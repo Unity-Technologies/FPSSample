@@ -1,0 +1,57 @@
+*    text=auto
+# Text files
+*.cs diff=csharp text
+*.txt text
+*.mat text
+*.shader text
+*.meta text
+*.md5 text
+*.compute text
+*.md text
+*.prefab text
+*.mixer text
+*.ShaderGraph text
+*.anim text
+*.asmdef text
+*.json text
+*.overrideController text
+*.cginc text
+*.hlsl text
+*.giparams text
+*.controller text
+*.mask text
+*.playable text
+ProjectSettings/*.asset text
+# Binaries
+**/Assets/**/*.png filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.tif filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.TIF filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.tiff filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.tga filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.fbx filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.FBX filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.ttf filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.dll filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.bundle filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.so filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.zip filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.exr filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.hdr filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.ma filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.mp3 filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.ogg filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.obj filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.OBJ filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.TGA filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.mdb filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.pdf filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.asset filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.bytes filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.aif filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.bmp filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.pdt filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.psd filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.sbsar filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.unity filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.entities filter=lfs diff=lfs merge=lfs -text
+**/Assets/**/*.wav filter=lfs diff=lfs merge=lfs -text
