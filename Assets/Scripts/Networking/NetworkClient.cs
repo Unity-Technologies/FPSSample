@@ -513,7 +513,7 @@ public class NetworkClient
                 return;
             }
 
-            var ourProtocol = Game.game ? Game.game.protocolId : "ProtocolId";
+            var ourProtocol = NetworkConfig.protocolVersion;
             var serverProtocol = NetworkConfig.encoding.GetString(protocolId, 0, length);
             GameDebug.Log("Client protocol id: " + ourProtocol);
             GameDebug.Log("Server protocol id: " + serverProtocol);

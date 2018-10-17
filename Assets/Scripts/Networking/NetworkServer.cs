@@ -715,7 +715,9 @@ public class NetworkServer
             AddMessage(NetworkMessage.ClientInfo);
             output.WriteRawBits((uint)connectionId, 8);
             output.WriteRawBits((uint)serverInfo.serverTickRate, 8);
-            var protocolId = NetworkConfig.encoding.GetBytes(Game.game ? Game.game.protocolId : "ProtocolId");
+
+            var protocolId = NetworkConfig.encoding.GetBytes(NetworkConfig.protocolVersion);
+
             output.WriteRawBits((uint)protocolId.Length, 8);
             output.WriteRawBytes(protocolId, 0, protocolId.Length);
 

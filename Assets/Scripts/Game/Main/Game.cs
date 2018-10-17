@@ -244,12 +244,6 @@ public class Game : MonoBehaviour
     }
     string _buildId = "NoBuild";
 
-    // For now we just use build id as protocol id
-    public string protocolId
-    {
-        get { return buildId; }
-    }
-
     public void RequestGameLoop(System.Type type, string[] args)
     {
         GameDebug.Assert(typeof(IGameLoop).IsAssignableFrom(type));

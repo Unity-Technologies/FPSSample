@@ -31,7 +31,6 @@ Procedural bone components (Twist, Fan and TranslateScale) help with deformation
 
 > //sample_game/prototype01/main/ProjectFolder/Assets/Scripts/EditorTools/Editor/SkeletonImporter.cs.
 
-
 ![](Images/ProceduralBones.png)
 
 Data about procedural bone setup is stored in MonoBehaviors. These also drive the bones in edit mode, so you may interact with the characters skeleton and see the behaviour of the procedural bones.
@@ -49,10 +48,10 @@ The project and pipeline is a work in progress and there are plenty of things fo
 ### Humanoid Configuration
 A Stance Pose that is parallel to world coordinates, without bends in in arms and knees is used for best results. 
 
-![](Images/TPose.png)
+![](Images/TPose.PNG)
 
 Additional Settings:
 * Twist extraction is disabled as we use our own twist solution with dedicated twist bones.
 * Translation DoF (Degrees of freedom) is enabled to allow for translation based stretch.
 
-![](Images/HumanoidSettings.png)
+![](Images/HumanoidSettings.PNG)

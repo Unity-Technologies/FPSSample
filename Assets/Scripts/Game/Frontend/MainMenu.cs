@@ -65,13 +65,13 @@ public class MainMenu : MonoBehaviour
         m_ListItemTemplate = uiBinding.servers.content.GetChild(0).gameObject;
 
         uiBinding.gamemode.options.Clear();
-        uiBinding.gamemode.options.Add(new Dropdown.OptionData("Deathmatch"));
         uiBinding.gamemode.options.Add(new Dropdown.OptionData("Assault"));
+        uiBinding.gamemode.options.Add(new Dropdown.OptionData("Deathmatch"));
         uiBinding.gamemode.RefreshShownValue();
 
         uiBinding.levelname.options.Clear();
-        uiBinding.levelname.options.Add(new Dropdown.OptionData("Level_00"));
         uiBinding.levelname.options.Add(new Dropdown.OptionData("Level_01"));
+        uiBinding.levelname.options.Add(new Dropdown.OptionData("Level_00"));
         uiBinding.levelname.RefreshShownValue();
 
         uiBinding.maxplayers.options.Clear();

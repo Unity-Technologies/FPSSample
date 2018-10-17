@@ -61,6 +61,10 @@ public static class NetworkConfig
     [ConfigVar(Name = "net.debug", DefaultValue = "0", Description = "Dump lots of debug info about network")]
     public static ConfigVar netDebug;
 
+    // TODO (petera) change away from string
+    // Increase this when you make a change to 
+    public const string protocolVersion = "1";
+
     public const int defaultServerPort = 7913;
 
     public const int commandServerQueueSize = 32;
