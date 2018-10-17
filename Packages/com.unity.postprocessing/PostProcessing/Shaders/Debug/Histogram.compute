@@ -1,0 +1,75 @@
+#pragma warning(disable : 3568)
+#pragma exclude_renderers gles gles3 d3d11_9x
+
+#define HISTOGRAM_BINS 256
+#define GROUP_SIZE_X 16
+#define GROUP_SIZE_Y 16
+
+#include "../StdLib.hlsl"
+#include "../Colors.hlsl"
+
+RWStructuredBuffer<uint> _HistogramBuffer;
+Texture2D<float4> _Source;
+
+CBUFFER_START(Params)
+    float4 _Params; // x: width, y: height, z: linear, w: channel
+CBUFFER_END
+
+groupshared uint gs_histogram[HISTOGRAM_BINS];
+
+#ifdef DISABLE_COMPUTE_SHADERS
+
+TRIVIAL_COMPUTE_KERNEL(KHistogramGather)
+TRIVIAL_COMPUTE_KERNEL(KHistogramClear)
+
+#else
+
+#pragma kernel KHistogramGather
+[numthreads(GROUP_SIZE_X, GROUP_SIZE_Y, 1)]
+void KHistogramGather(uint2 dispatchThreadId : SV_DispatchThreadID, uint2 groupThreadId : SV_GroupThreadID)
+{
+    const uint localThreadId = groupThreadId.y * GROUP_SIZE_X + groupThreadId.x;
+
+    // Clears the shared memory
+    if (localThreadId < HISTOGRAM_BINS)
+        gs_histogram[localThreadId] = 0u;
+
+    GroupMemoryBarrierWithGroupSync();
+
+    // Gather local group histogram
+    if (dispatchThreadId.x < uint(_Params.x) && dispatchThreadId.y < uint(_Params.y))
+    {
+        float3 color = saturate(_Source[dispatchThreadId].xyz);
+
+        // We want a gamma-corrected histogram (like Photoshop & all)
+        if (_Params.z > 0)
+            color = LinearToSRGB(color);
+
+        // Convert channel value to histogram bin
+        float channel;
+        uint c = uint(_Params.w);
+
+        if (c > 2) channel = Luminance(color);
+        else channel = color[c];
+
+        uint idx = (uint)(round(channel * 255.0));
+
+        InterlockedAdd(gs_histogram[idx], 1u);
+    }
+
+    GroupMemoryBarrierWithGroupSync();
+
+    // Merge everything
+    if (localThreadId < HISTOGRAM_BINS)
+        InterlockedAdd(_HistogramBuffer[localThreadId], gs_histogram[localThreadId]);
+}
+
+#pragma kernel KHistogramClear
+[numthreads(GROUP_SIZE_X, 1, 1)]
+void KHistogramClear(uint dispatchThreadId : SV_DispatchThreadID)
+{
+    if (dispatchThreadId < HISTOGRAM_BINS)
+        _HistogramBuffer[dispatchThreadId] = 0u;
+}
+
+#endif // DISABLE_COMPUTE_SHADERS

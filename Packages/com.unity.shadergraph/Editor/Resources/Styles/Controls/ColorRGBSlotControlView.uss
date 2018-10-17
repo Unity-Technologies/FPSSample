@@ -1,0 +1,10 @@
+ColorRGBSlotControlView {
+    flex-direction: row;
+    align-items: center;
+}
+
+ColorRGBSlotControlView > ColorField {
+    width: 41;
+    margin-left: 0;
+    margin-right: 0;
+}

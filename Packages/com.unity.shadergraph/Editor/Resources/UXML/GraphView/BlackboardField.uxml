@@ -1,0 +1,12 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements">
+    <ui:VisualElement name="contentItem" pickingMode="Ignore">
+        <ui:VisualElement name="pill" pickingMode="Ignore">
+            <ui:VisualElement name="borderItem" pickingMode="Ignore" />
+            <ui:VisualElement name="backgroundItem" pickingMode="Ignore" />
+            <ui:Image name="iconItem" />
+            <ui:Label name="textLabel" text = "" pickingMode="Ignore" />
+        </ui:VisualElement>
+        <ui:Label name="typeLabel" text = "" pickingMode="Ignore" />
+    </ui:VisualElement>
+    <ui:TextField name="textField" text="" />
+</UXML>

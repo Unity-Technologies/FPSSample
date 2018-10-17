@@ -1,0 +1,51 @@
+#pragma warning(disable : 3568)
+#pragma exclude_renderers gles gles3 d3d11_9x
+
+#include "../StdLib.hlsl"
+#include "../Colors.hlsl"
+
+RWStructuredBuffer<uint> _VectorscopeBuffer;
+Texture2D<float4> _Source;
+
+CBUFFER_START (Params)
+    float4 _Params; // x: source width, y: source height, z: buffer size, w: linear?
+CBUFFER_END
+
+#define GROUP_SIZE_X 16
+#define GROUP_SIZE_Y 16
+
+#ifdef DISABLE_COMPUTE_SHADERS
+
+TRIVIAL_COMPUTE_KERNEL(KVectorscopeGather)
+TRIVIAL_COMPUTE_KERNEL(KVectorscopeClear)
+
+#else
+
+#pragma kernel KVectorscopeGather
+[numthreads(GROUP_SIZE_X, GROUP_SIZE_Y, 1)]
+void KVectorscopeGather(uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+    if (dispatchThreadId.x < uint(_Params.x) && dispatchThreadId.y < uint(_Params.y))
+    {
+        float3 color = saturate(_Source[dispatchThreadId].xyz);
+
+        if (_Params.w > 0)
+            color = LinearToSRGB(color);
+
+        float3 yuv = RgbToYCbCr(color);
+        yuv.yz += (0.5).xx;
+        uint u = (uint)floor(yuv.y * _Params.z);
+        uint v = (uint)floor(yuv.z * _Params.z);
+        InterlockedAdd(_VectorscopeBuffer[v * _Params.z + u], 1u);
+    }
+}
+
+#pragma kernel KVectorscopeClear
+[numthreads(GROUP_SIZE_X, GROUP_SIZE_Y, 1)]
+void KVectorscopeClear(uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+    if (dispatchThreadId.x < uint(_Params.z) && dispatchThreadId.y < uint(_Params.z))
+        _VectorscopeBuffer[dispatchThreadId.y * _Params.z + dispatchThreadId.x] = 0u;
+}
+
+#endif

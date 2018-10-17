@@ -1,0 +1,170 @@
+#pragma kernel Deferred_Direct_Fptl                                SHADE_OPAQUE_ENTRY=Deferred_Direct_Fptl
+#pragma kernel Deferred_Direct_Fptl_DebugDisplay                   SHADE_OPAQUE_ENTRY=Deferred_Direct_Fptl_DebugDisplay             DEBUG_DISPLAY
+#pragma kernel Deferred_Direct_ShadowMask_Fptl                     SHADE_OPAQUE_ENTRY=Deferred_Direct_ShadowMask_Fptl               SHADOWS_SHADOWMASK
+#pragma kernel Deferred_Direct_ShadowMask_Fptl_DebugDisplay        SHADE_OPAQUE_ENTRY=Deferred_Direct_ShadowMask_Fptl_DebugDisplay  SHADOWS_SHADOWMASK  DEBUG_DISPLAY
+
+// Variant with and without shadowmask
+#pragma kernel Deferred_Indirect_Fptl_Variant0      SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant0      USE_INDIRECT    VARIANT=0
+#pragma kernel Deferred_Indirect_Fptl_Variant1      SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant1      USE_INDIRECT    VARIANT=1
+#pragma kernel Deferred_Indirect_Fptl_Variant2      SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant2      USE_INDIRECT    VARIANT=2
+#pragma kernel Deferred_Indirect_Fptl_Variant3      SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant3      USE_INDIRECT    VARIANT=3
+#pragma kernel Deferred_Indirect_Fptl_Variant4      SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant4      USE_INDIRECT    VARIANT=4
+#pragma kernel Deferred_Indirect_Fptl_Variant5      SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant5      USE_INDIRECT    VARIANT=5
+#pragma kernel Deferred_Indirect_Fptl_Variant6      SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant6      USE_INDIRECT    VARIANT=6
+#pragma kernel Deferred_Indirect_Fptl_Variant7      SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant7      USE_INDIRECT    VARIANT=7
+#pragma kernel Deferred_Indirect_Fptl_Variant8      SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant8      USE_INDIRECT    VARIANT=8
+#pragma kernel Deferred_Indirect_Fptl_Variant9      SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant9      USE_INDIRECT    VARIANT=9
+#pragma kernel Deferred_Indirect_Fptl_Variant10     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant10     USE_INDIRECT    VARIANT=10
+#pragma kernel Deferred_Indirect_Fptl_Variant11     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant11     USE_INDIRECT    VARIANT=11
+#pragma kernel Deferred_Indirect_Fptl_Variant12     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant12     USE_INDIRECT    VARIANT=12
+#pragma kernel Deferred_Indirect_Fptl_Variant13     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant13     USE_INDIRECT    VARIANT=13
+#pragma kernel Deferred_Indirect_Fptl_Variant14     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant14     USE_INDIRECT    VARIANT=14
+#pragma kernel Deferred_Indirect_Fptl_Variant15     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant15     USE_INDIRECT    VARIANT=15
+#pragma kernel Deferred_Indirect_Fptl_Variant16     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant16     USE_INDIRECT    VARIANT=16
+#pragma kernel Deferred_Indirect_Fptl_Variant17     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant17     USE_INDIRECT    VARIANT=17
+#pragma kernel Deferred_Indirect_Fptl_Variant18     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant18     USE_INDIRECT    VARIANT=18
+#pragma kernel Deferred_Indirect_Fptl_Variant19     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant19     USE_INDIRECT    VARIANT=19
+#pragma kernel Deferred_Indirect_Fptl_Variant20     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant20     USE_INDIRECT    VARIANT=20
+#pragma kernel Deferred_Indirect_Fptl_Variant21     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant21     USE_INDIRECT    VARIANT=21
+#pragma kernel Deferred_Indirect_Fptl_Variant22     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant22     USE_INDIRECT    VARIANT=22
+#pragma kernel Deferred_Indirect_Fptl_Variant23     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant23     USE_INDIRECT    VARIANT=23
+#pragma kernel Deferred_Indirect_Fptl_Variant24     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant24     USE_INDIRECT    VARIANT=24
+#pragma kernel Deferred_Indirect_Fptl_Variant25     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant25     USE_INDIRECT    VARIANT=25
+#pragma kernel Deferred_Indirect_Fptl_Variant26     SHADE_OPAQUE_ENTRY=Deferred_Indirect_Fptl_Variant26     USE_INDIRECT    VARIANT=26
+
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant0       SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant0       USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=0
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant1       SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant1       USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=1
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant2       SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant2       USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=2
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant3       SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant3       USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=3
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant4       SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant4       USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=4
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant5       SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant5       USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=5
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant6       SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant6       USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=6
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant7       SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant7       USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=7
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant8       SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant8       USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=8
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant9       SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant9       USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=9
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant10      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant10      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=10
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant11      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant11      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=11
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant12      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant12      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=12
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant13      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant13      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=13
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant14      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant14      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=14
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant15      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant15      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=15
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant16      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant16      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=16
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant17      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant17      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=17
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant18      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant18      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=18
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant19      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant19      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=19
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant20      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant20      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=20
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant21      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant21      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=21
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant22      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant22      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=22
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant23      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant23      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=23
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant24      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant24      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=24
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant25      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant25      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=25
+#pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant26      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant26      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=26
+
+#ifdef DEBUG_DISPLAY
+    // Don't care about this warning in debug
+#   pragma warning( disable : 4714 ) // sum of temp registers and indexable temp registers times 256 threads exceeds the recommended total 16384.  Performance may be reduced at kernel
+#endif
+
+#define UNITY_SINGLE_PASS_STEREO 1
+
+#define LIGHTLOOP_TILE_PASS 1
+// deferred opaque always use FPTL
+#define USE_FPTL_LIGHTLIST 1
+
+//#pragma enable_d3d11_debug_symbols
+
+//-------------------------------------------------------------------------------------
+// Include
+//-------------------------------------------------------------------------------------
+
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
+#define SHADERPASS SHADERPASS_DEFERRED_LIGHTING
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+
+// Note: We have fix as guidelines that we have only one deferred material (with control of GBuffer enabled). Mean a users that add a new
+// deferred material must replace the old one here. If in the future we want to support multiple layout (cause a lot of consistency problem),
+// the deferred shader will require to use multicompile.
+#define UNITY_MATERIAL_LIT // Need to be define before including Material.hlsl
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl" // This include Material.hlsl
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+//-------------------------------------------------------------------------------------
+// variable declaration
+//-------------------------------------------------------------------------------------
+
+RWTexture2D<float3> diffuseLightingUAV;
+RWTexture2D<float4> specularLightingUAV;
+
+CBUFFER_START(UnityDeferredCompute)
+    uint g_TileListOffset;
+CBUFFER_END
+
+#ifdef USE_INDIRECT
+
+StructuredBuffer<uint> g_TileList;
+// Indirect
+[numthreads(TILE_SIZE_FPTL, TILE_SIZE_FPTL, 1)]
+void SHADE_OPAQUE_ENTRY(uint2 groupThreadId : SV_GroupThreadID, uint groupId : SV_GroupID)
+{
+    uint  tileIndex   = g_TileList[g_TileListOffset + groupId];
+    uint2 tileCoord   = uint2(tileIndex & ((1 << TILE_SIZE_FPTL) - 1), tileIndex >> TILE_SIZE_FPTL);
+    uint2 pixelCoord  = tileCoord * GetTileSize() + groupThreadId;
+
+    uint screenWidth  = (uint)_ScreenSize.x;
+    uint numTilesX    = (screenWidth + (TILE_SIZE_FPTL) - 1) / TILE_SIZE_FPTL;
+    uint featureFlags = TileVariantToFeatureFlags(VARIANT, tileCoord.x + tileCoord.y * numTilesX);
+#else
+
+// Direct
+[numthreads(TILE_SIZE_FPTL, TILE_SIZE_FPTL, 1)]
+void SHADE_OPAQUE_ENTRY(uint2 dispatchThreadId : SV_DispatchThreadID, uint2 groupId : SV_GroupID)
+{
+    uint2 tileCoord    = (TILE_SIZE_FPTL * groupId) / GetTileSize();
+	uint2 pixelCoord = TexCoordStereoOffset(dispatchThreadId);// +uint2((unity_StereoEyeIndex * _ScreenSize.x), 0);
+    uint  featureFlags = UINT_MAX;
+
+#endif
+
+    // This need to stay in sync with deferred.shader
+
+    float depth = LOAD_TEXTURE2D(_CameraDepthTexture, pixelCoord.xy).x;
+    PositionInputs posInput = GetPositionInput_Stereo(pixelCoord.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, tileCoord, unity_StereoEyeIndex);
+
+    // For indirect case: we can still overlap inside a tile with the sky/background, reject it
+    // Can't rely on stencil as we are in compute shader
+    // TODO : if we have depth bounds test we could remove such a test ?
+    if (depth == UNITY_RAW_FAR_CLIP_VALUE)
+    {
+        return;
+    }
+
+    float3 V = GetWorldSpaceNormalizeViewDir(posInput.positionWS);
+
+    BSDFData bsdfData;
+    BuiltinData builtinData;
+    DECODE_FROM_GBUFFER(posInput.positionSS, featureFlags, bsdfData, builtinData);
+
+    PreLightData preLightData = GetPreLightData(V, posInput, bsdfData);
+
+    float3 diffuseLighting;
+    float3 specularLighting;
+    LightLoop(V, posInput, preLightData, bsdfData, builtinData, featureFlags, diffuseLighting, specularLighting);
+
+// sample-game-begin: fix against emitting value so high it will end up as INF when it passes through ROP .. and then later bacomes NaN party
+	specularLighting = min(specularLighting, 65000.0f);
+// sample-game-end
+
+    if (_EnableSubsurfaceScattering != 0 && ShouldOutputSplitLighting(bsdfData))
+    {
+        specularLightingUAV[pixelCoord] = float4(specularLighting, 1.0);
+        diffuseLightingUAV[pixelCoord]  = TagLightingForSSS(diffuseLighting);
+    }
+    else
+    {
+        specularLightingUAV[pixelCoord] = float4(diffuseLighting + specularLighting, 1.0);
+    }
+}

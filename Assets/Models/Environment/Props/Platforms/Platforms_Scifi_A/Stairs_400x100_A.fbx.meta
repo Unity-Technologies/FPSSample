@@ -1,0 +1,148 @@
+fileFormatVersion: 2
+guid: 0a3fc4100be041d488e4d1efb89d840d
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: //RootNode
+    100002: Stairs_400x100_A 1
+    100004: Collision_Stairs_400x100_A
+    100006: Geom_Stairs_400x100_A_LOD00
+    100008: Stairs_400x100_A_LOD00
+    100010: Stairs_400x100_A_LOD01
+    100012: Stairs_400x100_A_LOD02
+    100014: Stairs_400x100_A_LOD03
+    100016: Collision_Detail_Stairs_400x100_A
+    100018: Collision_Player_Stairs_400x100_A
+    400000: //RootNode
+    400002: Stairs_400x100_A 1
+    400004: Collision_Stairs_400x100_A
+    400006: Geom_Stairs_400x100_A_LOD00
+    400008: Stairs_400x100_A_LOD00
+    400010: Stairs_400x100_A_LOD01
+    400012: Stairs_400x100_A_LOD02
+    400014: Stairs_400x100_A_LOD03
+    400016: Collision_Detail_Stairs_400x100_A
+    400018: Collision_Player_Stairs_400x100_A
+    2300000: Stairs_400x100_A 1
+    2300002: Geom_Stairs_400x100_A_LOD00
+    2300004: Stairs_400x100_A_LOD00
+    2300006: Stairs_400x100_A_LOD01
+    2300008: Stairs_400x100_A_LOD02
+    2300010: Stairs_400x100_A_LOD03
+    2300012: Collision_Stairs_400x100_A
+    2300014: Collision_Detail_Stairs_400x100_A
+    2300016: Collision_Player_Stairs_400x100_A
+    3300000: Stairs_400x100_A 1
+    3300002: Collision_Stairs_400x100_A
+    3300004: Geom_Stairs_400x100_A_LOD00
+    3300006: Stairs_400x100_A_LOD00
+    3300008: Stairs_400x100_A_LOD01
+    3300010: Stairs_400x100_A_LOD02
+    3300012: Stairs_400x100_A_LOD03
+    3300014: Collision_Detail_Stairs_400x100_A
+    3300016: Collision_Player_Stairs_400x100_A
+    4300000: Stairs_400x100_A
+    4300002: Geom_Stairs_400x100_A_LOD00
+    4300004: Collision_Stairs_400x100_A
+    4300006: Stairs_400x100_A_LOD00
+    4300008: Stairs_400x100_A_LOD01
+    4300010: Stairs_400x100_A_LOD02
+    4300012: Stairs_400x100_A_LOD03
+    4300014: Collision_Player_Stairs_400x100_A
+    4300016: Collision_Detail_Stairs_400x100_A
+    6400000: Stairs_400x100_A 1
+    6400002: Collision_Stairs_400x100_A
+    6400004: Collision_Detail_Stairs_400x100_A
+    6400006: Collision_Player_Stairs_400x100_A
+    11400000: //RootNode
+    20500000: //RootNode
+  externalObjects: {}
+  materials:
+    importMaterials: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages:
+    - 0.25
+    - 0.125
+    - 0.0625
+    - 0.01
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 0
+    importBlendShapes: 1
+    importCameras: 0
+    importLights: 0
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 1
+    hasPreviousCalculatedGlobalScale: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 5fd03e06658cf2041a9ad5af29ea7482
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,31 @@
+ShaderPropertyView {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8;
+    padding-bottom: 4;
+    padding-left: 8;
+    padding-right: 8;
+}
+
+ShaderPropertyView > #displayName {
+    flex: 1;
+    margin-right: 8;
+}
+
+ShaderPropertyView > #value {
+    flex: 2;
+    margin-right: 8;
+}
+
+ShaderPropertyView > #remove {
+    font-size: 9;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 1;
+    padding-right: 1;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+}

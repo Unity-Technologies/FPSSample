@@ -1,0 +1,127 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!4 &7530653703461671030 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+  m_PrefabInstance: {fileID: 7530653703462062836}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4409422474170609899
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4027844916439509566}
+  - component: {fileID: 6406774966006717309}
+  m_Layer: 0
+  m_Name: LPG_Floor_Wall_Interior_Door_Stop_1200_A
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 4294967295
+  m_IsActive: 1
+--- !u!4 &4027844916439509566
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4409422474170609899}
+  m_LocalRotation: {x: 0.7071067, y: -0.000000029802319, z: 0.000000059604638, w: 0.7071069}
+  m_LocalPosition: {x: 0, y: -1, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 7530653703461671030}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!220 &6406774966006717309
+LightProbeGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4409422474170609899}
+  m_Enabled: 1
+  m_SourcePositions:
+  - {x: -0.050001144, y: -0.99999857, z: 5.9499974}
+  - {x: -0.9500027, y: -0.99999803, z: 4.9499974}
+  - {x: -0.9500027, y: -0.9999981, z: 5.949997}
+  - {x: -0.050001144, y: -0.99999803, z: 4.9499974}
+  - {x: -0.9500027, y: -0.9999986, z: 0.049999464}
+  - {x: -0.050001144, y: -0.9999986, z: 0.049999524}
+  - {x: -0.9500027, y: -0.99999875, z: 1.0000004}
+  - {x: -0.050001144, y: -0.99999875, z: 1.0000005}
+  - {x: -0.9500027, y: -0.99999887, z: 2.000001}
+  - {x: -0.050001144, y: -0.99999887, z: 2.000001}
+  - {x: -0.9500027, y: -0.9999985, z: 2.999997}
+  - {x: -0.050001144, y: -0.9999985, z: 2.999997}
+  - {x: -0.9500027, y: -0.99999803, z: 3.9999967}
+  - {x: -0.050001144, y: -0.99999803, z: 3.9999967}
+  m_Dering: 0
+--- !u!1001 &7530653703462062836
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.00000030517577
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -12.000005
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -360
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_Name
+      value: Floor_Wall_Interior_Door_Stop_1200_A
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300002, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 41197085d79c46a4199c368723e5983d, type: 2}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 780f8d7b65d852244b4a2c987c85da3b, type: 3}

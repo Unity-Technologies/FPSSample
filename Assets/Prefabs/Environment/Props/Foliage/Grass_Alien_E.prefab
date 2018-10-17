@@ -1,0 +1,119 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &7213747616917171061
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_Name
+      value: Grass_Alien_E
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_FadeMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_AnimateCrossFading
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LODs.Array.data[0].screenRelativeHeight
+      value: 0.10042399
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LODs.Array.data[1].screenRelativeHeight
+      value: 0.062834
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_LODs.Array.data[2].screenRelativeHeight
+      value: 0.028575238
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300002, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300002, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: fd0f2a70a71bec64a85eee06a18b8651, type: 2}
+    - target: {fileID: 2300004, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300004, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: fd0f2a70a71bec64a85eee06a18b8651, type: 2}
+    - target: {fileID: 2300006, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300006, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: fd0f2a70a71bec64a85eee06a18b8651, type: 2}
+    - target: {fileID: 100008, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 100004, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 100006, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 80
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f53add520821abf4bab97c4ef1cf17d1, type: 3}

@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3319207419486499542
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -36.18232
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -10.198373
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 87.72422
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_Name
+      value: TunneL_Digger_A_Front_Spinner Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300008, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: ffe5d2ce04747644ba60796e53397a83, type: 2}
+    - target: {fileID: 2300006, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: ffe5d2ce04747644ba60796e53397a83, type: 2}
+    - target: {fileID: 2300000, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: ffe5d2ce04747644ba60796e53397a83, type: 2}
+    - target: {fileID: 2300004, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: ffe5d2ce04747644ba60796e53397a83, type: 2}
+    - target: {fileID: 20500000, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LODs.Array.data[2].screenRelativeHeight
+      value: 0.021165287
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LODs.Array.data[1].screenRelativeHeight
+      value: 0.044556096
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_LODs.Array.data[0].screenRelativeHeight
+      value: 0.09732646
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_FadeMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}
+      propertyPath: m_AnimateCrossFading
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 60c94239aa773144eb7ae2d811bfb4ce, type: 3}

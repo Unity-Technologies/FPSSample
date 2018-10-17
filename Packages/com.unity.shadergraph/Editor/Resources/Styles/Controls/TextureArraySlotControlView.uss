@@ -1,0 +1,12 @@
+TextureArraySlotControlView {
+    flex-direction: row;
+    align-items: center;
+}
+
+TextureArraySlotControlView > ObjectField {
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100;
+}

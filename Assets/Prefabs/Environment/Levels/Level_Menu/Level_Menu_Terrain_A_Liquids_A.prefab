@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &6211736730587152108
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 100006, guid: b2830b68dce9e7e41b2685dafbba471d, type: 3}
+      propertyPath: m_Name
+      value: Level_Menu_Terrain_A_Liquids_A_VARIANT
+      objectReference: {fileID: 0}
+    - target: {fileID: 100006, guid: b2830b68dce9e7e41b2685dafbba471d, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 400006, guid: b2830b68dce9e7e41b2685dafbba471d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400006, guid: b2830b68dce9e7e41b2685dafbba471d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: b2830b68dce9e7e41b2685dafbba471d, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300000, guid: b2830b68dce9e7e41b2685dafbba471d, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300000, guid: b2830b68dce9e7e41b2685dafbba471d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 5f69456f0f5c4324d83c428fcb17fb08, type: 2}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b2830b68dce9e7e41b2685dafbba471d, type: 3}

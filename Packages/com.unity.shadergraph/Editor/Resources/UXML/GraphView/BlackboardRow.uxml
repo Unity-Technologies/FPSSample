@@ -1,0 +1,13 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements">
+    <ui:VisualElement name="root" pickingMode="Ignore">
+        <ui:VisualElement name="itemRow" pickingMode="Ignore">
+            <ui:Button name="expandButton" text = "">
+                <ui:Image name="buttonImage" />
+            </ui:Button>
+            <ui:VisualElement name="itemRowContentContainer" pickingMode="Ignore">
+                <ui:VisualElement name="itemContainer" pickingMode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="propertyViewContainer" pickingMode="Ignore" />
+    </ui:VisualElement>
+</UXML>

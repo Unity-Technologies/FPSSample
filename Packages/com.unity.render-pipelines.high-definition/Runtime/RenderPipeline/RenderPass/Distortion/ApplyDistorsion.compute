@@ -1,0 +1,61 @@
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Builtin/BuiltinData.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+TEXTURE2D(_DistortionTexture);
+RW_TEXTURE2D(float4, _Destination);
+
+SamplerState sampler_ColorPyramidTexture;
+
+CBUFFER_START(cb)
+    float4 _Size;
+CBUFFER_END
+
+#pragma kernel KMain
+[numthreads(8, 8, 1)]
+void KMain(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+    // We use a bias when fetching distortion source pixels
+    // This avoid artifacts when a distortion is overlapped by an opaque object
+    const float _FetchBias = 0.9;
+
+    // Get distortion values
+    float4 encodedDistortion = LOAD_TEXTURE2D(_DistortionTexture, dispatchThreadId);
+
+    float2 distortion;
+    float distortionBlur;
+    bool distortionIsSourceValid;
+    DecodeDistortion(encodedDistortion, distortion, distortionBlur, distortionIsSourceValid);
+
+    // Reject the pixel if it is not in the distortion mask
+    if (!distortionIsSourceValid)
+        return;
+
+    int2 distortedEncodedDistortionId = dispatchThreadId + int2(distortion);
+
+    // Reject distortion if we try to fetch a pixel out of the buffer
+    if (any(distortedEncodedDistortionId < 0)
+        || any(distortedEncodedDistortionId > int2(_Size.xy)))
+        return;
+
+    // We fetch a second time the _DistortionTexture for the at the distorded coordinate
+    // Then we check if this pixels is in the distorded mask (eg: behind any distorted object)
+    // Otherwise we reject the distortion
+    float2 distordedDistortion;
+    float distordedDistortionBlur;
+    bool distordedIsSourceValid;
+    float4 encodedDistordedDistortion = LOAD_TEXTURE2D(_DistortionTexture, distortedEncodedDistortionId);
+    DecodeDistortion(encodedDistordedDistortion, distordedDistortion, distordedDistortionBlur, distordedIsSourceValid);
+
+    if (!distordedIsSourceValid)
+        return;
+
+    // Get source pixel for distortion
+    float2 distordedUV = float2(dispatchThreadId + int2(distortion * _FetchBias)) * _Size.zw * _ScreenToTargetScale.xy;
+    float mip = (_ColorPyramidScale.z - 1) * clamp(distortionBlur, 0.0, 1.0);
+    float4 sampled = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, sampler_ColorPyramidTexture, distordedUV, mip);
+
+    _Destination[dispatchThreadId] = sampled;
+}

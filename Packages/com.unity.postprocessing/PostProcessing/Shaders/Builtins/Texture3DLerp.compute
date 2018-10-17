@@ -1,0 +1,50 @@
+#pragma warning(disable : 3568)
+#pragma exclude_renderers gles gles3 d3d11_9x
+
+#include "../StdLib.hlsl"
+
+#pragma kernel KTexture3DLerp
+#pragma kernel KTexture3DLerpToColor
+
+RWTexture3D<float4> _Output;
+
+CBUFFER_START(Params)
+    float4 _DimensionsAndLerp; // xyz: surface dimensions, w: lerp factor
+    float4 _TargetColor; // Color to lerp into
+CBUFFER_END
+
+Texture3D _From;
+Texture3D _To;
+
+#define GROUP_SIZE 4
+
+#ifdef DISABLE_COMPUTE_SHADERS
+
+TRIVIAL_COMPUTE_KERNEL(KTexture3DLerp)
+TRIVIAL_COMPUTE_KERNEL(KTexture3DLerpToColor)
+
+#else
+
+[numthreads(GROUP_SIZE, GROUP_SIZE, GROUP_SIZE)]
+void KTexture3DLerp(uint3 id : SV_DispatchThreadID)
+{
+    if(all(float3(id) < _DimensionsAndLerp.xyz))
+    {
+        float4 from = _From[id];
+        float4 to = _To[id];
+        _Output[id] = lerp(from, to, _DimensionsAndLerp.wwww);
+    }
+}
+
+[numthreads(GROUP_SIZE, GROUP_SIZE, GROUP_SIZE)]
+void KTexture3DLerpToColor(uint3 id : SV_DispatchThreadID)
+{
+    if(all(float3(id) < _DimensionsAndLerp.xyz))
+    {
+        float4 from = _From[id];
+        float4 to = _TargetColor;
+        _Output[id] = lerp(from, to, _DimensionsAndLerp.wwww);
+    }
+}
+
+#endif // DISABLE_COMPUTE_SHADERS

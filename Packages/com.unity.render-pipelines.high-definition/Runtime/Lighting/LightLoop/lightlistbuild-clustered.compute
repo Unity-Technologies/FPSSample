@@ -1,0 +1,652 @@
+#pragma kernel TileLightListGen_NoDepthRT                   LIGHTLISTGEN=TileLightListGen_NoDepthRT
+#pragma kernel TileLightListGen_DepthRT                     LIGHTLISTGEN=TileLightListGen_DepthRT           ENABLE_DEPTH_TEXTURE_BACKPLANE
+#pragma kernel TileLightListGen_DepthRT_MSAA                LIGHTLISTGEN=TileLightListGen_DepthRT_MSAA      ENABLE_DEPTH_TEXTURE_BACKPLANE      MSAA_ENABLED
+#pragma kernel TileLightListGen_NoDepthRT_SrcBigTile        LIGHTLISTGEN=TileLightListGen_NoDepthRT_SrcBigTile                                                                  USE_TWO_PASS_TILED_LIGHTING
+#pragma kernel TileLightListGen_DepthRT_SrcBigTile          LIGHTLISTGEN=TileLightListGen_DepthRT_SrcBigTile            ENABLE_DEPTH_TEXTURE_BACKPLANE                          USE_TWO_PASS_TILED_LIGHTING
+#pragma kernel TileLightListGen_DepthRT_MSAA_SrcBigTile     LIGHTLISTGEN=TileLightListGen_DepthRT_MSAA_SrcBigTile       ENABLE_DEPTH_TEXTURE_BACKPLANE      MSAA_ENABLED        USE_TWO_PASS_TILED_LIGHTING
+
+#pragma kernel TileLightListGen_DepthRT_Oblique                     LIGHTLISTGEN=TileLightListGen_DepthRT_Oblique						ENABLE_DEPTH_TEXTURE_BACKPLANE			USE_OBLIQUE_MODE
+#pragma kernel TileLightListGen_DepthRT_MSAA_Oblique                LIGHTLISTGEN=TileLightListGen_DepthRT_MSAA_Oblique					ENABLE_DEPTH_TEXTURE_BACKPLANE			MSAA_ENABLED			USE_OBLIQUE_MODE
+#pragma kernel TileLightListGen_DepthRT_SrcBigTile_Oblique          LIGHTLISTGEN=TileLightListGen_DepthRT_SrcBigTile_Oblique            ENABLE_DEPTH_TEXTURE_BACKPLANE          USE_TWO_PASS_TILED_LIGHTING				USE_OBLIQUE_MODE
+#pragma kernel TileLightListGen_DepthRT_MSAA_SrcBigTile_Oblique     LIGHTLISTGEN=TileLightListGen_DepthRT_MSAA_SrcBigTile_Oblique       ENABLE_DEPTH_TEXTURE_BACKPLANE			MSAA_ENABLED        USE_TWO_PASS_TILED_LIGHTING			USE_OBLIQUE_MODE
+
+#pragma kernel ClearAtomic
+
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/ShaderBase.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightingConvexHullUtils.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightCullUtils.hlsl"
+
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/SortingComputeUtils.hlsl"
+#endif
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+//#define EXACT_EDGE_TESTS
+#define PERFORM_SPHERICAL_INTERSECTION_TESTS
+#define CONV_HULL_TEST_ENABLED
+
+CBUFFER_START(UnityLightListClustered)
+int g_iNrVisibLights;
+
+float4x4 g_mInvScrProjectionArr[2];
+float4x4 g_mScrProjectionArr[2];
+
+uint g_isOrthographic;
+int _EnvLightIndexShift;
+int _DecalIndexShift;
+int _DensityVolumeIndexShift;
+
+float g_fClustScale;
+float g_fClustBase;
+float g_fNearPlane;
+float g_fFarPlane;
+int   g_iLog2NumClusters;       // numClusters = (1<<g_iLog2NumClusters)
+
+float4 g_screenSize;
+int g_iNumSamplesMSAA;
+
+CBUFFER_END
+
+// ClusteredUtils.hlsl is dependent on the constants declared in UnityLightListClustered :/
+// g_fClustBase, g_fNearPlane, g_fFarPlane, g_iLog2NumClusters
+#include "ClusteredUtils.hlsl"
+
+#ifdef MSAA_ENABLED
+Texture2DMS<float> g_depth_tex : register( t0 );
+#else
+Texture2D g_depth_tex : register( t0 );
+#endif
+StructuredBuffer<float4> g_vBoundsBuffer : register( t1 );
+StructuredBuffer<LightVolumeData> _LightVolumeData : register(t2);
+StructuredBuffer<SFiniteLightBound> g_data : register( t3 );
+
+#ifdef USE_TWO_PASS_TILED_LIGHTING
+StructuredBuffer<uint> g_vBigTileLightList : register( t4 );        // don't support Buffer yet in unity
+#endif
+
+
+#define NR_THREADS          64
+
+RWStructuredBuffer<uint> g_vLayeredLightList : register( u0 );          // don't support RWBuffer yet in unity
+RWStructuredBuffer<uint> g_LayeredOffset : register( u1 );              // don't support RWBuffer yet in unity
+RWStructuredBuffer<uint> g_LayeredSingleIdxBuffer : register( u2 );     // don't support RWBuffer yet in unity
+
+#ifdef ENABLE_DEPTH_TEXTURE_BACKPLANE
+RWStructuredBuffer<float> g_logBaseBuffer : register( u3 );             // don't support RWBuffer yet in unity
+#endif
+
+
+#define MAX_NR_COARSE_ENTRIES       128
+
+groupshared unsigned int coarseList[MAX_NR_COARSE_ENTRIES];
+groupshared unsigned int clusterIdxs[MAX_NR_COARSE_ENTRIES/2];
+groupshared float4 lightPlanes[4*6]; // Each plane is defined by a float4. 6 planes per light, 4 lights (24 planes)
+
+groupshared uint lightOffs;
+
+#ifdef ENABLE_DEPTH_TEXTURE_BACKPLANE
+groupshared uint ldsZMax;
+#endif
+
+#ifdef EXACT_EDGE_TESTS
+groupshared uint ldsIsLightInvisible;
+groupshared uint lightOffs2;
+#endif
+
+#ifdef PERFORM_SPHERICAL_INTERSECTION_TESTS
+groupshared uint lightOffsSph;
+#endif
+
+float GetLinearDepth(float2 pixXY, float zDptBufSpace, uint eyeIndex)    // 0 is near 1 is far
+{
+    float4x4 g_mInvScrProjection = g_mInvScrProjectionArr[eyeIndex];
+
+#ifdef USE_OBLIQUE_MODE
+	float2 res2 = mul(g_mInvScrProjection, float4(pixXY, zDptBufSpace, 1.0)).zw;
+	return res2.x / res2.y;
+#else
+    // for perspective projection m22 is zero and m23 is +1/-1 (depends on left/right hand proj)
+    // however this function must also work for orthographic projection so we keep it like this.
+    float m22 = g_mInvScrProjection[2].z, m23 = g_mInvScrProjection[2].w;
+    float m32 = g_mInvScrProjection[3].z, m33 = g_mInvScrProjection[3].w;
+
+    return (m22*zDptBufSpace+m23) / (m32*zDptBufSpace+m33);
+#endif
+}
+
+float3 GetViewPosFromLinDepth(float2 v2ScrPos, float fLinDepth, uint eyeIndex)
+{
+    float4x4 g_mScrProjection = g_mScrProjectionArr[eyeIndex];
+
+    bool isOrthographic = g_isOrthographic!=0;
+    float fSx = g_mScrProjection[0].x;
+    float fSy = g_mScrProjection[1].y;
+    float fCx = isOrthographic ? g_mScrProjection[0].w : g_mScrProjection[0].z;
+    float fCy = isOrthographic ? g_mScrProjection[1].w : g_mScrProjection[1].z;
+
+#if USE_LEFT_HAND_CAMERA_SPACE
+    bool useLeftHandVersion = true;
+#else
+    bool useLeftHandVersion = isOrthographic;
+#endif
+
+    float s = useLeftHandVersion ? 1 : (-1);
+    float2 p = float2( (s*v2ScrPos.x-fCx)/fSx, (s*v2ScrPos.y-fCy)/fSy);
+
+    return float3(isOrthographic ? p.xy : (fLinDepth*p.xy), fLinDepth);
+}
+
+float GetOnePixDiagWorldDistAtDepthOne(uint eyeIndex)
+{
+    float4x4 g_mScrProjection = g_mScrProjectionArr[eyeIndex];
+    float fSx = g_mScrProjection[0].x;
+    float fSy = g_mScrProjection[1].y;
+
+    return length( float2(1.0/fSx,1.0/fSy) );
+}
+
+// SphericalIntersectionTests and CullByExactEdgeTests are close to the versions
+// in lightlistbuild-bigtile.compute.  But would need more re-factoring than needed
+// right now.
+
+#ifdef EXACT_EDGE_TESTS
+int CullByExactEdgeTests(uint threadID, int iNrCoarseLights, uint2 viTilLL, uint2 viTilUR, float fTileFarPlane, uint eyeIndex);
+#endif
+#ifdef PERFORM_SPHERICAL_INTERSECTION_TESTS
+int SphericalIntersectionTests(uint threadID, int iNrCoarseLights, float2 screenCoordinate, uint eyeIndex);
+#endif
+
+
+// returns 1 for intersection and 0 for none
+
+float4 FetchPlane(int l, int p, uint eyeIndex);
+
+bool CheckIntersection(int l, int k, uint2 viTilLL, uint2 viTilUR, float suggestedBase, uint eyeIndex)
+{
+    // If this light's screen space depth bounds intersect this cluster...simple cluster test
+    unsigned int val = (clusterIdxs[l>>1]>>(16*(l&1)))&0xffff;
+    bool bIsHit = ((val>>0)&0xff)<=((uint) k) && ((uint) k)<=((val>>8)&0xff);
+    if(bIsHit)
+    {
+#ifdef CONV_HULL_TEST_ENABLED
+        float depthAtNearZ = ClusterIdxToZ(k, suggestedBase);
+        float depthAtFarZ = ClusterIdxToZ(k+1, suggestedBase);
+
+        for(int p=0; p<6; p++)
+        {
+            float4 plane = lightPlanes[6*(l&3)+p];
+
+            bool bAllInvisib = true;
+
+            for(int i=0; i<8; i++)
+            {
+                float x = (i&1)==0 ? viTilLL.x : viTilUR.x;
+                float y = (i&2)==0 ? viTilLL.y : viTilUR.y;
+                float z = (i&4)==0 ? depthAtNearZ : depthAtFarZ;
+                float3 vP = GetViewPosFromLinDepth( float2(x, y), z, eyeIndex);
+
+                // Test each corner of the cluster against the light bounding box planes
+                bAllInvisib = bAllInvisib && dot(plane, float4(vP,1.0))>0;
+            }
+
+            if(bAllInvisib) bIsHit = false;
+        }
+#endif
+    }
+
+    return bIsHit;
+}
+
+// l is the coarse light index, k is the cluster index
+bool CheckIntersectionBasic(int l, int k)
+{
+    unsigned int val = (clusterIdxs[l>>1]>>(16*(l&1)))&0xffff;
+    return ((val>>0)&0xff)<=((uint) k) && ((uint) k)<=((val>>8)&0xff);
+}
+
+
+[numthreads(NR_THREADS, 1, 1)]
+void LIGHTLISTGEN(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
+{
+    uint eyeIndex = u3GroupID.z;
+
+    uint2 tileIDX = u3GroupID.xy;
+    uint t=threadID;
+
+    const uint log2TileSize = firstbithigh(TILE_SIZE_CLUSTERED);
+    uint nrTilesX = ((uint)g_screenSize.x +(TILE_SIZE_CLUSTERED-1))>>log2TileSize;
+    uint nrTilesY = ((uint)g_screenSize.y +(TILE_SIZE_CLUSTERED-1))>>log2TileSize;
+
+    // Screen space coordinates of clustered tile
+    uint2 viTilLL = TILE_SIZE_CLUSTERED*tileIDX;
+    uint2 viTilUR = min( viTilLL+uint2(TILE_SIZE_CLUSTERED,TILE_SIZE_CLUSTERED), uint2(g_screenSize.x, g_screenSize.y) );       // not width and height minus 1 since viTilUR represents the end of the tile corner.
+
+    if(t==0)
+    {
+        lightOffs = 0;
+
+#ifdef ENABLE_DEPTH_TEXTURE_BACKPLANE
+        ldsZMax = 0;
+#endif
+    }
+
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+    GroupMemoryBarrierWithGroupSync();
+#endif
+
+    //float linMaDist=g_fFarPlane;
+
+#ifdef ENABLE_DEPTH_TEXTURE_BACKPLANE
+    // establish max depth first
+    float linMaDist=0.0;
+
+    for(int idx=t; idx<(TILE_SIZE_CLUSTERED*TILE_SIZE_CLUSTERED); idx+=NR_THREADS)
+    {
+        // XRTODO: We need to stereo-ize access to g_depth_tex for texture arrays.
+        uint2 uPixCrd = min( uint2(viTilLL.x+(idx&(TILE_SIZE_CLUSTERED-1)), viTilLL.y+(idx>>log2TileSize)), uint2(g_screenSize.x-1, g_screenSize.y-1) );
+
+        // TODO: For stereo double-wide, I need a proper way to insert the second eye width offset. Right now, I can just
+        // use g_screenSize.x, but that's kinda cheating.
+        // Additionally, we're going to have a method to select between a doublewide texture or texture array. Doubling
+        // the kernels seems like a bad idea.  We could branch our texture read to switch between different texture declarations.
+        uint stereoDWOffset = eyeIndex * g_screenSize.x;
+        uPixCrd.x += stereoDWOffset;
+#ifdef MSAA_ENABLED
+        for(int i=0; i<g_iNumSamplesMSAA; i++)
+        {
+        const float fDpth = FetchDepthMSAA(g_depth_tex, uPixCrd, i);
+		const float2 fracSampleCoord = g_depth_tex.GetSamplePosition(i).xy;		// this is optimized away when USE_OBLIQUE_MODE is NOT set.
+#else
+        const float fDpth = FetchDepth(g_depth_tex, uPixCrd);
+		const float2 fracSampleCoord = float2(0.5,0.5);
+#endif
+
+        if(fDpth<VIEWPORT_SCALE_Z)      // if not skydome
+        {
+			// unclear here if stereoDWOffset is taken into account in g_mInvScrProjectionArr[eyeIndex] used in GetLinearDepth()
+			// otherwise it should not be included in uPixCrd when querying GetLinearDepth().
+			float linZ = GetLinearDepth(uPixCrd+fracSampleCoord, fDpth, eyeIndex);
+#if USE_LEFT_HAND_CAMERA_SPACE
+			float linDistZ = linZ;
+#else
+			float linDistZ = -linZ;
+#endif
+
+            linMaDist = max(linDistZ, linMaDist);
+        }
+#ifdef MSAA_ENABLED
+        }
+#endif
+    }
+
+    linMaDist = max(linMaDist, 0.0);
+    InterlockedMax(ldsZMax, asuint(linMaDist) );
+
+
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+    GroupMemoryBarrierWithGroupSync();
+#endif
+    linMaDist = asfloat(ldsZMax);
+    if(linMaDist<=0.0) linMaDist = g_fFarPlane;      // assume sky pixel
+#endif
+
+    // 'Normalized' coordinates of tile, for use with AABB bounds in g_vBoundsBuffer
+    float2 vTileLL = float2(viTilLL.x/g_screenSize.x, viTilLL.y/g_screenSize.y);
+    float2 vTileUR = float2(viTilUR.x/g_screenSize.x, viTilUR.y/g_screenSize.y);
+
+    // build coarse list using AABB
+#ifdef USE_TWO_PASS_TILED_LIGHTING
+    const uint log2BigTileToClustTileRatio = firstbithigh(64) - log2TileSize;
+
+    int NrBigTilesX = (nrTilesX + ((1<<log2BigTileToClustTileRatio)-1)) >> log2BigTileToClustTileRatio;
+    int NrBigTilesY = (nrTilesY + ((1<<log2BigTileToClustTileRatio)-1)) >> log2BigTileToClustTileRatio;
+    const int bigTileBase = eyeIndex * NrBigTilesX * NrBigTilesY;
+    const int bigTileIdx = bigTileBase + ((tileIDX.y>>log2BigTileToClustTileRatio)*NrBigTilesX) + (tileIDX.x>>log2BigTileToClustTileRatio);     // map the idx to 64x64 tiles
+
+    int nrBigTileLights = g_vBigTileLightList[MAX_NR_BIG_TILE_LIGHTS_PLUS_ONE*bigTileIdx+0];
+    for(int l0=(int) t; l0<(int) nrBigTileLights; l0 += NR_THREADS)
+    {
+        int l = g_vBigTileLightList[MAX_NR_BIG_TILE_LIGHTS_PLUS_ONE*bigTileIdx+l0+1];
+#else
+    for(int l=(int) t; l<(int) g_iNrVisibLights; l += NR_THREADS)
+    {
+#endif
+        const ScreenSpaceBoundsIndices boundsIndices = GenerateScreenSpaceBoundsIndices(l, g_iNrVisibLights, eyeIndex);
+        const float2 vMi = g_vBoundsBuffer[boundsIndices.min].xy;
+        const float2 vMa = g_vBoundsBuffer[boundsIndices.max].xy;
+
+        if( all(vMa>vTileLL) && all(vMi<vTileUR))
+        {
+            unsigned int uInc = 1;
+            unsigned int uIndex;
+            InterlockedAdd(lightOffs, uInc, uIndex);
+            if(uIndex<MAX_NR_COARSE_ENTRIES) coarseList[uIndex] = l;        // add to light list
+        }
+    }
+
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+    GroupMemoryBarrierWithGroupSync();
+#endif
+
+    int iNrCoarseLights = min(lightOffs,MAX_NR_COARSE_ENTRIES);
+
+#ifdef PERFORM_SPHERICAL_INTERSECTION_TESTS
+    iNrCoarseLights = SphericalIntersectionTests( t, iNrCoarseLights, float2(min(viTilLL.xy+uint2(TILE_SIZE_CLUSTERED/2,TILE_SIZE_CLUSTERED/2), uint2(g_screenSize.x-1, g_screenSize.y-1))), eyeIndex );
+#endif
+
+#ifdef ENABLE_DEPTH_TEXTURE_BACKPLANE
+    float fTileFarPlane = linMaDist;
+    float suggestedBase = SuggestLogBase50(fTileFarPlane);
+#else // ENABLE_DEPTH_TEXTURE_BACKPLANE
+    float fTileFarPlane = g_fFarPlane;
+    float suggestedBase = g_fClustBase;
+#endif
+
+
+#ifdef EXACT_EDGE_TESTS
+    iNrCoarseLights = CullByExactEdgeTests(t, iNrCoarseLights, viTilLL.xy, viTilUR.xy, fTileFarPlane, eyeIndex);
+#endif
+
+    // sort lights (gives a more efficient execution in both deferred and tiled forward lighting).
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+    SORTLIST(coarseList, iNrCoarseLights, MAX_NR_COARSE_ENTRIES, t, NR_THREADS);
+#endif
+
+    //////////// cell specific code
+    {
+        // TODO: We should write some encode/decode functions to help put cluster indices into the shared mem buffer,
+        // and extract them later.  The code that reads from clusterIdx is hairy.
+
+        for(int l=(int) t; l<((iNrCoarseLights+1)>>1); l += NR_THREADS)
+        {
+            const int l0 = coarseList[2*l+0], l1 = coarseList[min(2*l+1,iNrCoarseLights-1)];
+            const ScreenSpaceBoundsIndices l0Bounds = GenerateScreenSpaceBoundsIndices(l0, g_iNrVisibLights, eyeIndex);
+            const ScreenSpaceBoundsIndices l1Bounds = GenerateScreenSpaceBoundsIndices(l1, g_iNrVisibLights, eyeIndex);
+
+            const unsigned int clustIdxMi0 = (const unsigned int)min(255, SnapToClusterIdx(g_vBoundsBuffer[l0Bounds.min].w, suggestedBase));
+            const unsigned int clustIdxMa0 = (const unsigned int)min(255, SnapToClusterIdx(g_vBoundsBuffer[l0Bounds.max].w, suggestedBase));
+            const unsigned int clustIdxMi1 = (const unsigned int)min(255, SnapToClusterIdx(g_vBoundsBuffer[l1Bounds.min].w, suggestedBase));
+            const unsigned int clustIdxMa1 = (const unsigned int)min(255, SnapToClusterIdx(g_vBoundsBuffer[l1Bounds.max].w, suggestedBase));
+            clusterIdxs[l] = (clustIdxMa1<<24) | (clustIdxMi1<<16) | (clustIdxMa0<<8) | (clustIdxMi0<<0);
+        }
+    }
+
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+    GroupMemoryBarrierWithGroupSync();
+#endif
+
+    int nrClusters = (1<<g_iLog2NumClusters);
+
+
+
+    //////////////////////////////////////////////////////////
+
+    uint start = 0;
+    int i=(int) t;
+    int iSpaceAvail = 0;
+    int iSum = 0;
+    if(i<nrClusters)
+    {
+        // Each thread checks it's respective cluster against all coarse lights for intersection.
+        // At the end, 'iSum' represents the number of lights that intersect this cluster!
+        for(int l=0; l<iNrCoarseLights; l++)
+        {
+            iSum += (CheckIntersectionBasic(l, i) ? 1 : 0);
+        }
+
+        // We have a limit to the number of lights we will track in a cluster (128). This is how much memory we
+        // want to allocate out of g_LayeredSingleIdxBuffer.
+        iSpaceAvail = min(iSum,MAX_NR_COARSE_ENTRIES);                          // combined storage for both direct lights and reflection
+        InterlockedAdd(g_LayeredSingleIdxBuffer[0], (uint) iSpaceAvail, start);     // alloc list memory
+    }
+
+    // All our cull data are in the same list, but at render time envLights are separated so we need to shift the index
+    // to make it work correctly
+    int shiftIndex[LIGHTCATEGORY_COUNT];
+    ZERO_INITIALIZE_ARRAY(int, shiftIndex, LIGHTCATEGORY_COUNT);
+    shiftIndex[LIGHTCATEGORY_COUNT - 3] = _EnvLightIndexShift;
+    shiftIndex[LIGHTCATEGORY_COUNT - 2] = _DecalIndexShift;
+    shiftIndex[LIGHTCATEGORY_COUNT - 1] = _DensityVolumeIndexShift;
+
+    int categoryListCount[LIGHTCATEGORY_COUNT]; // number of direct lights, reflection probes, decals and density volumes
+    ZERO_INITIALIZE_ARRAY(int, categoryListCount, LIGHTCATEGORY_COUNT);
+
+    uint offs = start;
+    for(int ll=0; ll<iNrCoarseLights; ll+=4)
+    {
+        int p = i>>2;
+        int m = i&3;
+        if(i<24) lightPlanes[6*m+p] = FetchPlane(min(iNrCoarseLights-1,ll+m), p, eyeIndex);
+
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+        GroupMemoryBarrierWithGroupSync();
+#endif
+
+        for(int l=ll; l<min(iNrCoarseLights,(ll+4)); l++)
+        {
+            if(offs<(start+iSpaceAvail) && i<nrClusters && CheckIntersection(l, i, viTilLL.xy, viTilUR.xy, suggestedBase, eyeIndex) )
+            {
+                const int lightVolIndex = GenerateLightCullDataIndex(coarseList[l], g_iNrVisibLights, eyeIndex);
+                uint lightCategory = _LightVolumeData[lightVolIndex].lightCategory;
+                ++categoryListCount[lightCategory];
+                g_vLayeredLightList[offs++] = coarseList[l] - shiftIndex[lightCategory];
+            }
+        }
+
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+        GroupMemoryBarrierWithGroupSync();
+#endif
+    }
+
+    uint localOffs=0;
+
+    offs = GenerateLayeredOffsetBufferIndex(0, tileIDX, i, nrTilesX, nrTilesY, nrClusters, eyeIndex);
+    for(int category=0; category<LIGHTCATEGORY_COUNT; category++)
+    {
+        int numLights = min(categoryListCount[category],31);        // only allow 5 bits
+        if(i<nrClusters)
+        {
+            g_LayeredOffset[offs] = (start+localOffs) | (((uint) numLights)<<27);
+            offs += (nrClusters*nrTilesX*nrTilesY);
+            localOffs += categoryListCount[category];       // use unclamped count for localOffs
+        }
+    }
+
+#ifdef ENABLE_DEPTH_TEXTURE_BACKPLANE
+    const uint logBaseIndex = GenerateLogBaseBufferIndex(tileIDX, nrTilesX, nrTilesY, eyeIndex);
+    if(threadID==0) g_logBaseBuffer[logBaseIndex] = suggestedBase;
+#endif
+}
+
+
+float4 FetchPlane(int l, int p, uint eyeIndex)
+{
+    const int lightBoundIndex = GenerateLightCullDataIndex(coarseList[l], g_iNrVisibLights, eyeIndex);
+    SFiniteLightBound lgtDat = g_data[lightBoundIndex];
+
+    const float3 boxX = lgtDat.boxAxisX.xyz;
+    const float3 boxY = lgtDat.boxAxisY.xyz;
+    const float3 boxZ = -lgtDat.boxAxisZ.xyz;           // flip axis (so it points away from the light direction for a spot-light)
+    const float3 center = lgtDat.center.xyz;
+    const float radius = lgtDat.radius;
+    const float2 scaleXY = lgtDat.scaleXY;
+
+    return GetHullPlaneEq(boxX, boxY, boxZ, center, scaleXY, p);
+}
+
+
+
+
+#ifdef PERFORM_SPHERICAL_INTERSECTION_TESTS
+int SphericalIntersectionTests(uint threadID, int iNrCoarseLights, float2 screenCoordinate, uint eyeIndex)
+{
+#if USE_LEFT_HAND_CAMERA_SPACE
+    float3 V = GetViewPosFromLinDepth( screenCoordinate, 1.0, eyeIndex);
+#else
+    float3 V = GetViewPosFromLinDepth( screenCoordinate, -1.0, eyeIndex);
+#endif
+
+    float onePixDiagDist = GetOnePixDiagWorldDistAtDepthOne(eyeIndex);
+    float halfTileSizeAtZDistOne = (TILE_SIZE_CLUSTERED/2)*onePixDiagDist;      // scale by half a tile
+
+    for(int l=threadID; l<iNrCoarseLights; l+=NR_THREADS)
+    {
+        const int lightBoundIndex = GenerateLightCullDataIndex(coarseList[l], g_iNrVisibLights, eyeIndex);
+        SFiniteLightBound lgtDat = g_data[lightBoundIndex];
+
+        if( !DoesSphereOverlapTile(V, halfTileSizeAtZDistOne, lgtDat.center.xyz, lgtDat.radius, g_isOrthographic!=0) )
+            coarseList[l]=UINT_MAX;
+    }
+
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+        GroupMemoryBarrierWithGroupSync();
+#endif
+
+    // to greedy to double buffer coarseList lds on this so serializing removal of gaps.
+    if(threadID==0)
+    {
+        int offs = 0;
+        for(int l=0; l<iNrCoarseLights; l++)
+        {
+            if(coarseList[l]!=UINT_MAX)
+                coarseList[offs++] = coarseList[l];
+        }
+        lightOffsSph = offs;
+    }
+
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+    GroupMemoryBarrierWithGroupSync();
+#endif
+
+    return lightOffsSph;
+}
+#endif
+
+
+
+
+
+
+
+#ifdef EXACT_EDGE_TESTS
+
+float3 GetTileVertex(uint2 viTilLL, uint2 viTilUR, int i, float fTileFarPlane, uint eyeIndex)
+{
+    float x = (i&1)==0 ? viTilLL.x : viTilUR.x;
+    float y = (i&2)==0 ? viTilLL.y : viTilUR.y;
+    float z = (i&4)==0 ? g_fNearPlane : fTileFarPlane;
+#if !USE_LEFT_HAND_CAMERA_SPACE
+    z = -z;
+#endif
+    return GetViewPosFromLinDepth( float2(x, y), z, eyeIndex);
+}
+
+void GetFrustEdge(out float3 vP0, out float3 vE0, const int e0, uint2 viTilLL, uint2 viTilUR, float fTileFarPlane, uint eyeIndex)
+{
+    int iSection = e0>>2;       // section 0 is side edges, section 1 is near edges and section 2 is far edges
+    int iSwizzle = e0&0x3;
+
+    int i=iSwizzle + (2*(iSection&0x2));    // offset by 4 at section 2
+    vP0 = GetTileVertex(uint2(viTilLL.x, viTilUR.y), uint2(viTilUR.x, viTilLL.y), i, fTileFarPlane, eyeIndex);
+
+#if USE_LEFT_HAND_CAMERA_SPACE
+    float3 edgeSectionZero = g_isOrthographic==0 ? vP0 : float3(0.0,0.0,1.0);
+#else
+    float3 edgeSectionZero = g_isOrthographic==0 ? vP0 : float3(0.0,0.0,-1.0);
+#endif
+
+    vE0 = iSection == 0 ? edgeSectionZero : (((iSwizzle & 0x2) == 0 ? 1.0f : (-1.0f)) * ((int)(iSwizzle & 0x1) == (iSwizzle >> 1) ? float3(1, 0, 0) : float3(0, 1, 0)));
+}
+
+int CullByExactEdgeTests(uint threadID, int iNrCoarseLights, uint2 viTilLL, uint2 viTilUR, float fTileFarPlane, uint eyeIndex)
+{
+    if(threadID==0) lightOffs2 = 0;
+
+    const bool bOnlyNeedFrustumSideEdges = true;
+    const int nrFrustEdges = bOnlyNeedFrustumSideEdges ? 4 : 8; // max 8 since we never need to test 4 far edges of frustum since they are identical vectors to near edges and plane is placed at vP0 on light hull.
+
+    const int totNrEdgePairs = 12*nrFrustEdges;
+    for(int l=0; l<iNrCoarseLights; l++)
+    {
+        if(threadID==0) ldsIsLightInvisible=0;
+
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+        GroupMemoryBarrierWithGroupSync();
+#endif
+        const int lightCullIndex = GenerateLightCullDataIndex(coarseList[l], g_iNrVisibLights, eyeIndex);
+        UNITY_BRANCH if (_LightVolumeData[lightCullIndex].lightVolume != LIGHTVOLUMETYPE_SPHERE)        // don't bother doing edge tests for sphere lights since these have camera aligned bboxes.
+        {
+            SFiniteLightBound lgtDat = g_data[lightCullIndex];
+
+            const float3 boxX = lgtDat.boxAxisX.xyz;
+            const float3 boxY = lgtDat.boxAxisY.xyz;
+            const float3 boxZ = -lgtDat.boxAxisZ.xyz;           // flip axis (so it points away from the light direction for a spot-light)
+            const float3 center = lgtDat.center.xyz;
+            const float2 scaleXY = lgtDat.scaleXY;
+
+            for(int i=threadID; i<totNrEdgePairs; i+=NR_THREADS)
+            {
+                int e0 = (int) (((uint)i)/((uint) nrFrustEdges)); // should become a shift right
+                int e1 = i - e0*nrFrustEdges;
+
+                int idx_cur=0, idx_twin=0;
+                float3 vP0, vE0;
+                GetHullEdge(idx_cur, idx_twin, vP0, vE0, e0, boxX, boxY, boxZ, center, scaleXY);
+
+
+                float3 vP1, vE1;
+                GetFrustEdge(vP1, vE1, e1, viTilLL, viTilUR, fTileFarPlane, eyeIndex);
+
+                // potential separation plane
+                float3 vN = cross(vE0, vE1);
+
+                int positive=0, negative=0;
+                for(int k=1; k<8; k++)      // only need to test 7 verts (technically just 6).
+                {
+                    int j = (idx_cur+k)&0x7;
+                    float3 vPh = GetHullVertex(boxX, boxY, boxZ, center, scaleXY, j);
+                    float fSignDist = idx_twin==j ? 0.0 : dot(vN, vPh-vP0);
+                    if(fSignDist>0) ++positive; else if(fSignDist<0) ++negative;
+                }
+                int resh = (positive>0 && negative>0) ? 0 : (positive>0 ? 1 : (negative>0 ? (-1) : 0));
+
+                positive=0; negative=0;
+                for(int j=0; j<8; j++)
+                {
+                    float3 vPf = GetTileVertex(viTilLL, viTilUR, j, fTileFarPlane, eyeIndex);
+                    float fSignDist = dot(vN, vPf-vP0);
+                    if(fSignDist>0) ++positive; else if(fSignDist<0) ++negative;
+                }
+                int resf = (positive>0 && negative>0) ? 0 : (positive>0 ? 1 : (negative>0 ? (-1) : 0));
+
+                bool bFoundSepPlane = (resh*resf)<0;
+
+                if(bFoundSepPlane) InterlockedOr(ldsIsLightInvisible, 1);
+            }
+        }
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+        GroupMemoryBarrierWithGroupSync();
+#endif
+        if(threadID==0 && ldsIsLightInvisible==0)
+        {
+            coarseList[lightOffs2++] = coarseList[l];
+        }
+    }
+#if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
+        GroupMemoryBarrierWithGroupSync();
+#endif
+    return lightOffs2;
+}
+#endif
+
+
+
+[numthreads(1, 1, 1)]
+void ClearAtomic(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
+{
+    g_LayeredSingleIdxBuffer[0]=0;
+}

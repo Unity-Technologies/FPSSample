@@ -1,0 +1,20 @@
+#pragma kernel ClearDispatchIndirect
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+RWBuffer<uint> g_DispatchIndirectBuffer : register( u0 );   // Indirect arguments have to be in a _buffer_, not a structured buffer
+
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.cs.hlsl"
+
+[numthreads(64, 1, 1)]
+void ClearDispatchIndirect(uint dispatchThreadId : SV_DispatchThreadID)
+{
+    // On iOS, we get a GPU hang/reset based upon the execution of the ClearDispatchIndirect kernel.
+    // The buffer is created using the 'NUM_FEATURE_VARIANTS' constant but we're dispatching a threadgroup of 64 threads, so we are presumably going out of bounds (Metal GPU errors are not terribly descriptive, but this is a common cause).
+    // In DirectX out-of-bounds reads are always zero and out-of-bounds writes are are a no op. 
+    if (dispatchThreadId >= NUM_FEATURE_VARIANTS)
+        return;
+
+    g_DispatchIndirectBuffer[dispatchThreadId * 3 + 0] = 0; // ThreadGroupCountX
+    g_DispatchIndirectBuffer[dispatchThreadId * 3 + 1] = 1; // ThreadGroupCountY
+    g_DispatchIndirectBuffer[dispatchThreadId * 3 + 2] = 1; // ThreadGroupCountZ
+}

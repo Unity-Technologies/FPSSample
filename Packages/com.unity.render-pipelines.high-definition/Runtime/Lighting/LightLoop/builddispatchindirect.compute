@@ -1,0 +1,38 @@
+#pragma kernel BuildDispatchIndirect
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.cs.hlsl"
+
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+#define UNITY_MATERIAL_LIT // Need to be define before including Material.hlsl
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl" // This includes Material.hlsl
+
+RWBuffer<uint> g_DispatchIndirectBuffer : register( u0 );   // Indirect arguments have to be in a _buffer_, not a structured buffer
+RWStructuredBuffer<uint> g_TileList;
+StructuredBuffer<uint> g_TileFeatureFlags;
+
+uniform uint g_NumTiles;
+uniform uint g_NumTilesX;
+
+[numthreads(64, 1, 1)]
+void BuildDispatchIndirect(uint dispatchThreadId : SV_DispatchThreadID)
+{
+    if (dispatchThreadId >= g_NumTiles)
+        return;
+
+    uint featureFlags = g_TileFeatureFlags[dispatchThreadId];
+
+    uint tileY = (dispatchThreadId + 0.5f) / (float)g_NumTilesX;    // Integer division is extremely expensive, so we better avoid it
+    uint tileX = dispatchThreadId - tileY * g_NumTilesX;
+
+    // Check if there is no material (means it is a sky/background pixel).
+    // Note that we can have no lights, yet we still need to render geometry with precomputed illumination.
+    if ((featureFlags & MATERIAL_FEATURE_MASK_FLAGS) != 0)
+    {
+        uint variant = FeatureFlagsToTileVariant(featureFlags);
+        uint offset;
+        InterlockedAdd(g_DispatchIndirectBuffer[variant * 3 + 0], 1, offset);
+        g_TileList[variant * g_NumTiles + offset] = (tileY << 16) | tileX;
+    }
+}

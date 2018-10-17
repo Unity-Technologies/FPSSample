@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: Robot_Weapon_A_Default_Mask
+  m_Mask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+  m_Elements:
+  - m_Path: 
+    m_Weight: 1
+  - m_Path: Geometry
+    m_Weight: 0
+  - m_Path: Geometry/Robot_Weapon_A_LOD0
+    m_Weight: 0
+  - m_Path: Skeleton
+    m_Weight: 0
+  - m_Path: Skeleton/Main
+    m_Weight: 0
+  - m_Path: Skeleton/Main/Barrel_A
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Barrel_A/Barrel_A_Muzzle
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Barrel_B
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Barrel_B/Barrel_B_Muzzle
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Barrel_C
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Barrel_C/Barrel_C_Muzzle
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Key
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Launcher_Drum
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Launcher_Muzzle
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Launcher_Release
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Oil_Reader
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Side_Handle
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Top_Handle
+    m_Weight: 1

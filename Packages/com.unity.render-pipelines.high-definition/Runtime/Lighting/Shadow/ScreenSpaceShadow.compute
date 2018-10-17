@@ -1,0 +1,195 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel DeferredContactShadow                DEFERRED_CONTACT_SHADOW_GENERIC=DeferredContactShadow
+#pragma kernel DeferredContactShadowMSAA            DEFERRED_CONTACT_SHADOW_GENERIC=DeferredContactShadowMSAA         ENABLE_MSAA
+
+#ifdef SHADER_API_PSSL
+#   pragma argument( scheduler=minpressure ) // instruct the shader compiler to prefer minimizing vgpr usage
+#endif
+
+#define UNITY_SINGLE_PASS_STEREO 1
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/NormalBuffer.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+//#pragma enable_d3d11_debug_symbols
+
+#ifdef ENABLE_MSAA
+    Texture2D<float4> _CameraDepthValues;
+#endif
+
+RWTexture2D<float> _DeferredShadowTextureUAV;
+
+CBUFFER_START(DeferredShadowParameters)
+float4  _DirectionalLightDirection;
+float4  _PunctualLightPosition;
+float4  _ContactShadowParamsParameters;
+float4  _ContactShadowParamsParameters2;
+int     _SampleCount;
+CBUFFER_END
+
+#define _ContactShadowLength                _ContactShadowParamsParameters.x
+#define _ContactShadowDistanceScaleFactor   _ContactShadowParamsParameters.y
+#define _ContactShadowFadeEnd               _ContactShadowParamsParameters.z
+#define _ContactShadowFadeOneOverRange      _ContactShadowParamsParameters.w
+#define _ContactShadowOpacity               _ContactShadowParamsParameters2.x
+#define _EnableTimeDependentNoise           _ContactShadowParamsParameters2.y
+#define _RenderTargetHeight                 _ContactShadowParamsParameters2.z
+
+#define DEFERRED_SHADOW_TILE_SIZE 16
+
+
+//From  Next Generation Post Processing in Call of Duty: Advanced Warfare [Jimenez 2014]
+// http://advances.realtimerendering.com/s2014/index.html
+float InterleavedGradientNoise(float2 uv, uint frameCount)
+{
+    const float3 magic = float3(0.06711056f, 0.00583715f, 52.9829189f);
+    float2 frameMagicScale = _EnableTimeDependentNoise * float2(2.083f, 4.867f);
+    uv += frameCount * frameMagicScale;
+    return frac(magic.z * frac(dot(uv, magic.xy)));
+}
+
+float SampleDepth(float2 UV, bool HalfRes)
+{
+    float2 pixelCoord = UV.xy * _ScreenSize.xy;
+
+    if (HalfRes)
+    {
+        pixelCoord.x *= 0.5f;
+        pixelCoord.y = pixelCoord.y * 0.5f + _RenderTargetHeight;
+    }
+    
+    return LOAD_TEXTURE2D(_CameraDepthTexture, pixelCoord).x;
+}
+
+
+float ScreenSpaceShadowRayCast(float3 positionWS, float3 rayDirWS, float rayLength, uint2 positionSS)
+{
+
+    // Dither pattern is shifted by 0.5 because we want to jitter the ray starting position backward and forward (so we need values between -0.5 and 0.5)
+    float ditherBias = 0.5f;
+    // With a mod of 8 and taa we'd get no visible flickering, but the stitching pattern is more noticeable. With %16 we do get a bit of visible flickering, but a smoother gradient.
+    // If TAA is off, the noise pattern does not vary over time. 
+    float dither = InterleavedGradientNoise(positionSS, _FrameCount % 16u) - ditherBias;
+
+    float3 rayStartWS = positionWS;
+    float3 rayEndWS = rayStartWS + rayDirWS * rayLength;
+
+    float4 rayStartCS = TransformWorldToHClip(rayStartWS);
+    float4 rayEndCS = TransformWorldToHClip(rayEndWS);
+
+    // Here we compute a ray perpendicular to view space. This is the ray we use to compute the threshold for rejecting samples.
+    // This is done this way so that the threshold is less dependent of ray slope.
+    float4 rayOrthoViewSpace = rayStartCS + GetViewToHClipMatrix()[2];
+    rayOrthoViewSpace = rayOrthoViewSpace / rayOrthoViewSpace.w;
+
+    rayStartCS.xyz = rayStartCS.xyz / rayStartCS.w;
+    rayEndCS.xyz = rayEndCS.xyz / rayEndCS.w;
+
+    // Pixel to light ray in clip space.
+    float3 rayDirCS = rayEndCS.xyz - rayStartCS.xyz;
+
+    float step = 1.0f / _SampleCount;
+    float compareThreshold = abs(rayOrthoViewSpace.z - rayStartCS.z) * max(0.05f, step);
+
+    float occluded = 0.0f;
+
+    // From this point on, all the marching will be done in UV space + Z 
+    float2 startUV = rayStartCS.xy * 0.5f + 0.5f;
+    startUV.y = 1.0f - startUV.y;
+    float3 rayStart = float3(startUV, rayStartCS.z);
+    float3 rayDir = float3(rayDirCS.x * 0.5f, -rayDirCS.y * 0.5f, rayDirCS.z);
+
+    float t = step * dither + step;
+
+    bool tracingHalfRes = true;
+    for (int i = 0; i < _SampleCount; i++)
+    {
+        float3 sampleAlongRay = rayStart + t * rayDir;
+
+
+        if (any(sampleAlongRay.xy < 0) || any(sampleAlongRay.xy > 1))
+        {
+            break;
+        }
+
+#ifdef ENABLE_MSAA
+        // Depth buffer depth for this sample
+        float sampleDepth = SAMPLE_TEXTURE2D_LOD(_CameraDepthValues, s_point_clamp_sampler, sampleAlongRay.xy, 0.0f).y;
+#else
+        // Depth buffer depth for this sample
+        float sampleDepth = SampleDepth(saturate(sampleAlongRay.xy), tracingHalfRes);
+#endif
+
+        float depthDiff = sampleDepth - sampleAlongRay.z;
+
+        if (depthDiff > 0.0f && depthDiff < compareThreshold)
+        {
+            if (tracingHalfRes)
+            {
+                // Move permanentely to full res. There is a good chance we've hit something, so next full res sample will find the intersection.
+                // If not, then allowing each thread to go back and forth between half and full was not beneficial to perf.
+                tracingHalfRes = false;
+                i--;
+                continue;
+            }
+            else
+            {
+                occluded = 1.0f;
+                break;
+            }
+        }
+
+        t += step;
+    }
+
+    // Off screen masking
+    // We remove the occlusion if the ray is occluded and only if direction steps out of the screen
+    float2 vignette = max(6.0f * abs(rayStartCS.xy + rayDirCS.xy * t) - 5.0f, 0.0f);
+    occluded *= saturate(1.0f - dot(vignette, vignette));
+
+    return occluded;
+}
+
+float ComputeContactShadow(PositionInputs posInput, float3 direction)
+{
+    float contactShadow = 1.0;
+    
+    if (_ContactShadowLength > 0.0f)
+    {
+        //Here LightDirection is not the light direction but the light position
+        float4 result = ScreenSpaceShadowRayCast(posInput.positionWS, direction, _ContactShadowLength * max(0.5, posInput.linearDepth * _ContactShadowDistanceScaleFactor), posInput.positionSS);
+        contactShadow = 1.0 - result.x * saturate((_ContactShadowFadeEnd - posInput.linearDepth) * _ContactShadowFadeOneOverRange);
+    }
+
+    return lerp(1.0, contactShadow, _ContactShadowOpacity);
+}
+
+[numthreads(DEFERRED_SHADOW_TILE_SIZE, DEFERRED_SHADOW_TILE_SIZE, 1)]
+void DEFERRED_CONTACT_SHADOW_GENERIC(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
+{
+    uint2 pixelCoord = groupId * DEFERRED_SHADOW_TILE_SIZE + groupThreadId;
+    pixelCoord.x = pixelCoord.x + (unity_StereoEyeIndex * _ScreenSize.x);
+    uint2 tileCoord = groupId;
+
+#ifdef ENABLE_MSAA
+    float depth = LOAD_TEXTURE2D(_CameraDepthValues, pixelCoord.xy).z;
+#else
+    float depth = LOAD_TEXTURE2D(_CameraDepthTexture, pixelCoord.xy).x;
+#endif
+
+    if (depth == UNITY_RAW_FAR_CLIP_VALUE)
+        return;
+
+    PositionInputs posInput = GetPositionInput_Stereo(pixelCoord.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, tileCoord, unity_StereoEyeIndex);
+
+    //Direction got from either the directional light direction or the difference of punctual light position and the pixel position
+    float3 direction = normalize(_DirectionalLightDirection.xyz * _DirectionalLightDirection.w + (_PunctualLightPosition.xyz - posInput.positionWS) * _PunctualLightPosition.w);
+
+    float contactShadow = ComputeContactShadow(posInput, direction);
+
+    _DeferredShadowTextureUAV[pixelCoord] = 1.0f - contactShadow;
+}

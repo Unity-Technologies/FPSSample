@@ -1,0 +1,11 @@
+Shader "${ShaderName}" 
+{
+	Properties 
+	{
+${ShaderPropertiesHeader}
+	}	
+	
+${SubShader}
+
+    FallBack "Hidden/InternalErrorShader"
+}

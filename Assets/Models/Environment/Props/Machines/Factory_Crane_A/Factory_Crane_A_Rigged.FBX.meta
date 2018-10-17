@@ -1,0 +1,469 @@
+fileFormatVersion: 2
+guid: d3c79f188ff71124b8ef2f72d5571756
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: Bone001
+    100002: Bone002
+    100004: Bone003
+    100006: Bone004
+    100008: Bone005
+    100010: Bone006
+    100012: Bone007
+    100014: Bone008
+    100016: Bone009
+    100018: Bone010
+    100020: Bone011
+    100022: Bone014
+    100024: Bone015
+    100026: //RootNode
+    100028: Geom_Factory_Crane_A_LOD00
+    100030: Geom_Factory_Crane_A_LOD01
+    100032: Geom_Factory_Crane_A_LOD02
+    100034: Geom_Factory_Crane_A_LOD03
+    100036: Geometry
+    100038: Roots_Main
+    100040: Skeleton
+    100042: Geom_Diorama_Space_Pod_A_Glass_LOD00
+    100044: Geometry 1
+    100046: Skeleton 1
+    100048: Space_Pod_Bone_001
+    100050: Geometry_Crane
+    100052: Geometry_Space_Pod
+    100054: Skeleton_Crane
+    100056: Skeleton_Space_Pod
+    400000: Bone001
+    400002: Bone002
+    400004: Bone003
+    400006: Bone004
+    400008: Bone005
+    400010: Bone006
+    400012: Bone007
+    400014: Bone008
+    400016: Bone009
+    400018: Bone010
+    400020: Bone011
+    400022: Bone014
+    400024: Bone015
+    400026: //RootNode
+    400028: Geom_Factory_Crane_A_LOD00
+    400030: Geom_Factory_Crane_A_LOD01
+    400032: Geom_Factory_Crane_A_LOD02
+    400034: Geom_Factory_Crane_A_LOD03
+    400036: Geometry
+    400038: Roots_Main
+    400040: Skeleton
+    400042: Geom_Diorama_Space_Pod_A_Glass_LOD00
+    400044: Geometry 1
+    400046: Skeleton 1
+    400048: Space_Pod_Bone_001
+    400050: Geometry_Crane
+    400052: Geometry_Space_Pod
+    400054: Skeleton_Crane
+    400056: Skeleton_Space_Pod
+    2300000: Geom_Factory_Crane_A_LOD00
+    2300002: Geom_Factory_Crane_A_LOD01
+    2300004: Geom_Factory_Crane_A_LOD02
+    2300006: Geom_Factory_Crane_A_LOD03
+    3300000: Geom_Factory_Crane_A_LOD00
+    3300002: Geom_Factory_Crane_A_LOD01
+    3300004: Geom_Factory_Crane_A_LOD02
+    3300006: Geom_Factory_Crane_A_LOD03
+    4300000: Geom_Factory_Crane_A_LOD00
+    4300002: Geom_Factory_Crane_A_LOD01
+    4300004: Geom_Factory_Crane_A_LOD02
+    4300006: Geom_Factory_Crane_A_LOD03
+    4300008: Geom_Diorama_Space_Pod_A_Glass_LOD00
+    7400000: DropEgg
+    7400002: EggLoop
+    7400004: FetchEgg
+    7400006: Default_Loop
+    7400008: Initialize_CaptureZone
+    9500000: //RootNode
+    11100000: //RootNode
+    11400000: //RootNode
+    13700000: Geom_Factory_Crane_A_LOD00
+    13700002: Geom_Factory_Crane_A_LOD01
+    13700004: Geom_Factory_Crane_A_LOD02
+    13700006: Geom_Factory_Crane_A_LOD03
+    13700008: Geom_Diorama_Space_Pod_A_Glass_LOD00
+    20500000: //RootNode
+    2186277476908879412: ImportLogs
+  externalObjects: {}
+  materials:
+    importMaterials: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 0
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.01
+    animationPositionError: 0.01
+    animationScaleError: 0.1
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: EggLoop
+      takeName: Take 001
+      firstFrame: 282
+      lastFrame: 382
+      wrapMode: 2
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 1
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 0
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
+      keepOriginalOrientation: 1
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 1
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Geometry_Crane
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD00
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD01
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD02
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD03
+        weight: 1
+      - path: Skeleton
+        weight: 1
+      - path: Skeleton/Bone001
+        weight: 1
+      - path: Skeleton/Bone001/Bone002
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone009
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone010
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone010/Bone011
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone014
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone014/Bone015
+        weight: 1
+      - path: Skeleton_Space_Pod
+        weight: 1
+      - path: Skeleton_Space_Pod/Space_Pod_Bone_001
+        weight: 1
+      maskType: 0
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: FetchEgg
+      takeName: Take 001
+      firstFrame: 382
+      lastFrame: 717
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
+      keepOriginalOrientation: 1
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 1
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Geometry_Crane
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD00
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD01
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD02
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD03
+        weight: 1
+      - path: Skeleton
+        weight: 1
+      - path: Skeleton/Bone001
+        weight: 1
+      - path: Skeleton/Bone001/Bone002
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone009
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone010
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone010/Bone011
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone014
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone014/Bone015
+        weight: 1
+      - path: Skeleton_Space_Pod
+        weight: 1
+      - path: Skeleton_Space_Pod/Space_Pod_Bone_001
+        weight: 1
+      maskType: 0
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Default_Loop
+      takeName: Take 001
+      firstFrame: -50
+      lastFrame: 50
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 0
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
+      keepOriginalOrientation: 1
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 1
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Geometry_Crane
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD00
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD01
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD02
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD03
+        weight: 1
+      - path: Skeleton
+        weight: 1
+      - path: Skeleton/Bone001
+        weight: 1
+      - path: Skeleton/Bone001/Bone002
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone009
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone010
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone010/Bone011
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone014
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone014/Bone015
+        weight: 1
+      - path: Skeleton_Space_Pod
+        weight: 1
+      - path: Skeleton_Space_Pod/Space_Pod_Bone_001
+        weight: 1
+      maskType: 0
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Initialize_CaptureZone
+      takeName: Take 001
+      firstFrame: 50
+      lastFrame: 282
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
+      keepOriginalOrientation: 1
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 1
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Geometry_Crane
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD00
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD01
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD02
+        weight: 1
+      - path: Geometry_Crane/Geom_Factory_Crane_A_LOD03
+        weight: 1
+      - path: Skeleton
+        weight: 1
+      - path: Skeleton/Bone001
+        weight: 1
+      - path: Skeleton/Bone001/Bone002
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone009
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone010
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone010/Bone011
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone014
+        weight: 1
+      - path: Skeleton/Bone001/Bone002/Bone003/Bone004/Bone005/Bone006/Bone007/Bone008/Bone014/Bone015
+        weight: 1
+      - path: Skeleton_Space_Pod
+        weight: 1
+      - path: Skeleton_Space_Pod/Space_Pod_Bone_001
+        weight: 1
+      maskType: 0
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    isReadable: 1
+  meshes:
+    lODScreenPercentages:
+    - 0.25
+    - 0.125
+    - 0.0625
+    - 0.01
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 0.01
+    hasPreviousCalculatedGlobalScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: Skeleton
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 2
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

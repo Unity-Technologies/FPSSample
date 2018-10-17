@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: Terraformer_Weapon_A_Default_Mask
+  m_Mask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+  m_Elements:
+  - m_Path: 
+    m_Weight: 1
+  - m_Path: Geometry
+    m_Weight: 0
+  - m_Path: Geometry/Geom_Terraformer_Weapon_A_LOD0
+    m_Weight: 0
+  - m_Path: Skeleton
+    m_Weight: 0
+  - m_Path: Skeleton/Main
+    m_Weight: 0
+  - m_Path: Skeleton/Main/Bullit_Spawn
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Button
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Button/Button_End
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Cooler
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Front_Hinge
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Grenade_Eject
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Grenade_Fuel
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Grenade_Fuel/Grenade_Fuel_Base
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Grenade_Fuel/Grenade_Fuel_Base/Grenade_Fuel_Rotate
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Grenade_Fuel/Grenade_Fuel_Base/Grenade_Fuel_Rotate/Grenade_Fuel_Shaper
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Grenade_Spawn
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Left_Back_Vent
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Left_Front_Vent
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Left_Mid_Vent
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Magazine
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Magazine/Magazine_End
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Right_Back_Vent
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Right_Front_Vent
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Right_Mid_Vent
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Slide
+    m_Weight: 1
+  - m_Path: Skeleton/Main/Trigger
+    m_Weight: 1

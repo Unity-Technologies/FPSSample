@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &5935696563978800594
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 3.464
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -155.472
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 15.92
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.00000028088027
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -179.99998
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_Name
+      value: Fitting_Scifi_B
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LODs.Array.data[0].screenRelativeHeight
+      value: 0.04086136
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LODs.Array.data[1].screenRelativeHeight
+      value: 0.020459056
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 5fdfc311202dfed4eaef03fdfa5cab16, type: 2}
+    - target: {fileID: 2300002, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300002, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 5fdfc311202dfed4eaef03fdfa5cab16, type: 2}
+    - target: {fileID: 20500000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_FadeMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 20500000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}
+      propertyPath: m_AnimateCrossFading
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 78d91b051f454bf4bba63ca481a330d5, type: 3}

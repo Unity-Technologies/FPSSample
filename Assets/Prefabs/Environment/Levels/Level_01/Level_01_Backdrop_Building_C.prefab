@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &5392974078410653088
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_Name
+      value: Level_01_Backdrop_Building_C_VARIANT
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300000, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300000, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f8db208183d06d45821386a566130ee, type: 2}
+    - target: {fileID: 2300000, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_Materials.Array.data[1]
+      value: 
+      objectReference: {fileID: 2100000, guid: 44f3c39a6859a784798b03a9ad6f3149, type: 2}
+    - target: {fileID: 2300000, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_Materials.Array.data[2]
+      value: 
+      objectReference: {fileID: 2100000, guid: ab9bbf1b31fd55a45ab0b87bd5e078b4, type: 2}
+    - target: {fileID: 2300000, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_Materials.Array.data[3]
+      value: 
+      objectReference: {fileID: 2100000, guid: 970c31614f6b97d4aa366fac6e11d4b1, type: 2}
+    - target: {fileID: 2300000, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_Materials.Array.data[4]
+      value: 
+      objectReference: {fileID: 2100000, guid: 23892475843119348a3388b681bfbe83, type: 2}
+    - target: {fileID: 2300000, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_Materials.Array.data[5]
+      value: 
+      objectReference: {fileID: 2100000, guid: adeae005dd51ef84385e89acf7712449, type: 2}
+    - target: {fileID: 100000, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 80
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fc0029c7856159f439e51c316d5f53cb, type: 3}

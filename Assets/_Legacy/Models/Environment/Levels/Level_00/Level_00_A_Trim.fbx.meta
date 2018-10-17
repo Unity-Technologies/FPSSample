@@ -1,0 +1,238 @@
+fileFormatVersion: 2
+guid: f8dfb37ab75409845894161ee7afdb02
+ModelImporter:
+  serializedVersion: 22
+  fileIDToRecycleName:
+    100000: Collision_Level_00_A
+    100002: Collision_Level_00_B
+    100004: Collision_Level_00_C
+    100006: Collision_SpawnRoom_A
+    100008: Geom_Level_00_A_Bridge_LOD00
+    100010: Geom_Level_00_A_Edges_LOD00
+    100012: Geom_Level_00_A_LOD00
+    100014: Geom_Level_00_A_Platform_LOD00
+    100016: Geom_Level_00_A_Seperates_LOD00
+    100018: Geom_Level_00_A_Trims_LOD00
+    100020: Geom_Level_00_B_Edges_B_LOD00
+    100022: Geom_Level_00_B_Edges_LOD00
+    100024: Geom_Level_00_B_LOD00
+    100026: Geom_Level_00_B_Trims_LOD00
+    100028: Geom_Level_00_C_Edges_LOD00
+    100030: Geom_Level_00_C_LOD00
+    100032: Geom_Level_00_C_Trims_LOD00
+    100034: Geom_Level_00_Shell_A_LOD00
+    100036: Geom_Level_00_Shell_B_LOD00
+    100038: Geom_Level_00_Shell_C_LOD00
+    100040: Geom_Level_00_SpawnRoom_Trims_LOD00
+    100042: Geom_SpawnRoom_A_Edges_LOD00
+    100044: Geom_SpawnRoom_A_LOD00
+    100046: Grid_A
+    100048: Grid_B
+    100050: Grid_C
+    100052: Grid_D
+    100054: Level_00_A
+    100056: Level_00_A_Trim
+    100058: //RootNode
+    100060: Level_00_B
+    100062: Level_00_C
+    100064: Level_00_Shell_A
+    100066: Level_00_Shell_B
+    100068: Level_00_Shell_C
+    100070: Level_00_SpawnRoom_A
+    100072: REF
+    100074: REF 1
+    400000: Collision_Level_00_A
+    400002: Collision_Level_00_B
+    400004: Collision_Level_00_C
+    400006: Collision_SpawnRoom_A
+    400008: Geom_Level_00_A_Bridge_LOD00
+    400010: Geom_Level_00_A_Edges_LOD00
+    400012: Geom_Level_00_A_LOD00
+    400014: Geom_Level_00_A_Platform_LOD00
+    400016: Geom_Level_00_A_Seperates_LOD00
+    400018: Geom_Level_00_A_Trims_LOD00
+    400020: Geom_Level_00_B_Edges_B_LOD00
+    400022: Geom_Level_00_B_Edges_LOD00
+    400024: Geom_Level_00_B_LOD00
+    400026: Geom_Level_00_B_Trims_LOD00
+    400028: Geom_Level_00_C_Edges_LOD00
+    400030: Geom_Level_00_C_LOD00
+    400032: Geom_Level_00_C_Trims_LOD00
+    400034: Geom_Level_00_Shell_A_LOD00
+    400036: Geom_Level_00_Shell_B_LOD00
+    400038: Geom_Level_00_Shell_C_LOD00
+    400040: Geom_Level_00_SpawnRoom_Trims_LOD00
+    400042: Geom_SpawnRoom_A_Edges_LOD00
+    400044: Geom_SpawnRoom_A_LOD00
+    400046: Grid_A
+    400048: Grid_B
+    400050: Grid_C
+    400052: Grid_D
+    400054: Level_00_A
+    400056: Level_00_A_Trim
+    400058: //RootNode
+    400060: Level_00_B
+    400062: Level_00_C
+    400064: Level_00_Shell_A
+    400066: Level_00_Shell_B
+    400068: Level_00_Shell_C
+    400070: Level_00_SpawnRoom_A
+    400072: REF
+    400074: REF 1
+    2300000: Geom_Level_00_A_Bridge_LOD00
+    2300002: Geom_Level_00_A_Edges_LOD00
+    2300004: Geom_Level_00_A_LOD00
+    2300006: Geom_Level_00_A_Platform_LOD00
+    2300008: Geom_Level_00_A_Seperates_LOD00
+    2300010: Geom_Level_00_A_Trims_LOD00
+    2300012: Geom_Level_00_B_Edges_B_LOD00
+    2300014: Geom_Level_00_B_Edges_LOD00
+    2300016: Geom_Level_00_B_LOD00
+    2300018: Geom_Level_00_B_Trims_LOD00
+    2300020: Geom_Level_00_C_Edges_LOD00
+    2300022: Geom_Level_00_C_LOD00
+    2300024: Geom_Level_00_C_Trims_LOD00
+    2300026: Geom_Level_00_Shell_A_LOD00
+    2300028: Geom_Level_00_Shell_B_LOD00
+    2300030: Geom_Level_00_Shell_C_LOD00
+    2300032: Geom_Level_00_SpawnRoom_Trims_LOD00
+    2300034: Geom_SpawnRoom_A_Edges_LOD00
+    2300036: Geom_SpawnRoom_A_LOD00
+    2300038: REF
+    2300040: REF 1
+    3300000: Collision_Level_00_A
+    3300002: Collision_Level_00_B
+    3300004: Collision_Level_00_C
+    3300006: Collision_SpawnRoom_A
+    3300008: Geom_Level_00_A_Bridge_LOD00
+    3300010: Geom_Level_00_A_Edges_LOD00
+    3300012: Geom_Level_00_A_LOD00
+    3300014: Geom_Level_00_A_Platform_LOD00
+    3300016: Geom_Level_00_A_Seperates_LOD00
+    3300018: Geom_Level_00_A_Trims_LOD00
+    3300020: Geom_Level_00_B_Edges_B_LOD00
+    3300022: Geom_Level_00_B_Edges_LOD00
+    3300024: Geom_Level_00_B_LOD00
+    3300026: Geom_Level_00_B_Trims_LOD00
+    3300028: Geom_Level_00_C_Edges_LOD00
+    3300030: Geom_Level_00_C_LOD00
+    3300032: Geom_Level_00_C_Trims_LOD00
+    3300034: Geom_Level_00_Shell_A_LOD00
+    3300036: Geom_Level_00_Shell_B_LOD00
+    3300038: Geom_Level_00_Shell_C_LOD00
+    3300040: Geom_Level_00_SpawnRoom_Trims_LOD00
+    3300042: Geom_SpawnRoom_A_Edges_LOD00
+    3300044: Geom_SpawnRoom_A_LOD00
+    3300046: REF
+    3300048: REF 1
+    4300000: Geom_Level_00_Shell_A_LOD00
+    4300002: Geom_Level_00_Shell_B_LOD00
+    4300004: Geom_Level_00_Shell_C_LOD00
+    4300006: Geom_Level_00_B_LOD00
+    4300008: Collision_Level_00_B
+    4300010: Geom_Level_00_B_Trims_LOD00
+    4300012: Geom_Level_00_B_Edges_LOD00
+    4300014: Geom_Level_00_B_Edges_B_LOD00
+    4300016: Geom_SpawnRoom_A_LOD00
+    4300018: Collision_SpawnRoom_A
+    4300020: Geom_SpawnRoom_A_Edges_LOD00
+    4300022: Geom_Level_00_SpawnRoom_Trims_LOD00
+    4300024: REF
+    4300026: REF
+    4300028: Geom_Level_00_C_LOD00
+    4300030: Collision_Level_00_C
+    4300032: Geom_Level_00_C_Edges_LOD00
+    4300034: Geom_Level_00_C_Trims_LOD00
+    4300036: Geom_Level_00_A_LOD00
+    4300038: Geom_Level_00_A_Edges_LOD00
+    4300040: Geom_Level_00_A_Bridge_LOD00
+    4300042: Collision_Level_00_A
+    4300044: Geom_Level_00_A_Platform_LOD00
+    4300046: Geom_Level_00_A_Seperates_LOD00
+    4300048: Geom_Level_00_A_Trims_LOD00
+    6400000: Collision_Level_00_A
+    6400002: Collision_Level_00_B
+    6400004: Collision_Level_00_C
+    6400006: Collision_SpawnRoom_A
+    9500000: //RootNode
+  externalObjects: {}
+  materials:
+    importMaterials: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 0
+    importBlendShapes: 1
+    importCameras: 0
+    importLights: 0
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15
+    secondaryUVHardAngle: 80
+    secondaryUVPackMargin: 32
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 0
+  importAnimation: 0
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

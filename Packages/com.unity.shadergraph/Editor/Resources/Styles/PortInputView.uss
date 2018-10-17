@@ -1,0 +1,119 @@
+PortInputView {
+    width: 212;
+    height: 22;
+    padding-top: 1;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+PortInputView > #container {
+    background-color: rgba(63, 63, 63, 0.8);
+    flex-direction: row;
+    align-items: center;
+    padding-left: 8;
+    margin-right: 12;
+    border-left-width: 1;
+    border-top-width: 1;
+    border-right-width: 1;
+    border-bottom-width: 1;
+    border-color: rgba(25, 25, 25, 0.8);
+    border-radius: 2;
+}
+
+PortInputView > #container > #slot {
+    width: 8;
+    height: 8;
+    background-color: #2B2B2B;
+    border-color: #232323;
+    border-top-width: 1;
+    border-bottom-width: 1;
+    border-left-width: 1;
+    border-right-width: 1;
+    border-radius: 4;
+    margin-left: 6;
+    margin-right: 6;
+    align-items: center;
+    justify-content: center;
+}
+
+PortInputView > #edge {
+    position-type: absolute;
+    position-right: 0;
+    position-top: 10.5;
+    height: 2;
+    width: 20;
+    background-color: #ff0000;
+}
+
+PortInputView > #container > #slot > #dot {
+    width: 4;
+    height: 4;
+    background-color: #ff0000;
+    border-radius: 4;
+}
+
+PortInputView.typeMatrix4 > #container > #slot > #dot,
+PortInputView.typeMatrix3 > #container > #slot > #dot,
+PortInputView.typeMatrix2 > #container > #slot > #dot {
+    background-color: #8FC1DF;
+}
+
+PortInputView.typeMatrix4,
+PortInputView.typeMatrix3,
+PortInputView.typeMatrix2 {
+    edge-color: #8FC1DF;
+}
+
+PortInputView.typeTexture2D > #container > #slot > #dot,
+PortInputView.typeTexture2DArray > #container > #slot > #dot,
+PortInputView.typeTexture3D > #container > #slot > #dot,
+PortInputView.typeCubemap > #container > #slot > #dot {
+    background-color: #FF8B8B;
+}
+
+PortInputView.typeTexture2D,
+PortInputView.typeTexture2DArray,
+PortInputView.typeTexture3D,
+PortInputView.typeCubemap {
+    edge-color: #FF8B8B;
+}
+
+PortInputView.typeVector4 > #container > #slot > #dot {
+    background-color: #FBCBF4;
+}
+
+PortInputView.typeVector4 {
+    edge-color: #FBCBF4;
+}
+
+PortInputView.typeVector3 > #container > #slot > #dot {
+    background-color: #F6FF9A;
+}
+
+PortInputView.typeVector3 {
+    edge-color: #F6FF9A;
+}
+
+PortInputView.typeVector2 > #container > #slot > #dot {
+    background-color: #9AEF92;
+}
+
+PortInputView.typeVector2 {
+    edge-color: #9AEF92;
+}
+
+PortInputView.typeVector1 > #container > #slot > #dot {
+    background-color: #84E4E7;
+}
+
+PortInputView.typeVector1 {
+    edge-color: #84E4E7;
+}
+
+PortInputView.typeBoolean > #container > #slot > #dot {
+    background-color: #9481E6;
+}
+
+PortInputView.typeBoolean {
+    edge-color: #9481E6;
+}

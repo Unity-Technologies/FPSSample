@@ -1,0 +1,21 @@
+{
+    "name": "Unity.RenderPipelines.HighDefinition.Editor",
+    "references": [
+        "Unity.RenderPipelines.HighDefinition.Runtime",
+        "Unity.Postprocessing.Runtime",
+        "Unity.ShaderGraph.Editor",
+        "Unity.Postprocessing.Editor",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Core.Editor"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

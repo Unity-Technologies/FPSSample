@@ -1,0 +1,134 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!4 &7808920805438814804 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+  m_PrefabInstance: {fileID: 7808920805438415060}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4459666907901531771
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4372336318792280374}
+  - component: {fileID: 4772996284911548967}
+  m_Layer: 0
+  m_Name: LPG_Floor_Corner_Interior_Convex_Angled_600_A
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 123
+  m_IsActive: 1
+--- !u!4 &4372336318792280374
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4459666907901531771}
+  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 1}
+  m_LocalScale: {x: 1, y: 1.0000002, z: 1.0000002}
+  m_Children: []
+  m_Father: {fileID: 7808920805438814804}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!220 &4772996284911548967
+LightProbeGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4459666907901531771}
+  m_Enabled: 1
+  m_SourcePositions:
+  - {x: 0.14999962, y: -0.80000114, z: 1}
+  - {x: 0.14999962, y: -0.800001, z: 2.062128}
+  - {x: -5.950001, y: -0.79999983, z: 6.1500044}
+  - {x: -0.83787155, y: -0.8000002, z: 3.0500054}
+  - {x: -4.937872, y: -0.8000002, z: 6.150004}
+  - {x: -1.8378716, y: -0.8000002, z: 4.050005}
+  - {x: -2.8878708, y: -0.8000002, z: 5.1000056}
+  - {x: 0.14999962, y: -0.80000114, z: 0.049999226}
+  - {x: -3.937872, y: -0.8000002, z: 6.150004}
+  m_Dering: 0
+--- !u!1001 &7808920805438415060
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 24
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -90.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_Name
+      value: Floor_Corner_Interior_Convex_Angled_600_A
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 100004, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 123
+      objectReference: {fileID: 0}
+    - target: {fileID: 100006, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 123
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300002, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300002, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 41197085d79c46a4199c368723e5983d, type: 2}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 56d03b183dce0924480c83aac6156c0c, type: 3}

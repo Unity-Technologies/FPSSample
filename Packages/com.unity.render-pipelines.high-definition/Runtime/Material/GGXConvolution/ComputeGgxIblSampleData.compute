@@ -1,0 +1,78 @@
+// Precomputes data for IntegrateLD(). See that function for a detailed description.
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl"
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+#ifdef SHADER_API_MOBILE
+#define MAX_IBL_SAMPLE_CNT 34
+#else
+#define MAX_IBL_SAMPLE_CNT 89
+#endif
+
+RWTexture2D<float4> output; // [MAX_SAMPLE_CNT x UNITY_SPECCUBE_LOD_STEPS]
+
+#pragma kernel ComputeGgxIblSampleData
+
+[numthreads(MAX_IBL_SAMPLE_CNT, UNITY_SPECCUBE_LOD_STEPS, 1)]
+void ComputeGgxIblSampleData(uint3 groupThreadId : SV_GroupThreadID)
+{
+    uint  sampleIndex = groupThreadId.x;
+    uint  mipLevel    = groupThreadId.y + 1;
+    float roughness   = PerceptualRoughnessToRoughness(MipmapLevelToPerceptualRoughness(mipLevel));
+    uint  sampleCount = GetIBLRuntimeFilterSampleCount(mipLevel);
+
+    if (sampleIndex >= sampleCount)
+    {
+        output[groupThreadId.xy] = float4(0, 0, 0, 0);
+        return;
+    }
+
+    float3 V     = float3(0, 0, 1);
+    float  NdotV = 1;
+
+    float3 localL;
+    float  NdotL, NdotH, LdotH;
+
+    const uint validSampleCount = sampleCount;
+
+    while (true)
+    {
+        uint acceptedSampleCount = 0;
+        uint shiftedSampleIndex  = 0;
+
+        for (uint i = 0; i < sampleCount; i++)
+        {
+            // We switch to the Golden sequence instead of the Fibonacci sequence
+            // since the sample count is not guaranteed to be a Fibonacci number.
+            // TODO: might be interesting to try Mitchell's Poisson disk sampling algorithm.
+            // In our case, samples would not have disks associated with them, but rather solid angles.
+            float2 u = Golden2dSeq(i, sampleCount);
+            SampleGGXDir(u, V, k_identity3x3, roughness, localL, NdotL, NdotH, LdotH, true);
+
+            if (NdotL > 0)
+            {
+                if (acceptedSampleCount == sampleIndex) shiftedSampleIndex = i;
+                acceptedSampleCount++;
+            }
+        }
+
+        if (acceptedSampleCount == validSampleCount)
+        {
+            sampleIndex = shiftedSampleIndex;
+            break;
+        }
+
+        sampleCount++;
+    }
+
+    float2 u = Golden2dSeq(sampleIndex, sampleCount);
+
+    SampleGGXDir(u, V, k_identity3x3, roughness, localL, NdotL, NdotH, LdotH, true);
+
+    float pdf    = 0.25 * D_GGX(NdotH, roughness);
+    float omegaS = rcp(sampleCount) * rcp(pdf);
+
+    output[groupThreadId.xy] = float4(localL, omegaS);
+}

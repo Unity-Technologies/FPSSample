@@ -1,0 +1,58 @@
+#pragma warning(disable : 3568)
+#pragma exclude_renderers gles gles3 d3d11_9x
+
+#include "../StdLib.hlsl"
+#include "../Colors.hlsl"
+
+RWStructuredBuffer<uint4> _WaveformBuffer;
+Texture2D<float4> _Source;
+SamplerState sampler_Source;
+
+CBUFFER_START(Params)
+    float4 _Params; // x: source width, y: source height, z: linear, w: unused
+CBUFFER_END
+
+#define GROUP_SIZE 256
+#define GROUP_SIZE_X 16
+#define GROUP_SIZE_Y 16
+
+#ifdef DISABLE_COMPUTE_SHADERS
+
+TRIVIAL_COMPUTE_KERNEL(KWaveformGather)
+TRIVIAL_COMPUTE_KERNEL(KWaveformClear)
+
+#else
+
+#pragma kernel KWaveformGather
+[numthreads(1, GROUP_SIZE, 1)]
+void KWaveformGather(uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+    // Gather local group histogram
+    if (dispatchThreadId.x < uint(_Params.x) && dispatchThreadId.y < uint(_Params.y))
+    {
+        float3 color = _Source[dispatchThreadId].rgb;
+        color = saturate(color);
+
+        // We want a gamma-corrected histogram (like Photoshop & all)
+        if (_Params.z > 0)
+            color = LinearToSRGB(color);
+
+        // Convert channel values to histogram bins
+        uint3 idx = (uint3)(round(color * (_Params.y - 1)));
+        idx += dispatchThreadId.x * _Params.y;
+
+        if (idx.x > 0u) InterlockedAdd(_WaveformBuffer[idx.x].x, 1u); // Red
+        if (idx.y > 0u) InterlockedAdd(_WaveformBuffer[idx.y].y, 1u); // Green
+        if (idx.z > 0u) InterlockedAdd(_WaveformBuffer[idx.z].z, 1u); // Blue
+    }
+}
+
+#pragma kernel KWaveformClear
+[numthreads(GROUP_SIZE_X, GROUP_SIZE_Y, 1)]
+void KWaveformClear(uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+    if (dispatchThreadId.x < uint(_Params.x) && dispatchThreadId.y < uint(_Params.y))
+        _WaveformBuffer[dispatchThreadId.y * uint(_Params.x) + dispatchThreadId.x] = uint4(0u, 0u, 0u, 0u);
+}
+
+#endif // DISABLE_COMPUTE_SHADERS

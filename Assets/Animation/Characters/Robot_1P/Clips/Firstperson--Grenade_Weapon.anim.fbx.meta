@@ -1,0 +1,190 @@
+fileFormatVersion: 2
+guid: 093a65ea39d79fe448ce52b36e170aaf
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: Barrel_A
+    100002: Barrel_A_Muzzle
+    100004: Barrel_B
+    100006: Barrel_B_Muzzle
+    100008: Barrel_C
+    100010: Barrel_C_Muzzle
+    100012: //RootNode
+    100014: Key
+    100016: Launcher_Drum
+    100018: Launcher_Muzzle
+    100020: Launcher_Release
+    100022: Main
+    100024: Oil_Reader
+    100026: Red_Button
+    100028: Side_Handle
+    100030: Skeleton
+    100032: Top_Handle
+    400000: Barrel_A
+    400002: Barrel_A_Muzzle
+    400004: Barrel_B
+    400006: Barrel_B_Muzzle
+    400008: Barrel_C
+    400010: Barrel_C_Muzzle
+    400012: //RootNode
+    400014: Key
+    400016: Launcher_Drum
+    400018: Launcher_Muzzle
+    400020: Launcher_Release
+    400022: Main
+    400024: Oil_Reader
+    400026: Red_Button
+    400028: Side_Handle
+    400030: Skeleton
+    400032: Top_Handle
+    7400000: Grenade_Weapon
+    9500000: //RootNode
+    11400000: //RootNode
+  externalObjects: {}
+  materials:
+    importMaterials: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.1
+    animationPositionError: 0.1
+    animationScaleError: 0.1
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: Grenade_Weapon
+      takeName: Grenade_Weapon
+      firstFrame: 0
+      lastFrame: 22
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Geometry
+        weight: 0
+      - path: Geometry/Robot_Weapon_A_LOD0
+        weight: 0
+      - path: Skeleton
+        weight: 0
+      - path: Skeleton/Main
+        weight: 0
+      - path: Skeleton/Main/Barrel_A
+        weight: 1
+      - path: Skeleton/Main/Barrel_A/Barrel_A_Muzzle
+        weight: 1
+      - path: Skeleton/Main/Barrel_B
+        weight: 1
+      - path: Skeleton/Main/Barrel_B/Barrel_B_Muzzle
+        weight: 1
+      - path: Skeleton/Main/Barrel_C
+        weight: 1
+      - path: Skeleton/Main/Barrel_C/Barrel_C_Muzzle
+        weight: 1
+      - path: Skeleton/Main/Key
+        weight: 1
+      - path: Skeleton/Main/Launcher_Drum
+        weight: 1
+      - path: Skeleton/Main/Launcher_Muzzle
+        weight: 1
+      - path: Skeleton/Main/Launcher_Release
+        weight: 1
+      - path: Skeleton/Main/Oil_Reader
+        weight: 1
+      - path: Skeleton/Main/Side_Handle
+        weight: 1
+      - path: Skeleton/Main/Top_Handle
+        weight: 1
+      maskType: 1
+      maskSource: {fileID: 31900000, guid: 0034d480e1a0b624588c4801aa0a5a83, type: 2}
+      additiveReferencePoseFrame: 0
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 0.01
+    hasPreviousCalculatedGlobalScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 1
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 80192c2428557e14daa00a06fae74d87,
+    type: 3}
+  animationType: 2
+  humanoidOversampling: 2
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

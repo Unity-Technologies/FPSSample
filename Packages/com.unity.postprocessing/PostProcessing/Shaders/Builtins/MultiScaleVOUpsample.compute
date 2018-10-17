@@ -1,0 +1,432 @@
+//
+// This is a modified version of the SSAO renderer from Microsoft's MiniEngine
+// library. The copyright notice from the original version is included below.
+//
+// The original source code of MiniEngine is available on GitHub.
+// https://github.com/Microsoft/DirectX-Graphics-Samples
+//
+
+//
+// Copyright (c) Microsoft. All rights reserved.
+// This code is licensed under the MIT License (MIT).
+// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// Developed by Minigraph
+//
+// Author:  James Stanard
+//
+
+#pragma warning(disable : 3568)
+#pragma exclude_renderers gles gles3 d3d11_9x
+
+#pragma kernel MultiScaleVOUpSample                         MAIN=MultiScaleVOUpSample
+#pragma kernel MultiScaleVOUpSample_invert                  MAIN=MultiScaleVOUpSample_invert                    INVERT
+#pragma kernel MultiScaleVOUpSample_premin                  MAIN=MultiScaleVOUpSample_premin                    COMBINE_LOWER_RESOLUTIONS
+#pragma kernel MultiScaleVOUpSample_blendout                MAIN=MultiScaleVOUpSample_blendout                  BLEND_WITH_HIGHER_RESOLUTION
+#pragma kernel MultiScaleVOUpSample_premin_blendout         MAIN=MultiScaleVOUpSample_premin_blendout           COMBINE_LOWER_RESOLUTIONS BLEND_WITH_HIGHER_RESOLUTION
+
+#pragma kernel MultiScaleVOUpSample_MSAA                    MAIN=MultiScaleVOUpSample_MSAA                      
+#pragma kernel MultiScaleVOUpSample_MSAA_invert             MAIN=MultiScaleVOUpSample_MSAA_invert               MSAA INVERT
+#pragma kernel MultiScaleVOUpSample_MSAA_premin             MAIN=MultiScaleVOUpSample_MSAA_premin               MSAA COMBINE_LOWER_RESOLUTIONS
+#pragma kernel MultiScaleVOUpSample_MSAA_blendout           MAIN=MultiScaleVOUpSample_MSAA_blendout             MSAA BLEND_WITH_HIGHER_RESOLUTION
+#pragma kernel MultiScaleVOUpSample_MSAA_premin_blendout    MAIN=MultiScaleVOUpSample_MSAA_premin_blendout      MSAA COMBINE_LOWER_RESOLUTIONS BLEND_WITH_HIGHER_RESOLUTION
+
+#include "../StdLib.hlsl"
+
+
+#ifdef MSAA
+    Texture2D<float2> LoResDB; SamplerState samplerLoResDB;
+    Texture2D<float2> HiResDB; SamplerState samplerHiResDB;
+    Texture2D<float2> LoResAO1; SamplerState samplerLoResAO1;
+    #ifdef COMBINE_LOWER_RESOLUTIONS
+    Texture2D<float2> LoResAO2; SamplerState samplerLoResAO2;
+    #endif
+    #ifdef BLEND_WITH_HIGHER_RESOLUTION
+    Texture2D<float2> HiResAO; SamplerState samplerHiResAO;
+    #endif
+    // Output textures
+    RWTexture2D<float2> AoResult;
+
+    // Shared memory
+    groupshared float2 DepthCache[256];
+    groupshared float2 AOCache1[256];
+    groupshared float2 AOCache2[256];
+#else
+    // Input textures
+    Texture2D<float> LoResDB; SamplerState samplerLoResDB;
+    Texture2D<float> HiResDB; SamplerState samplerHiResDB;
+    Texture2D<float> LoResAO1; SamplerState samplerLoResAO1;
+    #ifdef COMBINE_LOWER_RESOLUTIONS
+    Texture2D<float> LoResAO2; SamplerState samplerLoResAO2;
+    #endif
+    #ifdef BLEND_WITH_HIGHER_RESOLUTION
+    Texture2D<float> HiResAO; SamplerState samplerHiResAO;
+    #endif
+
+    // Ouput textures
+    RWTexture2D<float> AoResult;
+
+    // Shared memory
+    groupshared float DepthCache[256];
+    groupshared float AOCache1[256];
+    groupshared float AOCache2[256];
+
+#endif
+
+CBUFFER_START(CB1)
+    float4 InvLowResolution;
+    float4 InvHighResolution;
+    float4 AdditionalParams;
+CBUFFER_END
+
+#define NoiseFilterStrength AdditionalParams.x
+#define StepSize AdditionalParams.y
+#define kBlurTolerance AdditionalParams.z
+#define kUpsampleTolerance AdditionalParams.w
+
+void PrefetchData(uint index, float2 uv)
+{
+#ifdef MSAA
+    float4 AO1_0 = LoResAO1.GatherRed(samplerLoResAO1, uv);
+    float4 AO1_1 = LoResAO1.GatherGreen(samplerLoResAO1, uv);
+
+#ifdef COMBINE_LOWER_RESOLUTIONS
+    AO1_0 = min(AO1_0, LoResAO2.GatherRed(samplerLoResAO2, uv));
+    AO1_1 = min(AO1_1, LoResAO2.GatherGreen(samplerLoResAO2, uv));
+#endif
+
+    AOCache1[index] = float2(AO1_0.w, AO1_1.w);
+    AOCache1[index + 1] = float2(AO1_0.z, AO1_1.z);
+    AOCache1[index + 16] = float2(AO1_0.x, AO1_1.x);
+    AOCache1[index + 17] = float2(AO1_0.y, AO1_1.y);
+
+    float4 ID_0 = 1.0 / LoResDB.GatherRed(samplerLoResDB, uv);
+    float4 ID_1 = 1.0 / LoResDB.GatherGreen(samplerLoResDB, uv);
+    DepthCache[index] = float2(ID_0.w, ID_1.w);
+    DepthCache[index + 1] = float2(ID_0.z, ID_1.z);
+    DepthCache[index + 16] = float2(ID_0.x, ID_1.x);
+    DepthCache[index + 17] = float2(ID_0.y, ID_1.y);
+#else
+    float4 AO1 = LoResAO1.Gather(samplerLoResAO1, uv);
+
+#ifdef COMBINE_LOWER_RESOLUTIONS
+    AO1 = min(AO1, LoResAO2.Gather(samplerLoResAO2, uv));
+#endif
+
+    AOCache1[index] = AO1.w;
+    AOCache1[index + 1] = AO1.z;
+    AOCache1[index + 16] = AO1.x;
+    AOCache1[index + 17] = AO1.y;
+
+    float4 ID = 1.0 / LoResDB.Gather(samplerLoResDB, uv);
+    DepthCache[index] = ID.w;
+    DepthCache[index + 1] = ID.z;
+    DepthCache[index + 16] = ID.x;
+    DepthCache[index + 17] = ID.y;
+#endif
+}
+
+float SmartBlur(float a, float b, float c, float d, float e, bool Left, bool Middle, bool Right)
+{
+    b = Left | Middle ? b : c;
+    a = Left ? a : b;
+    d = Right | Middle ? d : c;
+    e = Right ? e : d;
+    return ((a + e) / 2.0 + b + c + d) / 4.0;
+}
+
+bool CompareDeltas(float d1, float d2, float l1, float l2)
+{
+    float temp = d1 * d2 + StepSize;
+    return temp * temp > l1 * l2 * kBlurTolerance;
+}
+
+void BlurHorizontally(uint leftMostIndex)
+{
+#ifdef MSAA 
+    float2 a0 = AOCache1[leftMostIndex];
+    float2 a1 = AOCache1[leftMostIndex + 1];
+    float2 a2 = AOCache1[leftMostIndex + 2];
+    float2 a3 = AOCache1[leftMostIndex + 3];
+    float2 a4 = AOCache1[leftMostIndex + 4];
+    float2 a5 = AOCache1[leftMostIndex + 5];
+    float2 a6 = AOCache1[leftMostIndex + 6];
+
+    float2 d0 = DepthCache[leftMostIndex];
+    float2 d1 = DepthCache[leftMostIndex + 1];
+    float2 d2 = DepthCache[leftMostIndex + 2];
+    float2 d3 = DepthCache[leftMostIndex + 3];
+    float2 d4 = DepthCache[leftMostIndex + 4];
+    float2 d5 = DepthCache[leftMostIndex + 5];
+    float2 d6 = DepthCache[leftMostIndex + 6];
+
+    float2 d01 = d1 - d0;
+    float2 d12 = d2 - d1;
+    float2 d23 = d3 - d2;
+    float2 d34 = d4 - d3;
+    float2 d45 = d5 - d4;
+    float2 d56 = d6 - d5;
+
+    float2 l01 = d01 * d01 + StepSize;
+    float2 l12 = d12 * d12 + StepSize;
+    float2 l23 = d23 * d23 + StepSize;
+    float2 l34 = d34 * d34 + StepSize;
+    float2 l45 = d45 * d45 + StepSize;
+    float2 l56 = d56 * d56 + StepSize;
+
+    bool c02_0 = CompareDeltas(d01.x, d12.x, l01.x, l12.x);
+    bool c13_0 = CompareDeltas(d12.x, d23.x, l12.x, l23.x);
+    bool c24_0 = CompareDeltas(d23.x, d34.x, l23.x, l34.x);
+    bool c35_0 = CompareDeltas(d34.x, d45.x, l34.x, l45.x);
+    bool c46_0 = CompareDeltas(d45.x, d56.x, l45.x, l56.x);
+
+    bool c02_1 = CompareDeltas(d01.y, d12.y, l01.y, l12.y);
+    bool c13_1 = CompareDeltas(d12.y, d23.y, l12.y, l23.y);
+    bool c24_1 = CompareDeltas(d23.y, d34.y, l23.y, l34.y);
+    bool c35_1 = CompareDeltas(d34.y, d45.y, l34.y, l45.y);
+    bool c46_1 = CompareDeltas(d45.y, d56.y, l45.y, l56.y);
+
+    AOCache2[leftMostIndex] = float2(SmartBlur(a0.x.x, a1.x, a2.x, a3.x, a4.x, c02_0, c13_0, c24_0), SmartBlur(a0.y, a1.y, a2.y, a3.y, a4.y, c02_1, c13_1, c24_1));
+    AOCache2[leftMostIndex + 1] = float2(SmartBlur(a1.x, a2.x, a3.x, a4.x, a5.x, c13_0, c24_0, c35_0), SmartBlur(a1.y, a2.y, a3.y, a4.y, a5.y, c13_1, c24_1, c35_1));
+    AOCache2[leftMostIndex + 2] = float2(SmartBlur(a2.x, a3.x, a4.x, a5.x, a6.x, c24_0, c35_0, c46_0), SmartBlur(a2.y, a3.y, a4.y, a5.y, a6.y, c24_1, c35_1, c46_1));
+#else
+    float a0 = AOCache1[leftMostIndex];
+    float a1 = AOCache1[leftMostIndex + 1];
+    float a2 = AOCache1[leftMostIndex + 2];
+    float a3 = AOCache1[leftMostIndex + 3];
+    float a4 = AOCache1[leftMostIndex + 4];
+    float a5 = AOCache1[leftMostIndex + 5];
+    float a6 = AOCache1[leftMostIndex + 6];
+
+    float d0 = DepthCache[leftMostIndex];
+    float d1 = DepthCache[leftMostIndex + 1];
+    float d2 = DepthCache[leftMostIndex + 2];
+    float d3 = DepthCache[leftMostIndex + 3];
+    float d4 = DepthCache[leftMostIndex + 4];
+    float d5 = DepthCache[leftMostIndex + 5];
+    float d6 = DepthCache[leftMostIndex + 6];
+
+    float d01 = d1 - d0;
+    float d12 = d2 - d1;
+    float d23 = d3 - d2;
+    float d34 = d4 - d3;
+    float d45 = d5 - d4;
+    float d56 = d6 - d5;
+
+    float l01 = d01 * d01 + StepSize;
+    float l12 = d12 * d12 + StepSize;
+    float l23 = d23 * d23 + StepSize;
+    float l34 = d34 * d34 + StepSize;
+    float l45 = d45 * d45 + StepSize;
+    float l56 = d56 * d56 + StepSize;
+
+    bool c02 = CompareDeltas(d01, d12, l01, l12);
+    bool c13 = CompareDeltas(d12, d23, l12, l23);
+    bool c24 = CompareDeltas(d23, d34, l23, l34);
+    bool c35 = CompareDeltas(d34, d45, l34, l45);
+    bool c46 = CompareDeltas(d45, d56, l45, l56);
+
+    AOCache2[leftMostIndex] = SmartBlur(a0, a1, a2, a3, a4, c02, c13, c24);
+    AOCache2[leftMostIndex + 1] = SmartBlur(a1, a2, a3, a4, a5, c13, c24, c35);
+    AOCache2[leftMostIndex + 2] = SmartBlur(a2, a3, a4, a5, a6, c24, c35, c46);
+#endif
+}
+
+void BlurVertically(uint topMostIndex)
+{
+#ifdef MSAA
+    float2 a0 = AOCache2[topMostIndex];
+    float2 a1 = AOCache2[topMostIndex + 16];
+    float2 a2 = AOCache2[topMostIndex + 32];
+    float2 a3 = AOCache2[topMostIndex + 48];
+    float2 a4 = AOCache2[topMostIndex + 64];
+    float2 a5 = AOCache2[topMostIndex + 80];
+
+    float2 d0 = DepthCache[topMostIndex + 2];
+    float2 d1 = DepthCache[topMostIndex + 18];
+    float2 d2 = DepthCache[topMostIndex + 34];
+    float2 d3 = DepthCache[topMostIndex + 50];
+    float2 d4 = DepthCache[topMostIndex + 66];
+    float2 d5 = DepthCache[topMostIndex + 82];
+
+    float2 d01 = d1 - d0;
+    float2 d12 = d2 - d1;
+    float2 d23 = d3 - d2;
+    float2 d34 = d4 - d3;
+    float2 d45 = d5 - d4;
+
+    float2 l01 = d01 * d01 + StepSize;
+    float2 l12 = d12 * d12 + StepSize;
+    float2 l23 = d23 * d23 + StepSize;
+    float2 l34 = d34 * d34 + StepSize;
+    float2 l45 = d45 * d45 + StepSize;
+
+    bool c02_0 = CompareDeltas(d01.x, d12.x, l01.x, l12.x);
+    bool c13_0 = CompareDeltas(d12.x, d23.x, l12.x, l23.x);
+    bool c24_0 = CompareDeltas(d23.x, d34.x, l23.x, l34.x);
+    bool c35_0 = CompareDeltas(d34.x, d45.x, l34.x, l45.x);
+
+    bool c02_1 = CompareDeltas(d01.y, d12.y, l01.y, l12.y);
+    bool c13_1 = CompareDeltas(d12.y, d23.y, l12.y, l23.y);
+    bool c24_1 = CompareDeltas(d23.y, d34.y, l23.y, l34.y);
+    bool c35_1 = CompareDeltas(d34.y, d45.y, l34.y, l45.y);
+
+    float2 aoResult1 = float2(SmartBlur(a0.x, a1.x, a2.x, a3.x, a4.x, c02_0, c13_0, c24_0), SmartBlur(a0.y, a1.y, a2.y, a3.y, a4.y, c02_1, c13_1, c24_1));
+    float2 aoResult2 = float2(SmartBlur(a1.x, a2.x, a3.x, a4.x, a5.x, c13_0, c24_0, c35_0), SmartBlur(a1.y, a2.y, a3.y, a4.y, a5.y, c13_1, c24_1, c35_1));
+
+    AOCache1[topMostIndex] = aoResult1;
+    AOCache1[topMostIndex + 16] = aoResult2;
+#else
+    float a0 = AOCache2[topMostIndex];
+    float a1 = AOCache2[topMostIndex + 16];
+    float a2 = AOCache2[topMostIndex + 32];
+    float a3 = AOCache2[topMostIndex + 48];
+    float a4 = AOCache2[topMostIndex + 64];
+    float a5 = AOCache2[topMostIndex + 80];
+
+    float d0 = DepthCache[topMostIndex + 2];
+    float d1 = DepthCache[topMostIndex + 18];
+    float d2 = DepthCache[topMostIndex + 34];
+    float d3 = DepthCache[topMostIndex + 50];
+    float d4 = DepthCache[topMostIndex + 66];
+    float d5 = DepthCache[topMostIndex + 82];
+
+    float d01 = d1 - d0;
+    float d12 = d2 - d1;
+    float d23 = d3 - d2;
+    float d34 = d4 - d3;
+    float d45 = d5 - d4;
+
+    float l01 = d01 * d01 + StepSize;
+    float l12 = d12 * d12 + StepSize;
+    float l23 = d23 * d23 + StepSize;
+    float l34 = d34 * d34 + StepSize;
+    float l45 = d45 * d45 + StepSize;
+
+    bool c02 = CompareDeltas(d01, d12, l01, l12);
+    bool c13 = CompareDeltas(d12, d23, l12, l23);
+    bool c24 = CompareDeltas(d23, d34, l23, l34);
+    bool c35 = CompareDeltas(d34, d45, l34, l45);
+
+    float aoResult1 = SmartBlur(a0, a1, a2, a3, a4, c02, c13, c24);
+    float aoResult2 = SmartBlur(a1, a2, a3, a4, a5, c13, c24, c35);
+
+    AOCache1[topMostIndex] = aoResult1;
+    AOCache1[topMostIndex + 16] = aoResult2;
+#endif
+}
+
+// We essentially want 5 weights:  4 for each low-res pixel and 1 to blend in when none of the 4 really
+// match.  The filter strength is 1 / DeltaZTolerance.  So a tolerance of 0.01 would yield a strength of 100.
+// Note that a perfect match of low to high depths would yield a weight of 10^6, completely superceding any
+// noise filtering.  The noise filter is intended to soften the effects of shimmering when the high-res depth
+// buffer has a lot of small holes in it causing the low-res depth buffer to inaccurately represent it.
+float BilateralUpsample(float HiDepth, float HiAO, float4 LowDepths, float4 LowAO)
+{
+    float4 weights = float4(9, 3, 1, 3) / (abs(HiDepth - LowDepths) + kUpsampleTolerance);
+    float TotalWeight = dot(weights, 1) + NoiseFilterStrength;
+    float WeightedSum = dot(LowAO, weights) + NoiseFilterStrength;// * HiAO;
+    return HiAO * WeightedSum / TotalWeight;
+}
+
+#ifdef DISABLE_COMPUTE_SHADERS
+
+TRIVIAL_COMPUTE_KERNEL(MAIN)
+
+#else
+
+[numthreads(8, 8, 1)]
+void MAIN(uint3 Gid : SV_GroupID, uint GI : SV_GroupIndex, uint3 GTid : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID)
+{
+    //
+    // Load 4 pixels per thread into LDS to fill the 16x16 LDS cache with depth and AO
+    //
+    PrefetchData(GTid.x << 1 | GTid.y << 5, int2(DTid.xy + GTid.xy - 2) * InvLowResolution.xy);
+    GroupMemoryBarrierWithGroupSync();
+
+    // Goal:  End up with a 9x9 patch that is blurred so we can upsample.  Blur radius is 2 pixels, so start with 13x13 area.
+
+    //
+    // Horizontally blur the pixels.	13x13 -> 9x13
+    //
+    if (GI < 39)
+        BlurHorizontally((GI / 3) * 16 + (GI % 3) * 3);
+    GroupMemoryBarrierWithGroupSync();
+
+    //
+    // Vertically blur the pixels.		9x13 -> 9x9
+    //
+    if (GI < 45)
+        BlurVertically((GI / 9) * 32 + GI % 9);
+    GroupMemoryBarrierWithGroupSync();
+
+    //
+    // Bilateral upsample
+    //
+    uint Idx0 = GTid.x + GTid.y * 16;
+    #ifdef MSAA
+    float4 LoSSAOs0 = float4(AOCache1[Idx0 + 16].x, AOCache1[Idx0 + 17].x, AOCache1[Idx0 + 1].x, AOCache1[Idx0].x);
+    float4 LoSSAOs1 = float4(AOCache1[Idx0 + 16].y, AOCache1[Idx0 + 17].y, AOCache1[Idx0 + 1].y, AOCache1[Idx0].y);
+    #else
+    float4 LoSSAOs = float4(AOCache1[Idx0 + 16], AOCache1[Idx0 + 17], AOCache1[Idx0 + 1], AOCache1[Idx0]);
+    #endif
+
+    // We work on a quad of pixels at once because then we can gather 4 each of high and low-res depth values
+    float2 UV0 = DTid.xy * InvLowResolution.xy;
+    float2 UV1 = DTid.xy * 2 * InvHighResolution.xy;
+
+#ifdef MSAA
+    #ifdef BLEND_WITH_HIGHER_RESOLUTION
+        float4 HiSSAOs0 = HiResAO.GatherRed(samplerHiResAO, UV1);
+        float4 HiSSAOs1 = HiResAO.GatherGreen(samplerHiResAO, UV1);
+    #else
+        float4 HiSSAOs0 = 1.0;
+        float4 HiSSAOs1 = 1.0;
+    #endif
+    float4 LoDepths0 = LoResDB.GatherRed(samplerLoResDB, UV0);
+    float4 LoDepths1 = LoResDB.GatherGreen(samplerLoResDB, UV0);
+    float4 HiDepths0 = HiResDB.GatherRed(samplerHiResDB, UV1);
+    float4 HiDepths1 = HiResDB.GatherGreen(samplerHiResDB, UV1);
+
+    int2 OutST = DTid.xy << 1;
+
+    #ifdef INVERT
+        AoResult[OutST + int2(-1,  0)] = float2(1.0 - BilateralUpsample(HiDepths0.x, HiSSAOs0.x, LoDepths0.xyzw, LoSSAOs0.xyzw), 1.0 - BilateralUpsample(HiDepths1.x, HiSSAOs1.x, LoDepths1.xyzw, LoSSAOs1.xyzw));
+        AoResult[OutST + int2( 0,  0)] = float2(1.0 - BilateralUpsample(HiDepths0.y, HiSSAOs0.y, LoDepths0.yzwx, LoSSAOs0.yzwx), 1.0 - BilateralUpsample(HiDepths1.y, HiSSAOs1.y, LoDepths1.yzwx, LoSSAOs1.yzwx));
+        AoResult[OutST + int2( 0, -1)] = float2(1.0 - BilateralUpsample(HiDepths0.z, HiSSAOs0.z, LoDepths0.zwxy, LoSSAOs0.zwxy), 1.0 - BilateralUpsample(HiDepths1.z, HiSSAOs1.z, LoDepths1.zwxy, LoSSAOs1.zwxy));
+        AoResult[OutST + int2(-1, -1)] = float2(1.0 - BilateralUpsample(HiDepths0.w, HiSSAOs0.w, LoDepths0.wxyz, LoSSAOs0.wxyz), 1.0 - BilateralUpsample(HiDepths1.w, HiSSAOs1.w, LoDepths1.wxyz, LoSSAOs1.wxyz));
+    #else
+        AoResult[OutST + int2(-1,  0)] = float2(BilateralUpsample(HiDepths0.x, HiSSAOs0.x, LoDepths0.xyzw, LoSSAOs0.xyzw), BilateralUpsample(HiDepths1.x, HiSSAOs1.x, LoDepths1.xyzw, LoSSAOs1.xyzw));
+        AoResult[OutST + int2( 0,  0)] = float2(BilateralUpsample(HiDepths0.y, HiSSAOs0.y, LoDepths0.yzwx, LoSSAOs0.yzwx), BilateralUpsample(HiDepths1.y, HiSSAOs1.y, LoDepths1.yzwx, LoSSAOs1.yzwx));
+        AoResult[OutST + int2( 0, -1)] = float2(BilateralUpsample(HiDepths0.z, HiSSAOs0.z, LoDepths0.zwxy, LoSSAOs0.zwxy), BilateralUpsample(HiDepths1.z, HiSSAOs1.z, LoDepths1.zwxy, LoSSAOs1.zwxy));
+        AoResult[OutST + int2(-1, -1)] = float2(BilateralUpsample(HiDepths0.w, HiSSAOs0.w, LoDepths0.wxyz, LoSSAOs0.wxyz),BilateralUpsample(HiDepths1.w, HiSSAOs1.w, LoDepths1.wxyz, LoSSAOs1.wxyz));
+    #endif
+#else
+    #ifdef BLEND_WITH_HIGHER_RESOLUTION
+        float4 HiSSAOs = HiResAO.Gather(samplerHiResAO, UV1);
+    #else
+        float4 HiSSAOs = 1.0;
+    #endif
+    float4 LoDepths = LoResDB.Gather(samplerLoResDB, UV0);
+    float4 HiDepths = HiResDB.Gather(samplerHiResDB, UV1);
+
+    int2 OutST = DTid.xy << 1;
+
+    #ifdef INVERT
+        AoResult[OutST + int2(-1,  0)] = 1.0 - BilateralUpsample(HiDepths.x, HiSSAOs.x, LoDepths.xyzw, LoSSAOs.xyzw);
+        AoResult[OutST + int2( 0,  0)] = 1.0 - BilateralUpsample(HiDepths.y, HiSSAOs.y, LoDepths.yzwx, LoSSAOs.yzwx);
+        AoResult[OutST + int2( 0, -1)] = 1.0 - BilateralUpsample(HiDepths.z, HiSSAOs.z, LoDepths.zwxy, LoSSAOs.zwxy);
+        AoResult[OutST + int2(-1, -1)] = 1.0 - BilateralUpsample(HiDepths.w, HiSSAOs.w, LoDepths.wxyz, LoSSAOs.wxyz);
+    #else
+        AoResult[OutST + int2(-1,  0)] = BilateralUpsample(HiDepths.x, HiSSAOs.x, LoDepths.xyzw, LoSSAOs.xyzw);
+        AoResult[OutST + int2( 0,  0)] = BilateralUpsample(HiDepths.y, HiSSAOs.y, LoDepths.yzwx, LoSSAOs.yzwx);
+        AoResult[OutST + int2( 0, -1)] = BilateralUpsample(HiDepths.z, HiSSAOs.z, LoDepths.zwxy, LoSSAOs.zwxy);
+        AoResult[OutST + int2(-1, -1)] = BilateralUpsample(HiDepths.w, HiSSAOs.w, LoDepths.wxyz, LoSSAOs.wxyz);
+    #endif
+#endif
+}
+
+#endif // DISABLE_COMPUTE_SHADERS

@@ -1,0 +1,205 @@
+/* THIS FILE IS FROM GRAPHVIEW BUT CONTAINS MODIFICATIONS */
+
+ShaderPort {
+    height: 24;
+    align-items: center;
+    padding-left: 4;
+    padding-right: 4;
+    port-color: rgb(200, 200, 200);
+    disabled-port-color: rgb(70, 70, 70);
+}
+
+ShaderPort.input {
+    flex-direction: row;
+}
+
+ShaderPort.output {
+    flex-direction: row-reverse;
+}
+
+ShaderPort > #connector {
+    border-color: rgb(70, 70, 70);
+    background-color: #212121;
+    width: 8;
+    height: 8;
+    border-radius: 8;
+    align-items: center;
+    justify-content: center;
+
+    margin-left: 4;
+    margin-right: 4;
+    border-left-width:1;
+    border-top-width:1;
+    border-right-width:1;
+    border-bottom-width:1;
+}
+
+ShaderPort > #connector:hover {
+    border-color:  #f0f0f0
+}
+
+ShaderPort > #connector > #cap
+{
+    background-color: #212121;
+    width: 4;
+    height: 4;
+    border-radius: 4;
+}
+
+ShaderPort > #connector > #cap:hover
+{
+    background-color: #f0f0f0;
+}
+
+ShaderPort > #connector.portHighlight {
+    border-color: #f0f0f0;
+}
+
+ShaderPort > #type {
+    text-color: #c1c1c1;
+    font-size:11;
+    height:16;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 4;
+    margin-right: 4;
+}
+
+ShaderPort.input > #type {
+    text-alignment: middle-left;
+}
+
+ShaderPort.output > #type {
+    text-alignment:middle-right;
+}
+
+/*******************************/
+/* ShaderPorts colors by types */
+/*******************************/
+
+ShaderPort.typeTexture {
+    port-color:#FF8B8B;
+}
+
+ShaderPort.typeTexture2D {
+    /* Same as typeTexture */
+    port-color:#FF8B8B;
+}
+
+ShaderPort.typeTexture2DArray {
+    /* Same as typeTexture */
+    port-color:#FF8B8B;
+}
+
+ShaderPort.typeTexture3D {
+    /* Same as typeTexture */
+    port-color:#FF8B8B;
+}
+
+ShaderPort.typeCubemap {
+    /* Same as typeTexture */
+    port-color:#FF8B8B;
+}
+
+ShaderPort.typeGraphScript {
+    /* Todo: there is no such type in Unity atm */
+    port-color:#E681BA;
+}
+
+ShaderPort.typeFloat4 {
+    port-color:#FBCBF4;
+}
+
+ShaderPort.typeVector4 {
+    /* Same as typeFloat4 */
+    port-color:#FBCBF4;
+}
+
+ShaderPort.typeQuaternion {
+    /* Same as typeFloat4 */
+    port-color:#FBCBF4;
+}
+
+ShaderPort.typeColor {
+    /* Same as typeFloat4 */
+    port-color:#FBCBF4;
+}
+
+ShaderPort.typeInt {
+    port-color:#9481E6;
+}
+
+ShaderPort.typeInt32 {
+    /* Same as typeInt */
+    port-color:#9481E6;
+}
+
+/* TEMP STUFF THAT SHOULD ACTUALLY STAY IN GRAPHVIEW */
+ShaderPort.typeInt64 {
+    /* Same as typeInt */
+    /* todo we might want to differentiate that from int32 */
+    port-color:#9481E6;
+}
+
+ShaderPort.typeBoolean {
+    port-color:#9481E6;
+}
+
+ShaderPort.typeMatrix {
+    port-color:#8FC1DF;
+}
+
+ShaderPort.typeMatrix4x4 {
+    /* Same as typeMatrix */
+    port-color:#8FC1DF;
+}
+
+ShaderPort.typeGameObject {
+    port-color:#8FC1DF;
+}
+
+ShaderPort.typeFloat {
+    port-color:#84E4E7;
+}
+
+ShaderPort.typeFloat1 {
+    /* Same as typeFloat */
+    port-color:#84E4E7;
+}
+
+ShaderPort.typeSingle {
+    /* Same as typeFloat */
+    port-color:#84E4E7;
+}
+
+ShaderPort.typeDouble {
+    /* Same as typeFloat */
+    /* todo we might want to differentiate that from float */
+    port-color:#84E4E7;
+}
+
+ShaderPort.typeFloat2 {
+    port-color:#9AEF92;
+}
+
+ShaderPort.typeVector2 {
+    /* Same as typeFloat2 */
+    port-color:#9AEF92;
+}
+
+ShaderPort.typeComponent {
+    port-color:#C9F774;
+}
+
+ShaderPort.typeFloat3 {
+    port-color:#F6FF9A;
+}
+
+ShaderPort.typeVector3 {
+    /* Same as typeFloat3 */
+    port-color:#F6FF9A;
+}
+
+ShaderPort.typeString {
+    port-color:#FCD76E;
+}

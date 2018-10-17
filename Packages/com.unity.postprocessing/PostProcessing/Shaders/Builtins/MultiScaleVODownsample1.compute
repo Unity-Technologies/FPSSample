@@ -1,0 +1,136 @@
+//
+// This is a modified version of the SSAO renderer from Microsoft's MiniEngine
+// library. The copyright notice from the original version is included below.
+//
+// The original source code of MiniEngine is available on GitHub.
+// https://github.com/Microsoft/DirectX-Graphics-Samples
+//
+
+//
+// Copyright (c) Microsoft. All rights reserved.
+// This code is licensed under the MIT License (MIT).
+// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
+// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
+// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
+// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
+//
+// Developed by Minigraph
+//
+// Author:  James Stanard
+//
+
+#pragma warning(disable : 3568)
+#pragma exclude_renderers gles gles3 d3d11_9x
+
+#pragma kernel MultiScaleVODownsample1              main=MultiScaleVODownsample1
+#pragma kernel MultiScaleVODownsample1_MSAA         main=MultiScaleVODownsample1_MSAA           MSAA
+
+#include "../StdLib.hlsl"
+
+#ifdef MSAA
+// Output textures
+RWTexture2D<float2> LinearZ;
+RWTexture2D<float2> DS2x;
+RWTexture2DArray<float2> DS2xAtlas;
+RWTexture2D<float2> DS4x;
+RWTexture2DArray<float2> DS4xAtlas;
+
+// Input textures
+Texture2D<float4> Depth;
+
+// Shared memory
+groupshared float2 g_CacheW[256];
+#else
+// Output textures
+RWTexture2D<float> LinearZ;
+RWTexture2D<float> DS2x;
+RWTexture2DArray<float> DS2xAtlas;
+RWTexture2D<float> DS4x;
+RWTexture2DArray<float> DS4xAtlas;
+
+// Input textures
+Texture2D<float> Depth;
+
+// Shared memory
+groupshared float g_CacheW[256];
+#endif
+
+CBUFFER_START(CB0)
+    float4 ZBufferParams;
+CBUFFER_END
+
+#ifdef MSAA
+float2 Linearize(uint2 st)
+{
+    float depthMin = Depth[st].y;
+    float depthMax = Depth[st].x;
+
+    float2 depth = float2(depthMin, depthMax);
+    float2 dist = 1.0 / (ZBufferParams.x * depth + ZBufferParams.y);
+#ifdef UNITY_REVERSED_Z
+    if (depth.x == 0) dist.x = 1e5;
+    if (depth.y == 0) dist.y = 1e5;
+#else
+    if (depth.x == 1) dist.x = 1e5;
+    if (depth.y == 1) dist.y = 1e5;
+#endif
+    LinearZ[st] = dist;
+    return dist;
+}
+#else
+float Linearize(uint2 st)
+{
+    float depth = Depth[st];
+    float dist = 1.0 / (ZBufferParams.x * depth + ZBufferParams.y);
+#ifdef UNITY_REVERSED_Z
+    if (depth == 0) dist = 1e5;
+#else
+    if (depth == 1) dist = 1e5;
+#endif
+    LinearZ[st] = dist;
+    return dist;
+}
+#endif
+
+
+#ifdef DISABLE_COMPUTE_SHADERS
+
+TRIVIAL_COMPUTE_KERNEL(main)
+
+#else
+
+[numthreads(8, 8, 1)]
+void main(uint3 Gid : SV_GroupID, uint GI : SV_GroupIndex, uint3 GTid : SV_GroupThreadID, uint3 DTid : SV_DispatchThreadID)
+{
+    uint2 startST = Gid.xy << 4 | GTid.xy;
+    uint destIdx = GTid.y << 4 | GTid.x;
+    g_CacheW[destIdx +  0 ] = Linearize(startST | uint2(0, 0));
+    g_CacheW[destIdx +  8 ] = Linearize(startST | uint2(8, 0));
+    g_CacheW[destIdx + 128] = Linearize(startST | uint2(0, 8));
+    g_CacheW[destIdx + 136] = Linearize(startST | uint2(8, 8));
+
+    GroupMemoryBarrierWithGroupSync();
+
+    uint ldsIndex = (GTid.x << 1) | (GTid.y << 5);
+
+    #ifdef MSAA
+    float2 w1 = g_CacheW[ldsIndex];
+    #else
+    float w1 = g_CacheW[ldsIndex];
+    #endif
+    uint2 st = DTid.xy;
+    uint slice = ((st.x & 3) | (st.y << 2)) & 15;
+    DS2x[st] = w1;
+    DS2xAtlas[uint3(st >> 2, slice)] = w1;
+
+    if ((GI & 011) == 0)
+    {
+        st = DTid.xy >> 1;
+        slice = ((st.x & 3) | (st.y << 2)) & 15;
+        DS4x[st] = w1;
+        DS4xAtlas[uint3(st >> 2, slice)] = w1;
+    }
+
+}
+
+#endif

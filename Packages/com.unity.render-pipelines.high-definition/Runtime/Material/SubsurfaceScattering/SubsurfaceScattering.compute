@@ -1,0 +1,479 @@
+// =============== Convolves transmitted radiance with the Disney diffusion profile ================
+
+//--------------------------------------------------------------------------------------------------
+// Definitions
+//--------------------------------------------------------------------------------------------------
+
+// #pragma enable_d3d11_debug_symbols
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+#pragma kernel SubsurfaceScatteringMQ SubsurfaceScattering=SubsurfaceScatteringMQ SSS_ENABLE_NEAR_FIELD=0
+#pragma kernel SubsurfaceScatteringHQ SubsurfaceScattering=SubsurfaceScatteringHQ SSS_ENABLE_NEAR_FIELD=1
+#pragma kernel SubsurfaceScatteringMQ_MSAA SubsurfaceScattering=SubsurfaceScatteringMQ_MSAA SSS_ENABLE_NEAR_FIELD=0 ENABLE_MSAA
+#pragma kernel SubsurfaceScatteringHQ_MSAA SubsurfaceScattering=SubsurfaceScatteringHQ_MSAA SSS_ENABLE_NEAR_FIELD=1 ENABLE_MSAA
+
+// TODO: use sharp load hoisting on PS4.
+
+// Tweak parameters.
+#define SSS_BILATERAL_FILTER  1
+#define SSS_USE_LDS_CACHE     1
+#define SSS_RANDOM_ROTATION   1 // Hides undersampling artifacts with high-frequency noise. TAA blurs the noise.
+#define SSS_USE_TANGENT_PLANE 0 // Improves the accuracy of the approximation(0 -> 1st order). High cost. Does not work with back-facing normals.
+#define SSS_CLAMP_ARTIFACT    0 // Reduces bleeding. Use with SSS_USE_TANGENT_PLANE.
+#define SSS_DEBUG_LOD         0
+#define SSS_DEBUG_NORMAL_VS   0
+
+// Do not modify these.
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
+#define SHADERPASS            SHADERPASS_SUBSURFACE_SCATTERING
+#define GROUP_SIZE_1D         16
+#define GROUP_SIZE_2D         (GROUP_SIZE_1D * GROUP_SIZE_1D)
+#define TEXTURE_CACHE_BORDER  2
+#define TEXTURE_CACHE_SIZE_1D (GROUP_SIZE_1D + 2 * TEXTURE_CACHE_BORDER)
+#define TEXTURE_CACHE_SIZE_2D (TEXTURE_CACHE_SIZE_1D * TEXTURE_CACHE_SIZE_1D)
+
+// Check for support of typed UAV loads from FORMAT_R16G16B16A16_FLOAT.
+// TODO: query the format support more precisely.
+#if !(defined(SHADER_API_PSSL) || defined(SHADER_API_XBOXONE)) || defined(ENABLE_MSAA)
+#define USE_INTERMEDIATE_BUFFER
+#endif
+
+//--------------------------------------------------------------------------------------------------
+// Included headers
+//--------------------------------------------------------------------------------------------------
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Sampling/Sampling.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceFillingCurves.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightDefinition.cs.hlsl"
+#include "SubsurfaceScattering.hlsl"
+
+
+//--------------------------------------------------------------------------------------------------
+// Inputs & outputs
+//--------------------------------------------------------------------------------------------------
+
+float4 _FilterKernels[DIFFUSION_PROFILE_COUNT][SSS_N_SAMPLES_NEAR_FIELD]; // XY = near field, ZW = far field; 0 = radius, 1 = reciprocal of the PDF
+
+TEXTURE2D(_DepthTexture);                           // Z-buffer
+TEXTURE2D(_SSSHTile);                               // DXGI_FORMAT_R8_UINT is not supported by Unity
+TEXTURE2D(_IrradianceSource);                       // Includes transmitted light
+
+#ifdef USE_INTERMEDIATE_BUFFER
+    RW_TEXTURE2D(float4, _CameraFilteringTexture);  // Target texture
+#else
+    RW_TEXTURE2D(float4, _CameraColorTexture);      // Target texture
+#endif
+
+//--------------------------------------------------------------------------------------------------
+// Implementation
+//--------------------------------------------------------------------------------------------------
+
+// 6656 bytes used. It appears that the reserved LDS space must be a multiple of 512 bytes.
+#if SSS_USE_LDS_CACHE
+groupshared float2 textureCache0[TEXTURE_CACHE_SIZE_2D]; // {irradiance.rg}
+groupshared float2 textureCache1[TEXTURE_CACHE_SIZE_2D]; // {irradiance.b, linearDepth}
+#endif
+groupshared bool   processGroup;
+
+#if SSS_USE_LDS_CACHE
+void StoreSampleToCacheMemory(float4 value, int2 cacheCoord)
+{
+    int linearCoord = Mad24(TEXTURE_CACHE_SIZE_1D, cacheCoord.y, cacheCoord.x);
+
+    textureCache0[linearCoord] = value.rg;
+    textureCache1[linearCoord] = value.ba;
+}
+
+float4 LoadSampleFromCacheMemory(int2 cacheCoord)
+{
+    int linearCoord = Mad24(TEXTURE_CACHE_SIZE_1D, cacheCoord.y, cacheCoord.x);
+
+    return float4(textureCache0[linearCoord],
+                  textureCache1[linearCoord]);
+}
+#endif
+
+float4 LoadSampleFromVideoMemory(int2 pixelCoord)
+{
+    float3 irradiance = LOAD_TEXTURE2D(_IrradianceSource, pixelCoord).rgb;
+    float  depth      = LOAD_TEXTURE2D(_DepthTexture,     pixelCoord).r;
+
+    return float4(irradiance, LinearEyeDepth(depth, _ZBufferParams));
+}
+
+// Returns {irradiance, linearDepth}.
+float4 LoadSample(int2 pixelCoord, int2 cacheOffset)
+{
+#if SSS_USE_LDS_CACHE
+    int2 cacheCoord = pixelCoord - cacheOffset;
+    bool isInCache  = max((uint)cacheCoord.x, (uint)cacheCoord.y) < TEXTURE_CACHE_SIZE_1D;
+
+    UNITY_BRANCH if (isInCache)
+    {
+        return LoadSampleFromCacheMemory(cacheCoord);
+    }
+    else
+#endif
+    {
+        // Always load both irradiance and depth.
+        // Avoid dependent texture reads at the cost of extra bandwidth.
+        return LoadSampleFromVideoMemory(pixelCoord);
+    }
+}
+
+// Computes f(r, s)/p(r, s), s.t. r = sqrt(xy^2 + z^2).
+// Rescaling of the PDF is handled by 'totalWeight'.
+float3 ComputeBilateralWeight(float xy2, float z, float mmPerUnit, float3 S, float rcpPdf)
+{
+#if (SSS_BILATERAL_FILTER == 0)
+    z = 0;
+#endif
+
+#if SSS_USE_TANGENT_PLANE
+    // Both 'xy2' and 'z' require conversion to millimeters.
+    float r = sqrt(xy2 + z * z) * mmPerUnit;
+    float p = sqrt(xy2) * mmPerUnit;
+#else
+    // Only 'z' requires conversion to millimeters.
+    float r = sqrt(xy2 + (z * mmPerUnit) * (z * mmPerUnit));
+    float p = sqrt(xy2);
+#endif
+
+    float area = rcpPdf;
+
+#if 0
+    // Boost the area associated with the sample by the ratio between the sample-center distance
+    // and its orthogonal projection onto the integration plane (disk).
+    area *= r / p;
+#endif
+
+#if SSS_CLAMP_ARTIFACT
+    return saturate(DisneyProfilePolar(r, S) * area);
+#else
+    return DisneyProfilePolar(r, S) * area;
+#endif
+}
+
+void EvaluateSample(uint i, uint n, uint profileID, uint iR, uint iP, float2 centerCoord, int2 cacheOffset,
+                    float3 shapeParam, float3 centerPosVS, float mmPerUnit, float2 pixelsPerMm,
+                    float startAngle, float3 tangentX, float3 tangentY, float4x4 projMatrix,
+                    inout float3 totalIrradiance, inout float3 totalWeight)
+{
+    // The relative sample position is known at the compile time.
+    float r   = _FilterKernels[profileID][i][iR];
+    float phi = SampleDiskFibonacci(i, n).y;
+
+    // The angle 'psi' is loop-invariant.
+    float sinPsi = sin(startAngle);
+    float cosPsi = cos(startAngle);
+
+    // cos(a + b) = cos(a) * cos(b) - sin(a) * sin(b)
+    // sin(a + b) = sin(a) * cos(b) + cos(a) * sin(b)
+    float cosSum = cos(phi) * cosPsi - sin(phi) * sinPsi;
+    float sinSum = sin(phi) * cosPsi + cos(phi) * sinPsi;
+
+    float2 vec = r * float2(cosSum, sinSum);
+
+    // Compute the screen-space position and the squared distance (in mm) in the image plane.
+    int2 position; float xy2;
+
+    #if SSS_USE_TANGENT_PLANE
+        float3 relPosVS   = vec.x * tangentX + vec.y * tangentY;
+        float3 positionVS = centerPosVS + relPosVS;
+        float2 positionNDC = ComputeNormalizedDeviceCoordinates(positionVS, projMatrix);
+
+        position = (int2)(positionNDC * _ScreenSize.xy);
+        xy2      = dot(relPosVS.xy, relPosVS.xy);
+    #else
+        position = (int2)(centerCoord + vec * pixelsPerMm);
+        xy2      = r * r;
+    #endif
+
+    float4 textureSample = LoadSample(position, cacheOffset);
+    float3 irradiance    = textureSample.rgb;
+
+    // Check the results of the stencil test.
+    if (TestLightingForSSS(irradiance))
+    {
+        // Apply bilateral weighting.
+        float  viewZ  = textureSample.a;
+        float  relZ   = viewZ - centerPosVS.z;
+        float  rcpPdf = _FilterKernels[profileID][i][iP];
+        float3 weight = ComputeBilateralWeight(xy2, relZ, mmPerUnit, shapeParam, rcpPdf);
+
+        // Note: if the texture sample if off-screen, (z = 0) -> (viewZ = far) -> (weight ≈ 0).
+        totalIrradiance += weight * irradiance;
+        totalWeight     += weight;
+    }
+    else
+    {
+        // The irradiance is 0. This could happen for 2 reasons.
+        // Most likely, the surface fragment does not have an SSS material.
+        // Alternatively, our sample comes from a region without any geometry.
+        // Our blur is energy-preserving, so 'centerWeight' should be set to 0.
+        // We do not terminate the loop since we want to gather the contribution
+        // of the remaining samples (e.g. in case of hair covering skin).
+    }
+}
+
+void StoreResult(uint2 pixelCoord, float3 irradiance)
+{
+#ifdef USE_INTERMEDIATE_BUFFER
+    _CameraFilteringTexture[pixelCoord] = float4(irradiance, 1);
+#else
+    _CameraColorTexture[pixelCoord]    += float4(irradiance, 0);
+#endif
+}
+
+[numthreads(GROUP_SIZE_2D, 1, 1)]
+void SubsurfaceScattering(uint2 groupId       : SV_GroupID,
+                          uint  groupThreadId : SV_GroupThreadID)
+{
+    groupThreadId &= GROUP_SIZE_2D - 1; // Help the compiler
+
+    // Note: any factor of 64 is a suitable wave size for our algorithm.
+    uint waveIndex = WaveReadFirstLane(groupThreadId / 64);
+    uint laneIndex = groupThreadId % 64;
+    uint quadIndex = laneIndex / 4;
+
+    // Arrange threads in the Morton order to optimally match the memory layout of GCN tiles.
+    uint2 groupCoord  = DecodeMorton2D(groupThreadId);
+    uint2 groupOffset = groupId * GROUP_SIZE_1D;
+    uint2 pixelCoord  = groupOffset + groupCoord;
+    int2  cacheOffset = (int2)groupOffset - TEXTURE_CACHE_BORDER;
+
+    UNITY_BRANCH if (groupThreadId == 0)
+    {
+        float stencilRef = STENCILLIGHTINGUSAGE_SPLIT_LIGHTING;
+
+        // Check whether the thread group needs to perform any work.
+        float s00 = LOAD_TEXTURE2D(_SSSHTile, 2 * groupId + uint2(0, 0)).r;
+        float s10 = LOAD_TEXTURE2D(_SSSHTile, 2 * groupId + uint2(1, 0)).r;
+        float s01 = LOAD_TEXTURE2D(_SSSHTile, 2 * groupId + uint2(0, 1)).r;
+        float s11 = LOAD_TEXTURE2D(_SSSHTile, 2 * groupId + uint2(1, 1)).r;
+
+        // Perform the stencil test (reject at the tile rate).
+        processGroup = (stencilRef == s00 || stencilRef == s10 || stencilRef == s01 || stencilRef == s11);
+    }
+
+    // Wait for the LDS.
+    GroupMemoryBarrierWithGroupSync();
+
+    UNITY_BRANCH if (!processGroup) { return; }
+
+    float3 centerIrradiance  = LOAD_TEXTURE2D(_IrradianceSource, pixelCoord).rgb;
+    float  centerDepth       = 0;
+    float  centerViewZ       = 0;
+    bool   passedStencilTest = TestLightingForSSS(centerIrradiance);
+
+    // Save some bandwidth by only loading depth values for SSS pixels.
+    UNITY_BRANCH if (passedStencilTest)
+    {
+        centerDepth = LOAD_TEXTURE2D(_DepthTexture, pixelCoord).r;
+        centerViewZ = LinearEyeDepth(centerDepth, _ZBufferParams);
+    }
+
+#if SSS_USE_LDS_CACHE
+    uint2 cacheCoord = groupCoord + TEXTURE_CACHE_BORDER;
+    // Populate the central region of the LDS cache.
+    StoreSampleToCacheMemory(float4(centerIrradiance, centerViewZ), cacheCoord);
+
+    uint numBorderQuadsPerWave = TEXTURE_CACHE_SIZE_1D / 2 - 1;
+    uint halfCacheWidthInQuads = TEXTURE_CACHE_SIZE_1D / 4;
+
+    UNITY_BRANCH if (quadIndex < numBorderQuadsPerWave)
+    {
+        // Fetch another texel into the LDS.
+        uint2 startQuad = halfCacheWidthInQuads * DeinterleaveQuad(waveIndex);
+
+        uint2 quadCoord;
+
+        // The traversal order is such that the quad's X coordinate is monotonically increasing.
+        // The corner is always the near the block of the corresponding wavefront.
+        // Note: the compiler can heavily optimize the code below, as the switch is scalar,
+        // and there are very few unique values due to the symmetry.
+        switch (waveIndex)
+        {
+            case 0:  // Bottom left
+                quadCoord.x = max(0, (int)(quadIndex - (halfCacheWidthInQuads - 1)));
+                quadCoord.y = max(0, (int)((halfCacheWidthInQuads - 1) - quadIndex));
+                break;
+            case 1:  // Bottom right
+                quadCoord.x = min(quadIndex, halfCacheWidthInQuads - 1);
+                quadCoord.y = max(0, (int)(quadIndex - (halfCacheWidthInQuads - 1)));
+                break;
+            case 2:  // Top left
+                quadCoord.x = max(0, (int)(quadIndex - (halfCacheWidthInQuads - 1)));
+                quadCoord.y = min(quadIndex, halfCacheWidthInQuads - 1);
+                break;
+            default: // Top right
+                quadCoord.x = min(quadIndex, halfCacheWidthInQuads - 1);
+                quadCoord.y = min(halfCacheWidthInQuads - 1, 2 * (halfCacheWidthInQuads - 1) - quadIndex);
+                break;
+        }
+
+        uint2  cacheCoord2 = 2 * (startQuad + quadCoord) + DeinterleaveQuad(laneIndex);
+        int2   pixelCoord2 = (int2)(groupOffset + cacheCoord2) - TEXTURE_CACHE_BORDER;
+        float3 irradiance2 = LOAD_TEXTURE2D(_IrradianceSource, pixelCoord2).rgb;
+        float  viewZ2      = 0;
+
+        // Save some bandwidth by only loading depth values for SSS pixels.
+        UNITY_BRANCH if (TestLightingForSSS(irradiance2))
+        {
+            viewZ2 = LinearEyeDepth(LOAD_TEXTURE2D(_DepthTexture, pixelCoord2).r, _ZBufferParams);
+        }
+
+        // Populate the border region of the LDS cache.
+        StoreSampleToCacheMemory(float4(irradiance2, viewZ2), cacheCoord2);
+    }
+
+    // Wait for the LDS.
+    GroupMemoryBarrierWithGroupSync();
+#endif
+
+    UNITY_BRANCH if (!passedStencilTest) { return; }
+
+    PositionInputs posInput = GetPositionInput(pixelCoord, _ScreenSize.zw);
+
+    // The result of the stencil test allows us to statically determine the material type (SSS).
+    SSSData sssData;
+    DECODE_FROM_SSSBUFFER(posInput.positionSS, sssData);
+
+    int    profileID   = sssData.diffusionProfile;
+    float  distScale   = sssData.subsurfaceMask;
+    float3 shapeParam  = _ShapeParams[profileID].rgb;
+    float  maxDistance = _ShapeParams[profileID].a;
+
+    // Reconstruct the view-space position corresponding to the central sample.
+    float2 centerPosNDC = posInput.positionNDC;
+    float2 cornerPosNDC = centerPosNDC + 0.5 * _ScreenSize.zw;
+    float3 centerPosVS  = ComputeViewSpacePosition(centerPosNDC, centerDepth, UNITY_MATRIX_I_P);
+    float3 cornerPosVS  = ComputeViewSpacePosition(cornerPosNDC, centerDepth, UNITY_MATRIX_I_P);
+
+    // Rescaling the filter is equivalent to inversely scaling the world.
+    float mmPerUnit  = MILLIMETERS_PER_METER * (_WorldScales[profileID].x / distScale);
+    float unitsPerMm = rcp(mmPerUnit);
+
+    // Compute the view-space dimensions of the pixel as a quad projected onto geometry.
+    float2 unitsPerPixel = 2 * abs(cornerPosVS.xy - centerPosVS.xy);
+    float2 pixelsPerMm   = rcp(unitsPerPixel) * unitsPerMm;
+
+    // We perform point sampling. Therefore, we can avoid the cost
+    // of filtering if we stay within the bounds of the current pixel.
+    // We use the value of 1 instead of 0.5 as an optimization.
+    // N.b.: our LoD selection algorithm is the same regardless of
+    // whether we integrate over the tangent plane or not, since we
+    // don't want the orientation of the tangent plane to create
+    // divergence of execution across the warp.
+    float maxDistInPixels = maxDistance * max(pixelsPerMm.x, pixelsPerMm.y);
+
+    uint   texturingMode = GetSubsurfaceScatteringTexturingMode(profileID);
+    float3 albedo        = ApplySubsurfaceScatteringTexturingMode(texturingMode, sssData.diffuseColor);
+
+    UNITY_BRANCH if (distScale == 0 || maxDistInPixels < 1)
+    {
+        #if SSS_DEBUG_LOD
+            StoreResult(pixelCoord, float3(0, 0, 1));
+        #else
+            StoreResult(pixelCoord, albedo * centerIrradiance);
+        #endif
+            return;
+    }
+
+    float4x4 viewMatrix, projMatrix;
+    GetLeftHandedViewSpaceMatrices(viewMatrix, projMatrix);
+
+    // TODO: Since we have moved to forward SSS, we don't support anymore a bsdfData.normalWS.
+    // Once we include normal+roughness rendering during the prepass, we will have a buffer to bind here and we will be able to reuse this part of the algorithm on demand.
+#if SSS_USE_TANGENT_PLANE
+    #error ThisWillNotCompile_SeeComment
+    // Compute the tangent frame in view space.
+    float3 normalVS = mul((float3x3)viewMatrix, bsdfData.normalWS);
+    float3 tangentX = GetLocalFrame(normalVS)[0] * unitsPerMm;
+    float3 tangentY = GetLocalFrame(normalVS)[1] * unitsPerMm;
+#else
+    float3 normalVS = float3(0, 0, 0);
+    float3 tangentX = float3(0, 0, 0);
+    float3 tangentY = float3(0, 0, 0);
+#endif
+
+#if SSS_DEBUG_NORMAL_VS
+    // We expect the normal to be front-facing.
+    float3 viewDirVS = normalize(centerPosVS);
+    if (dot(normalVS, viewDirVS) >= 0)
+    {
+        StoreResult(pixelCoord, float3(1, 1, 1));
+        return;
+    }
+#endif
+
+#if SSS_RANDOM_ROTATION
+    // Previously, we used asuint(centerPosVS) as the seed.
+    // This was not temporarily stable for some reason (pattern changed every frame),
+    // even if both the camera and the scene were completely static.
+    // Note that GenerateHashedRandomFloat() only uses the 23 low bits, hence the 2^24 factor.
+    float startAngle = TWO_PI * GenerateHashedRandomFloat(uint3(pixelCoord, (uint)(centerDepth * 16777216)));
+#else
+    float startAngle = 0;
+#endif
+
+    // Use more samples for SS regions larger than 5x5 pixels (rotated by 45 degrees).
+    bool useNearFieldKernel = SSS_ENABLE_NEAR_FIELD && maxDistInPixels > SSS_LOD_THRESHOLD;
+
+#if SSS_DEBUG_LOD
+    StoreResult(pixelCoord, useNearFieldKernel ? float3(1, 0, 0) : float3(0.5, 0.5, 0));
+    return;
+#endif
+
+    // Compute the indices used to access the individual components of the float4 of the kernel.
+    uint iR = useNearFieldKernel ? 0 : 2; // radius
+    uint iP = useNearFieldKernel ? 1 : 3; // rcp(pdf)
+    uint n  = useNearFieldKernel ? SSS_N_SAMPLES_NEAR_FIELD : SSS_N_SAMPLES_FAR_FIELD;
+
+    float  centerRadius = _FilterKernels[profileID][0][iR];
+    float  centerRcpPdf = _FilterKernels[profileID][0][iP];
+    float3 centerWeight = DisneyProfilePolar(centerRadius, shapeParam) * centerRcpPdf;
+
+    // If the shape parameter is 0, the weight is be 0.
+    // This is desirable for all but the central sample.
+    // We make sure that if the shape parameter is 0, the weight is non-zero.
+    // Weight normalization will ensure that the result is correct.
+    centerWeight = max(centerWeight, FLT_EPS);
+
+    // Accumulate filtered irradiance and bilateral weights (for renormalization).
+    float3 totalIrradiance = centerWeight * centerIrradiance;
+    float3 totalWeight     = centerWeight;
+
+    uint i; // Declare once to avoid the warning from the Unity shader compiler.
+
+    UNITY_UNROLL
+    for (i = 1; i < SSS_N_SAMPLES_FAR_FIELD; i++)
+    {
+        // Integrate over the image or tangent plane in the view space.
+        EvaluateSample(i, n, profileID, iR, iP, pixelCoord + 0.5, cacheOffset,
+                       shapeParam, centerPosVS, mmPerUnit, pixelsPerMm,
+                       startAngle, tangentX, tangentY, projMatrix,
+                       totalIrradiance, totalWeight);
+    }
+
+    UNITY_BRANCH if (!useNearFieldKernel)
+    {
+         StoreResult(pixelCoord, albedo * totalIrradiance / totalWeight);
+         return;
+    }
+
+    UNITY_UNROLL
+    for (i = SSS_N_SAMPLES_FAR_FIELD; i < SSS_N_SAMPLES_NEAR_FIELD; i++)
+    {
+        // Integrate over the image or tangent plane in the view space.
+        EvaluateSample(i, n, profileID, iR, iP, pixelCoord + 0.5, cacheOffset,
+                       shapeParam, centerPosVS, mmPerUnit, pixelsPerMm,
+                       startAngle, tangentX, tangentY, projMatrix,
+                       totalIrradiance, totalWeight);
+    }
+
+    StoreResult(pixelCoord, albedo * totalIrradiance / totalWeight);
+}

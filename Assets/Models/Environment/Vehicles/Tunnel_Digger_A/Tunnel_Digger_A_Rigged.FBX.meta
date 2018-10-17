@@ -1,0 +1,565 @@
+fileFormatVersion: 2
+guid: 9558128a1efd0d4418c1f388cedb6a41
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: Bone_Front_Spinner_A
+    100002: Bone_Front_Spinner_B
+    100004: Bone_Front_Spinner_C
+    100006: Bone_Front_Spinner_D
+    100008: Bone_Front_Spinner_E
+    100010: Bone_Front_Spinner_F
+    100012: Bone_Front_Spinner_G
+    100014: Bone_Tunnel_Digger_A
+    100016: Bone_TunneL_Digger_A_Front
+    100018: Collision_Tunnel_Digger_A
+    100020: Collision_TunneL_Digger_A_Front
+    100022: Collision_TunneL_Digger_A_Front_Spinner_A
+    100024: Collision_TunneL_Digger_A_Front_Spinner_B
+    100026: Collision_TunneL_Digger_A_Front_Spinner_C
+    100028: Collision_TunneL_Digger_A_Front_Spinner_D
+    100030: Collision_TunneL_Digger_A_Front_Spinner_E
+    100032: Collision_TunneL_Digger_A_Front_Spinner_F
+    100034: Collision_TunneL_Digger_A_Front_Spinner_G
+    100036: Geom_TunneL_Digger_A_Front_LOD00
+    100038: Geom_TunneL_Digger_A_Front_LOD01
+    100040: Geom_TunneL_Digger_A_Front_LOD02
+    100042: Geom_TunneL_Digger_A_Front_LOD03
+    100044: Geom_TunneL_Digger_A_Front_Spinner_A_LOD00
+    100046: Geom_TunneL_Digger_A_Front_Spinner_A_LOD01
+    100048: Geom_TunneL_Digger_A_Front_Spinner_A_LOD02
+    100050: Geom_TunneL_Digger_A_Front_Spinner_A_LOD03
+    100052: Geom_TunneL_Digger_A_Front_Spinner_B_LOD00
+    100054: Geom_TunneL_Digger_A_Front_Spinner_B_LOD01
+    100056: Geom_TunneL_Digger_A_Front_Spinner_B_LOD02
+    100058: Geom_TunneL_Digger_A_Front_Spinner_B_LOD03
+    100060: Geom_TunneL_Digger_A_Front_Spinner_C_LOD00
+    100062: Geom_TunneL_Digger_A_Front_Spinner_C_LOD01
+    100064: Geom_TunneL_Digger_A_Front_Spinner_C_LOD02
+    100066: Geom_TunneL_Digger_A_Front_Spinner_C_LOD03
+    100068: Geom_TunneL_Digger_A_Front_Spinner_D_LOD00
+    100070: Geom_TunneL_Digger_A_Front_Spinner_D_LOD01
+    100072: Geom_TunneL_Digger_A_Front_Spinner_D_LOD02
+    100074: Geom_TunneL_Digger_A_Front_Spinner_D_LOD03
+    100076: Geom_TunneL_Digger_A_Front_Spinner_E_LOD00
+    100078: Geom_TunneL_Digger_A_Front_Spinner_E_LOD01
+    100080: Geom_TunneL_Digger_A_Front_Spinner_E_LOD02
+    100082: Geom_TunneL_Digger_A_Front_Spinner_E_LOD03
+    100084: Geom_TunneL_Digger_A_Front_Spinner_F_LOD00
+    100086: Geom_TunneL_Digger_A_Front_Spinner_F_LOD01
+    100088: Geom_TunneL_Digger_A_Front_Spinner_F_LOD02
+    100090: Geom_TunneL_Digger_A_Front_Spinner_F_LOD03
+    100092: Geom_TunneL_Digger_A_Front_Spinner_G_LOD00
+    100094: Geom_TunneL_Digger_A_Front_Spinner_G_LOD01
+    100096: Geom_TunneL_Digger_A_Front_Spinner_G_LOD02
+    100098: Geom_TunneL_Digger_A_Front_Spinner_G_LOD03
+    100100: Geom_Tunnel_Digger_A_LOD00
+    100102: Geom_Tunnel_Digger_A_LOD01
+    100104: Geom_Tunnel_Digger_A_LOD02
+    100106: Geom_Tunnel_Digger_A_LOD03
+    100108: Geometry
+    100110: Piston1_Bone001
+    100112: Piston1_Bone002
+    100114: Piston1_Bone003_End
+    100116: Piston1_Dummy
+    100118: Piston2_Bone001
+    100120: Piston2_Bone002
+    100122: Piston2_Bone003_End
+    100124: Piston2_Dummy
+    100126: Skeleton
+    100128: Tunnel_Digger_A
+    100130: //RootNode
+    100132: upnode
+    100134: Bone_Front_Spinner_H
+    100136: Bone_Front_Spinner_I
+    100138: Bone_Front_Spinner_J
+    100140: Bone_Front_Spinner_K
+    100142: Bone_Front_Spinner_L
+    100144: Bone_Front_Spinner_M
+    100146: Bone_Front_Spinner_N
+    100148: Bone_TunneL_Digger_A_001
+    100150: Bone_TunneL_Digger_A_002
+    100152: Bone_Tunnel_Digger_A_Main
+    100154: Geom_TunneL_Digger_A_LOD00
+    100156: Geom_TunneL_Digger_A_LOD01
+    100158: Geom_TunneL_Digger_A_LOD02
+    100160: Geom_TunneL_Digger_A_LOD03
+    100162: Geometry_Tunnel_Digger_A_LOD00
+    100164: Geometry_Tunnel_Digger_A_LOD01
+    100166: Geometry_Tunnel_Digger_A_LOD02
+    100168: Geometry_Tunnel_Digger_A_LOD03
+    400000: Bone_Front_Spinner_A
+    400002: Bone_Front_Spinner_B
+    400004: Bone_Front_Spinner_C
+    400006: Bone_Front_Spinner_D
+    400008: Bone_Front_Spinner_E
+    400010: Bone_Front_Spinner_F
+    400012: Bone_Front_Spinner_G
+    400014: Bone_Tunnel_Digger_A
+    400016: Bone_TunneL_Digger_A_Front
+    400018: Collision_Tunnel_Digger_A
+    400020: Collision_TunneL_Digger_A_Front
+    400022: Collision_TunneL_Digger_A_Front_Spinner_A
+    400024: Collision_TunneL_Digger_A_Front_Spinner_B
+    400026: Collision_TunneL_Digger_A_Front_Spinner_C
+    400028: Collision_TunneL_Digger_A_Front_Spinner_D
+    400030: Collision_TunneL_Digger_A_Front_Spinner_E
+    400032: Collision_TunneL_Digger_A_Front_Spinner_F
+    400034: Collision_TunneL_Digger_A_Front_Spinner_G
+    400036: Geom_TunneL_Digger_A_Front_LOD00
+    400038: Geom_TunneL_Digger_A_Front_LOD01
+    400040: Geom_TunneL_Digger_A_Front_LOD02
+    400042: Geom_TunneL_Digger_A_Front_LOD03
+    400044: Geom_TunneL_Digger_A_Front_Spinner_A_LOD00
+    400046: Geom_TunneL_Digger_A_Front_Spinner_A_LOD01
+    400048: Geom_TunneL_Digger_A_Front_Spinner_A_LOD02
+    400050: Geom_TunneL_Digger_A_Front_Spinner_A_LOD03
+    400052: Geom_TunneL_Digger_A_Front_Spinner_B_LOD00
+    400054: Geom_TunneL_Digger_A_Front_Spinner_B_LOD01
+    400056: Geom_TunneL_Digger_A_Front_Spinner_B_LOD02
+    400058: Geom_TunneL_Digger_A_Front_Spinner_B_LOD03
+    400060: Geom_TunneL_Digger_A_Front_Spinner_C_LOD00
+    400062: Geom_TunneL_Digger_A_Front_Spinner_C_LOD01
+    400064: Geom_TunneL_Digger_A_Front_Spinner_C_LOD02
+    400066: Geom_TunneL_Digger_A_Front_Spinner_C_LOD03
+    400068: Geom_TunneL_Digger_A_Front_Spinner_D_LOD00
+    400070: Geom_TunneL_Digger_A_Front_Spinner_D_LOD01
+    400072: Geom_TunneL_Digger_A_Front_Spinner_D_LOD02
+    400074: Geom_TunneL_Digger_A_Front_Spinner_D_LOD03
+    400076: Geom_TunneL_Digger_A_Front_Spinner_E_LOD00
+    400078: Geom_TunneL_Digger_A_Front_Spinner_E_LOD01
+    400080: Geom_TunneL_Digger_A_Front_Spinner_E_LOD02
+    400082: Geom_TunneL_Digger_A_Front_Spinner_E_LOD03
+    400084: Geom_TunneL_Digger_A_Front_Spinner_F_LOD00
+    400086: Geom_TunneL_Digger_A_Front_Spinner_F_LOD01
+    400088: Geom_TunneL_Digger_A_Front_Spinner_F_LOD02
+    400090: Geom_TunneL_Digger_A_Front_Spinner_F_LOD03
+    400092: Geom_TunneL_Digger_A_Front_Spinner_G_LOD00
+    400094: Geom_TunneL_Digger_A_Front_Spinner_G_LOD01
+    400096: Geom_TunneL_Digger_A_Front_Spinner_G_LOD02
+    400098: Geom_TunneL_Digger_A_Front_Spinner_G_LOD03
+    400100: Geom_Tunnel_Digger_A_LOD00
+    400102: Geom_Tunnel_Digger_A_LOD01
+    400104: Geom_Tunnel_Digger_A_LOD02
+    400106: Geom_Tunnel_Digger_A_LOD03
+    400108: Geometry
+    400110: Piston1_Bone001
+    400112: Piston1_Bone002
+    400114: Piston1_Bone003_End
+    400116: Piston1_Dummy
+    400118: Piston2_Bone001
+    400120: Piston2_Bone002
+    400122: Piston2_Bone003_End
+    400124: Piston2_Dummy
+    400126: Skeleton
+    400128: Tunnel_Digger_A
+    400130: //RootNode
+    400132: upnode
+    400134: Bone_Front_Spinner_H
+    400136: Bone_Front_Spinner_I
+    400138: Bone_Front_Spinner_J
+    400140: Bone_Front_Spinner_K
+    400142: Bone_Front_Spinner_L
+    400144: Bone_Front_Spinner_M
+    400146: Bone_Front_Spinner_N
+    400148: Bone_TunneL_Digger_A_001
+    400150: Bone_TunneL_Digger_A_002
+    400152: Bone_Tunnel_Digger_A_Main
+    400154: Geom_TunneL_Digger_A_LOD00
+    400156: Geom_TunneL_Digger_A_LOD01
+    400158: Geom_TunneL_Digger_A_LOD02
+    400160: Geom_TunneL_Digger_A_LOD03
+    400162: Geometry_Tunnel_Digger_A_LOD00
+    400164: Geometry_Tunnel_Digger_A_LOD01
+    400166: Geometry_Tunnel_Digger_A_LOD02
+    400168: Geometry_Tunnel_Digger_A_LOD03
+    2300000: Geom_TunneL_Digger_A_Front_LOD00
+    2300002: Geom_TunneL_Digger_A_Front_LOD01
+    2300004: Geom_TunneL_Digger_A_Front_LOD02
+    2300006: Geom_TunneL_Digger_A_Front_LOD03
+    2300008: Geom_TunneL_Digger_A_Front_Spinner_A_LOD01
+    2300010: Geom_TunneL_Digger_A_Front_Spinner_A_LOD02
+    2300012: Geom_TunneL_Digger_A_Front_Spinner_A_LOD03
+    2300014: Geom_TunneL_Digger_A_Front_Spinner_B_LOD01
+    2300016: Geom_TunneL_Digger_A_Front_Spinner_B_LOD02
+    2300018: Geom_TunneL_Digger_A_Front_Spinner_B_LOD03
+    2300020: Geom_TunneL_Digger_A_Front_Spinner_C_LOD01
+    2300022: Geom_TunneL_Digger_A_Front_Spinner_C_LOD02
+    2300024: Geom_TunneL_Digger_A_Front_Spinner_C_LOD03
+    2300026: Geom_TunneL_Digger_A_Front_Spinner_D_LOD01
+    2300028: Geom_TunneL_Digger_A_Front_Spinner_D_LOD02
+    2300030: Geom_TunneL_Digger_A_Front_Spinner_D_LOD03
+    2300032: Geom_TunneL_Digger_A_Front_Spinner_E_LOD01
+    2300034: Geom_TunneL_Digger_A_Front_Spinner_E_LOD02
+    2300036: Geom_TunneL_Digger_A_Front_Spinner_E_LOD03
+    2300038: Geom_TunneL_Digger_A_Front_Spinner_F_LOD01
+    2300040: Geom_TunneL_Digger_A_Front_Spinner_F_LOD02
+    2300042: Geom_TunneL_Digger_A_Front_Spinner_F_LOD03
+    2300044: Geom_TunneL_Digger_A_Front_Spinner_G_LOD01
+    2300046: Geom_TunneL_Digger_A_Front_Spinner_G_LOD02
+    2300048: Geom_TunneL_Digger_A_Front_Spinner_G_LOD03
+    2300050: Geom_Tunnel_Digger_A_LOD01
+    2300052: Geom_Tunnel_Digger_A_LOD02
+    2300054: Geom_Tunnel_Digger_A_LOD03
+    3300000: Collision_Tunnel_Digger_A
+    3300002: Collision_TunneL_Digger_A_Front
+    3300004: Collision_TunneL_Digger_A_Front_Spinner_A
+    3300006: Collision_TunneL_Digger_A_Front_Spinner_B
+    3300008: Collision_TunneL_Digger_A_Front_Spinner_C
+    3300010: Collision_TunneL_Digger_A_Front_Spinner_D
+    3300012: Collision_TunneL_Digger_A_Front_Spinner_E
+    3300014: Collision_TunneL_Digger_A_Front_Spinner_F
+    3300016: Collision_TunneL_Digger_A_Front_Spinner_G
+    3300018: Geom_TunneL_Digger_A_Front_LOD00
+    3300020: Geom_TunneL_Digger_A_Front_LOD01
+    3300022: Geom_TunneL_Digger_A_Front_LOD02
+    3300024: Geom_TunneL_Digger_A_Front_LOD03
+    3300026: Geom_TunneL_Digger_A_Front_Spinner_A_LOD01
+    3300028: Geom_TunneL_Digger_A_Front_Spinner_A_LOD02
+    3300030: Geom_TunneL_Digger_A_Front_Spinner_A_LOD03
+    3300032: Geom_TunneL_Digger_A_Front_Spinner_B_LOD01
+    3300034: Geom_TunneL_Digger_A_Front_Spinner_B_LOD02
+    3300036: Geom_TunneL_Digger_A_Front_Spinner_B_LOD03
+    3300038: Geom_TunneL_Digger_A_Front_Spinner_C_LOD01
+    3300040: Geom_TunneL_Digger_A_Front_Spinner_C_LOD02
+    3300042: Geom_TunneL_Digger_A_Front_Spinner_C_LOD03
+    3300044: Geom_TunneL_Digger_A_Front_Spinner_D_LOD01
+    3300046: Geom_TunneL_Digger_A_Front_Spinner_D_LOD02
+    3300048: Geom_TunneL_Digger_A_Front_Spinner_D_LOD03
+    3300050: Geom_TunneL_Digger_A_Front_Spinner_E_LOD01
+    3300052: Geom_TunneL_Digger_A_Front_Spinner_E_LOD02
+    3300054: Geom_TunneL_Digger_A_Front_Spinner_E_LOD03
+    3300056: Geom_TunneL_Digger_A_Front_Spinner_F_LOD01
+    3300058: Geom_TunneL_Digger_A_Front_Spinner_F_LOD02
+    3300060: Geom_TunneL_Digger_A_Front_Spinner_F_LOD03
+    3300062: Geom_TunneL_Digger_A_Front_Spinner_G_LOD01
+    3300064: Geom_TunneL_Digger_A_Front_Spinner_G_LOD02
+    3300066: Geom_TunneL_Digger_A_Front_Spinner_G_LOD03
+    3300068: Geom_Tunnel_Digger_A_LOD01
+    3300070: Geom_Tunnel_Digger_A_LOD02
+    3300072: Geom_Tunnel_Digger_A_LOD03
+    4300000: Geom_TunneL_Digger_A_Front_LOD00
+    4300002: Geom_Tunnel_Digger_A_LOD03
+    4300004: Geom_Tunnel_Digger_A_LOD02
+    4300006: Geom_Tunnel_Digger_A_LOD01
+    4300008: Geom_Tunnel_Digger_A_LOD00
+    4300010: Collision_Tunnel_Digger_A
+    4300012: Collision_TunneL_Digger_A_Front
+    4300014: Collision_TunneL_Digger_A_Front_Spinner_A
+    4300016: Collision_TunneL_Digger_A_Front_Spinner_B
+    4300018: Collision_TunneL_Digger_A_Front_Spinner_C
+    4300020: Collision_TunneL_Digger_A_Front_Spinner_D
+    4300022: Collision_TunneL_Digger_A_Front_Spinner_E
+    4300024: Collision_TunneL_Digger_A_Front_Spinner_F
+    4300026: Collision_TunneL_Digger_A_Front_Spinner_G
+    4300028: Geom_TunneL_Digger_A_Front_LOD01
+    4300030: Geom_TunneL_Digger_A_Front_LOD02
+    4300032: Geom_TunneL_Digger_A_Front_LOD03
+    4300034: Geom_TunneL_Digger_A_Front_Spinner_A_LOD00
+    4300036: Geom_TunneL_Digger_A_Front_Spinner_A_LOD01
+    4300038: Geom_TunneL_Digger_A_Front_Spinner_A_LOD02
+    4300040: Geom_TunneL_Digger_A_Front_Spinner_A_LOD03
+    4300042: Geom_TunneL_Digger_A_Front_Spinner_B_LOD00
+    4300044: Geom_TunneL_Digger_A_Front_Spinner_B_LOD01
+    4300046: Geom_TunneL_Digger_A_Front_Spinner_B_LOD02
+    4300048: Geom_TunneL_Digger_A_Front_Spinner_B_LOD03
+    4300050: Geom_TunneL_Digger_A_Front_Spinner_C_LOD00
+    4300052: Geom_TunneL_Digger_A_Front_Spinner_C_LOD01
+    4300054: Geom_TunneL_Digger_A_Front_Spinner_C_LOD02
+    4300056: Geom_TunneL_Digger_A_Front_Spinner_C_LOD03
+    4300058: Geom_TunneL_Digger_A_Front_Spinner_D_LOD00
+    4300060: Geom_TunneL_Digger_A_Front_Spinner_D_LOD01
+    4300062: Geom_TunneL_Digger_A_Front_Spinner_D_LOD02
+    4300064: Geom_TunneL_Digger_A_Front_Spinner_D_LOD03
+    4300066: Geom_TunneL_Digger_A_Front_Spinner_E_LOD00
+    4300068: Geom_TunneL_Digger_A_Front_Spinner_E_LOD01
+    4300070: Geom_TunneL_Digger_A_Front_Spinner_E_LOD02
+    4300072: Geom_TunneL_Digger_A_Front_Spinner_E_LOD03
+    4300074: Geom_TunneL_Digger_A_Front_Spinner_F_LOD00
+    4300076: Geom_TunneL_Digger_A_Front_Spinner_F_LOD01
+    4300078: Geom_TunneL_Digger_A_Front_Spinner_F_LOD02
+    4300080: Geom_TunneL_Digger_A_Front_Spinner_F_LOD03
+    4300082: Geom_TunneL_Digger_A_Front_Spinner_G_LOD00
+    4300084: Geom_TunneL_Digger_A_Front_Spinner_G_LOD01
+    4300086: Geom_TunneL_Digger_A_Front_Spinner_G_LOD02
+    4300088: Geom_TunneL_Digger_A_Front_Spinner_G_LOD03
+    4300090: Geom_TunneL_Digger_A_LOD01
+    4300092: Geom_TunneL_Digger_A_LOD02
+    4300094: Geom_TunneL_Digger_A_LOD00
+    4300096: Geom_TunneL_Digger_A_LOD03
+    4300098: Geometry_Tunnel_Digger_A_LOD01
+    4300100: Geometry_Tunnel_Digger_A_LOD02
+    4300102: Geometry_Tunnel_Digger_A_LOD00
+    4300104: Geometry_Tunnel_Digger_A_LOD03
+    6400000: Collision_Tunnel_Digger_A
+    6400002: Collision_TunneL_Digger_A_Front
+    6400004: Collision_TunneL_Digger_A_Front_Spinner_A
+    6400006: Collision_TunneL_Digger_A_Front_Spinner_B
+    6400008: Collision_TunneL_Digger_A_Front_Spinner_C
+    6400010: Collision_TunneL_Digger_A_Front_Spinner_D
+    6400012: Collision_TunneL_Digger_A_Front_Spinner_E
+    6400014: Collision_TunneL_Digger_A_Front_Spinner_F
+    6400016: Collision_TunneL_Digger_A_Front_Spinner_G
+    7400000: Idle
+    7400002: Drill_Loop
+    7400004: Drill_Stop
+    9500000: //RootNode
+    11400000: //RootNode
+    13700000: Geom_TunneL_Digger_A_Front_Spinner_A_LOD00
+    13700002: Geom_TunneL_Digger_A_Front_Spinner_B_LOD00
+    13700004: Geom_TunneL_Digger_A_Front_Spinner_C_LOD00
+    13700006: Geom_TunneL_Digger_A_Front_Spinner_D_LOD00
+    13700008: Geom_TunneL_Digger_A_Front_Spinner_E_LOD00
+    13700010: Geom_TunneL_Digger_A_Front_Spinner_F_LOD00
+    13700012: Geom_TunneL_Digger_A_Front_Spinner_G_LOD00
+    13700014: Geom_Tunnel_Digger_A_LOD00
+    13700016: Collision_Tunnel_Digger_A
+    13700018: Geom_TunneL_Digger_A_LOD00
+    13700020: Geom_TunneL_Digger_A_LOD01
+    13700022: Geom_TunneL_Digger_A_LOD02
+    13700024: Geom_TunneL_Digger_A_LOD03
+    13700026: Geometry_Tunnel_Digger_A_LOD00
+    13700028: Geometry_Tunnel_Digger_A_LOD01
+    13700030: Geometry_Tunnel_Digger_A_LOD02
+    13700032: Geometry_Tunnel_Digger_A_LOD03
+    20500000: //RootNode
+  externalObjects: {}
+  materials:
+    importMaterials: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: Skeleton/Tunnel_Digger_A
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.01
+    animationPositionError: 0.01
+    animationScaleError: 0.1
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: Idle
+      takeName: Take 001
+      firstFrame: 0
+      lastFrame: 0
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Geometry
+        weight: 1
+      - path: Geometry/Geometry_Tunnel_Digger_A_LOD00
+        weight: 1
+      - path: Geometry/Geometry_Tunnel_Digger_A_LOD01
+        weight: 1
+      - path: Geometry/Geometry_Tunnel_Digger_A_LOD02
+        weight: 1
+      - path: Geometry/Geometry_Tunnel_Digger_A_LOD03
+        weight: 1
+      - path: Skeleton
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_001
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_001/Bone_Front_Spinner_A
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_001/Bone_Front_Spinner_B
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_001/Bone_Front_Spinner_C
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_001/Bone_Front_Spinner_D
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_001/Bone_Front_Spinner_E
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_001/Bone_Front_Spinner_F
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_001/Bone_Front_Spinner_G
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_002
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_002/Bone_Front_Spinner_H
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_002/Bone_Front_Spinner_I
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_002/Bone_Front_Spinner_J
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_002/Bone_Front_Spinner_K
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_002/Bone_Front_Spinner_L
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_002/Bone_Front_Spinner_M
+        weight: 1
+      - path: Skeleton/Bone_Tunnel_Digger_A_Main/Bone_TunneL_Digger_A_002/Bone_Front_Spinner_N
+        weight: 1
+      - path: Skeleton/Piston1_Bone001
+        weight: 1
+      - path: Skeleton/Piston1_Bone001/Piston1_Bone002
+        weight: 1
+      - path: Skeleton/Piston1_Bone001/Piston1_Bone002/Piston1_Bone003_End
+        weight: 1
+      - path: Skeleton/Piston1_Dummy
+        weight: 1
+      - path: Skeleton/Piston2_Bone001
+        weight: 1
+      - path: Skeleton/Piston2_Bone001/Piston2_Bone002
+        weight: 1
+      - path: Skeleton/Piston2_Bone001/Piston2_Bone002/Piston2_Bone003_End
+        weight: 1
+      - path: Skeleton/Piston2_Dummy
+        weight: 1
+      - path: Skeleton/Tunnel_Digger_A
+        weight: 1
+      maskType: 0
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Drill_Loop
+      takeName: Take 001
+      firstFrame: 0
+      lastFrame: 408
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 0
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
+      keepOriginalOrientation: 1
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 1
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Drill_Stop
+      takeName: Take 001
+      firstFrame: 408
+      lastFrame: 550
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    isReadable: 1
+  meshes:
+    lODScreenPercentages:
+    - 0.25
+    - 0.125
+    - 0.0625
+    - 0.01
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 0.01
+    hasPreviousCalculatedGlobalScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: Tunnel_Digger_A
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 2
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

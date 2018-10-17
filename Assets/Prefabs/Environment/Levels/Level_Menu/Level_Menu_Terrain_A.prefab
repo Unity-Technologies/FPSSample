@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3142998035433236230
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 100006, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_Name
+      value: Level_Menu_Terrain_A_VARIANT
+      objectReference: {fileID: 0}
+    - target: {fileID: 100006, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 65
+      objectReference: {fileID: 0}
+    - target: {fileID: 400006, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.12632294
+      objectReference: {fileID: 0}
+    - target: {fileID: 400006, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.6957317
+      objectReference: {fileID: 0}
+    - target: {fileID: 400006, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.6957317
+      objectReference: {fileID: 0}
+    - target: {fileID: 400006, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.12632294
+      objectReference: {fileID: 0}
+    - target: {fileID: 400006, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: 400006, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -159.41801
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 65
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300000, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300000, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 2a0702df47a26974faf734268ee6a709, type: 2}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3c11ce570ce212848b9c04286bf87455, type: 3}

@@ -1,0 +1,41 @@
+{
+    "MonoBehaviour": {
+        "m_Enabled": true,
+        "m_EditorHideFlags": 0,
+        "m_Name": "",
+        "m_EditorClassIdentifier": "Assembly-CSharp-Editor:FbxExporters.EditorTools:ExportSettings",
+        "Verbose": false,
+        "autoUpdaterEnabled": true,
+        "launchAfterInstallation": true,
+        "HideSendToUnityMenu": true,
+        "BakeAnimation": true,
+        "IntegrationSavePath": "E:\\P4\\sample_game\\prototype01\\main\\ProjectFolder",
+        "selectedDCCApp": 0,
+        "prefabSavePaths": [
+            "."
+        ],
+        "fbxSavePaths": [
+            "."
+        ],
+        "selectedFbxPath": 0,
+        "selectedPrefabPath": 0,
+        "dccOptionNames": [],
+        "dccOptionPaths": [],
+        "exportModelSettingsSerialize": {
+            "exportFormat": 0,
+            "rootMotionTransfer": "",
+            "animatedSkinnedMesh": true,
+            "mayaCompatibleNaming": true,
+            "include": 2,
+            "lodLevel": 0,
+            "objectPosition": 1,
+            "exportUnrendered": true
+        },
+        "convertToPrefabSettingsSerialize": {
+            "exportFormat": 0,
+            "rootMotionTransfer": "",
+            "animatedSkinnedMesh": true,
+            "mayaCompatibleNaming": true
+        }
+    }
+}

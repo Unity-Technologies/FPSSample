@@ -1,0 +1,39 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements">
+    <ui:VisualElement name="content">
+        <Style path="Styles/PixelCacheProfiler"/>
+        <ui:Label name="title" text="Pixel Cache Profiler"/>
+        <ui:VisualElement class="row">
+            <ui:Label text="Total pixel caches: "/>
+            <ui:Label name="totalLabel" text="-"/>
+        </ui:VisualElement>
+        <ui:VisualElement class="indented row">
+            <ui:Label text="Node contents: "/>
+            <ui:Label name="totalNodeContentsLabel" text="-"/>
+        </ui:VisualElement>
+        <ui:VisualElement class="indented row">
+            <ui:Label text="Node previews: "/>
+            <ui:Label name="totalPreviewsLabel" text="-"/>
+        </ui:VisualElement>
+        <ui:VisualElement class="indented row">
+            <ui:Label text="Inline inputs: "/>
+            <ui:Label name="totalInlinesLabel" text="-"/>
+        </ui:VisualElement>
+
+        <ui:VisualElement class="row">
+            <ui:Label text="Dirty pixel caches: "/>
+            <ui:Label name="dirtyLabel" text="-"/>
+        </ui:VisualElement>
+        <ui:VisualElement class="indented row">
+            <ui:Label text="Node contents: "/>
+            <ui:Label name="dirtyNodeContentsLabel" text="-"/>
+        </ui:VisualElement>
+        <ui:VisualElement class="indented row">
+            <ui:Label text="Node previews: "/>
+            <ui:Label name="dirtyPreviewsLabel" text="-"/>
+        </ui:VisualElement>
+        <ui:VisualElement class="indented row">
+            <ui:Label text="Inline inputs: "/>
+            <ui:Label name="dirtyInlinesLabel" text="-"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</UXML>

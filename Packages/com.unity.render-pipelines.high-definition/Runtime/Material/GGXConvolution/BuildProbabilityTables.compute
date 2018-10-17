@@ -1,0 +1,162 @@
+// Given a cube map (passed as a 2D array), builds CDFs of two distributions:
+// 1. 1D texture with marginal densities, telling us the likelihood of selecting a particular row,
+// 2. 2D texture with conditional densities, which correspond to the PDF of the texel given its row.
+// Ref: PBRT v3, 13.6.7 "Piecewise-Constant 2D Distributions".
+// Note that we use the equiareal sphere-to-square mapping instead of the latitude-longitude one.
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+/* --- Input --- */
+
+#define TEXTURE_HEIGHT 256                // Equiareal texture map: cos(theta) = 1.0 - 2.0 * v
+#define TEXTURE_WIDTH  2 * TEXTURE_HEIGHT // Equiareal texture map: phi = TWO_PI * (1.0 - u)
+
+TEXTURECUBE(envMap);                      // Input cubemap
+
+/* --- Output --- */
+
+RWTexture2D<float> marginalRowDensities;  // [(TEXTURE_HEIGHT + 1) x 1] (+ 1 for the image integral)
+RWTexture2D<float> conditionalDensities;  // [TEXTURE_WIDTH x TEXTURE_HEIGHT]
+
+/* --- Implementation --- */
+
+// Creates an access pattern which avoids shared memory bank conflicts.
+#define NUM_BANKS 32
+#define SHARED_MEM(x) ((x) + (x) / NUM_BANKS)
+
+// Performs a block-level parallel scan.
+// Ref: GPU Gems 3, Chapter 39: "Parallel Prefix Sum (Scan) with CUDA".
+#define PARALLEL_SCAN(i, n, temp, sum)                          \
+{                                                               \
+    uint offset;                                                \
+                                                                \
+    /* Execute the up-sweep phase. */                           \
+    for (offset = 1; offset <= n / 2; offset *= 2)              \
+    {                                                           \
+        GroupMemoryBarrierWithGroupSync();                      \
+                                                                \
+        /*** a1 = (2 * i + 1) * offset - 1 */                   \
+        uint a1 = Mad24(Mad24(2, i, 1), offset, -1);            \
+        uint a2 = a1 + offset;                                  \
+                                                                \
+        if (a2 < n)                                             \
+        {                                                       \
+            temp[SHARED_MEM(a2)] += temp[SHARED_MEM(a1)];       \
+        }                                                       \
+    }                                                           \
+                                                                \
+    GroupMemoryBarrierWithGroupSync();                          \
+                                                                \
+    /* Prevent NaNs arising from the division of 0 by 0. */     \
+    sum = max(temp[SHARED_MEM(n - 1)], FLT_EPS);                \
+                                                                \
+    GroupMemoryBarrierWithGroupSync();                          \
+                                                                \
+    /* The exclusive scan requires the last element to be 0. */ \
+    if (i == 0)                                                 \
+    {                                                           \
+        temp[SHARED_MEM(n - 1)] = 0.0;                          \
+    }                                                           \
+                                                                \
+    /* Execute the down-sweep phase. */                         \
+    for (offset = n / 2; offset > 0; offset /= 2)               \
+    {                                                           \
+        GroupMemoryBarrierWithGroupSync();                      \
+                                                                \
+        /*** a1 = (2 * i + 1) * offset - 1 */                   \
+        uint a1 = Mad24(Mad24(2, i, 1), offset, -1);            \
+        uint a2 = a1 + offset;                                  \
+                                                                \
+        if (a2 < n)                                             \
+        {                                                       \
+            float t1 = temp[SHARED_MEM(a1)];                    \
+            temp[SHARED_MEM(a1)]  = temp[SHARED_MEM(a2)];       \
+            temp[SHARED_MEM(a2)] += t1;                         \
+        }                                                       \
+    }                                                           \
+                                                                \
+    GroupMemoryBarrierWithGroupSync();                          \
+}
+
+#pragma kernel ComputeConditionalDensities
+
+groupshared float rowVals[SHARED_MEM(TEXTURE_WIDTH)];
+
+[numthreads(TEXTURE_WIDTH / 2, 1, 1)]
+void ComputeConditionalDensities(uint3 groupId       : SV_GroupID,
+                                 uint3 groupThreadId : SV_GroupThreadID)
+{
+    // There are TEXTURE_HEIGHT thread groups processing 2 texels per thread.
+    const uint n  = TEXTURE_WIDTH;
+    const uint i  = groupThreadId.x;
+    const uint j  = groupId.x;
+    const uint i1 = i;
+    const uint i2 = i + n / 2;
+
+    float w  = TEXTURE_WIDTH;
+    float h  = TEXTURE_HEIGHT;
+    float u1 = i1 / w + 0.5 / w;
+    float u2 = i2 / w + 0.5 / w;
+    float v  = j  / h + 0.5 / h;
+
+    float3 L1 = ConvertEquiarealToCubemap(u1, v);
+    float3 L2 = ConvertEquiarealToCubemap(u2, v);
+    float3 c1 = SAMPLE_TEXTURECUBE_LOD(envMap, s_linear_clamp_sampler, L1, 0).rgb;
+    float3 c2 = SAMPLE_TEXTURECUBE_LOD(envMap, s_linear_clamp_sampler, L2, 0).rgb;
+
+    // Compute the integral of the step function (row values).
+    // TODO: process 4 texels per thread, and manually unroll.
+    rowVals[SHARED_MEM(i1)] = c1.r + c1.g + c1.b;
+    rowVals[SHARED_MEM(i2)] = c2.r + c2.g + c2.b;
+
+    float rowValSum;
+
+    PARALLEL_SCAN(i, n, rowVals, rowValSum)
+
+    // Compute the CDF. Note: the value at (i = n) is implicitly 1.
+    conditionalDensities[uint2(i1, j)] = rowVals[SHARED_MEM(i1)] / rowValSum;
+    conditionalDensities[uint2(i2, j)] = rowVals[SHARED_MEM(i2)] / rowValSum;
+
+    if (i == 0)
+    {
+        float rowIntegralValue = rowValSum / n;
+        marginalRowDensities[uint2(j, 0)] = rowIntegralValue;
+    }
+}
+
+#pragma kernel ComputeMarginalRowDensities
+
+groupshared float rowInts[SHARED_MEM(TEXTURE_HEIGHT)];
+
+[numthreads(TEXTURE_HEIGHT / 2, 1, 1)]
+void ComputeMarginalRowDensities(uint3 groupThreadId : SV_GroupThreadID)
+{
+    // There is only one thread group processing 2 texels per thread.
+    const uint n  = TEXTURE_HEIGHT;
+    const uint i  = groupThreadId.x;
+    const uint i1 = i;
+    const uint i2 = i + n / 2;
+
+    // Compute the integral of the step function (row integrals).
+    // TODO: process 4 texels per thread, and manually unroll.
+    rowInts[SHARED_MEM(i1)] = marginalRowDensities[uint2(i1, 0)];
+    rowInts[SHARED_MEM(i2)] = marginalRowDensities[uint2(i2, 0)];
+
+    float rowIntSum;
+
+    PARALLEL_SCAN(i, n, rowInts, rowIntSum)
+
+    // Compute the CDF. Note: the value at (i = n) is implicitly 1.
+    marginalRowDensities[uint2(i1, 0)] = rowInts[SHARED_MEM(i1)] / rowIntSum;
+    marginalRowDensities[uint2(i2, 0)] = rowInts[SHARED_MEM(i2)] / rowIntSum;
+
+    if (i == 0)
+    {
+        float imgIntegralValue = rowIntSum / n;
+        marginalRowDensities[uint2(n, 0)] = imgIntegralValue;
+    }
+}

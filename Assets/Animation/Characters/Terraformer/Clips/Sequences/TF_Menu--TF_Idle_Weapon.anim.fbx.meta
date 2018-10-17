@@ -1,0 +1,144 @@
+fileFormatVersion: 2
+guid: 5425c428ecc4ae841b1409cb44439125
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: Bullit_Spawn
+    100002: Button
+    100004: Button_End
+    100006: Cooler
+    100008: Front_Hinge
+    100010: Grenade_Eject
+    100012: Grenade_Fuel
+    100014: Grenade_Fuel_Base
+    100016: Grenade_Fuel_Rotate
+    100018: Grenade_Fuel_Shaper
+    100020: Grenade_Spawn
+    100022: Left_Back_Vent
+    100024: Left_Front_Vent
+    100026: Left_Mid_Vent
+    100028: Magazine
+    100030: Magazine_End
+    100032: Main
+    100034: Right_Back_Vent
+    100036: Right_Front_Vent
+    100038: Right_Mid_Vent
+    100040: Skeleton
+    100042: Slide
+    100044: //RootNode
+    100046: Trigger
+    100048: Magazine_Goo
+    400000: Bullit_Spawn
+    400002: Button
+    400004: Button_End
+    400006: Cooler
+    400008: Front_Hinge
+    400010: Grenade_Eject
+    400012: Grenade_Fuel
+    400014: Grenade_Fuel_Base
+    400016: Grenade_Fuel_Rotate
+    400018: Grenade_Fuel_Shaper
+    400020: Grenade_Spawn
+    400022: Left_Back_Vent
+    400024: Left_Front_Vent
+    400026: Left_Mid_Vent
+    400028: Magazine
+    400030: Magazine_End
+    400032: Main
+    400034: Right_Back_Vent
+    400036: Right_Front_Vent
+    400038: Right_Mid_Vent
+    400040: Skeleton
+    400042: Slide
+    400044: //RootNode
+    400046: Trigger
+    400048: Magazine_Goo
+    7400000: TF_Idle_Weapon
+    9500000: //RootNode
+    11400000: //RootNode
+  externalObjects: {}
+  materials:
+    importMaterials: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: <Root Transform>
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 0
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 0.01
+    hasPreviousCalculatedGlobalScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 1
+  copyAvatar: 1
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: d8a208e861797f14db629d906d9e98d1, type: 3}
+  animationType: 2
+  humanoidOversampling: 2
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

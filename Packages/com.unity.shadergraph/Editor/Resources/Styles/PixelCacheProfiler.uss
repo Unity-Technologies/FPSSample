@@ -1,0 +1,11 @@
+PixelCacheProfilerView > #content > #title {
+    font-style: bold;
+}
+
+PixelCacheProfilerView > #content > .row {
+    flex-direction: row;
+}
+
+PixelCacheProfilerView > #content > .indented {
+    padding-left: 8;
+}

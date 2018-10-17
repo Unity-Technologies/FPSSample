@@ -1,0 +1,12 @@
+
+{
+	"name": "com.unity.assetbundlebrowser",
+	"displayName": "Asset Bundle Browser",
+	"version": "1.7.0",
+	"unity": "2018.1",
+	"description": "The Asset Bundle Browser tool enables the user to view and edit the configuration of asset bundles for their Unity project. It will block editing that would create invalid bundles, and inform you of any issues with existing bundles. It also provides basic build functionality.\n\nUse this tool as an alternative to selecting assets and setting their asset bundle manually in the inspector. It can be dropped into any Unity project with a version of 5.6 or greater. It will create a new menu item in Window > AssetBundle Browser. The bundle configuration, build functionality, and built-bundle inspection are split into three tabs within the new window.",
+	"keywords": ["asset", "bundle", "bundles", "assetbundles"],
+	"category": "Asset Bundles",
+	"dependencies": {
+	}
+}

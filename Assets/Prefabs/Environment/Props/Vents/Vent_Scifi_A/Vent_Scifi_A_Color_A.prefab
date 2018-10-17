@@ -1,0 +1,133 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!4 &5807584225301758569 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+  m_PrefabInstance: {fileID: 5807584225301371115}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &783807325509285343
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 5807584225301758569}
+    m_Modifications:
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.00000032782552
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_RootOrder
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235175076001, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235174788225, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_Name
+      value: Vent_Scifi_A_Fan_VARIANT
+      objectReference: {fileID: 0}
+    - target: {fileID: 1483158235176976963, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: cef7ca24193d8a24c9674862c159dfa2, type: 2}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ce2c30193b6782f41a1cc236bff999ae, type: 3}
+--- !u!1001 &5807584225301371115
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90.00001
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_Name
+      value: Vent_Scifi_A_Color_A_VARIANT
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300000, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: cef7ca24193d8a24c9674862c159dfa2, type: 2}
+    - target: {fileID: 100000, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 4294967295
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b376e15b9d2beb340a32396f1028d09d, type: 3}

@@ -1,0 +1,77 @@
+#pragma kernel MaterialFlagsGen_Write       MATERIALFLAGSGEN=MaterialFlagsGen_Write
+#pragma kernel MaterialFlagsGen_Or          MATERIALFLAGSGEN=MaterialFlagsGen_Or        USE_OR
+
+// #pragma enable_d3d11_debug_symbols
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/ShaderBase.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.cs.hlsl"
+
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+#define UNITY_MATERIAL_LIT // Need to be define before including Material.hlsl
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl" // This includes Material.hlsl
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightDefinition.cs.hlsl"
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+#define USE_MATERIAL_FEATURE_FLAGS
+#define NR_THREADS  64
+
+CBUFFER_START(UnityMaterialFlags)
+uint2 g_viDimensions;
+uint g_BaseFeatureFlags;
+CBUFFER_END
+
+groupshared uint ldsFeatureFlags;
+RWStructuredBuffer<uint> g_TileFeatureFlags;
+
+TEXTURE2D(_StencilTexture);               // DXGI_FORMAT_R8_UINT is not supported by Unity
+
+[numthreads(NR_THREADS, 1, 1)]
+void MATERIALFLAGSGEN(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
+{
+    uint2 tileIDX = u3GroupID.xy;
+
+    uint iWidth = g_viDimensions.x;
+    uint iHeight = g_viDimensions.y;
+    uint nrTilesX = (iWidth + (TILE_SIZE_FPTL - 1)) / TILE_SIZE_FPTL;
+
+    // 16 * 4 = 64. We process data by group of 4 pixel
+    uint2 viTilLL = 16 * tileIDX;
+
+    float2 invScreenSize = float2(1.0f / iWidth, 1.0f / iHeight);
+
+    if (threadID == 0)
+    {
+        ldsFeatureFlags = 0;
+    }
+    GroupMemoryBarrierWithGroupSync();
+
+    uint materialFeatureFlags = g_BaseFeatureFlags; // Contain all lightFeatures or 0 (depends if we enable light classification or not)
+    UNITY_UNROLL
+    for(int i = 0; i < 4; i++)
+    {
+        int idx = i * NR_THREADS + threadID;
+        uint2 uCrd = min( uint2(viTilLL.x + (idx & 0xf), viTilLL.y + (idx >> 4)), uint2(iWidth - 1, iHeight - 1));
+
+        // StencilTexture here contain the result of testing if we are not equal to stencil usage NoLighting. i.e (stencil value != NoLighting). The 1.0 mean true.
+        // This test if we are the sky/background or a forward opaque (which tag the stencil as NoLighting)
+        if (LOAD_TEXTURE2D(_StencilTexture, uCrd).r == 1.0)
+        {
+            PositionInputs posInput = GetPositionInput(uCrd, invScreenSize);
+            materialFeatureFlags |= MATERIAL_FEATURE_FLAGS_FROM_GBUFFER(posInput.positionSS);
+        }
+    }
+
+    InterlockedOr(ldsFeatureFlags, materialFeatureFlags);   //TODO: driver might optimize this or we might have to do a manual reduction
+    GroupMemoryBarrierWithGroupSync();
+
+    if(threadID == 0)
+    {
+#ifdef USE_OR
+        g_TileFeatureFlags[tileIDX.y * nrTilesX + tileIDX.x] |= ldsFeatureFlags;
+#else // Use in case we have disabled light classification
+        g_TileFeatureFlags[tileIDX.y * nrTilesX + tileIDX.x] = ldsFeatureFlags;
+#endif
+    }
+}

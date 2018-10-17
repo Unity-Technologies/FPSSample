@@ -1,0 +1,16 @@
+MultiFloatSlotControlView {
+    flex-direction: row;
+    align-items: center;
+}
+
+MultiFloatSlotControlView > #dummy > Label {
+    margin-left: 0;
+    margin-right: 0;
+    cursor: slide-arrow;
+}
+
+MultiFloatSlotControlView > FloatField {
+    width: 30;
+    margin-left: 0;
+    margin-right: 0;
+}

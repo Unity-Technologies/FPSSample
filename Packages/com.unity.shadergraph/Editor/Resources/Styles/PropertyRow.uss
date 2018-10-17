@@ -1,0 +1,30 @@
+PropertyRow EnumField,
+PropertyRow Label,
+PropertyRow Toggle,
+PropertyRow DoubleField {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+PropertyRow > #container{
+    flex-grow: 1;
+    padding-left: 8;
+    padding-right: 8;
+    flex-direction: row;
+}
+
+PropertyRow > #container > #label {
+    width: 200;
+    height: 24;
+    justify-content: center;
+}
+
+PropertyRow > #container > #label > Label {
+    margin-bottom: 3;
+}
+
+PropertyRow > #container > #content{
+    flex-grow: 1;
+    height: 24;
+    justify-content: center;
+}

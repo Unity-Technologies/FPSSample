@@ -1,0 +1,618 @@
+fileFormatVersion: 2
+guid: a23f66f3b78219042808780c6d95f1b5
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: Back_Chest_Plate
+    100002: Camera
+    100004: Chest
+    100006: Enging_Block
+    100008: Front_Chest_Plate
+    100010: Head
+    100012: Head_End
+    100014: Hips
+    100016: Hips_Offset
+    100018: Jaw
+    100020: Left_Chest_Plate
+    100022: Left_Engine_Fan_Low
+    100024: Left_Engine_Fan_Mid
+    100026: Left_Engine_Fan_Up
+    100028: Left_Engine_Pipe_Exhaust
+    100030: Left_Engine_Pipe_Exhaust_End
+    100032: Left_Foot
+    100034: Left_Foot_Inner
+    100036: Left_Foot_Outer
+    100038: Left_Hand
+    100040: Left_Hand_Attach
+    100042: Left_Hand_End
+    100044: Left_Hand_Plate
+    100046: Left_Heel
+    100048: Left_IndexDistal
+    100050: Left_IndexDistalEnd
+    100052: Left_IndexIntermediate
+    100054: Left_IndexProximal
+    100056: Left_LowerArm
+    100058: Left_LowerArm_Attach
+    100060: Left_LowerArm_Translate_Scale
+    100062: Left_LowerLeg
+    100064: Left_LowerLeg_Translate_Scale
+    100066: Left_MiddleDistal
+    100068: Left_MiddleDistalEnd
+    100070: Left_MiddleIntermediate
+    100072: Left_MiddleProximal
+    100074: Left_Offhand_IK
+    100076: Left_RingDistal
+    100078: Left_RingDistalEnd
+    100080: Left_RingIntermediate
+    100082: Left_RingProximal
+    100084: Left_Shoulder
+    100086: Left_ThumbDistal
+    100088: Left_ThumbDistalEnd
+    100090: Left_ThumbIntermediate
+    100092: Left_ThumbProximal
+    100094: Left_Toes
+    100096: Left_ToesEnd
+    100098: Left_Tube_A_Mid
+    100100: Left_Tube_B_Mid
+    100102: Left_Tube_C_Mid
+    100104: Left_UpperArm
+    100106: Left_UpperArm_Shield
+    100108: Left_UpperArm_Shoulder_Plate
+    100110: Left_UpperArm_Translate_Scale
+    100112: Left_UpperArm_Twist_A
+    100114: Left_UpperLeg
+    100116: Left_UpperLeg_Translate_Scale
+    100118: Neck
+    100120: Neck_Twist_A
+    100122: Right_Chest_Plate
+    100124: Right_Engine_Fan_Low
+    100126: Right_Engine_Fan_Mid
+    100128: Right_Engine_Fan_Up
+    100130: Right_Engine_Pipe_Exhaust
+    100132: Right_Engine_Pipe_Exhaust_End
+    100134: Right_Foot
+    100136: Right_Foot_Inner
+    100138: Right_Foot_Outer
+    100140: Right_Hand
+    100142: Right_Hand_Attach
+    100144: Right_Hand_End
+    100146: Right_Hand_Plate
+    100148: Right_Heel
+    100150: Right_IndexDistal
+    100152: Right_IndexDistalEnd
+    100154: Right_IndexIntermediate
+    100156: Right_IndexProximal
+    100158: Right_LowerArm
+    100160: Right_LowerArm_Attach
+    100162: Right_LowerArm_Translate_Scale
+    100164: Right_LowerLeg
+    100166: Right_LowerLeg_Translate_Scale
+    100168: Right_MiddleDistal
+    100170: Right_MiddleDistalEnd
+    100172: Right_MiddleIntermediate
+    100174: Right_MiddleProximal
+    100176: Right_Offhand_IK
+    100178: Right_RingDistal
+    100180: Right_RingDistalEnd
+    100182: Right_RingIntermediate
+    100184: Right_RingProximal
+    100186: Right_Shoulder
+    100188: Right_ThumbDistal
+    100190: Right_ThumbDistalEnd
+    100192: Right_ThumbIntermediate
+    100194: Right_ThumbProximal
+    100196: Right_Toes
+    100198: Right_ToesEnd
+    100200: Right_Tube_A_Mid
+    100202: Right_Tube_B_Mid
+    100204: Right_Tube_C_Mid
+    100206: Right_UpperArm
+    100208: Right_UpperArm_Shoulder_Plate
+    100210: Right_UpperArm_Translate_Scale
+    100212: Right_UpperArm_Twist_A
+    100214: Right_UpperLeg
+    100216: Right_UpperLeg_Translate_Scale
+    100218: Skeleton
+    100220: Spine
+    100222: //RootNode
+    100224: Up_Chest_Plate
+    100226: UpperChest
+    100228: UpperChest_Offset
+    100230: Chest_Noodle
+    100232: Spine_Noodle
+    100234: Root_Motion
+    400000: Back_Chest_Plate
+    400002: Camera
+    400004: Chest
+    400006: Enging_Block
+    400008: Front_Chest_Plate
+    400010: Head
+    400012: Head_End
+    400014: Hips
+    400016: Hips_Offset
+    400018: Jaw
+    400020: Left_Chest_Plate
+    400022: Left_Engine_Fan_Low
+    400024: Left_Engine_Fan_Mid
+    400026: Left_Engine_Fan_Up
+    400028: Left_Engine_Pipe_Exhaust
+    400030: Left_Engine_Pipe_Exhaust_End
+    400032: Left_Foot
+    400034: Left_Foot_Inner
+    400036: Left_Foot_Outer
+    400038: Left_Hand
+    400040: Left_Hand_Attach
+    400042: Left_Hand_End
+    400044: Left_Hand_Plate
+    400046: Left_Heel
+    400048: Left_IndexDistal
+    400050: Left_IndexDistalEnd
+    400052: Left_IndexIntermediate
+    400054: Left_IndexProximal
+    400056: Left_LowerArm
+    400058: Left_LowerArm_Attach
+    400060: Left_LowerArm_Translate_Scale
+    400062: Left_LowerLeg
+    400064: Left_LowerLeg_Translate_Scale
+    400066: Left_MiddleDistal
+    400068: Left_MiddleDistalEnd
+    400070: Left_MiddleIntermediate
+    400072: Left_MiddleProximal
+    400074: Left_Offhand_IK
+    400076: Left_RingDistal
+    400078: Left_RingDistalEnd
+    400080: Left_RingIntermediate
+    400082: Left_RingProximal
+    400084: Left_Shoulder
+    400086: Left_ThumbDistal
+    400088: Left_ThumbDistalEnd
+    400090: Left_ThumbIntermediate
+    400092: Left_ThumbProximal
+    400094: Left_Toes
+    400096: Left_ToesEnd
+    400098: Left_Tube_A_Mid
+    400100: Left_Tube_B_Mid
+    400102: Left_Tube_C_Mid
+    400104: Left_UpperArm
+    400106: Left_UpperArm_Shield
+    400108: Left_UpperArm_Shoulder_Plate
+    400110: Left_UpperArm_Translate_Scale
+    400112: Left_UpperArm_Twist_A
+    400114: Left_UpperLeg
+    400116: Left_UpperLeg_Translate_Scale
+    400118: Neck
+    400120: Neck_Twist_A
+    400122: Right_Chest_Plate
+    400124: Right_Engine_Fan_Low
+    400126: Right_Engine_Fan_Mid
+    400128: Right_Engine_Fan_Up
+    400130: Right_Engine_Pipe_Exhaust
+    400132: Right_Engine_Pipe_Exhaust_End
+    400134: Right_Foot
+    400136: Right_Foot_Inner
+    400138: Right_Foot_Outer
+    400140: Right_Hand
+    400142: Right_Hand_Attach
+    400144: Right_Hand_End
+    400146: Right_Hand_Plate
+    400148: Right_Heel
+    400150: Right_IndexDistal
+    400152: Right_IndexDistalEnd
+    400154: Right_IndexIntermediate
+    400156: Right_IndexProximal
+    400158: Right_LowerArm
+    400160: Right_LowerArm_Attach
+    400162: Right_LowerArm_Translate_Scale
+    400164: Right_LowerLeg
+    400166: Right_LowerLeg_Translate_Scale
+    400168: Right_MiddleDistal
+    400170: Right_MiddleDistalEnd
+    400172: Right_MiddleIntermediate
+    400174: Right_MiddleProximal
+    400176: Right_Offhand_IK
+    400178: Right_RingDistal
+    400180: Right_RingDistalEnd
+    400182: Right_RingIntermediate
+    400184: Right_RingProximal
+    400186: Right_Shoulder
+    400188: Right_ThumbDistal
+    400190: Right_ThumbDistalEnd
+    400192: Right_ThumbIntermediate
+    400194: Right_ThumbProximal
+    400196: Right_Toes
+    400198: Right_ToesEnd
+    400200: Right_Tube_A_Mid
+    400202: Right_Tube_B_Mid
+    400204: Right_Tube_C_Mid
+    400206: Right_UpperArm
+    400208: Right_UpperArm_Shoulder_Plate
+    400210: Right_UpperArm_Translate_Scale
+    400212: Right_UpperArm_Twist_A
+    400214: Right_UpperLeg
+    400216: Right_UpperLeg_Translate_Scale
+    400218: Skeleton
+    400220: Spine
+    400222: //RootNode
+    400224: Up_Chest_Plate
+    400226: UpperChest
+    400228: UpperChest_Offset
+    400230: Chest_Noodle
+    400232: Spine_Noodle
+    400234: Root_Motion
+    7400000: RB_Idle_Enter
+    9500000: //RootNode
+    11400000: //RootNode
+    11400002: //RootNode
+    11400004: //RootNode
+  externalObjects: {}
+  materials:
+    importMaterials: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: Skeleton/Root_Motion
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.01
+    animationPositionError: 0.01
+    animationScaleError: 0.1
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: RB_Idle_Enter
+      takeName: RB_Idle_Enter
+      firstFrame: 0
+      lastFrame: 320
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 1
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 1
+      keepOriginalOrientation: 1
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 1
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask:
+      - path: 
+        weight: 1
+      - path: Geometry
+        weight: 0
+      - path: Geometry/Robot_A_Body
+        weight: 0
+      - path: Geometry/Robot_A_Body/Robot_A_Body_LOD00
+        weight: 0
+      - path: Geometry/Robot_A_Body/Robot_A_Body_LOD01
+        weight: 0
+      - path: Geometry/Robot_A_Body/Robot_A_Body_LOD02
+        weight: 0
+      - path: Geometry/Robot_A_Body/Robot_A_Body_LOD03
+        weight: 0
+      - path: Geometry/Robot_A_LowerArm_Left
+        weight: 0
+      - path: Geometry/Robot_A_LowerArm_Left/Robot_A_LowerArm_Left_LOD0
+        weight: 0
+      - path: Geometry/Robot_A_LowerArm_Left/Robot_A_LowerArm_Left_LOD01
+        weight: 0
+      - path: Geometry/Robot_A_LowerArm_Left/Robot_A_LowerArm_Left_LOD02
+        weight: 0
+      - path: Geometry/Robot_A_LowerArm_Left/Robot_A_LowerArm_Left_LOD03
+        weight: 0
+      - path: Skeleton
+        weight: 0
+      - path: Skeleton/Camera
+        weight: 1
+      - path: Skeleton/Hips
+        weight: 1
+      - path: Skeleton/Hips/Hips_Offset
+        weight: 1
+      - path: Skeleton/Hips/Left_UpperLeg
+        weight: 1
+      - path: Skeleton/Hips/Left_UpperLeg/Left_LowerLeg
+        weight: 1
+      - path: Skeleton/Hips/Left_UpperLeg/Left_LowerLeg/Left_Foot
+        weight: 1
+      - path: Skeleton/Hips/Left_UpperLeg/Left_LowerLeg/Left_Foot/Left_Heel
+        weight: 0
+      - path: Skeleton/Hips/Left_UpperLeg/Left_LowerLeg/Left_Foot/Left_Toes
+        weight: 1
+      - path: Skeleton/Hips/Left_UpperLeg/Left_LowerLeg/Left_Foot/Left_Toes/Left_Foot_Inner
+        weight: 0
+      - path: Skeleton/Hips/Left_UpperLeg/Left_LowerLeg/Left_Foot/Left_Toes/Left_Foot_Outer
+        weight: 0
+      - path: Skeleton/Hips/Left_UpperLeg/Left_LowerLeg/Left_Foot/Left_Toes/Left_ToesEnd
+        weight: 0
+      - path: Skeleton/Hips/Left_UpperLeg/Left_LowerLeg/Left_LowerLeg_Translate_Scale
+        weight: 0
+      - path: Skeleton/Hips/Left_UpperLeg/Left_UpperLeg_Translate_Scale
+        weight: 0
+      - path: Skeleton/Hips/Right_UpperLeg
+        weight: 1
+      - path: Skeleton/Hips/Right_UpperLeg/Right_LowerLeg
+        weight: 1
+      - path: Skeleton/Hips/Right_UpperLeg/Right_LowerLeg/Right_Foot
+        weight: 1
+      - path: Skeleton/Hips/Right_UpperLeg/Right_LowerLeg/Right_Foot/Right_Heel
+        weight: 0
+      - path: Skeleton/Hips/Right_UpperLeg/Right_LowerLeg/Right_Foot/Right_Toes
+        weight: 1
+      - path: Skeleton/Hips/Right_UpperLeg/Right_LowerLeg/Right_Foot/Right_Toes/Right_Foot_Inner
+        weight: 0
+      - path: Skeleton/Hips/Right_UpperLeg/Right_LowerLeg/Right_Foot/Right_Toes/Right_Foot_Outer
+        weight: 0
+      - path: Skeleton/Hips/Right_UpperLeg/Right_LowerLeg/Right_Foot/Right_Toes/Right_ToesEnd
+        weight: 0
+      - path: Skeleton/Hips/Right_UpperLeg/Right_LowerLeg/Right_LowerLeg_Translate_Scale
+        weight: 0
+      - path: Skeleton/Hips/Right_UpperLeg/Right_UpperLeg_Translate_Scale
+        weight: 0
+      - path: Skeleton/Hips/Spine
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/Chest_Noodle
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block/Left_Engine_Fan_Low
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block/Left_Engine_Fan_Mid
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block/Left_Engine_Fan_Up
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block/Left_Engine_Pipe_Exhaust
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block/Left_Engine_Pipe_Exhaust/Left_Engine_Pipe_Exhaust_End
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block/Right_Engine_Fan_Low
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block/Right_Engine_Fan_Mid
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block/Right_Engine_Fan_Up
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block/Right_Engine_Pipe_Exhaust
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Enging_Block/Right_Engine_Pipe_Exhaust/Right_Engine_Pipe_Exhaust_End
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_Hand_Attach
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_Hand_Attach/Left_Offhand_IK
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_Hand_End
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_Hand_Plate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_IndexProximal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_IndexProximal/Left_IndexIntermediate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_IndexProximal/Left_IndexIntermediate/Left_IndexDistal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_IndexProximal/Left_IndexIntermediate/Left_IndexDistal/Left_IndexDistalEnd
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_MiddleProximal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_MiddleProximal/Left_MiddleIntermediate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_MiddleProximal/Left_MiddleIntermediate/Left_MiddleDistal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_MiddleProximal/Left_MiddleIntermediate/Left_MiddleDistal/Left_MiddleDistalEnd
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_RingProximal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_RingProximal/Left_RingIntermediate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_RingProximal/Left_RingIntermediate/Left_RingDistal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_RingProximal/Left_RingIntermediate/Left_RingDistal/Left_RingDistalEnd
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_ThumbProximal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_ThumbProximal/Left_ThumbIntermediate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_ThumbProximal/Left_ThumbIntermediate/Left_ThumbDistal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand/Left_ThumbProximal/Left_ThumbIntermediate/Left_ThumbDistal/Left_ThumbDistalEnd
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_LowerArm_Attach
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_LowerArm_Translate_Scale
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_UpperArm_Translate_Scale
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_UpperArm_Twist_A
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_UpperArm_Twist_A/Left_UpperArm_Shoulder_Plate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_UpperArm_Twist_A/Left_UpperArm_Shoulder_Plate/Left_UpperArm_Shield
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Neck
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Neck/Head
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Neck/Head/Head_End
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Neck/Head/Jaw
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Neck/Neck_Twist_A
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_Hand_Attach
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_Hand_Attach/Right_Offhand_IK
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_Hand_End
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_Hand_Plate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_IndexProximal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_IndexProximal/Right_IndexIntermediate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_IndexProximal/Right_IndexIntermediate/Right_IndexDistal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_IndexProximal/Right_IndexIntermediate/Right_IndexDistal/Right_IndexDistalEnd
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_MiddleProximal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_MiddleProximal/Right_MiddleIntermediate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_MiddleProximal/Right_MiddleIntermediate/Right_MiddleDistal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_MiddleProximal/Right_MiddleIntermediate/Right_MiddleDistal/Right_MiddleDistalEnd
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_RingProximal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_RingProximal/Right_RingIntermediate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_RingProximal/Right_RingIntermediate/Right_RingDistal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_RingProximal/Right_RingIntermediate/Right_RingDistal/Right_RingDistalEnd
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_ThumbProximal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_ThumbProximal/Right_ThumbIntermediate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_ThumbProximal/Right_ThumbIntermediate/Right_ThumbDistal
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_ThumbProximal/Right_ThumbIntermediate/Right_ThumbDistal/Right_ThumbDistalEnd
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_LowerArm_Attach
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_LowerArm_Translate_Scale
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_UpperArm_Translate_Scale
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_UpperArm_Twist_A
+        weight: 0
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_UpperArm_Twist_A/Right_UpperArm_Shoulder_Plate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Back_Chest_Plate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Front_Chest_Plate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Left_Chest_Plate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Left_Tube_A_Mid
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Left_Tube_B_Mid
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Left_Tube_C_Mid
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Right_Chest_Plate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Right_Tube_A_Mid
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Right_Tube_B_Mid
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Right_Tube_C_Mid
+        weight: 1
+      - path: Skeleton/Hips/Spine/Chest/UpperChest/UpperChest_Offset/Up_Chest_Plate
+        weight: 1
+      - path: Skeleton/Hips/Spine/Spine_Noodle
+        weight: 0
+      - path: Skeleton/Root_Motion
+        weight: 1
+      maskType: 1
+      maskSource: {fileID: 31900000, guid: d987d953553912a4c91129535d85d2f4, type: 2}
+      additiveReferencePoseFrame: 0
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 0.01
+    hasPreviousCalculatedGlobalScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 1
+  copyAvatar: 1
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: b25f47f9f630b1346b0b7f9aaa6c697a, type: 3}
+  animationType: 2
+  humanoidOversampling: 2
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

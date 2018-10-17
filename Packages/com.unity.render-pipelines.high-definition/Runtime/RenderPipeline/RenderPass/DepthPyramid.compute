@@ -1,0 +1,44 @@
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+#pragma kernel KDepthDownsample8DualUav  KERNEL_SIZE=8  KERNEL_NAME=KDepthDownsample8DualUav
+
+RW_TEXTURE2D(float, _DepthMipChain);
+
+CBUFFER_START(cb)
+    uint4 _SrcOffsetAndLimit; // {x, y, w - 1, h - 1}
+    uint4 _DstOffset;         // {x, y, 0, 0}
+CBUFFER_END
+
+#if UNITY_REVERSED_Z
+# define MIN_DEPTH(l, r) max(l, r)
+#else
+# define MIN_DEPTH(l, r) min(l, r)
+#endif
+
+// Downsample a depth texture by taking the min value of sampled pixels
+// The size of the dispatch is (DstMipSize / KernelSize).
+[numthreads(KERNEL_SIZE, KERNEL_SIZE, 1)]
+void KERNEL_NAME(uint2 dispatchThreadId : SV_DispatchThreadID)
+{
+    uint2 srcOffset = _SrcOffsetAndLimit.xy;
+    uint2 srcLimit  = _SrcOffsetAndLimit.zw;
+    uint2 dstOffset = _DstOffset.xy;
+
+    // Upper-left pixel coordinate of quad that this thread will read
+    uint2 srcPixelUL = srcOffset + (dispatchThreadId << 1);
+
+    float p00 = _DepthMipChain[min(srcPixelUL + uint2(0u, 0u), srcLimit)];
+    float p10 = _DepthMipChain[min(srcPixelUL + uint2(1u, 0u), srcLimit)];
+    float p01 = _DepthMipChain[min(srcPixelUL + uint2(0u, 1u), srcLimit)];
+    float p11 = _DepthMipChain[min(srcPixelUL + uint2(1u, 1u), srcLimit)];
+    float4 depths = float4(p00, p10, p01, p11);
+
+    // Select the closest sample
+    float minDepth = MIN_DEPTH(MIN_DEPTH(depths.x, depths.y), MIN_DEPTH(depths.z, depths.w));
+
+    _DepthMipChain[dstOffset + dispatchThreadId] = minDepth;
+}
+
+#undef MIN_DEPTH

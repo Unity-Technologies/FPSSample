@@ -1,0 +1,51 @@
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/BC6H.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Sampling/Sampling.hlsl"
+
+#pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+TextureCube<float4> _Source;
+RWTexture2DArray<uint4> _Target;
+int _MipIndex;
+
+SAMPLER(s_point_clamp);
+
+static const uint2 kOffsets[] =
+{
+    uint2(0, 0), uint2(1, 0), uint2(2, 0), uint2(3, 0),
+    uint2(0, 1), uint2(1, 1), uint2(2, 1), uint2(3, 1),
+    uint2(0, 2), uint2(1, 2), uint2(2, 2), uint2(3, 2),
+    uint2(0, 3), uint2(1, 3), uint2(2, 3), uint2(3, 3),
+};
+
+#pragma kernel KEncodeFastCubemapMip
+[numthreads(1, 1, 1)]
+void KEncodeFastCubemapMip(uint3 groupId : SV_GroupID, uint3 groupThreadId : SV_GroupThreadID, uint3 dispatchThreadId : SV_DispatchThreadID)
+{
+    uint width = 0;
+    uint height = 0;
+    _Source.GetDimensions(width, height);
+    int size = width >> _MipIndex;
+
+    // Load 4x4 pixel block
+    float3 texels[16];
+
+    uint2 topLeftSourceID = dispatchThreadId.xy << 2;
+    uint faceId = dispatchThreadId.z;
+
+    float2 nvc;
+    float3 dir;
+    for (uint i = 0u; i < 16; ++i)
+    {
+        nvc = CubemapTexelToNVC(topLeftSourceID + kOffsets[i], size);
+        dir = CubemapTexelToDirection(nvc, faceId);
+        texels[i] = SAMPLE_TEXTURECUBE_LOD(_Source, s_point_clamp, dir, _MipIndex).rgb;
+    }
+
+    uint4 block = uint4(0, 0, 0, 0);
+    float blockMSLE = 0;
+
+    EncodeMode11(block, blockMSLE, texels);
+
+    _Target[dispatchThreadId] = block;
+}

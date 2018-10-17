@@ -1,0 +1,343 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: NewShaderVariants
+  m_Shaders:
+    data:
+      first: {fileID: 19, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 66, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 45, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: DIRECTIONAL _EMISSION
+          passType: 4
+        - keywords: DIRECTIONAL _NORMALMAP _SPECGLOSSMAP
+          passType: 4
+        - keywords: DIRECTIONAL _EMISSION _NORMALMAP _SPECGLOSSMAP
+          passType: 4
+        - keywords: DIRECTIONAL _DETAIL_MULX2 _NORMALMAP _PARALLAXMAP _SPECGLOSSMAP
+          passType: 4
+        - keywords: DIRECTIONAL
+          passType: 5
+        - keywords: DIRECTIONAL _NORMALMAP _SPECGLOSSMAP
+          passType: 5
+        - keywords: DIRECTIONAL _DETAIL_MULX2 _NORMALMAP _PARALLAXMAP _SPECGLOSSMAP
+          passType: 5
+        - keywords: SHADOWS_DEPTH
+          passType: 8
+        - keywords: SHADOWS_DEPTH _SPECGLOSSMAP
+          passType: 8
+        - keywords: SHADOWS_DEPTH _PARALLAXMAP _SPECGLOSSMAP
+          passType: 8
+    data:
+      first: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: DIRECTIONAL
+          passType: 4
+        - keywords: DIRECTIONAL _EMISSION
+          passType: 4
+        - keywords: DIRECTIONAL _NORMALMAP
+          passType: 4
+        - keywords: DIRECTIONAL _EMISSION _NORMALMAP
+          passType: 4
+        - keywords: DIRECTIONAL _ALPHATEST_ON _EMISSION
+          passType: 4
+        - keywords: DIRECTIONAL _ALPHAPREMULTIPLY_ON
+          passType: 4
+        - keywords: DIRECTIONAL _ALPHAPREMULTIPLY_ON _EMISSION
+          passType: 4
+        - keywords: DIRECTIONAL _NORMALMAP _PARALLAXMAP
+          passType: 4
+        - keywords: DIRECTIONAL
+          passType: 5
+        - keywords: DIRECTIONAL _NORMALMAP
+          passType: 5
+        - keywords: DIRECTIONAL _ALPHATEST_ON
+          passType: 5
+        - keywords: SPOT _ALPHAPREMULTIPLY_ON
+          passType: 5
+        - keywords: DIRECTIONAL _ALPHAPREMULTIPLY_ON
+          passType: 5
+        - keywords: DIRECTIONAL _NORMALMAP _PARALLAXMAP
+          passType: 5
+        - keywords: SHADOWS_DEPTH
+          passType: 8
+        - keywords: SHADOWS_DEPTH _ALPHATEST_ON
+          passType: 8
+        - keywords: SHADOWS_DEPTH _ALPHAPREMULTIPLY_ON
+          passType: 8
+        - keywords: SHADOWS_DEPTH _PARALLAXMAP
+          passType: 8
+        - keywords: UNITY_HDR_ON
+          passType: 10
+        - keywords: DIRLIGHTMAP_COMBINED DYNAMICLIGHTMAP_ON UNITY_HDR_ON
+          passType: 10
+        - keywords: UNITY_HDR_ON _EMISSION
+          passType: 10
+        - keywords: DIRLIGHTMAP_COMBINED DYNAMICLIGHTMAP_ON UNITY_HDR_ON _EMISSION
+          passType: 10
+        - keywords: UNITY_HDR_ON _EMISSION _NORMALMAP
+          passType: 10
+        - keywords: UNITY_HDR_ON _ALPHATEST_ON _EMISSION
+          passType: 10
+        - keywords: 
+          passType: 11
+        - keywords: _EMISSION
+          passType: 11
+    data:
+      first: {fileID: 64, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: SHADOWS_SPLIT_SPHERES
+          passType: 0
+    data:
+      first: {fileID: 74, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+        - keywords: UNITY_HDR_ON
+          passType: 0
+    data:
+      first: {fileID: 69, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: SPOT UNITY_HDR_ON
+          passType: 0
+        - keywords: DIRECTIONAL UNITY_HDR_ON
+          passType: 0
+        - keywords: POINT UNITY_HDR_ON
+          passType: 0
+        - keywords: SHADOWS_DEPTH SPOT UNITY_HDR_ON
+          passType: 0
+        - keywords: DIRECTIONAL SHADOWS_SCREEN UNITY_HDR_ON
+          passType: 0
+        - keywords: SHADOWS_DEPTH SHADOWS_SOFT SPOT UNITY_HDR_ON
+          passType: 0
+    data:
+      first: {fileID: 75, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+        - keywords: 
+          passType: 12
+    data:
+      first: {fileID: 7, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: DIRECTIONAL
+          passType: 4
+        - keywords: DIRECTIONAL
+          passType: 5
+        - keywords: SHADOWS_DEPTH
+          passType: 8
+    data:
+      first: {fileID: 51, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: DIRECTIONAL
+          passType: 4
+        - keywords: DIRECTIONAL
+          passType: 5
+        - keywords: SHADOWS_DEPTH
+          passType: 8
+    data:
+      first: {fileID: 103, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 106, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: _SUNDISK_SIMPLE
+          passType: 0
+        - keywords: _SUNDISK_HIGH_QUALITY
+          passType: 0
+    data:
+      first: {fileID: 200, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 202, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 203, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 206, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 207, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 9000, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 9001, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 9002, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 9003, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 10720, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 10723, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 10752, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 15104, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 15105, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 15106, guid: 0000000000000000f000000000000000, type: 0}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: cf9fe3c6badaedf4aa507a8a3eae07cc, type: 3}
+      second:
+        variants:
+        - keywords: ATMOSPHERICS ATMOSPHERICS_OCCLUSION ATMOSPHERICS_OCCLUSION_EDGE_FIXUP
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: 0997715dbbf3a1e41b8df8c3d734e682, type: 3}
+      second:
+        variants:
+        - keywords: ATMOSPHERICS_OCCLUSION SHADOWS_NATIVE
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: 4ceb73bc148699b469361531d6062548, type: 3}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+        - keywords: ANTI_FLICKER
+          passType: 0
+        - keywords: ANTI_FLICKER EYE_ADAPTATION
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: 607a5643efb168f429e438f7d6ad270a, type: 3}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+        - keywords: SHADOWS_DEPTH
+          passType: 8
+    data:
+      first: {fileID: 4800000, guid: 725384793f7b4ec4c8a6e098330a2f6a, type: 3}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: 81899cddfbc72494497a6db0ae045f2c, type: 3}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: 8ce0a6f4c8cae334d8a5617f302b6769, type: 3}
+      second:
+        variants:
+        - keywords: BLOOM_LENS_DIRT CHROMATIC_ABERRATION COLOR_GRADING EYE_ADAPTATION
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: d248d4d1588851f43a9fa18a4e6f0209, type: 3}
+      second:
+        variants:
+        - keywords: TONEMAPPING_FILMIC
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: e881ae5627d1cc84395303acfbca6fb2, type: 3}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: ec6c5af987867f54aa08fba81ee279bd, type: 3}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+    data:
+      first: {fileID: 4800000, guid: fc7ddc365b4e40841ae3272224b3982f, type: 3}
+      second:
+        variants:
+        - keywords: 
+          passType: 0
+        - keywords: ATMOSPHERICS
+          passType: 0

@@ -1,0 +1,10 @@
+GradientSlotControlView {
+    flex-direction: row;
+    align-items: center;
+}
+
+GradientSlotControlView > GradientField {
+    margin-left: 0;
+    margin-right: 0;
+    width: 41;
+}

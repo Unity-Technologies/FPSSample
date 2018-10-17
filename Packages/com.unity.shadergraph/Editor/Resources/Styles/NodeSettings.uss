@@ -1,0 +1,20 @@
+NodeSettingsView {
+    width: 362;
+    position-type: absolute;
+    slice-top: 40;
+    slice-left: 80;
+    slice-right: 25;
+    slice-bottom: 25;
+    padding-top: 15;
+    padding-left: 4;
+    padding-right: 4;
+    padding-bottom: 4;
+    background-image: resource("Icons/Settings_Flyout_9slice");
+}
+
+NodeSettingsView > #mainContainer {
+    padding-top: 4;
+    padding-left: 4;
+    padding-right: 4;
+    padding-bottom: 4;
+}
