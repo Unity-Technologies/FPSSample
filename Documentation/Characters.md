@@ -11,16 +11,16 @@ Characters are Modeled and Rigged in Maya and exported into FBX files.
 ### Prefabs
 Prefab are where Materials are assigned and additional components for game play systems are added and configures. We use Prefab Variants as they allow the prefab to stay up to date as mesh, skeleton and skinning changes throughout production.
 
-![](images/CharacterPrefabs.png)
+![](Images/CharacterPrefabs.png)
 
 We have different prefabs for each character, like first person, client, server, hit collision and ragdoll. A simplified version of the characters skeleton is used where appropriate:
 
-![](images/ReducedSkeleton.png)
+![](Images/ReducedSkeleton.png)
 
 ### Skeleton Component
 The Skeleton Component stores information about the characters bone hierarchy, bone names and default pose for quick lookup at runtime. It also lets you visualize and interact with the skeleton in the scene view.
 
-![](images/SkeletonComponent.png)
+![](Images/SkeletonComponent.png)
 
 It’s added during import, in order to stay in sync with the model.fbx. Placing skeleton root nodes below a transform/group called “Skeleton” that is a child of the prefab root, will let the skeleton be picked up correctly by the AssetPostProcessor: 
 
@@ -32,7 +32,7 @@ Procedural bone components (Twist, Fan and TranslateScale) help with deformation
 > //sample_game/prototype01/main/ProjectFolder/Assets/Scripts/EditorTools/Editor/SkeletonImporter.cs.
 
 
-![](images/ProceduralBones.png)
+![](Images/ProceduralBones.png)
 
 Data about procedural bone setup is stored in MonoBehaviors. These also drive the bones in edit mode, so you may interact with the characters skeleton and see the behaviour of the procedural bones.
 > E.G: //sample_game/prototype01/main/ProjectFolder/Assets/Scripts/Game/Systems/Character/Components/TranslateScale.cs
@@ -49,10 +49,10 @@ The project and pipeline is a work in progress and there are plenty of things fo
 ### Humanoid Configuration
 A Stance Pose that is parallel to world coordinates, without bends in in arms and knees is used for best results. 
 
-![](images/TPose.png)
+![](Images/TPose.png)
 
 Additional Settings:
 * Twist extraction is disabled as we use our own twist solution with dedicated twist bones.
 * Translation DoF (Degrees of freedom) is enabled to allow for translation based stretch.
 
-![](images/HumanoidSettings.png)
+![](Images/HumanoidSettings.png)
