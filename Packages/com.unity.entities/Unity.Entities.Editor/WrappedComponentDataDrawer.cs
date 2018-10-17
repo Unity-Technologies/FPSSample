@@ -8,6 +8,7 @@ namespace Unity.Entities.Editor
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
+            property.isExpanded = true;
             return EditorGUI.GetPropertyHeight(property)
                    - EditorGUIUtility.standardVerticalSpacing
                    - EditorGUIUtility.singleLineHeight;

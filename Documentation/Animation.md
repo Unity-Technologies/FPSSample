@@ -6,7 +6,7 @@ We assume an iterative workflow where animations are put into game in their earl
 ### Authoring
 Animation is done in Maya. A Maya scene typically contains a grouping of related animations, for instance all animations for the Stand State.
 
-![](images~/MayaAnimation.png)
+![](images/MayaAnimation.png)
 
 From here a seperate clip is exported for each animation, with the help of a custom exporter. Splitting each animation into multiple exports allow for quick export and import times. E.G:
 
@@ -25,11 +25,11 @@ The use of translation driven squash and stretch (TranslateScale Component) allo
 ### Avatars
 We aim to define the Avatar for a Skeleton once (well once for Humanoid and once for Generic) and let any subsequent model and animation FBX’s copy this avatar:
 
-![](images~/AvatarReference.png)
+![](images/AvatarReference.png)
 
 Currently all Avatars copies must be updated if the source Avatar changes. Here is a small script that will accomplish that:
 
-![](images~/UpdateAvatarReferences.png)
+![](images/UpdateAvatarReferences.png)
 
 ### Avatar Masks
 We use Avatar Masks for all our animations for a few reasons:
@@ -38,15 +38,15 @@ We use Avatar Masks for all our animations for a few reasons:
 * Generate curves for Generic bones when using Humanoid (these are masked out by default when no mask is used).
 
 
-![](images~/DefaultMask.png)
+![](images/DefaultMask.png)
 
 As with Avatars, we assume a single default mask will be used for all Clips, unless a special case mask is needed. So we use the copy from option:
 
-![](images~/ClipMask.png)
+![](images/ClipMask.png)
 
 If the source mask changes it must be updated in all dependent clips, so there's a button for that:
 
-![](images~/UpdateAnimationMasks.png)
+![](images/UpdateAnimationMasks.png)
 
 ### Import AssetPostProcessor
 An AssetPostProcessor is used during animation import, which does just a few things:
@@ -62,4 +62,4 @@ Humanoid has the option of Leg and Arm stretch (Anti pop/Soft IK), which will sl
 
 With our choice of animation style and having almost purely character specific animations, turning this feature off made the most sense. 
 
-![](images~/HumanoidSettings.png)
+![](images/HumanoidSettings.png)
