@@ -501,20 +501,22 @@ public class Game : MonoBehaviour
             {
                 hdpipe.DebugLayer2DCallback = DebugOverlay.Render;
                 hdpipe.DebugLayer3DCallback = DebugOverlay.Render3D;
+
+                var layer = LayerMask.NameToLayer("PostProcess Volumes");
+                if (layer == -1)
+                    GameDebug.LogWarning("Unable to find layer mask for camera fader");
+                else
+                {
+                    m_Exposure = ScriptableObject.CreateInstance<AutoExposure>();
+                    m_Exposure.active = false;
+                    m_Exposure.enabled.Override(true);
+                    m_Exposure.keyValue.Override(0);
+                    m_ExposureVolume = PostProcessManager.instance.QuickVolume(layer, 100.0f, m_Exposure);
+                }
+
                 pipeSetup = true;
             }
 
-            var layer = LayerMask.NameToLayer("PostProcess Volumes");
-            if (layer == -1)
-                GameDebug.LogWarning("Unable to find layer mask for camera fader");
-            else
-            {
-                m_Exposure = ScriptableObject.CreateInstance<AutoExposure>();
-                m_Exposure.active = false;
-                m_Exposure.enabled.Override(true);
-                m_Exposure.keyValue.Override(0);
-                m_ExposureVolume = PostProcessManager.instance.QuickVolume(layer, 100.0f, m_Exposure);
-            }
         }
         if(m_ExposureReleaseCount > 0)
         {
