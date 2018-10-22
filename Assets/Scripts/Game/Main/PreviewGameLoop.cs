@@ -312,7 +312,7 @@ public class PreviewGameLoop : Game.IGameLoop
             
             commandWasConsumed = true;
 
-            PreviewTickUpdate();    // TODO (ulfj) : Need to sort out what is fixed timestep and what is not
+            PreviewTickUpdate();
             m_GameWorld.nextTickTime += m_GameWorld.worldTime.tickInterval;
             
         }

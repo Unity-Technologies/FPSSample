@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-[CreateAssetMenu(menuName = "SampleGame/Projectile/ProjectileRegistry", fileName = "ProjectileRegistry")]
+[CreateAssetMenu(menuName = "FPS Sample/Projectile/ProjectileRegistry", fileName = "ProjectileRegistry")]
 public class ProjectileRegistry : RegistryBase
 {
     [System.Serializable]

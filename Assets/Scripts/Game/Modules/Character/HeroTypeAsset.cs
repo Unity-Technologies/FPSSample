@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "HeroType", menuName = "SampleGame/Hero/HeroType")]
+[CreateAssetMenu(fileName = "HeroType", menuName = "FPS Sample/Hero/HeroType")]
 public class HeroTypeAsset : ScriptableObject 
 {
     [Serializable]

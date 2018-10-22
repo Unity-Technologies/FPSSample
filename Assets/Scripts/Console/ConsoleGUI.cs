@@ -31,15 +31,6 @@ public class ConsoleGUI : MonoBehaviour, IConsoleUI
         text_area.text = string.Join("\n", m_Lines.GetRange(start, count).ToArray());
     }
 
-    /*
-    public void Write(bstring message)
-    {
-        // TODO: make gui work on chars
-        OutputString(message.ToString());
-    }
-    */
-
-
     public bool IsOpen()
     {
         return panel.gameObject.activeSelf;

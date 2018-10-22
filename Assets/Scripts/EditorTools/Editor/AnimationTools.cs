@@ -13,7 +13,7 @@ public class AnimTools : EditorWindow
     /// This is to stop the user from having to update the masks of all dependant animation clips everytime a "Source" mask changes.
     /// Fall out of not having resource dependencies, but needing them anyway.
     /// </remarks>
-    [MenuItem("fps.sample/Animation/Update Animation Masks")]
+    [MenuItem("FPS Sample/Animation/Update Animation Masks")]
     static void UpdateAnimationMasks()
     {
         var guids = AssetDatabase.FindAssets("t:animation");
@@ -58,7 +58,7 @@ public class AnimTools : EditorWindow
     /// This is to stop the user from having to update the avatar definition of all dependant avatars everytime a "Source" definition changes.
     /// Fall out of not having resource dependencies, but needing them anyway.
     /// </remarks>
-    [MenuItem("fps.sample/Animation/Update Avatar References")]
+    [MenuItem("FPS Sample/Animation/Update Avatar References")]
     static void UpdateAvatarReferences()
     {
         var guids = AssetDatabase.FindAssets("t:model");

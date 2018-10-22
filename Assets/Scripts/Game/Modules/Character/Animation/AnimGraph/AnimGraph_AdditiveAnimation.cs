@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "AdditiveAnimation", menuName = "SampleGame/Animation/AnimGraph/AdditiveAnimation")]
+[CreateAssetMenu(fileName = "AdditiveAnimation", menuName = "FPS Sample/Animation/AnimGraph/AdditiveAnimation")]
 public class AnimGraph_AdditiveAnimation : AnimGraphAsset
 {
     public AnimationClip clip;

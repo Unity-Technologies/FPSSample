@@ -283,7 +283,7 @@ class TextureSettingsTool
         VerifyTextureSettings(Selection.assetGUIDs);
     }
 
-    [MenuItem("fps.sample/VerifyTextureSettings")]
+    [MenuItem("FPS Sample/VerifyTextureSettings")]
     public static void VerifyTextureSettings()
     {
         var textures = AssetDatabase.FindAssets("t:texture");

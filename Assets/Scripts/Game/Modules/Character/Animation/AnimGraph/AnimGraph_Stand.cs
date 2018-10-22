@@ -8,7 +8,7 @@ using UnityEngine.Playables;
 using UnityEngine.Profiling;
 using Debug = UnityEngine.Debug;
 
-[CreateAssetMenu(fileName = "Stand", menuName = "SampleGame/Animation/AnimGraph/Stand")]
+[CreateAssetMenu(fileName = "Stand", menuName = "FPS Sample/Animation/AnimGraph/Stand")]
 public class AnimGraph_Stand : AnimGraphAsset
 {
     [ConfigVar(Name = "char.standik", DefaultValue = "1", Description = "Enable stand foot ik")]

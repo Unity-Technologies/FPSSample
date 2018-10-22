@@ -6,7 +6,7 @@ using UnityEngine.Animations;
 using UnityEngine.Playables;
 using UnityEngine.Profiling;
 
-[CreateAssetMenu(fileName = "Move8Dir", menuName = "SampleGame/Animation/AnimGraph/Move8Dir")]
+[CreateAssetMenu(fileName = "Move8Dir", menuName = "FPS Sample/Animation/AnimGraph/Move8Dir")]
 public class AnimGraph_Move8Dir : AnimGraphAsset
 {
     public float animMovePlaySpeed = 1.0f;

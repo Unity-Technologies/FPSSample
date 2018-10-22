@@ -97,7 +97,7 @@ public static class NetworkUtils
 
     public static void MemCopy(byte[] src, int srcIndex, byte[] dst, int dstIndex, int count)
     {
-        // TODO (ulfj) : Right now we cannot have unsafe code and be able to debug the project
+        // TODO : Right now we cannot have unsafe code and be able to debug the project
         // at the same time because the generated project file doesn't add the allow unsafe
         // block, so do the
         for (int i = 0; i < count; ++i)
@@ -106,7 +106,7 @@ public static class NetworkUtils
 
     public static int MemCmp(byte[] a, int aIndex, byte[] b, int bIndex, int count)
     {
-        // TODO (ulfj) : Right now we cannot have unsafe code and be able to debug the project
+        // TODO : Right now we cannot have unsafe code and be able to debug the project
         // at the same time because the generated project file doesn't add the allow unsafe
         // block, so do the
         for (int i = 0; i < count; ++i)
@@ -157,9 +157,8 @@ public static class NetworkUtils
             }
             catch (System.Exception e)
             {
-                // NOTE (ulfj) : For some reason this can throw marshal exception in the interop 
+                // NOTE : For some reason this can throw marshal exception in the interop 
                 // to native network code on some computers (when running player but not in editor)?
-                // TODO (ulfj) : Verify that this is only happening on my computer
                 GameDebug.Log("Error " + e.Message + " while getting IP properties for " + item.Description);
             }
         }

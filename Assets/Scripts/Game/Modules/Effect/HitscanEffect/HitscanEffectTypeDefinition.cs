@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "HitscanEffectTypeDefinition", menuName = "SampleGame/Effect/HitscanEffectTypeDefinition")]
+[CreateAssetMenu(fileName = "HitscanEffectTypeDefinition", menuName = "FPS Sample/Effect/HitscanEffectTypeDefinition")]
 public class HitscanEffectTypeDefinition : DynamicEnum
 {
     public WeakAssetReference prefab;

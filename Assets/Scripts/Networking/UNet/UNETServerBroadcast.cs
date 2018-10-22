@@ -4,10 +4,6 @@ using UnityEngine.Networking;
 
 public class UNETServerBroadcast
 {
-    // TODO (ulfj) : The UNET broadcast functionality is not really suited to send server information like level, player count etc.
-    // that change over time but until we implement an alternative server info handshake that allows clients to query game info
-    // from the server this is the best we have.
-
     public struct GameInfo
     {
         public uint token;
@@ -68,7 +64,7 @@ public class UNETServerBroadcast
 
         if (m_Broadcasting)
         {
-            // TODO (ulfj) : We have to restart the broadcast to update the message but we cannot
+            // TODO : We have to restart the broadcast to update the message but we cannot
             // do this in a single frame since we have to wait for some internal state in UNET
             // to reset, so we try 3 times
             NetworkTransport.StopBroadcastDiscovery();

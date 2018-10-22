@@ -8,7 +8,7 @@ using UnityEditor;
 public class StateHistoryWindow : EditorWindow
 {
 
-    [MenuItem("fps.sample/Windows/State History")]
+    [MenuItem("FPS Sample/Windows/State History")]
     public static void ShowWindow()
     {
         GetWindow<StateHistoryWindow>(false, "State History", true);

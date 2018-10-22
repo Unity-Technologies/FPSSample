@@ -77,7 +77,7 @@ public class GameModeDeathmatch : IGameMode
                         winTeam = teams[0].score > teams[1].score ? 0 : teams[0].score < teams[1].score ? 1 : -1;
                     }
 
-                    // TODO (ulfj) : For now we just kill all players when we restart 
+                    // TODO : For now we just kill all players when we restart 
                     // but we should change it to something less dramatic like taking
                     // control away from the player or something
                     for (int i = 0, c = players.Length; i < c; i++)

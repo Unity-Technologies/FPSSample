@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Animations;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "AimDrag", menuName = "SampleGame/Animation/AnimGraph/AimDrag")]
+[CreateAssetMenu(fileName = "AimDrag", menuName = "FPS Sample/Animation/AnimGraph/AimDrag")]
 public class AnimGraph_AimDrag : AnimGraphAsset
 {
 	public string weaponHandBone;

@@ -16,7 +16,7 @@ public class NetworkProfiler : EditorWindow
     }
 
 
-    [MenuItem("fps.sample/Windows/Network Profiler")]
+    [MenuItem("FPS Sample/Windows/Network Profiler")]
     public static void ShowWindow()
     {
         GetWindow<NetworkProfiler>(false, "Network Profiler", true);

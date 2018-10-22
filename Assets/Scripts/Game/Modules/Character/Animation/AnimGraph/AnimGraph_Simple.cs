@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "Simple", menuName = "SampleGame/Animation/AnimGraph/Simple")]
+[CreateAssetMenu(fileName = "Simple", menuName = "FPS Sample/Animation/AnimGraph/Simple")]
 public class AnimGraph_Simple : AnimGraphAsset
 {
     public AnimationClip animIdle;

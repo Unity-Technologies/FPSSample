@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(menuName = "SampleGame/Item/TypeRegistry", fileName = "ItemTypeRegistry")]
+[CreateAssetMenu(menuName = "FPS Sample/Item/TypeRegistry", fileName = "ItemTypeRegistry")]
 public class ItemRegistry : Registry<ItemTypeDefinition>
 {
     public int GetIndexByClientGUID(string guid)

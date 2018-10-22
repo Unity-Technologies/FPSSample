@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-[CreateAssetMenu(menuName = "SampleGame/Character/TypeRegistry", fileName = "CharacterTypeRegistry")]
+[CreateAssetMenu(menuName = "FPS Sample/Character/TypeRegistry", fileName = "CharacterTypeRegistry")]
 public class CharacterTypeRegistry : RegistryBase
 {
     public CharacterTypeDefinition[] entries;

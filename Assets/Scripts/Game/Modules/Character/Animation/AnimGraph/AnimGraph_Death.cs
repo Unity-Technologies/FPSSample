@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "Death", menuName = "SampleGame/Animation/AnimGraph/Death")]
+[CreateAssetMenu(fileName = "Death", menuName = "FPS Sample/Animation/AnimGraph/Death")]
 public class AnimGraph_Death : AnimGraphAsset
 {
     public AnimationClip[] anims;

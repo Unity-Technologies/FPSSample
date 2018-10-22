@@ -20,7 +20,7 @@ public class CharacterDebugWindow : EditorWindow
 
     private static DamageInfo damageInfo; 
     
-    [MenuItem("fps.sample/Windows/Character Debug")]
+    [MenuItem("FPS Sample/Windows/Character Debug")]
     public static void ShowWindow()
     {
         GetWindow<CharacterDebugWindow>(false, "Char Debug", true);

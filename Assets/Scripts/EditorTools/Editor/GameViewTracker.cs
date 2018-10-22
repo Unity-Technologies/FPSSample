@@ -42,5 +42,5 @@ public static class GameViewTracker
     }
 
     static bool s_Enabled;
-    const string k_MenuName = "fps.sample/Hotkeys/Toggle game view tracking _%#K";
+    const string k_MenuName = "FPS Sample/Hotkeys/Toggle game view tracking _%#K";
 }

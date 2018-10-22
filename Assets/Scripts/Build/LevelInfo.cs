@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(fileName = "LevelInfo", menuName = "SampleGame/Level/LevelInfo")]
+[CreateAssetMenu(fileName = "LevelInfo", menuName = "FPS Sample/Level/LevelInfo")]
 public class LevelInfo : ScriptableObject
 {
     public enum LevelType

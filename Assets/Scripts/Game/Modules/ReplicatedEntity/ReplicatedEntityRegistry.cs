@@ -21,7 +21,7 @@ public abstract class ReplicatedEntityFactor : ScriptableObject
 
 
 [CreateAssetMenu(fileName = "ReplicatedEntityRegistry",
-    menuName = "SampleGame/ReplicatedEntity/ReplicatedEntityRegistry")]
+    menuName = "FPS Sample/ReplicatedEntity/ReplicatedEntityRegistry")]
 public class ReplicatedEntityRegistry : RegistryBase
 {
     [Serializable]

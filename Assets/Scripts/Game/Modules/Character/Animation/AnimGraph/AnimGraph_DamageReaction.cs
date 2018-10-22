@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "DamageReaction", menuName = "SampleGame/Animation/AnimGraph/DamageReaction")]
+[CreateAssetMenu(fileName = "DamageReaction", menuName = "FPS Sample/Animation/AnimGraph/DamageReaction")]
 public class AnimGraph_DamageReaction : AnimGraphAsset
 {
 	[Tooltip("Reaction animations starting from S (damage comming from front) going clockwise")]

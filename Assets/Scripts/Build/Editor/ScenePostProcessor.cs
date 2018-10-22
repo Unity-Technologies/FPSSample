@@ -5,7 +5,7 @@ using UnityEditor.SceneManagement;
 
 public class ScenePostProcessor
 {
-    // TODO (ulfj) : At some point we need to set these when building different configs
+    // TODO : At some point we need to set these when building different configs
     public static LevelManager.BuildType buildType = LevelManager.BuildType.Default;
     public static bool isDevelopmentBuild = false;
 
@@ -27,16 +27,6 @@ public class ScenePostProcessor
         }
 
         AddBuildInfo();
-        /*
-        if(BuildPipeline.isBuildingPlayer)
-        {
-            Debug.Log("Baking Occlusion data.");
-            StaticOcclusionCulling.Compute();
-            while(StaticOcclusionCulling.isRunning)
-            {
-            }
-        }
-        */
     }
 
     static void AddBuildInfo()

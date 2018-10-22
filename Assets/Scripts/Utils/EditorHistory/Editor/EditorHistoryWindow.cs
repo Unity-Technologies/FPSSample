@@ -67,7 +67,7 @@ public class EditorHistoryWindow : EditorWindow
         Repaint();
     }
 
-    [MenuItem("fps.sample/Windows/Selection History")]
+    [MenuItem("FPS Sample/Windows/Selection History")]
     public static void ShowWindow()
     {
         GetWindow<EditorHistoryWindow>(false, "Selection History", true);

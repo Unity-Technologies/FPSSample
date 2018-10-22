@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "AnimatorController", menuName = "SampleGame/Animation/AnimGraph/AnimatorController")]
+[CreateAssetMenu(fileName = "AnimatorController", menuName = "FPS Sample/Animation/AnimGraph/AnimatorController")]
 public class AnimGraph_AnimatorController : AnimGraphAsset
 {
     public RuntimeAnimatorController animatorController;

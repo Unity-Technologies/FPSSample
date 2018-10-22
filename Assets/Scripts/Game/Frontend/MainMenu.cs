@@ -136,12 +136,12 @@ public class MainMenu : MonoBehaviour
     {
         var servername = uiBinding.servername.text;
 
-        // TODO (ulfj) : Fix console handling of whitespaces
+        // TODO : Fix console handling of whitespaces
         servername = servername.Replace(" ", "");
 
         var levelname = uiBinding.levelname.options[uiBinding.levelname.value].text;
 
-        // TODO (ulfj) : Add commands to set these
+        // TODO : Add commands to set these
         var gamemode = uiBinding.gamemode.options[uiBinding.gamemode.value].text.ToLower();
         var maxplayers = uiBinding.maxplayers.options[uiBinding.maxplayers.value].text;
 
@@ -156,7 +156,7 @@ public class MainMenu : MonoBehaviour
             }
             else
             {
-                // TODO (ulfj) : We should look to make this more robust but for now we just
+                // TODO : We should look to make this more robust but for now we just
                 // kill other processes to avoid running multiple servers locally
                 var thisProcess = System.Diagnostics.Process.GetCurrentProcess();
                 var processes = System.Diagnostics.Process.GetProcesses();
@@ -253,7 +253,7 @@ public class MainMenu : MonoBehaviour
             data.serverNameField.text = data.info.Name;
             data.serverModeField.text = data.info.GameMode;
             data.serverPlayersField.text = data.info.Players + "/" + data.info.MaxPlayers;
-            data.serverPingField.text = "-";    // TODO (ulfj)
+            data.serverPingField.text = "-";
             data.lastUpdated = data.info.LastSeenTime;
         }
     }

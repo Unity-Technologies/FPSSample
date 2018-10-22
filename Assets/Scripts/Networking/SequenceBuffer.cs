@@ -2,7 +2,7 @@
 using UnityEngine;
 
 
-// TODO (ulfj) : Flip back to use ushort
+// TODO : Flip back to use ushort
 
 public static class Sequence
 {
@@ -21,7 +21,7 @@ public static class Sequence
         return (ushort)(value & 0xffff);
     }
 
-    // TODO (ulfj) : We can probably implement this more elegantly?
+    // TODO : We can probably implement this more elegantly?
     public static int FromUInt16(ushort value, int baseline)
     {
         ushort b = ToUInt16(baseline);

@@ -5,7 +5,7 @@ using UnityEditor;
 public static class ClearAllReflectionProbesToBlack
 
 {
-    [MenuItem("fps.sample/Lighting/Reflection Probes/Clear to Black")]
+    [MenuItem("FPS Sample/Lighting/Reflection Probes/Clear to Black")]
 
     static void ClearAllReflection()
     {

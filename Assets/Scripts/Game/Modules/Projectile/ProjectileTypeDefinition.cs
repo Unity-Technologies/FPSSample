@@ -13,7 +13,7 @@ public struct ProjectileSettings
     public SplashDamageSettings splashDamage;
 }
 
-[CreateAssetMenu(fileName = "ProjectileTypeDefinition", menuName = "SampleGame/Projectile/ProjectileTypeDefinition")]
+[CreateAssetMenu(fileName = "ProjectileTypeDefinition", menuName = "FPS Sample/Projectile/ProjectileTypeDefinition")]
 public class ProjectileTypeDefinition : DynamicEnum
 {
     public ProjectileSettings properties;

@@ -222,22 +222,6 @@ public class BuildTools
         return shared;
     }
 
-    /*
-    // TODO (ulfj) : What is this function for?
-    public static void CloudBuild_PostExport(string unityPlayerPath)
-    {
-        Debug.Log("CloudBuild_PostExport, Begin. Player path: " + unityPlayerPath);
-
-        BuildInternal(true);
-
-        var unityPlayerDir = Path.GetDirectoryName(unityPlayerPath);
-        FileUtil.ReplaceDirectory(SimpleBundleManager.assetBundleFolder, unityPlayerDir + "/" + SimpleBundleManager.assetBundleFolder);
-
-        Debug.Log("CloudBuild_PostExport, End");
-    }
-    */
-
-
     public static void BuildBundles(string bundlePath, BuildTarget target, bool buildBundledAssets, bool buildBundledLevels, bool force = false, List<LevelInfo> buildOnlyLevels = null)
     {
         Debug.Log("Scene cooking started");
@@ -322,7 +306,7 @@ public class BuildTools
         }
     }
 
-    [MenuItem("fps.sample/BuildSystem/Win64/OpenBuildFolder")]
+    [MenuItem("FPS Sample/BuildSystem/Win64/OpenBuildFolder")]
     public static void OpenBuildFolder()
     {
         var target = BuildTarget.StandaloneWindows64;
@@ -337,7 +321,7 @@ public class BuildTools
         }
     }
 
-    [MenuItem("fps.sample/BuildSystem/Win64/Deploy")]
+    [MenuItem("FPS Sample/BuildSystem/Win64/Deploy")]
     public static void Deploy()
     {
         Debug.Log("Window64 Deploying...");
@@ -377,7 +361,7 @@ public class BuildTools
         return;
     }
 
-    [MenuItem("fps.sample/BuildSystem/Win64/PostProcess")]
+    [MenuItem("FPS Sample/BuildSystem/Win64/PostProcess")]
     public static void PostProcess()
     {
         Debug.Log("Window64 build postprocessing...");
@@ -401,15 +385,6 @@ public class BuildTools
         File.WriteAllLines(buildPath + "/server.bat", serverBat);
         Debug.Log("  server.bat");
 
-        // Build client bat
-        var clientBat = new string[]
-        {
-            "REM start game client",
-            "start " + executableName
-        };
-        File.WriteAllLines(buildPath + "/client.bat", clientBat);
-        Debug.Log("  client.bat");
-
         // Build empty user.cfg
         File.WriteAllLines(buildPath + "/user.cfg", new string[] { });
         Debug.Log("  user.cfg");
@@ -426,13 +401,13 @@ public class BuildTools
         Debug.Log("Window64 build postprocessing done.");
     }
 
-    [MenuItem("fps.sample/BuildSystem/Win64/CreateBuildWindows64")]
+    [MenuItem("FPS Sample/BuildSystem/Win64/CreateBuildWindows64")]
     public static void CreateBuildWindows64()
     {
         CreateBuildWindows64(false);
     }
 
-    [MenuItem("fps.sample/BuildSystem/Win64/CreateBuildWindows64-IL2CPP")]
+    [MenuItem("FPS Sample/BuildSystem/Win64/CreateBuildWindows64-IL2CPP")]
     public static void CreateBuildWindows64IL2CPP()
     {
         CreateBuildWindows64(true);
@@ -460,7 +435,7 @@ public class BuildTools
         PostProcess();
     }
 
-    [MenuItem("fps.sample/BuildSystem/PS4/CreateBuildPS4")]
+    [MenuItem("FPS Sample/BuildSystem/PS4/CreateBuildPS4")]
     public static void CreateBuildPS4()
     {
         var target = BuildTarget.PS4;
@@ -478,7 +453,7 @@ public class BuildTools
             throw new Exception("BuildPipeline.BuildPlayer failed: " + res.ToString());
     }
 
-    [MenuItem("fps.sample/BuildSystem/Linux64/CreateBuildLinux64")]
+    [MenuItem("FPS Sample/BuildSystem/Linux64/CreateBuildLinux64")]
     public static void CreateBuildLinux64()
     {
         var target = BuildTarget.StandaloneLinux64;

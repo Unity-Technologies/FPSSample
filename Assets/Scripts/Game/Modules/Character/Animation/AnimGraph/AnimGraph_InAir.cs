@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Animations;
 
-[CreateAssetMenu(fileName = "InAir", menuName = "SampleGame/Animation/AnimGraph/InAir")]
+[CreateAssetMenu(fileName = "InAir", menuName = "FPS Sample/Animation/AnimGraph/InAir")]
 public class AnimGraph_InAir : AnimGraphAsset
 {
     public AnimationClip animInAir;

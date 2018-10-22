@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "Stack", menuName = "SampleGame/Animation/AnimGraph/Stack")]
+[CreateAssetMenu(fileName = "Stack", menuName = "FPS Sample/Animation/AnimGraph/Stack")]
 public class AnimGraph_Stack : AnimGraphAsset 
 {
     public List<AnimGraphAsset> rootNodes = new List<AnimGraphAsset>();

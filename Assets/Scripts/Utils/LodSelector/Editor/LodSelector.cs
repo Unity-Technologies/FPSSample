@@ -15,7 +15,7 @@ public class LodSelector
         EditorApplication.update += CheckSelected;
     }
 
-    [MenuItem("fps.sample/Hotkeys/LodSelector &L")]
+    [MenuItem("FPS Sample/Hotkeys/LodSelector &L")]
     static void ToggleLodSelector()
     {
         enabled = !enabled;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName="SampleGame/Animation/SkeletonDefinition", fileName="SkeletonDefinition")]
+[CreateAssetMenu(menuName="FPS Sample/Animation/SkeletonDefinition", fileName="SkeletonDefinition")]
 public class SkeletonDefinition : ScriptableObject
 {
     public Avatar avatar;

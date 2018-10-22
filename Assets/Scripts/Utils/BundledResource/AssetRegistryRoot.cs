@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(fileName = "AssetRegistryRoot", menuName = "SampleGame/Resource/AssetRegistryRoot", order = 10000)]
+[CreateAssetMenu(fileName = "AssetRegistryRoot", menuName = "FPS Sample/Resource/AssetRegistryRoot", order = 10000)]
 public class AssetRegistryRoot : ScriptableObject
 {
     public bool serverBuild;

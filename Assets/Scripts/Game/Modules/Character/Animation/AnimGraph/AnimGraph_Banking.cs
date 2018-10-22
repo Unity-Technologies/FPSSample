@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Animations;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "Banking", menuName = "SampleGame/Animation/AnimGraph/Banking")]
+[CreateAssetMenu(fileName = "Banking", menuName = "FPS Sample/Animation/AnimGraph/Banking")]
 public class AnimGraph_Banking : AnimGraphAsset
 {
     public string bankTransform;

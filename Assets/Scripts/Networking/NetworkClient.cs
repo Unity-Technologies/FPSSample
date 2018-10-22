@@ -93,8 +93,6 @@ public class NetworkClient
 
     public void Shutdown()
     {
-        // TODO (ulfj) : Send disconnect?
-
         Disconnect();
     }
 

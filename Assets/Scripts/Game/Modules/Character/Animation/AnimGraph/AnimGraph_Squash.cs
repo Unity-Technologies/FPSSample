@@ -5,7 +5,7 @@ using UnityEngine.Animations;
 using UnityEngine.Experimental.Animations;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "Squash", menuName = "SampleGame/Animation/AnimGraph/Squash")]
+[CreateAssetMenu(fileName = "Squash", menuName = "FPS Sample/Animation/AnimGraph/Squash")]
 public class AnimGraph_Squash : AnimGraphAsset
 {
     public AnimationClip animSquash;

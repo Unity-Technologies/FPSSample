@@ -2,7 +2,7 @@
 
 public class RevertSelectedPrefabs
 {
-    [MenuItem("fps.sample/Revert Selected Prefabs")]
+    [MenuItem("FPS Sample/Revert Selected Prefabs")]
     static void Execute()
     {
         foreach(var gameObject in Selection.gameObjects)

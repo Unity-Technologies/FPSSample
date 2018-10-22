@@ -4,7 +4,7 @@ using UnityEngine.Playables;
 using UnityEngine.Animations;
 using UnityEngine.Profiling;
 
-[CreateAssetMenu(fileName = "Sprint", menuName = "SampleGame/Animation/AnimGraph/Sprint")]
+[CreateAssetMenu(fileName = "Sprint", menuName = "FPS Sample/Animation/AnimGraph/Sprint")]
 public class AnimGraph_Sprint : AnimGraphAsset
 {
     public AnimationClip animMoveNW;

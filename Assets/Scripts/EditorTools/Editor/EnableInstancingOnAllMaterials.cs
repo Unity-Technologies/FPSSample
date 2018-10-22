@@ -3,7 +3,7 @@ using UnityEditor;
 
 public static class EnableInstancingOnAllMaterials
 {
-    [MenuItem("fps.sample/Performance/Enable Instancing on All Materials")]
+    [MenuItem("FPS Sample/Performance/Enable Instancing on All Materials")]
 
     static void DoIt()
     {

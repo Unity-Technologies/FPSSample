@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "SpatialEffectTypeDefinition", menuName = "SampleGame/Effect/SpatialEffectTypeDefinition")]
+[CreateAssetMenu(fileName = "SpatialEffectTypeDefinition", menuName = "FPS Sample/Effect/SpatialEffectTypeDefinition")]
 public class SpatialEffectTypeDefinition : DynamicEnum
 {
     public WeakAssetReference prefab;

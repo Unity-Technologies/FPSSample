@@ -11,11 +11,9 @@ public class ServerCameraSystem
 
     public ServerCameraSystem(GameWorld gameWorld)
     {
-        // TODO (ulfj) : It would be better if we had a more appropriate way of
-        // finding all objects of a given type with the current level
         m_CameraSpots = Object.FindObjectsOfType<ServerCameraSpot>();
 
-        // NOTE (ulfj) : We should look at this when we have figured out the final 
+        // NOTE : We should look at this when we have figured out the final 
         // way that cameras should work
         GameObject cameraGO = GameObject.Instantiate<GameObject>(Resources.Load<GameObject>("Prefabs/ServerCam"));
         m_Camera = cameraGO.GetComponent<Camera>();

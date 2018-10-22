@@ -105,7 +105,7 @@ public class BuildWindow : EditorWindow
         // TODO reset m_LevelInfos if LevelInfos are added/removed
     }
 
-    [MenuItem("fps.sample/Windows/Project Tools")]
+    [MenuItem("FPS Sample/Windows/Project Tools")]
     public static void ShowWindow()
     {
         GetWindow<BuildWindow>(false, "Project Tools", true);

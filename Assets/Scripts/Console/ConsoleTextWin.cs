@@ -135,13 +135,6 @@ public class ConsoleTextWin : IConsoleUI
         DrawInputline();
     }
 
-    /*
-    public void Write(bstring message)
-    {
-        OutputString(message.ToString());
-    }
-    */
-
     public void SetOpen(bool open)
     {
     }

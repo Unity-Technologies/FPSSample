@@ -13,7 +13,7 @@ public class GridSnapTool
         CheckSceneGUIRegistration();
     }
 
-    private const string ToggleName = "fps.sample/GridSnapTool";
+    private const string ToggleName = "FPS Sample/GridSnapTool";
     [MenuItem(ToggleName)]
     private static void ToggleGridSnapTool()
     {
@@ -22,7 +22,7 @@ public class GridSnapTool
     }
 
     
-    [MenuItem("fps.sample/Hotkeys/Snap selected to grid &s")]
+    [MenuItem("FPS Sample/Hotkeys/Snap selected to grid &s")]
     static void SnapSelectedHotkey()
     {
         SnapSelected();

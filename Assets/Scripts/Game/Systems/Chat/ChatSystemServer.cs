@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class ChatSystemServer
 {
-    // TODO (ulfj) : The integration is annoying because we don't have a proper permanent place for player
+    // TODO : The integration is annoying because we don't have a proper permanent place for player
     // info (world is destroyed for each level). We should try to make this smoother
     public ChatSystemServer(Dictionary<int, ServerGameLoop.ClientInfo> clients, NetworkServer networkServer)
     {

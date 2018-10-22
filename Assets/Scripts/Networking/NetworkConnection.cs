@@ -224,7 +224,7 @@ public class NetworkConnection<TCounters, TPackageInfo>
             // means the package (inSequenceNew-15 and before) will be considered lost (either it will never come or we will 
             // reject it as being stale if we get it at a later point in time)
             var distance = inSequenceNew - inSequence;
-            for (var i = 0; i < Math.Min(distance, 15); ++i)    // TODO (ulfj) : Fix this contant
+            for (var i = 0; i < Math.Min(distance, 15); ++i)    // TODO : Fix this contant
             {
                 if ((inSequenceAckMask & 1 << (15 - i)) == 0)
                     counters.packagesLostIn++;
@@ -256,7 +256,7 @@ public class NetworkConnection<TCounters, TPackageInfo>
             // of the ack mask, so we don't have to worry about resending messages as long as we do that
             // after the original package has fallen off the ack mask.
             var distance = inSequence - inSequenceNew;
-            if (distance > 15) // TODO (ulfj) : Fix this constant
+            if (distance > 15) // TODO : Fix this constant
             {
                 counters.packagesStaleIn++;
                 return 0;
@@ -527,5 +527,5 @@ public class NetworkConnection<TCounters, TPackageInfo>
     // Events
     Dictionary<ushort, NetworkEventType> eventTypesIn = new Dictionary<ushort, NetworkEventType>();
     List<NetworkEventType> ackedEventTypes = new List<NetworkEventType>();
-    public List<NetworkEvent> eventsOut = new List<NetworkEvent>(); // TODO (ulfj) : Should be private (content calc issue)
+    public List<NetworkEvent> eventsOut = new List<NetworkEvent>(); // TODO : Should be private (content calc issue)
 }

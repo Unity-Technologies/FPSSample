@@ -1,89 +1,128 @@
-# fps.sample
+![](Documentation/Images/banner.png)
 
-This is a fully functional, first person multiplayer shooter game made in Unity and with full source and assets.
-It is in active development by a small team from Unity Technologies. The goals are to test and showcase new
-features in unity and to be of use for teams who can bootstrap on top of this, extract useful bits or simply
-learn from and get inspired by what is in the project.
+# FPS Sample
+
+Thanks for checking out our project!
+
+This is a fully functional, first person multiplayer shooter game made in
+Unity and with full source and assets. It is in active development by a small
+team from Unity Technologies. Our goals are to test and showcase new
+features in Unity and to be of use for teams who can bootstrap on top of
+this, extract useful bits and tools or simply learn from and get inspired by
+what is in the project.
+
+Visit our [landing page](https://unity.com/fps-sample) for more high
+level information about the project. Or reach out [in the forum](https://forum.unity.com/forums/fps-sample-game.184).
+
+The project is using a number of new technologies: We use the new [HD Render
+Pipeline](https://github.com/Unity-Technologies/ScriptableRenderPipeline), meaning 
+all content has been authored for HDRP. We are also using the new
+[network transport layer](https://github.com/Unity-Technologies/multiplayer) as well as the [Entity-Component System](https://unity3d.com/unity/features/job-system-ECS). 
+In the case of ECS, we have primarily adopted the "ECS-pattern" and use it in
+hybrid mode with a lot of regular components. As more and more features of
+Unity become availble in ECS-aware versions, we will migrate to them.
 
 ## Status and prerequisites
 
 Current status at a glance:
 ```
-Required Unity: 18.3 beta 7
-Supported platforms: Windows and Linux (server only)
+Unity version: 2018.3 beta 6
+Platforms    : Windows (client and server) and Linux (server only)
+Fun          : Yes
+Finished     : No
+Useful       : We think so
 ```
 
-## Getting started
+## Getting the project
+
+To get the project folder you need to clone the project.
+Note, that 
+
+> __IMPORTANT__: 
+> This project uses Git Large Files Support (LFS). Downloading a zip file using the green button on Github
+> **will not work**. You must clone the project with a version of git that has LFS.
+> You can download Git LFS here: https://git-lfs.github.com/.
+
+The project size is about 18GB. If your cloned repository is much smaller,
+you most likely did not have LFS when you cloned.
+
+## Getting the right version of Unity
+
+Once you have cloned the repository, you should install
+the version of Unity that is listed above in the prerequisites section. Make
+sure you include windows standalone support in your installation.
+
+## Opening the project for the first time
 
 The following guide should take you to the point where
 you can hit play in the editor and run around the levels and also build a
-standalone version of the game and connect a few clients with a server.
+standalone version of the game and use it to spin up a server and connect a
+few clients to it.
 
-### Getting the project
+The first time you open the project you need patience! It takes a while
+to import all the assets.
 
-There are 2 ways you can get the project. You can download a release.
-Or you can clone the project. Note, that 
+> __NOTE__: Due to a bug in Unity 2018.3 beta, you have to take
+the following steps right after the initial import:
+> 1. Search for `t:prefab` in the Project search field. Then click on the first prefab and shift+click on the last to select them all. Right click and select __Reimport__.
+> 2. Search for `t:model` in the Project search field. Repeat the same steps as for prefabs to reimport them all.
+>
+> One day soon we will remove this note and there will be cake.
 
-> *IMPORTANT*: 
-> This project uses Git Large files. Downloading a zip file using the green button on Github
-> WILL NOT WORK. You MUST clone the project or download a release from the releases tab.
+Once the editor is ready, open the _Project Tools Window_ by
+navigating to ___FPS Sample > Windows > Project tools___.
 
-### Getting the right version of Unity
+It should look like this:
 
-Once you have downloaded a release or cloned the repository, it is recommended you install
-the exact version of Unity that the project was last updated to. Currently that means
+![](Documentation/Images/projecttools.png)
 
-> *You need Unity 2018.3b7*
+Keep this window docked as you will use it a lot. From here you can open the
+levels, build assetbundles and build standalone players. Because this is a
+multiplayer game you will need to work with standalone players a lot.
 
-### Opening the project for the first time
+### Trying out preview mode
 
-The first time you open the project you need patience! Once the editor is ready,
+From the Project Tools window click __Open__ next to Level_00. Our levels are
+split into multiple scenes but using these buttons will ensure you open all the scenes
+that make up a level.
 
-> open the project tools window: fps.sample | Windows | Project tools
+Once opened, try entering playmode in the editor. You should now
+be able to run around in the level. This is what we call 'preview mode'. Here
+you can move around and test your level, player traversal and weapons.
 
-Keep this window docked as you will use it a lot. From here you can open the levels, build assetbundles
-and build standalone players. Because this is a multiplayer game you will need to work
-with standalone players a lot.
+### Building bundles and standalone
 
-From the Project tools window hit
+Leave playmode again and in the Project Tools windows, in the
+bundles section, press __All \[force\]__.
 
-> open Level_00 
+This will build the levels and other assets into assetbundles. The first time
+around this will take a significant amount of time as all shaders have to be
+compiled.
 
-You should now be able to press
+Once you have built the bundles, hit __Build game__ in the game section.
+This builds the standalone player. Again, first time will be slow.
 
-> Play in the editor
+### Using the quick start launcher
 
-and enter playmode in 'preview' state. This means you can run around and test
-the leve, but no multiplayer is enabled.
+When this is done, locate the "Quick start" section at the bottom of the
+Project Tools window. Fill out the settings like this:
 
-Back in the editor, press
+> Mode: __Multiplayer__\
+> Level: __Level_00__\
+> Clients: __1__\
+> Headless: __Checked__\
+> Use editor: __Unused__
 
-> "All \[force\]" 
-
-in the Project Tools window. This will build
-the levels and other assets into assetbundles. The first time this will also take a significant
-amount of time as all shaders have to be compiled.
-
-Finally press
-
-> "Build game"
-
-from the Project Tools window. This builds the standalone player.
-Again, first time is slow.
-
-After all this is done, find the "Quick start" section in the Project Tools window. Select "Multiplayer" mode
-and "Level_00" as level, 1 client, Headless server Checked, Unused editor and then press the green
-"Start" button. This should launch two processes: one is a standalone,
-headless server, the other is a client that will attempt to connect to the
-server.
-
-If all of this works, by all means celebrate!
+Now hit the green __Start__ button. This should launch two processes: one is
+a standalone, headless server, the other is a client that will attempt to
+connect to the server.
 
 ## More information
 
-Check out the `Documentation` folder for more information.
+Check out the [Documentation](Documentation/) folder for more information. In particular, the [Getting Started Guide](Documentation/GettingStarted.md) is a good place to, well, start.
 
 ## License
 
-This project is distributed under the Unity Companion License. The full text
-is found in here: [LICENSE.md](LICENSE.md). 
+Our intention is that you can use everything in this project as a starting
+point or as bits and pieces in your own Unity games. For the legal words, see
+[LICENSE.md](LICENSE.md).

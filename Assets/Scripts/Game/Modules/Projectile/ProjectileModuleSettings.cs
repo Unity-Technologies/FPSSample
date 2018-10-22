@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(fileName = "ProjectileModuleSettings", menuName = "SampleGame/Projectile/ProjectileSystemSettings")]
+[CreateAssetMenu(fileName = "ProjectileModuleSettings", menuName = "FPS Sample/Projectile/ProjectileSystemSettings")]
 public class ProjectileModuleSettings : ScriptableObject
 {
 //    public WeakAssetReference projectilePrefab;

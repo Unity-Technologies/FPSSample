@@ -29,7 +29,7 @@ public class LaunchWindow : EditorWindow
     }
 
 
-    [MenuItem("fps.sample/Windows/LaunchWindow")]
+    [MenuItem("FPS Sample/Windows/LaunchWindow")]
     public static void ShowWindow()
     {
         GetWindow<LaunchWindow>(false, "Launch", true);

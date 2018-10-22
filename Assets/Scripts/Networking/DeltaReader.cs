@@ -152,7 +152,6 @@ public struct DeltaReader
 
                 case NetworkSchema.FieldType.Quaternion:
                     {
-                        // TODO (ulfj) : Figure out what to do with quaternions
                         uint bx = baselineStream.ReadUInt32();
                         uint by = baselineStream.ReadUInt32();
                         uint bz = baselineStream.ReadUInt32();
@@ -200,7 +199,7 @@ public struct DeltaReader
                 case NetworkSchema.FieldType.String:
                 case NetworkSchema.FieldType.ByteArray:
                     {
-                        // TODO (ulfj) : Do a better job with deltaing strings and buffers
+                        // TODO : Do a better job with deltaing strings and buffers
                         if (!skip)
                         {
                             baselineStream.SkipByteArray(field.arraySize);

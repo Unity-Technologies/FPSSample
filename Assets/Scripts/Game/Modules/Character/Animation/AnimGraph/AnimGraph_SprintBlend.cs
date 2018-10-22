@@ -5,7 +5,7 @@ using UnityEngine.Animations;
 using UnityEngine.Playables;
 using UnityEngine.Profiling;
 
-[CreateAssetMenu(fileName = "SprintBlend", menuName = "SampleGame/Animation/AnimGraph/SprintBlend")]
+[CreateAssetMenu(fileName = "SprintBlend", menuName = "FPS Sample/Animation/AnimGraph/SprintBlend")]
 public class AnimGraph_SprintBlend : AnimGraphAsset
 {
     public AnimGraphAsset runTemplate;

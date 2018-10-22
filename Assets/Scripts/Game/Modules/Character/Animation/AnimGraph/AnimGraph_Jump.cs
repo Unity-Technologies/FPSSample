@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "Jump", menuName = "SampleGame/Animation/AnimGraph/Jump")]
+[CreateAssetMenu(fileName = "Jump", menuName = "FPS Sample/Animation/AnimGraph/Jump")]
 public class AnimGraph_Jump : AnimGraphAsset
 {
     public AnimationClip animJump;

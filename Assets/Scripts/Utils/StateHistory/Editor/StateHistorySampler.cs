@@ -42,7 +42,7 @@ public class StateHistorySampler
     public static bool captureOnMispredict;
     public static event CaptureDelegate Capture;
 
-    [MenuItem("fps.sample/Hotkeys/Capture state history _%H")]
+    [MenuItem("FPS Sample/Hotkeys/Capture state history _%H")]
     static void HotkeyCapture()
     {
         if (!StateHistory.Enabled)

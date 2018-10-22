@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Animations;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "TwoBoneIk", menuName = "SampleGame/Animation/AnimGraph/TwoBoneIk")]
+[CreateAssetMenu(fileName = "TwoBoneIk", menuName = "FPS Sample/Animation/AnimGraph/TwoBoneIk")]
 public class AnimGraph_TwoBoneIk : AnimGraphAsset
 {
     public string targetBone;

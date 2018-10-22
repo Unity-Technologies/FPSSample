@@ -11,7 +11,7 @@ public enum SoundMixerGroup
     _Count
 }
 
-[CreateAssetMenu(fileName = "Sound", menuName = "SampleGame/Audio/SoundDef", order = 10000)]
+[CreateAssetMenu(fileName = "Sound", menuName = "FPS Sample/Audio/SoundDef", order = 10000)]
 public class SoundDef : ScriptableObject
 {
     public List<AudioClip> clips;

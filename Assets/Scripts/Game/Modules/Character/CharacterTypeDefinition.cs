@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-[CreateAssetMenu(fileName = "CharacterTypeDefinition", menuName = "SampleGame/Character/TypeDefinition")]
+[CreateAssetMenu(fileName = "CharacterTypeDefinition", menuName = "FPS Sample/Character/TypeDefinition")]
 public class CharacterTypeDefinition : DynamicEnum, IReplicatedEntityProvider
 {
     public WeakAssetReference prefabServer;

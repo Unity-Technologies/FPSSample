@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "SampleGame/Hero/HeroTypeRegistry", fileName = "HeroTypeRegistry")]
+[CreateAssetMenu(menuName = "FPS Sample/Hero/HeroTypeRegistry", fileName = "HeroTypeRegistry")]
 public class HeroTypeRegistry : RegistryBase  
 {
     public HeroTypeAsset[] entries;

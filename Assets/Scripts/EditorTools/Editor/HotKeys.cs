@@ -17,7 +17,7 @@ public class HotKeys
         SceneView.onSceneGUIDelegate += OnSceneGUI;
     }
 
-    [MenuItem("fps.sample/Hotkeys/Lookup asset guid %&l")]
+    [MenuItem("FPS Sample/Hotkeys/Lookup asset guid %&l")]
     static void LookupAsset()
     {
         LookupAssetWindow.Open();
@@ -25,7 +25,7 @@ public class HotKeys
 
     public static List<Object> objectsSelectedForCut;
 
-    [MenuItem("fps.sample/Hotkeys/Cut GameObjects _%#X")]
+    [MenuItem("FPS Sample/Hotkeys/Cut GameObjects _%#X")]
     static void Cut()
     {
         if (Selection.objects.Length > 0)
@@ -39,7 +39,7 @@ public class HotKeys
         }
     }
 
-    [MenuItem("fps.sample/Hotkeys/Paste GameObjects _%#V")]
+    [MenuItem("FPS Sample/Hotkeys/Paste GameObjects _%#V")]
     static void Paste()
     {
         if (objectsSelectedForCut == null)
@@ -98,7 +98,7 @@ public class HotKeys
         objectsSelectedForCut = null;
     }
 
-    [MenuItem("fps.sample/Hotkeys/Deselect All &d")]
+    [MenuItem("FPS Sample/Hotkeys/Deselect All &d")]
     static void Deselect()
     {
         Selection.activeGameObject = null;
@@ -110,7 +110,7 @@ public class HotKeys
         lastMouseRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
     }
 
-    [MenuItem("fps.sample/Hotkeys/Position under mouse %#q")]
+    [MenuItem("FPS Sample/Hotkeys/Position under mouse %#q")]
     static void MousePlace()
     {
         var transforms = Selection.transforms;
@@ -148,7 +148,7 @@ public class HotKeys
         return hit;
     }
 
-    [MenuItem("fps.sample/Hotkeys/Align and position under mouse %#z")]
+    [MenuItem("FPS Sample/Hotkeys/Align and position under mouse %#z")]
     static void MousePlaceAndAlign()
     {
         var transforms = Selection.transforms;
@@ -187,7 +187,7 @@ public class HotKeys
         }
     }
 
-    [MenuItem("fps.sample/Hotkeys/Toggle Gizmos _%G")]
+    [MenuItem("FPS Sample/Hotkeys/Toggle Gizmos _%G")]
     static void ToggleGizmos()
     {
         var etype = typeof(Editor);
@@ -240,7 +240,7 @@ public class HotKeys
     }
 
     private static string k_EditorPrefScreenshotPath = "ScreenshotPath";
-    [MenuItem("fps.sample/Take screenshot")]
+    [MenuItem("FPS Sample/Take screenshot")]
     public static void CaptureScreenshot()
     {
         var path = UnityEditor.EditorPrefs.GetString(k_EditorPrefScreenshotPath, Application.dataPath.BeforeLast("Assets"));

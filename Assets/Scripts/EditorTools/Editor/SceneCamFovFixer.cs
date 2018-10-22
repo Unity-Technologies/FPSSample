@@ -107,7 +107,7 @@ public static class SceneCamFovFixer
             sceneView.pivot += -Camera.current.transform.forward * currentEvent.delta.y * 0.50f;
     }
 
-    const string k_MenuName = "fps.sample/Fix sceneview fov";
+    const string k_MenuName = "FPS Sample/Fix sceneview fov";
 
     static FieldInfo s_OnPreSceneGUIDelegateInfo;
     static bool s_Enabled;

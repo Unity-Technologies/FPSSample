@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 
-[CreateAssetMenu(fileName = "ItemTypeDefinition", menuName = "SampleGame/Item/TypeDefinition")]
+[CreateAssetMenu(fileName = "ItemTypeDefinition", menuName = "FPS Sample/Item/TypeDefinition")]
 public class ItemTypeDefinition : DynamicEnum, IReplicatedEntityProvider
 {
     public WeakAssetReference prefabServer;

@@ -155,7 +155,7 @@ public struct NetworkReader
 
     public bool ReadCheck()
     {
-        // TODO (ulfj) : Add conditional so we can ship without this
+        // TODO : Add conditional so we can ship without this
         var check = m_Input.ReadUInt32();
         return check == 0x12345678;
     }

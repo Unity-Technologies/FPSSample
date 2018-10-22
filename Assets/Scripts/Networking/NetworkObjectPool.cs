@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// TODO (ulfj) : Optimize internal data structures
+// TODO : Optimize internal data structures
 public class NetworkObjectPool<T> where T : class, new()
 {
     public int allocated { get { return m_Allocated.Count; } }

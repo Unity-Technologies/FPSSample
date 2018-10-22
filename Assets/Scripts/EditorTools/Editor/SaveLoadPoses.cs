@@ -92,43 +92,43 @@ public static class SaveLoadPoses
 {
     static string filepath => $"{Path.GetTempPath()}/Skeleton_Pose.json";
 
-    [MenuItem("fps.sample/Animation/Skeleton Pose Interop/Load from tmp folder: Bind Pose (Selected)")]
+    [MenuItem("FPS Sample/Animation/Skeleton Pose Interop/Load from tmp folder: Bind Pose (Selected)")]
     static void LoadBindPose()
     {
         LoadPose(PoseType.bindpose);
     }
 
-    [MenuItem("fps.sample/Animation/Skeleton Pose Interop/Load from tmp folder: T-Pose (Selected)")]
+    [MenuItem("FPS Sample/Animation/Skeleton Pose Interop/Load from tmp folder: T-Pose (Selected)")]
     static void LoadRigPose()
     {
         LoadPose(PoseType.tpose);
     }
     
-    [MenuItem("fps.sample/Animation/Skeleton Pose Interop/Load from tmp folder: Human Pose (Selected)")]
+    [MenuItem("FPS Sample/Animation/Skeleton Pose Interop/Load from tmp folder: Human Pose (Selected)")]
     static void LoadHumanPose()
     {
         LoadPose(PoseType.humanpose);
     }
 
-    [MenuItem("fps.sample/Animation/Skeleton Pose Interop/")]
+    [MenuItem("FPS Sample/Animation/Skeleton Pose Interop/")]
     static void SeperateMe()
     {
         EditorGUILayout.Separator();
     }
 
-    [MenuItem("fps.sample/Animation/Skeleton Pose Interop/Save to tmp folder: Bind Pose (Selected)")]
+    [MenuItem("FPS Sample/Animation/Skeleton Pose Interop/Save to tmp folder: Bind Pose (Selected)")]
     static void SaveBindPose()
     {
         SavePose(PoseType.bindpose);
     }
 
-    [MenuItem("fps.sample/Animation/Skeleton Pose Interop/Save to tmp folder: T-Pose (Selected)")]
+    [MenuItem("FPS Sample/Animation/Skeleton Pose Interop/Save to tmp folder: T-Pose (Selected)")]
     static void SaveRigPose()
     {
         SavePose(PoseType.tpose);
     }
    
-    [MenuItem("fps.sample/Animation/Skeleton Pose Interop/Save to tmp folder: Human Pose (Selected)")]
+    [MenuItem("FPS Sample/Animation/Skeleton Pose Interop/Save to tmp folder: Human Pose (Selected)")]
     static void SaveHumanPose()
     {
         SavePose(PoseType.humanpose);

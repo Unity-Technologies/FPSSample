@@ -386,6 +386,8 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         CmdLoad(args);
         Game.SetMousePointerLock(false);
 
+        m_ServerStartTime = Time.time;
+
         GameDebug.Log("Server initialized");
         Console.SetOpen(false);
         return true;
@@ -411,6 +413,25 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
     public void Update()
     {
+        if(serverRecycleInterval.FloatValue > 0.0f)
+        {
+            // Recycle server if time is up and no clients connected
+            if(m_Clients.Count == 0 && Time.time > m_ServerStartTime + serverRecycleInterval.FloatValue)
+            {
+                GameDebug.Log("Server exiting because recycle timeout was hit.");
+                Console.EnqueueCommandNoHistory("quit");
+            }
+        }
+
+        if (m_Clients.Count > m_MaxClients)
+            m_MaxClients = m_Clients.Count;
+
+        if(serverQuitWhenEmpty.IntValue > 0 && m_MaxClients > 0 && m_Clients.Count == 0)
+        {
+            GameDebug.Log("Server exiting because last client disconnected");
+            Console.EnqueueCommandNoHistory("quit");
+        }
+
         m_SimStartTime = Game.Clock.ElapsedTicks;
         m_SimStartTimeTick = m_serverGameWorld != null ? m_serverGameWorld.WorldTick : 0;
 
@@ -562,7 +583,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
 #if USE_UNET
         //m_ServerBroadcast.gameInfo.levelname = Game.game.levelManager.currentLevel.name;
-        //m_ServerBroadcast.gameInfo.gamemode = "Deathmatch"; // TODO (ulfj) : Report game mode when we have more than one
+        //m_ServerBroadcast.gameInfo.gamemode = "Deathmatch";
         //m_ServerBroadcast.UpdateGameInfo();
 #endif
     }
@@ -646,7 +667,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         if (m_serverGameWorld != null && m_SimStartTimeTick != m_serverGameWorld.WorldTick)
         {
             // Only update sim time if we actually simulatated
-            // TODO (ulfj) : remove this when targetFrameRate works the way we want it.
+            // TODO : remove this when targetFrameRate works the way we want it.
             m_LastSimTime = Game.Clock.GetTicksDeltaAsMilliseconds(m_SimStartTime);
         }
 
@@ -816,8 +837,6 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
     void OnDebugDrawGameloopInfo()
     {
-        // TODO (ulfj) : Reimplement this
-
         //DebugOverlay.Write(2,2,"Server Gameloop Info:");
 
         //var y = 3;
@@ -889,6 +908,12 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     [ConfigVar(Name = "server.port", DefaultValue = "7913", Description = "Port listened to by server")]
     static ConfigVar serverPort;
 
+    [ConfigVar(Name = "server.quitwhenempty", DefaultValue = "0", Description = "If enabled, quit when last client disconnects.")]
+    static ConfigVar serverQuitWhenEmpty;
+
+    [ConfigVar(Name = "server.recycleinterval", DefaultValue = "0", Description = "Exit when N seconds old AND when 0 players. 0 means never.")]
+    static ConfigVar serverRecycleInterval;
+
     [ConfigVar(Name = "server.sqp_port", DefaultValue = "7912", Description = "Port used for server query protocol")]
     static ConfigVar serverSQPPort;
 
@@ -900,4 +925,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
     [ConfigVar(Name = "server.servername", DefaultValue = "", Description = "Servername")]
     static ConfigVar serverServerName;
+
+    float m_ServerStartTime;
+    int m_MaxClients;
 }

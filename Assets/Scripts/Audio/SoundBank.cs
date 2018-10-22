@@ -11,7 +11,7 @@ public class WeakSoundDef : Weak<SoundDef>
     public bool IsValid() { return guid != ""; }
 }
 
-[CreateAssetMenu(fileName = "Sound", menuName = "SampleGame/Audio/SoundBank", order = 10000)]
+[CreateAssetMenu(fileName = "Sound", menuName = "FPS Sample/Audio/SoundBank", order = 10000)]
 public class SoundBank : ScriptableObject
 {
     public List<SoundDef> soundDefs;

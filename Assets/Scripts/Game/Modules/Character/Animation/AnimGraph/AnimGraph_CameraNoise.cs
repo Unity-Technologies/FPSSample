@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Animations;
 using UnityEngine.Playables;
 
-[CreateAssetMenu(fileName = "CameraNoise", menuName = "SampleGame/Animation/AnimGraph/CameraNoise")]
+[CreateAssetMenu(fileName = "CameraNoise", menuName = "FPS Sample/Animation/AnimGraph/CameraNoise")]
 public class AnimGraph_CameraNoise : AnimGraphAsset
 {
 	public string cameraBone;

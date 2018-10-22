@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-[CreateAssetMenu(menuName = "SampleGame/Effect/SpatialEffectRegistry", fileName = "SpatialEffectRegistry")]
+[CreateAssetMenu(menuName = "FPS Sample/Effect/SpatialEffectRegistry", fileName = "SpatialEffectRegistry")]
 public class SpatialEffectRegistry : Registry<SpatialEffectTypeDefinition>
 {
 }

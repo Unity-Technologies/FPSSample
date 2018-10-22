@@ -38,7 +38,7 @@ public class GameModeSystemClient : ComponentSystem
         m_OverlayUI.Clear();
     }
 
-    // TODO (ulfj) : We need to fix up these dependencies
+    // TODO : We need to fix up these dependencies
     public void SetLocalPlayerId(int playerId)
     {
         m_LocalPlayerId = playerId;

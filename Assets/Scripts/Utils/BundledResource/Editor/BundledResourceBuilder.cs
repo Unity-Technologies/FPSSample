@@ -44,14 +44,14 @@ public class BundledResourceBuilder
             saveAssets = true;
     }
 
-    [MenuItem("fps.sample/Registries/Dryrun update")]
+    [MenuItem("FPS Sample/Registries/Dryrun update")]
     public static void DryrunUpdateRegistries()
     {
         BuildWindowProgress.Open("Dryrun Registry Update");
         UpdateRegistries(true);
     }
 
-    [MenuItem("fps.sample/Registries/Test registries")]
+    [MenuItem("FPS Sample/Registries/Test registries")]
     public static void TestRegistriesMenu()
     {
         BuildWindowProgress.Open("Verify Registries");

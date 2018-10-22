@@ -7,48 +7,12 @@ public interface IConsoleUI
 {
     void Init();
     void Shutdown();
-    //void Write(bstring message);
     void OutputString(string message);
     bool IsOpen();
     void SetOpen(bool open);
     void ConsoleUpdate();
     void ConsoleLateUpdate();
 }
-
-/*
-public class bstring
-{
-    private class NoArg { };
-
-    public bstring() : this(0, "") { }
-    public bstring(int capacity) : this(capacity, "") { }
-    public bstring(string str) : this(str.Length, str) { }
-    public bstring(int capacity, string value) { _buf = new char[capacity]; value.CopyTo(0, _buf, 0, value.Length); }
-    public bstring(int capacity, char[] value, int length) { _buf = new char[capacity]; _len = length; System.Array.Copy(value, _buf, length); }
-    public bstring(bstring other) : this(other.Capacity, other._buf, other.Length) { }
-
-    public int Format<T0>(string format, T0 arg0)
-    {
-        return StringFormatter.Write<T0, NoArg, NoArg, NoArg, NoArg, NoArg>(ref _buf, 0, format, arg0, null, null, null, null, null);
-    }
-    public int Format<T0, T1>(string format, T0 arg0, T1 arg1)
-    {
-        return StringFormatter.Write<T0, T1, NoArg, NoArg, NoArg, NoArg>(ref _buf, 0, format, arg0, arg1, null, null, null, null);
-    }
-
-    public int Capacity { get { return _buf.Length; } }
-    public int Length { get { return _len; } }
-
-    public override string ToString()
-    {
-        return new string(_buf, 0, _len);
-    }
-
-    char[] _buf;
-    int _len;
-}
-*/
-
 
 public class ConsoleNullUI : IConsoleUI
 {
@@ -80,12 +44,6 @@ public class ConsoleNullUI : IConsoleUI
     public void SetOpen(bool open)
     {
     }
-
-    /*
-    public void Write(bstring message)
-    {
-    }
-    */
 }
 
 public class Console
@@ -112,14 +70,6 @@ public class Console
     {
         s_ConsoleUI.Shutdown();
     }
-
-    /*
-    public static void Write(bstring message)
-    {
-        if (s_ConsoleUI != null)
-            s_ConsoleUI.Write(message);
-    }
-    */
 
     static void OutputString(string message)
     {
@@ -346,7 +296,6 @@ public class Console
             OutputString(c.Value.name + ": " + c.Value.description);
     }
 
-    //static bstring buf = new bstring(256);
     static void CmdVars(string[] arguments)
     {
         var varNames = new List<string>(ConfigVar.ConfigVars.Keys);
@@ -354,10 +303,6 @@ public class Console
         foreach (var v in varNames)
         {
             var cv = ConfigVar.ConfigVars[v];
-            /*
-            buf.Format("{0} = {1}", cv.name, cv.Value);
-            Write(buf);
-            */
             OutputString(string.Format("{0} = {1}", cv.name, cv.Value));
         }
     }

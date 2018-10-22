@@ -585,7 +585,7 @@ public class NetworkServer
             // we find one. (This will happen if the client determines that it has gotten too
             // far ahead and recalculate the client time.)
 
-            // TODO (ulfj) : We should be able to do this in a smarter way
+            // TODO : We should be able to do this in a smarter way
             for (var sequence = commandSequenceProcessed + 1; sequence <= commandSequenceIn; ++sequence)
             {
                 CommandInfo previous;
@@ -761,7 +761,7 @@ public class NetworkServer
             // so if the client baseline is older than that we cannot generate the snapshot. Furthermore, we require
             // the client to keep the last N updates for any entity, so even though the client might have much older
             // baselines for some entities we cannot guarantee it. 
-            // TODO (ulfj) : Can we make this simpler?
+            // TODO : Can we make this simpler?
             var haveBaseline = maxSnapshotAck != 0 && owner.m_ServerSequence - maxSnapshotAck < NetworkConfig.snapshotDeltaCacheSize - 2; // -2 because we want 3 baselines!
 
 

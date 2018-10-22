@@ -141,7 +141,7 @@ public class LevelManager
         if (currentLevel.state == LevelState.Loading)
             throw new NotImplementedException("TODO : Implement unload during load");
 
-        // TODO (ulfj) : Load empty scene for now
+        // TODO : Load empty scene for now
         SceneManager.LoadScene(1);
 
         SimpleBundleManager.ReleaseLevelAssetBundle(currentLevel.name);

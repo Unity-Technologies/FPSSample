@@ -138,7 +138,6 @@ public struct DeltaWriter
 
                 case NetworkSchema.FieldType.Quaternion:
                     {
-                        // TODO (ulfj) : Figure out what to do with quaternions
                         uint vx = inputStream.ReadBits(field.bits);
                         uint vy = inputStream.ReadBits(field.bits);
                         uint vz = inputStream.ReadBits(field.bits);
@@ -167,7 +166,7 @@ public struct DeltaWriter
                 case NetworkSchema.FieldType.String:
                 case NetworkSchema.FieldType.ByteArray:
                     {
-                        // TODO (ulfj) : Do a better job of string and buffer diffs?
+                        // TODO : Do a better job of string and buffer diffs?
                         byte[] valueBuffer;
                         int valueOffset;
                         int valueLength;
@@ -352,7 +351,7 @@ public struct DeltaWriter
 
                 case NetworkSchema.FieldType.Quaternion:
                     {
-                        // TODO (ulfj) : Figure out what to do with quaternions
+                        // TODO : Figure out what to do with quaternions
                         uint vx = inputStream.ReadBits(field.bits);
                         uint vy = inputStream.ReadBits(field.bits);
                         uint vz = inputStream.ReadBits(field.bits);
@@ -389,7 +388,7 @@ public struct DeltaWriter
                 case NetworkSchema.FieldType.String:
                 case NetworkSchema.FieldType.ByteArray:
                     {
-                        // TODO (ulfj) : Do a better job of string and buffer diffs?
+                        // TODO : Do a better job of string and buffer diffs?
                         byte[] valueBuffer;
                         int valueOffset;
                         int valueLength;

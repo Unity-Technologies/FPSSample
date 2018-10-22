@@ -1,7 +1,7 @@
 ﻿using Unity.Entities;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "ProjectileEntityFactory",menuName = "SampleGame/Projectile/ProjectileEntityFactory")]
+[CreateAssetMenu(fileName = "ProjectileEntityFactory",menuName = "FPS Sample/Projectile/ProjectileEntityFactory")]
 public class ProjectileEntityFactory : ReplicatedEntityFactor
 {
     public override Entity Create(EntityManager entityManager)

@@ -6,7 +6,7 @@ using UnityEngine.Animations;
 using UnityEngine.Playables;
 
 
-[CreateAssetMenu(fileName = "StateSelector", menuName = "SampleGame/Animation/AnimGraph/StateSelector")]
+[CreateAssetMenu(fileName = "StateSelector", menuName = "FPS Sample/Animation/AnimGraph/StateSelector")]
 public class AnimGraph_StateSelector : AnimGraphAsset
 {
     // TODO remove this and use character locomotion state
