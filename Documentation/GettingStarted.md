@@ -2,7 +2,7 @@
 
 ## The game
 
-The FPS Sample is multiplayer only game. There is no single player mode and
+The FPS Sample is a multiplayer only game. There is no single player mode and
 you cannot play the game without being connected to a server. It is a pretty
 traditional shooter game with two different characters: The Terraformer and
 The Robot. Each have their own weapon with a primary and secondary fire mode.

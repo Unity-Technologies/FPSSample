@@ -1,4 +1,4 @@
-![](Documentation/Images/banner.png)
+![](Documentation/Images/Banner.png)
 
 # FPS Sample
 
@@ -74,7 +74,7 @@ navigating to ___FPS Sample > Windows > Project tools___.
 
 It should look like this:
 
-![](Documentation/Images/projecttools.png)
+![](Documentation/Images/ProjectTools.png)
 
 Keep this window docked as you will use it a lot. From here you can open the
 levels, build assetbundles and build standalone players. Because this is a
