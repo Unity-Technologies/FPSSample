@@ -46,10 +46,10 @@ Alt+Enter | Toggle full screen
 Working with a multiplayer game in Unity means you will be working a lot with the
 standalone player. To make a client and a server that talks over a network connection there
 has to be two processes. To make this workflow as frictionless as possible, we
-use assetbundles for all the content (levels and characters etc.). The only thing that
-goes into the standalone player is the code and a single,
-very small, bootstrapper scene. Only if you have made changes to a level or a prefab
-do you have to rebuild the assetbundles. (And you can rebuild selectively -- to some degree.)
+use assetbundles for all the content (levels and characters etc.). 
+The only thing that goes into the standalone player is the code and a single, very small, bootstrapper scene. 
+Only if you have made changes to a level or a prefab do you have to rebuild the assetbundles. 
+(And you can rebuild selectively -- to some degree.)
 
 The Project Tools window is used to make this workflow function in practice. The most commonly used functions here are:
 
@@ -57,11 +57,16 @@ Button | Function
 --- | --- 
 __Open__ | Open all the scenes that make up a level
 __Levels [force]__ | Build all the levels into bundles
-__Assets [force]__ | Build all prefabs into  bundles (players etc)
+__Assets [force]__ | Build all prefabs into bundles (players etc)
 __All [force]__ | Build all levels and prefabs into bundles
 __Build game__ | Build code and bootstrapper scene
 __Run__ | Start game in _boot mode_. No level loaded, only bootstrapper.
 __Open build folder__ | Open the folder containing the standalone player
+__Update Registry__ | Updates the registry used when building prefab bundles. 
+
+Updating the registry only needs to be done when new game elements (ect. Character, Replicated entity, Hero definition) 
+are added to the project  
+
 
 From the _boot mode_ a standalone player can enter other modes. Some examples:
 

@@ -175,7 +175,7 @@ Characters and weapon are separate hierarchies, but need to play in sync, so an 
 
 ### Setting up the First Person Controller
 
-The Animator Controller is not references in the Characters Animator Component, but assigned to an Animator Controller Template 
+The Animator Controller is not referenced in the Characters Animator Component, but assigned to an Animator Controller Template 
 (`AnimGraph_AnimatorController`). This template wraps the controller in an AnimatorControllerPlayable and forwards game state 
 to the Animator Controllers parameters etc. 
 

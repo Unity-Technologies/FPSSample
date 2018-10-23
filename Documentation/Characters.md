@@ -1,7 +1,8 @@
 # Character Pipeline
 
 ### Iteration
-We assume an iterative workflow where characters are put into game in their earliest/mockup phase and continuously updated as the projects progresses, bug surface and standards change late in production.
+We assume an iterative workflow where characters are put into game in their earliest/mockup phase and continuously 
+updated as the projects progresses, bug surface and standards change late in production.
 
 ### Authoring
 Characters are Modeled and Rigged in Maya and exported into FBX files.
@@ -9,7 +10,7 @@ Characters are Modeled and Rigged in Maya and exported into FBX files.
 > E.G: //Assets/Models/Characters/Terraformer/Terraformer_A.fbx
 
 ### Prefabs
-Prefab are where Materials are assigned and additional components for game play systems are added and configures. 
+Prefab are where Materials are assigned and additional components for game play systems are added and configured. 
 We use Prefab Variants as they allow the prefab to stay up to date as mesh, skeleton and skinning changes throughout production.
 
 ![](Images/CharacterPrefabs.png)

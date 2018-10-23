@@ -20,7 +20,7 @@ all content has been authored for HDRP. We are also using the new
 [network transport layer](https://github.com/Unity-Technologies/multiplayer) as well as the [Entity-Component System](https://unity3d.com/unity/features/job-system-ECS). 
 In the case of ECS, we have primarily adopted the "ECS-pattern" and use it in
 hybrid mode with a lot of regular components. As more and more features of
-Unity become availble in ECS-aware versions, we will migrate to them.
+Unity become available in ECS-aware versions, we will migrate to them.
 
 ## Status and prerequisites
 
@@ -66,6 +66,7 @@ to import all the assets.
 the following steps right after the initial import:
 > 1. Search for `t:prefab` in the Project search field. Then click on the first prefab and shift+click on the last to select them all. Right click and select __Reimport__.
 > 2. Search for `t:model` in the Project search field. Repeat the same steps as for prefabs to reimport them all.
+> 3. __IF__ you are on a version older than beta 6, you may have had a few crashes during import. In that case you need to find `GooRocket` and `GooRifle` in project, right click and select __Reimport__. 
 >
 > One day soon we will remove this note and there will be cake.
 
@@ -116,6 +117,21 @@ Project Tools window. Fill out the settings like this:
 Now hit the green __Start__ button. This should launch two processes: one is
 a standalone, headless server, the other is a client that will attempt to
 connect to the server.
+
+Congratulations! If you made it this far you should celebrate a bit!
+
+## Development of FPS Sample, Contributions etc.
+
+As of today, internally development of the project happens on Perforce. We
+push versions of the project to github from there. As we do that we will update
+the [CHANGELOG](CHANGELOG.md) with highlights but the full history is not
+carried over.
+
+For legal and practical reasons we are not able to take larger contributions
+just now. We are working to see how we can make it happen and we are always happy
+to hear about bugfixes and ideas for improvements in our forum. If you post
+bugfixes, we remind you that they will be covered by
+[Unity Contribution Agreement](https://unity3d.com/legal/licenses/Unity_Contribution_Agreement).
 
 ## More information
 
