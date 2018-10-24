@@ -183,7 +183,7 @@ public class Game : MonoBehaviour
     [ConfigVar(Name = "chartype", DefaultValue = "-1", Description = "Character to start with (-1 uses default character)")]
     public static ConfigVar characterType;
 
-    [ConfigVar(Name = "allowcharchange", DefaultValue = "1", Description = "Is changing charaacter allowed")]
+    [ConfigVar(Name = "allowcharchange", DefaultValue = "1", Description = "Is changing character allowed")]
     public static ConfigVar allowCharChange;
 
     [ConfigVar(Name = "debug.cpuprofile", DefaultValue = "0", Description = "Profile and dump cpu usage")]
