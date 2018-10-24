@@ -84,7 +84,7 @@ reason we have chosen to use a custom Playable Graph for Third Person animation.
 
 
 #### Playable Graph
-The playable praph is the backend for animation features like TimeLine and the Animator Controller. When you use these 
+The playable graph is the backend for animation features like TimeLine and the Animator Controller. When you use these 
 a playable graph is created in the background. 
 Playable graphs can also be constructed and managed through code using the Playable API, which is what we do.
 
