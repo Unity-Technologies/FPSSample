@@ -550,7 +550,7 @@ public class BuildWindow : EditorWindow
         var buildExe = GetBuildExe(buildTarget);
         Debug.Log("Starting " + buildExe + " in " + buildPath);
         var process = new System.Diagnostics.Process();
-        process.StartInfo.UseShellExecute = false;
+        process.StartInfo.UseShellExecute = args.Contains("-batchmode");
         process.StartInfo.FileName = Application.dataPath + "/../" + buildPath + "/" + buildExe;    // mogensh: for some reason we now need to specify project path
         process.StartInfo.Arguments = args;
         process.StartInfo.WorkingDirectory = buildPath;
