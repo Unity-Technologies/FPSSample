@@ -17,7 +17,7 @@ Syncs position of scene view and default game camera.
 __Cut GameObjects [Hotkey]__\
 Cuts the current selection in the scene Hierarchy. The cut objects are marked by a little round icon to the right in the scene Hierarchy
 
-![](Images/CutGameObjects.png)
+![](Images/CutGameObjects.PNG)
 
 > Hotkey: Ctrl+Shift+X\
 > Menu: FPS Sample > Hotkeys > Cut GameObjects
@@ -53,7 +53,7 @@ used to 'pin' the item so it doesn't get pushed out by later selected items.
 Items in the history window can be dragged onto component fields.
 This is useful for setting up assets with many cross references such as materials and complicated prefabs
 
-![](Images/SelectionHistory.png)
+![](Images/SelectionHistory.PNG)
 
 > Menu: FPS Sample > Windows > Selection History
 
@@ -75,7 +75,7 @@ __Replace scene selection by this prefab [Hotkey]__\
 Enables you to easily replace scene Hierarchy selection with another resource from Project. Simply make a selection in the 
 scene Hierarchy and Ctrl+RMB in Project on what resource you want to replace your selection with and press "Replace scene selection by this prefab"
 
-![](Images/ReplaceSceneSelectionByThisPrefab.png)
+![](Images/ReplaceSceneSelectionByThisPrefab.PNG)
 
 > Hotkey: Ctrl+RMB
 
@@ -101,7 +101,7 @@ This way you can easily push changes to many different materials making it easy 
 to manage the colors of the pipes, the industrial tanks, the factory exterior detail props and more. By using Material
 Property Override Assets we could push the same color values to many different materials making it easy to manage color schemes and keep the number of material resources at a minimum.
 
-![](Images/MaterialPropertyOverrideComponent.png)
+![](Images/MaterialPropertyOverrideComponent.PNG)
 
 __Rope line [Component]__\
 These components help setting up ropes using a line renderer. The Rope Line Component keeps track of anchor gameobjects and
@@ -111,8 +111,8 @@ are satisfied with the ropes untick Simulate and the ropes are then saved.
 
 The Rope Anchor Component defines the length and number of segments for that section of the rope. 
 
-![](Images/RopeLine.png)
-![](Images/RopeAnchor.png)
+![](Images/RopeLine.PNG)
+![](Images/RopeAnchor.PNG)
 
 ## Lighting
 
@@ -121,7 +121,7 @@ This component helps set up and manage light probe proxy volumes. It is a compon
 a given light probe proxy volume and basically checks if it's meshrenderer children are set up to use the same light probe proxy volume
 as it refers to. If this is not the case you can set this up by pressing "Assign". This speeds up bulk setup of light probe proxy volumes
 
-![](Images/LPPVTool.png)
+![](Images/LPPVTool.PNG)
 
 __Clear all reflectionprobes to black [Utility]__\
 Clears all reflectionprobes to black. This is required to get correct bakes when baking reflectionprobes
@@ -135,19 +135,19 @@ Enable the script by pressing the toggle key labelled "Place [L key]" and press 
 Now a lightprobe will be added whenever you press L. The placement of the probe is pushed in the normal direction of the collision you click on and the height can be altered in the Light Probe Placement component.
 It is important that the gameobject on which the component is placed is situated at 0, 0, 0 in worldspace as the probe placement otherwise will be incorrect.
 
-![](Images/LightProbePlacement.png)
+![](Images/LightProbePlacement.PNG)
 
 __Light Probe Generator [Asset postprocessor]__\
 This is an asset post processor that looks for meshes with the prefix "LPG_" and when found it assigns a Light Probe Group to the object and generates a lightprobe per vertice.
 
-![](Images/LightProbeGenerator.png)
+![](Images/LightProbeGenerator.PNG)
 
 ## Other
 
 __Lookup asset guid [Utility]__\
 Looks up the GUID for an asset OR looks up the asset for a particular GUID. 
 
-![](Images/LookUpAssetWindow.png)
+![](Images/LookUpAssetWindow.PNG)
 
 > Hotkey: Ctrl+Alt+L\
 > Menu: FPS Sample > Hotkeys > Lookup asset guid
