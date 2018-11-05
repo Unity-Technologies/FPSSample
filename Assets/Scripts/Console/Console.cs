@@ -344,14 +344,26 @@ public class Console
 
     static void CmdExec(string[] arguments)
     {
-        if (arguments.Length != 1)
+        bool silent = false;
+        string filename = "";
+        if (arguments.Length == 1)
         {
-            OutputString("Usage: exec <filename>");
+            filename = arguments[0];
+        }
+        else if (arguments.Length == 2 && arguments[0] == "-s")
+        {
+            silent = true;
+            filename = arguments[1];
+        }
+        else
+        {
+            OutputString("Usage: exec [-s] <filename>");
             return;
         }
+
         try
         {
-            var lines = System.IO.File.ReadAllLines(arguments[0]);
+            var lines = System.IO.File.ReadAllLines(filename);
             s_PendingCommands.InsertRange(0, lines);
             if (s_PendingCommands.Count > 128)
             {
@@ -361,7 +373,8 @@ public class Console
         }
         catch (Exception e)
         {
-            OutputString("Exec failed: " + e.Message);
+            if(!silent)
+                OutputString("Exec failed: " + e.Message);
         }
     }
 

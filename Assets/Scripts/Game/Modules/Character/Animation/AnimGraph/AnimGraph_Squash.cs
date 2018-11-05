@@ -125,15 +125,16 @@ public class AnimGraph_Squash : AnimGraphAsset
                     } 
                 }
                 
-                // Change Direction
-                else if (animState.charLocoState == CharacterPredictedState.StateData.LocoState.GroundMove &&
-                    Vector2.Angle(animState.locomotionVector, m_prevLocoVector) > 90f)
-                {
-                    m_lastSquashTick = time.tick;
-                    animState.squashTime = 0;
-                    animState.squashWeight = m_Settings.stop.weight;
-                    playSpeed = m_Settings.stop.playSpeed; 
-                }   
+                // Disabled for now. Will be replaced in later version
+//                // Change Direction
+//                else if (animState.charLocoState == CharacterPredictedState.StateData.LocoState.GroundMove &&
+//                    Vector2.Angle(animState.locomotionVector, m_prevLocoVector) > 90f)
+//                {
+//                    m_lastSquashTick = time.tick;
+//                    animState.squashTime = 0;
+//                    animState.squashWeight = m_Settings.stop.weight;
+//                    playSpeed = m_Settings.stop.playSpeed; 
+//                }   
             }
             
             if (animState.squashWeight > 0)

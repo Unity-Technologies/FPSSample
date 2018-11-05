@@ -43,7 +43,8 @@ Note, that
 > **will not work**. You must clone the project with a version of git that has LFS.
 > You can download Git LFS here: https://git-lfs.github.com/.
 
-The project size is about 18GB. If your cloned repository is much smaller,
+The project size is about 18GB (size of Assets folder). Your cloned repository
+will be almost double of that due to git state. If it is much smaller,
 you most likely did not have LFS when you cloned.
 
 ## Getting the right version of Unity
@@ -93,8 +94,12 @@ you can move around and test your level, player traversal and weapons.
 
 ### Building bundles and standalone
 
-Leave playmode again and in the Project Tools windows, in the
-bundles section, press __All \[force\]__.
+Leave playmode again and in the Project Tools window, verify that
+it says "Building for: StandaloneWindows64..." under the Game headline.
+If it does not, change your platform in the usual way, using File > Build
+settings window.
+
+Now, in the Project Tools window in the bundles section, press __All \[force\]__.
 
 This will build the levels and other assets into assetbundles. The first time
 around this will take a significant amount of time as all shaders have to be
@@ -127,11 +132,9 @@ push versions of the project to github from there. As we do that we will update
 the [CHANGELOG](CHANGELOG.md) with highlights but the full history is not
 carried over.
 
-For legal and practical reasons we are not able to take larger contributions
-just now. We are working to see how we can make it happen and we are always happy
-to hear about bugfixes and ideas for improvements in our forum. If you post
-bugfixes, we remind you that they will be covered by
-[Unity Contribution Agreement](https://unity3d.com/legal/licenses/Unity_Contribution_Agreement).
+For practical reasons we are not able to take larger contributions
+just now. But bugfixes are very welcome! Read the guidelines for
+contributing in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## More information
 

@@ -380,7 +380,7 @@ public class BuildTools
         var serverBat = new string[]
         {
             "REM start game server on level_01",
-            executableName + " -nographics -batchmode +serve level_01 +game.modename assault"
+            executableName + " -nographics -batchmode -noboot +serve level_01 +game.modename assault"
         };
         File.WriteAllLines(buildPath + "/server.bat", serverBat);
         Debug.Log("  server.bat");
@@ -389,14 +389,14 @@ public class BuildTools
         File.WriteAllLines(buildPath + "/user.cfg", new string[] { });
         Debug.Log("  user.cfg");
 
-        // Build game.cfg
-        var gameCfg = new string[]
+        // Build boot.cfg
+        var bootCfg = new string[]
         {
            "client",
            "load level_menu"
         };
-        File.WriteAllLines(buildPath + "/game.cfg", gameCfg);
-        Debug.Log("  game.cfg");
+        File.WriteAllLines(buildPath + "/" + Game.k_BootConfigFilename, bootCfg);
+        Debug.Log("  " + Game.k_BootConfigFilename);
 
         Debug.Log("Window64 build postprocessing done.");
     }
@@ -463,6 +463,25 @@ public class BuildTools
 
         Directory.CreateDirectory(buildPath);
         BuildBundles(buildPath, target, true, true, true);
+        var res = BuildGame(buildPath, executableName, target, BuildOptions.EnableHeadlessMode, buildName, false);
+
+        if (!res)
+            throw new Exception("BuildPipeline.BuildPlayer failed");
+        if (res.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
+            throw new Exception("BuildPipeline.BuildPlayer failed: " + res.ToString());
+    }
+
+    // This is just a little convenience for when iterating on Linux specific code
+    // Build a full build and then use this to just build the executable into the same build folder.
+    [MenuItem("FPS Sample/BuildSystem/Linux64/CreateBuildLinux64_OnlyExecutable")]
+    public static void CreateBuildLinux64_OnlyExecutable()
+    {
+        var target = BuildTarget.StandaloneLinux64;
+        var buildName = GetBuildName();
+        var buildPath = GetBuildPath(target, buildName);
+        string executableName = Application.productName;
+
+        Directory.CreateDirectory(buildPath);
         var res = BuildGame(buildPath, executableName, target, BuildOptions.EnableHeadlessMode, buildName, false);
 
         if (!res)

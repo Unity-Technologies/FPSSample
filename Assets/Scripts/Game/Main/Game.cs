@@ -7,6 +7,7 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 using System;
 using System.Globalization;
 using UnityEngine.Rendering.PostProcessing;
+//using SQP;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -183,7 +184,7 @@ public class Game : MonoBehaviour
     [ConfigVar(Name = "chartype", DefaultValue = "-1", Description = "Character to start with (-1 uses default character)")]
     public static ConfigVar characterType;
 
-    [ConfigVar(Name = "allowcharchange", DefaultValue = "1", Description = "Is changing charaacter allowed")]
+    [ConfigVar(Name = "allowcharchange", DefaultValue = "1", Description = "Is changing character allowed")]
     public static ConfigVar allowCharChange;
 
     [ConfigVar(Name = "debug.cpuprofile", DefaultValue = "0", Description = "Profile and dump cpu usage")]
@@ -193,7 +194,7 @@ public class Game : MonoBehaviour
     public static ConfigVar netDropEvents;
     
     static readonly string k_UserConfigFilename = "user.cfg";
-    static readonly string k_GameConfigFilename = "game.cfg";
+    public static readonly string k_BootConfigFilename = "boot.cfg";
 
     public static GameConfiguration config;
     public static InputSystem inputSystem;
@@ -286,7 +287,11 @@ public class Game : MonoBehaviour
 
         var commandLineArgs = new List<string>(System.Environment.GetCommandLineArgs());
 
+#if UNITY_STANDALONE_LINUX
+        m_isHeadless = true;
+#else
         m_isHeadless = commandLineArgs.Contains("-batchmode");
+#endif
         var consoleRestoreFocus = commandLineArgs.Contains("-consolerestorefocus");
 
         if (m_isHeadless)
@@ -344,7 +349,7 @@ public class Game : MonoBehaviour
 
         ConfigVar.Init();
 
-        Console.EnqueueCommandNoHistory("exec " + k_UserConfigFilename);
+        Console.EnqueueCommandNoHistory("exec -s " + k_UserConfigFilename);
 
         // Default is to allow no frame cap, i.e. as fast as possible if vsync is disabled
         Application.targetFrameRate = -1;
@@ -354,21 +359,21 @@ public class Game : MonoBehaviour
             Application.targetFrameRate = serverTickRate.IntValue;
             QualitySettings.vSyncCount = 0; // Needed to make targetFramerate work; even in headless mode
 
+#if !UNITY_STANDALONE_LINUX
             if (!commandLineArgs.Contains("-nographics"))
                 GameDebug.Log("WARNING: running -batchmod without -nographics");
+#endif
         }
         else
         {
             RenderSettings.Init();
-
-            // Determine if we are a 'normal' game build. If so we run game.cfg to get started
-            //bool menuBoot = (buildInfo != null && buildInfo.buildId != "AutoBuild" && !commandLineArgs.Contains("-nogame")) || commandLineArgs.Contains("-game");
-            if(!commandLineArgs.Contains("-nogame"))
-            {
-                Console.EnqueueCommandNoHistory("exec " + k_GameConfigFilename);
-            }
         }
 
+        // Out of the box game behaviour is driven by boot.cfg unless you ask it not to
+        if(!commandLineArgs.Contains("-noboot"))
+        {
+            Console.EnqueueCommandNoHistory("exec -s " + k_BootConfigFilename);
+        }
 
         var forceClientSystem = commandLineArgs.Contains("-forceclientsystems");
         if (!m_isHeadless || forceClientSystem)
@@ -381,6 +386,8 @@ public class Game : MonoBehaviour
             UnityEngine.Object.DontDestroyOnLoad(go);
             clientFrontend = go.GetComponentInChildren<ClientFrontend>();
         }
+
+        //m_SQPClient = new SQP.SQPClient();
 
         GameDebug.Log("fps.sample initialized");
 #if UNITY_EDITOR
@@ -422,6 +429,7 @@ public class Game : MonoBehaviour
         Console.AddCommand("crashme", (string[] args) => { GameDebug.Assert(false); }, "Crashes the game next frame ");
         Console.AddCommand("saveconfig", CmdSaveConfig, "Save the user config variables");
         Console.AddCommand("loadconfig", CmdLoadConfig, "Load the user config variables");
+        //Console.AddCommand("sqp", CmdSQP, "Query the given server");
 
 #if UNITY_STANDALONE_WIN
         Console.AddCommand("windowpos", CmdWindowPosition, "Position of window. e.g. windowpos 100,100");
@@ -613,6 +621,8 @@ public class Game : MonoBehaviour
 
         UpdateCPUStats();
 
+        //m_SQPClient.Update();
+
         endUpdateEvent?.Invoke();
     }
 
@@ -781,6 +791,29 @@ public class Game : MonoBehaviour
             GameDebug.Log("Cannot connect from current gamemode");
     }
 
+    /*
+    private void CmdSQP(string[] args)
+    {
+        if(m_SQPClient.ClientState != SQPClient.SQPClientState.Idle)
+        {
+            GameDebug.Log("SQPClient is busy");
+            return;
+        }
+        if(args.Length != 1)
+        {
+            Console.Write("Usage sqp <server>");
+            return;
+        }
+        System.Net.IPAddress addr;
+        if(!System.Net.IPAddress.TryParse(args[0], out addr))
+        {
+            Console.Write("Invalid address");
+            return;
+        }
+        m_SQPClient.StartInfoQuery(new System.Net.IPEndPoint(addr, NetworkConfig.serverSQPPort.IntValue));
+    }
+    */
+
     void CmdQuit(string[] args)
     {
 #if UNITY_EDITOR
@@ -935,4 +968,5 @@ public class Game : MonoBehaviour
     System.Diagnostics.Stopwatch m_Clock;
 
     static int s_bMouseLockFrameNo;
+    //SQPClient m_SQPClient;
 }

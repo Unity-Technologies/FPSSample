@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Threading.Tasks;
+using System.Threading;
 
 #if UNITY_STANDALONE_LINUX
 
@@ -10,8 +12,38 @@ using System.Runtime.InteropServices;
 
 public class ConsoleTextLinux : IConsoleUI
 {
+    bool IsDumb()
+    {
+        return System.Console.IsInputRedirected || System.Console.IsOutputRedirected;
+    }
+
+    void ReaderThread()
+    {
+
+    }
+
+    char[] buf = new char[1024];
     public void Init()
     {
+        System.Console.WriteLine("Dumb console: " + IsDumb());
+        if (IsDumb())
+        {
+            m_ReaderThread = new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                while (true)
+                {
+                    var read = System.Console.In.Read(buf, 0, buf.Length);
+                    if (read > 0)
+                    {
+                        m_CurrentLine += new string(buf, 0, read);
+                    }
+                    else
+                        break;
+                }
+            });
+            m_ReaderThread.Start();
+        }
         System.Console.Clear();
         m_CurrentLine = "";
         DrawInputline();
@@ -24,6 +56,20 @@ public class ConsoleTextLinux : IConsoleUI
 
     public void ConsoleUpdate()
     {
+        // Handling for cases where the terminal is 'dumb', i.e. cursor etc.
+        // and no individual keys fired
+        if (IsDumb())
+        {
+            var lines = m_CurrentLine.Split('\n');
+            if (lines.Length > 1)
+            {
+                for (int i = 0; i < lines.Length - 1; i++)
+                    Console.EnqueueCommand(lines[i]);
+                m_CurrentLine = lines[lines.Length - 1];
+            }
+            return;
+        }
+
         if (!System.Console.KeyAvailable)
             return;
 
@@ -82,7 +128,7 @@ public class ConsoleTextLinux : IConsoleUI
     {
         ClearInputLine();
 
-        if(message.Length > 0 && message[0] == '>')
+        if (!IsDumb() && message.Length > 0 && message[0] == '>')
         {
             var oldColor = System.Console.ForegroundColor;
             System.Console.ForegroundColor = System.ConsoleColor.Green;
@@ -101,6 +147,9 @@ public class ConsoleTextLinux : IConsoleUI
 
     void ClearInputLine()
     {
+        if (IsDumb())
+            return;
+
         System.Console.CursorLeft = 0;
         System.Console.CursorTop = System.Console.BufferHeight - 1;
         System.Console.Write(new string(' ', System.Console.BufferWidth - 1));
@@ -109,6 +158,9 @@ public class ConsoleTextLinux : IConsoleUI
 
     void DrawInputline()
     {
+        if (IsDumb())
+            return;
+
         System.Console.CursorLeft = 0;
         System.Console.CursorTop = System.Console.BufferHeight - 1;
         System.Console.Write(m_CurrentLine + new string(' ', System.Console.BufferWidth - m_CurrentLine.Length - 1));
@@ -116,6 +168,7 @@ public class ConsoleTextLinux : IConsoleUI
     }
 
     string m_CurrentLine;
+    private Thread m_ReaderThread;
     //TextWriter m_PreviousOutput;
 }
 #endif

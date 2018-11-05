@@ -6,7 +6,7 @@ namespace UnityEngine.Ucg.Matchmaking
     public class Matchmaker
     {
         /// <summary>
-        /// The ip:port of the matchmaking service
+        /// The hostname[:port]/{projectid} for the running matchmaker assigned to this project
         /// </summary>
         public string Endpoint;
 
@@ -43,8 +43,8 @@ namespace UnityEngine.Ucg.Matchmaking
         /// <summary>
         /// Matchmaking state-machine driver
         /// </summary>
-        /// <exception cref="ArgumentException"></exception>
-        public void UpdateMatchmaking()
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public void Update()
         {
             switch (State)
             {
@@ -56,9 +56,10 @@ namespace UnityEngine.Ucg.Matchmaking
                     break;
                 case MatchmakingState.Found:
                 case MatchmakingState.Error:
-                    break; // User hasn't stopped the state machine yet.
+                    Debug.Log("Update() is still being called after matchmaking finished.");
+                    break;
                 default:
-                    throw new ArgumentException();
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
@@ -73,7 +74,7 @@ namespace UnityEngine.Ucg.Matchmaking
         {
             MatchmakingRequest request = new MatchmakingRequest();
             MatchmakingPlayer thisPlayer = new MatchmakingPlayer(playerId);
-            
+
             thisPlayer.Properties = JsonUtility.ToJson(playerProps);
 
             request.Players.Add(thisPlayer);

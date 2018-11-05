@@ -540,7 +540,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         Console.AddCommand("nextchar", CmdNextChar, "Select next character", this.GetHashCode());
         Console.AddCommand("nextteam", CmdNextTeam, "Select next character", this.GetHashCode());
         Console.AddCommand("spectator", CmdSpectator, "Select spectator cam", this.GetHashCode());
-        Console.AddCommand("matchmake", CmdMatchmake, "matchmake <ip:port>: Find and join a server", this.GetHashCode());
+        Console.AddCommand("matchmake", CmdMatchmake, "matchmake <hostname[:port]/{projectid}>: Find and join a server", this.GetHashCode());
         
         if (args.Length > 0)
         {
@@ -643,7 +643,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     {
          if (m_useMatchmaking)
          {
-             m_matchmaker?.UpdateMatchmaking();
+             m_matchmaker?.Update();
          }
          
          UpdateIdleScreen();
@@ -953,7 +953,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
         if (string.IsNullOrEmpty(endpoint))
         {
-            GameDebug.LogError("matchmake: command requires an endpoint <ip:port>");
+            GameDebug.LogError("matchmake: command requires an endpoint <hostname[:port]/{projectid}>");
             return;
         }
 

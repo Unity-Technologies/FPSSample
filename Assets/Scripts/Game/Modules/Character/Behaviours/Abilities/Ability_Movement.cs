@@ -147,7 +147,7 @@ class Movement_Update : BaseComponentDataSystem<CharacterAbility, Ability_Moveme
         }
 
         if (time.tick != characterPredictedState.State.tick + 1)
-            GameDebug.LogError("Update tick invalid. Game tick:" + time.tick + " but current state is at tick:" + characterPredictedState.State.tick);
+            GameDebug.Log("Update tick invalid. Game tick:" + time.tick + " but current state is at tick:" + characterPredictedState.State.tick);
 
         characterPredictedState.State.tick = time.tick;
 
