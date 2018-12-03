@@ -63,6 +63,7 @@ to import all the assets.
 > __NOTE__: Due to a bug in Unity 2018.3 beta, you have to take
 the following steps right after the initial import:
 > 1. Search for `t:model` in the Project search field. Select them all, right click and reimport them.
+> 2. Search for `Firstperson_Projection` in the Project search field. Select the 4 shaders, right click and reimport them.
 >
 > One day soon we will remove this note and there will be cake.
 
