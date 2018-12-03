@@ -148,7 +148,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400278, guid: cad17df165f0478439bf67de774ca59d, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 400278, guid: cad17df165f0478439bf67de774ca59d, type: 3}
       propertyPath: m_LocalRotation.w
@@ -168,7 +168,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400278, guid: cad17df165f0478439bf67de774ca59d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -90.00001
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 100278, guid: cad17df165f0478439bf67de774ca59d, type: 3}
       propertyPath: m_Name
@@ -218,5 +218,17 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 41197085d79c46a4199c368723e5983d, type: 2}
+    - target: {fileID: 100416, guid: cad17df165f0478439bf67de774ca59d, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 126
+      objectReference: {fileID: 0}
+    - target: {fileID: 100418, guid: cad17df165f0478439bf67de774ca59d, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 126
+      objectReference: {fileID: 0}
+    - target: {fileID: 100414, guid: cad17df165f0478439bf67de774ca59d, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 126
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cad17df165f0478439bf67de774ca59d, type: 3}

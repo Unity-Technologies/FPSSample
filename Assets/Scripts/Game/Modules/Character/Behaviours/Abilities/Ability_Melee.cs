@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-[RequireComponent(typeof(ReplicatedAbility))]
-public class Ability_Melee : MonoBehaviour
+[CreateAssetMenu(fileName = "Ability_Melee",menuName = "FPS Sample/Abilities/Ability_Melee")]
+public class Ability_Melee : CharBehaviorFactory
 {
     public enum Phase
     {
@@ -29,10 +29,10 @@ public class Ability_Melee : MonoBehaviour
         public float impactTime;
         public int punchPerSecond;
 
-        public CharacterPredictedState.StateData.Action punchAction;
+        public CharPredictedStateData.Action punchAction;
     }
 
-    public struct PredictedState : IPredictedData<PredictedState>, IComponentData
+    public struct PredictedState : INetPredicted<PredictedState>, IComponentData
     {
         public Phase phase;
         public int phaseStartTick;
@@ -63,7 +63,7 @@ public class Ability_Melee : MonoBehaviour
 #endif        
     }
     
-    public struct InterpolatedState : IInterpolatedData<InterpolatedState>, IComponentData
+    public struct InterpolatedState : INetInterpolated<InterpolatedState>, IComponentData
     {
         public int impactTick;
         
@@ -82,69 +82,29 @@ public class Ability_Melee : MonoBehaviour
             this = first;
         }
     }
-
+    
     public Settings settings;
-
-    private void OnEnable()
+    
+    public override Entity Create(EntityManager entityManager, List<Entity> entities)
     {
-        var gameObjectEntity = GetComponent<GameObjectEntity>();
-        var entityManager = gameObjectEntity.EntityManager;
-        var abilityEntity = gameObjectEntity.Entity;
-
-        // Default components
-        entityManager.AddComponentData(abilityEntity, new CharacterAbility());
-        entityManager.AddComponentData(abilityEntity, new AbilityControl());
-
+        var entity = CreateCharBehavior(entityManager);
+        entities.Add(entity);
+		
         // Ability components
-        var localState = new LocalState
+        entityManager.AddComponentData(entity, settings);
+        var localState = new Ability_Melee.LocalState
         {
             rayQueryId = -1,
         };
-        entityManager.AddComponentData(abilityEntity, localState);
-        entityManager.AddComponentData(abilityEntity, new PredictedState());
-        entityManager.AddComponentData(abilityEntity, settings);
-        entityManager.AddComponentData(abilityEntity, new InterpolatedState());
-        
-        // Setup replicated ability
-        var replicatedAbility = entityManager.GetComponentObject<ReplicatedAbility>(abilityEntity);
-        replicatedAbility.predictedHandlers = new IPredictedDataHandler[2];
-        replicatedAbility.predictedHandlers[0] = new PredictedEntityHandler<AbilityControl>(entityManager, abilityEntity);
-        replicatedAbility.predictedHandlers[1] = new PredictedEntityHandler<PredictedState>(entityManager, abilityEntity);
-        
-        replicatedAbility.interpolatedHandlers = new IInterpolatedDataHandler[1];
-        replicatedAbility.interpolatedHandlers[0] = new InterpolatedEntityHandler<InterpolatedState>(entityManager, abilityEntity);
-    }
-}
-
-
-[DisableAutoCreation]
-class Melee_RequestActive : BaseComponentDataSystem<CharacterAbility,AbilityControl,Ability_Melee.PredictedState>
-{
-    public Melee_RequestActive(GameWorld world) : base(world)
-    {
-        ExtraComponentRequirements = new ComponentType[] { typeof(ServerEntity) } ;
-    }
-    
-    protected override void Update(Entity abilityEntity, CharacterAbility charAbility, AbilityControl abilityCtrl, Ability_Melee.PredictedState predictedState)
-    {
-        var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character).command;
-        var character = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
-			
-        var isAlive = character.State.locoState != CharacterPredictedState.StateData.LocoState.Dead;
-        var fireRequested = command.melee && isAlive;
-
-        var isActive = predictedState.phase == Ability_Melee.Phase.Punch;
-
-        abilityCtrl.requestsActive = !character.State.abilityActive && (isActive || fireRequested) ? 1 : 0;
-        
-        
-        EntityManager.SetComponentData(abilityEntity, abilityCtrl);
-        EntityManager.SetComponentData(abilityEntity, predictedState);
+        entityManager.AddComponentData(entity, localState);
+        entityManager.AddComponentData(entity, new PredictedState());
+        entityManager.AddComponentData(entity, new InterpolatedState());
+        return entity;
     }
 }
 
 [DisableAutoCreation]
-class Melee_Update : BaseComponentDataSystem<CharacterAbility,AbilityControl, Ability_Melee.LocalState,
+class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Ability_Melee.LocalState,
     Ability_Melee.PredictedState, Ability_Melee.Settings>
 {
     public Melee_Update(GameWorld world) : base(world)
@@ -152,22 +112,32 @@ class Melee_Update : BaseComponentDataSystem<CharacterAbility,AbilityControl, Ab
         ExtraComponentRequirements = new ComponentType[] { typeof(ServerEntity) } ;
     }
     
-    protected override void Update(Entity abilityEntity, CharacterAbility charAbility, AbilityControl abilityCtrl, 
+    protected override void Update(Entity abilityEntity, CharBehaviour charAbility, AbilityControl abilityCtrl, 
         Ability_Melee.LocalState localState, Ability_Melee.PredictedState predictedState, Ability_Melee.Settings settings)
     {
         var time = m_world.worldTime;
-        
+
+        if (abilityCtrl.active == 0)
+        {
+            if(predictedState.phase != Ability_Melee.Phase.Idle)
+                predictedState.SetPhase(Ability_Melee.Phase.Idle, time.tick);
+            EntityManager.SetComponentData(abilityEntity, predictedState);
+            return;
+        }
+            
         switch (predictedState.phase)
         {
             case Ability_Melee.Phase.Idle:
                 {
-                    if (abilityCtrl.activeAllowed == 1)
-                    {
-                        var character = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
-                        predictedState.SetPhase(Ability_Melee.Phase.Punch, time.tick);
-                        character.State.SetAction(settings.punchAction, time.tick);
-                        character.State.abilityActive = true;
-                    }
+                    var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
+
+                    abilityCtrl.behaviorState = AbilityControl.State.Active;
+                    predictedState.SetPhase(Ability_Melee.Phase.Punch, time.tick);
+                    charPredictedState.SetAction(settings.punchAction, time.tick);
+                    
+                    EntityManager.SetComponentData(abilityEntity, abilityCtrl);
+                    EntityManager.SetComponentData(abilityEntity, predictedState);
+                    EntityManager.SetComponentData(charAbility.character, charPredictedState);
 
                     break;
                 }
@@ -177,10 +147,10 @@ class Melee_Update : BaseComponentDataSystem<CharacterAbility,AbilityControl, Ab
                     if (phaseDuration >= settings.impactTime)
                     {
                         var character = EntityManager.GetComponentObject<Character>(charAbility.character);
-                        var charPredictedState = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
+                        var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
                         var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character).command;
                         var viewDir = command.lookDir;
-                        var eyePos = charPredictedState.State.position + Vector3.up*character.eyeHeight;
+                        var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight;
 
                         predictedState.SetPhase(Ability_Melee.Phase.Hold, time.tick);
 
@@ -198,6 +168,7 @@ class Melee_Update : BaseComponentDataSystem<CharacterAbility,AbilityControl, Ab
                         });
 
                         EntityManager.SetComponentData(abilityEntity,localState);
+                        EntityManager.SetComponentData(abilityEntity, predictedState);
                         
                         break;
                     }
@@ -209,11 +180,16 @@ class Melee_Update : BaseComponentDataSystem<CharacterAbility,AbilityControl, Ab
                     var phaseDuration = time.DurationSinceTick(predictedState.phaseStartTick);
                     if (phaseDuration > holdEndDuration)
                     {
-                        predictedState.phase = Ability_Melee.Phase.Idle;
-                        predictedState.phaseStartTick = time.tick;
-                        var character = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
-                        
-                        character.State.SetAction(CharacterPredictedState.StateData.Action.None, time.tick);
+                        var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
+
+                        abilityCtrl.behaviorState = AbilityControl.State.Idle;
+                        predictedState.SetPhase(Ability_Melee.Phase.Idle, time.tick);
+                        charPredictedState.SetAction(CharPredictedStateData.Action.None, time.tick);
+
+                        EntityManager.SetComponentData(abilityEntity, abilityCtrl);
+                        EntityManager.SetComponentData(abilityEntity, predictedState);
+                        EntityManager.SetComponentData(charAbility.character, charPredictedState);
+
                         break;
                     }
 
@@ -221,7 +197,6 @@ class Melee_Update : BaseComponentDataSystem<CharacterAbility,AbilityControl, Ab
                 }
         }
        
-        EntityManager.SetComponentData(abilityEntity, predictedState);
     }
 }
 
@@ -248,7 +223,7 @@ class Melee_HandleCollision : BaseComponentDataSystem<Ability_Melee.LocalState>
         
         if (result.hitCollisionOwner != Entity.Null)
         {
-            var charAbility = EntityManager.GetComponentData<CharacterAbility>(abilityEntity);       
+            var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);       
             var settings = EntityManager.GetComponentData<Ability_Melee.Settings>(abilityEntity);
 
             var hitCollisionOwner =

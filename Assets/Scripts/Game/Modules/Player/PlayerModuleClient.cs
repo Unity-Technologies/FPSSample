@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 using Unity.Entities;
 
@@ -28,7 +29,6 @@ public class PlayerModuleClient
         m_UpdatePlayerCameras = m_world.GetECSWorld().CreateManager<UpdatePlayerCameras>(m_world);
         m_ResolvePlayerReference = m_world.GetECSWorld().CreateManager<ResolvePlayerReference>(m_world);
         m_UpdateServerEntityComponent = m_world.GetECSWorld().CreateManager<UpdateServerEntityComponent>(m_world);
-
     }
 
     public void Shutdown()
@@ -150,10 +150,6 @@ public class PlayerModuleClient
             m_LocalPlayer.commandBuffer.Set(ref m_LocalPlayer.command, tick);
         else
             m_LocalPlayer.commandBuffer.Add(ref m_LocalPlayer.command, tick);
-
-#if UNITY_EDITOR        
-        StateHistory.SetCommand(tick, ref m_LocalPlayer.command);
-#endif
     }
 
     // Fetches command for a tick and stores it in the UserCommandComponent

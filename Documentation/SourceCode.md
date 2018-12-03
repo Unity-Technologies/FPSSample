@@ -109,5 +109,10 @@ Updates the state of all active ragdolls. Simulation processed by Unity physics 
 ### SpectatorCam
 Controls a replicated player camera, that can be controlled by the spectator. This can be used to test control of non-character units and is currently in a pretty hacky state.  
 
-
-
+## ECS
+All (almost) game-code is implemented using ECS systems, but in what we call _mixed-mode_.
+As we depend on functionality that is not yet implemented in ECS we still base our code around
+GameObjects and MonoBehaviors - but we try to spice things up with some entities and data components. 
+We also opted for manually updating all systems as it gives us complete control over update order and is 
+required when systems needed to be updated multiple times per frame (as in client side prediction).  
+But expect more and more game code to go _pure_ ECS as we move along.

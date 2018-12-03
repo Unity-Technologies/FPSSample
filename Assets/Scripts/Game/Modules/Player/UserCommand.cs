@@ -2,7 +2,7 @@
 using UnityEngine.Networking;
 
 [System.Serializable]
-public struct UserCommand : INetworkSerializable
+public struct UserCommand : INetSerialized
 {
     public int checkTick;        // For debug purposes
     public int renderTick;      
@@ -19,6 +19,7 @@ public struct UserCommand : INetworkSerializable
     public bool reload;
     public bool melee;
     public bool use;
+    public CharacterEmote emote;
 
     public static readonly UserCommand defaultCommand = new UserCommand(0); 
 
@@ -39,6 +40,7 @@ public struct UserCommand : INetworkSerializable
         reload = false;
         melee = false;
         use = false;
+        emote = CharacterEmote.None;
     }
     
     public void ClearCommand()  
@@ -52,6 +54,7 @@ public struct UserCommand : INetworkSerializable
         reload = false;
         melee = false;
         use = false;
+        emote = CharacterEmote.None;
     }
     
 
@@ -81,6 +84,7 @@ public struct UserCommand : INetworkSerializable
         networkWriter.WriteBoolean("reload", reload);
         networkWriter.WriteBoolean("melee", melee);
         networkWriter.WriteBoolean("use", use);
+        networkWriter.WriteByte("emote", (byte)emote);
     }
 
     public void Deserialize(ref NetworkReader networkReader, IEntityReferenceSerializer refSerializer, int tick)
@@ -100,6 +104,7 @@ public struct UserCommand : INetworkSerializable
         reload = networkReader.ReadBoolean();
         melee = networkReader.ReadBoolean();
         use = networkReader.ReadBoolean();
+        emote = (CharacterEmote)networkReader.ReadByte();
     }
 
     public override string ToString()
@@ -119,6 +124,7 @@ public struct UserCommand : INetworkSerializable
         strBuilder.AppendLine("reload:" + reload);
         strBuilder.AppendLine("melee:" + melee);
         strBuilder.AppendLine("use:" + use);
+        strBuilder.AppendLine("emote:" + emote);
         return strBuilder.ToString();
     }
 }

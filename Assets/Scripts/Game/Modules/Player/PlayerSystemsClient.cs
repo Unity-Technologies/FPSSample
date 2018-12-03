@@ -7,9 +7,9 @@ public class ResolvePlayerReference : BaseComponentSystem
     
     public ResolvePlayerReference(GameWorld world) : base(world) {}
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         Group = GetComponentGroup(typeof(PlayerState));
     }
 
@@ -39,6 +39,7 @@ public class ResolvePlayerReference : BaseComponentSystem
 }
 
 
+// TODO (mogensh) rename this. Or can we get rid of it as it not only sets controlled entity on localPlayer?
 [DisableAutoCreation]
 public class UpdateServerEntityComponent : BaseComponentSystem<LocalPlayer>    
 {
@@ -53,22 +54,7 @@ public class UpdateServerEntityComponent : BaseComponentSystem<LocalPlayer>
         
         if (player.controlledEntity != localPlayer.controlledEntity)
         {
-            // Remove components added for previous controlled entity
-            if (localPlayer.controlledEntity != Entity.Null)
-            {
-                var controlledEntity = localPlayer.controlledEntity;
-                if(EntityManager.Exists(controlledEntity) && EntityManager.HasComponent<ServerEntity>(controlledEntity))
-                    PostUpdateCommands.RemoveComponent<ServerEntity>(controlledEntity);
-            }
-
             localPlayer.controlledEntity = player.controlledEntity;
-
-            if (localPlayer.controlledEntity != Entity.Null)
-            {
-                var controlledEntity = localPlayer.controlledEntity;
-                if(!EntityManager.HasComponent< ServerEntity>(controlledEntity))
-                    PostUpdateCommands.AddComponent(controlledEntity, new ServerEntity());
-            }
         }
     }
 }

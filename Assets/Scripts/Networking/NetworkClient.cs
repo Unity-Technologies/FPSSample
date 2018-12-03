@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using NetworkCompression;
 using UnityEngine.Profiling;
+using System.Net;
 
 public interface ISnapshotConsumer
 {
@@ -116,33 +117,15 @@ public class NetworkClient
             return false;
         }
 
-        string address;
-        var port = 0;
-
-        if (endpoint.Contains(":"))
+        IPAddress ipAddress;
+        int port;
+        if(!NetworkUtils.EndpointParse(endpoint, out ipAddress, out port, NetworkConfig.defaultServerPort))
         {
-            int.TryParse(endpoint.AfterLast(":"), out port);
-            address = endpoint.BeforeFirst(":");
-        }
-        else
-            address = endpoint;
-
-        if (port == 0)
-            port = NetworkConfig.defaultServerPort;
-
-        // Resolve in case we got a hostname
-        var resolvedAddress = System.Net.Dns.GetHostAddresses(address);
-        foreach (var r in resolvedAddress)
-        {
-            if (r.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            {
-                // Pick first ipv4
-                address = r.ToString();
-                break;
-            }
+            GameDebug.Log("Invalid endpoint: " + endpoint);
+            return false;
         }
 
-        var connectionId = m_Transport.Connect(address, port);
+        var connectionId = m_Transport.Connect(ipAddress.ToString(), port);
         if (connectionId == -1)
         {
             GameDebug.Log("Connect failed");
@@ -159,7 +142,12 @@ public class NetworkClient
         if (m_Connection == null)
             return;
 
+        // Force transport layer to disconnect
         m_Transport.Disconnect(m_Connection.connectionId);
+
+        // Note, we have to call OnDisconnect manually as disconnecting forcefully like this does not
+        // generate an disconnect event from the transport layer
+        OnDisconnect(m_Connection.connectionId);
     }
 
     public void QueueCommand(int time, DataGenerator generator)
@@ -244,9 +232,6 @@ public class NetworkClient
             case NetworkCompression.IOStreamType.Huffman:
                 m_Connection.SendPackage<HuffmanOutputStream>();
                 break;
-            case NetworkCompression.IOStreamType.Rans:
-                m_Connection.SendPackage<RansOutputStream>();
-                break;
             default:
                 GameDebug.Assert(false);
         }
@@ -300,11 +285,6 @@ public class NetworkClient
                 case NetworkCompression.IOStreamType.Huffman:
                     {
                         m_Connection.ReadPackage<HuffmanInputStream>(data, size, m_Connection.compressionModel, loop);
-                        break;
-                    }
-                case NetworkCompression.IOStreamType.Rans:
-                    {
-                        m_Connection.ReadPackage<RansInputStream>(data, size, m_Connection.compressionModel, loop);
                         break;
                     }
                 default:
@@ -490,14 +470,12 @@ public class NetworkClient
             CompleteSendPackage(info, ref rawOutputStream);
         }
 
-        byte[] protocolId = new byte[128];
         byte[] modelData = new byte[32];
         void ReadClientInfo<TInputStream>(ref TInputStream input) where TInputStream : NetworkCompression.IInputStream
         {
             var newClientId = (int)input.ReadRawBits(8);
             serverTickRate = (int)input.ReadRawBits(8); // TODO (petera) remove this from here. This should only be handshake code. tickrate updated by other means like configvar
-            var length = (int)input.ReadRawBits(8);
-            input.ReadRawBytes(protocolId, 0, length);
+            uint serverProtocol = input.ReadRawBits(8);
 
             int modelSize = (int)input.ReadRawBits(16);
             if (modelSize < modelData.Length)
@@ -511,11 +489,10 @@ public class NetworkClient
                 return;
             }
 
-            var ourProtocol = NetworkConfig.protocolVersion;
-            var serverProtocol = NetworkConfig.encoding.GetString(protocolId, 0, length);
+            uint ourProtocol = NetworkConfig.protocolVersion;
             GameDebug.Log("Client protocol id: " + ourProtocol);
             GameDebug.Log("Server protocol id: " + serverProtocol);
-            if (ourProtocol.AfterLast(".") != serverProtocol.AfterLast("."))
+            if (ourProtocol != serverProtocol)
             {
                 if (clientVerifyProtocol.IntValue > 0)
                 {

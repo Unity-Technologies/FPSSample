@@ -8,7 +8,8 @@ public class AnimGraph_Death : AnimGraphAsset
 {
     public AnimationClip[] anims;
 
-    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner)
     {
         return new Instance(graph, this); 
     }

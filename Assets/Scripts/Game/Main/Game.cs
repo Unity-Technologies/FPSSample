@@ -7,7 +7,7 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 using System;
 using System.Globalization;
 using UnityEngine.Rendering.PostProcessing;
-//using SQP;
+using SQP;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -204,6 +204,7 @@ public class Game : MonoBehaviour
     public Camera bootCamera;
     
     public LevelManager levelManager;
+    public SQPClient sqpClient;
 
     public static double frameTime;
 
@@ -277,10 +278,6 @@ public class Game : MonoBehaviour
         m_Clock = new System.Diagnostics.Stopwatch();
         m_Clock.Start();
 
-#if UNITY_EDITOR
-        StateHistory.Initialize();       
-#endif
-        
         var buildInfo = FindObjectOfType<BuildInfo>();
         if (buildInfo != null)
             _buildId = buildInfo.buildId;
@@ -387,9 +384,9 @@ public class Game : MonoBehaviour
             clientFrontend = go.GetComponentInChildren<ClientFrontend>();
         }
 
-        //m_SQPClient = new SQP.SQPClient();
+        sqpClient = new SQP.SQPClient();
 
-        GameDebug.Log("fps.sample initialized");
+        GameDebug.Log("FPS Sample initialized");
 #if UNITY_EDITOR
         GameDebug.Log("Build type: editor");
 #elif DEVELOPMENT_BUILD
@@ -429,7 +426,6 @@ public class Game : MonoBehaviour
         Console.AddCommand("crashme", (string[] args) => { GameDebug.Assert(false); }, "Crashes the game next frame ");
         Console.AddCommand("saveconfig", CmdSaveConfig, "Save the user config variables");
         Console.AddCommand("loadconfig", CmdLoadConfig, "Load the user config variables");
-        //Console.AddCommand("sqp", CmdSQP, "Query the given server");
 
 #if UNITY_STANDALONE_WIN
         Console.AddCommand("windowpos", CmdWindowPosition, "Position of window. e.g. windowpos 100,100");
@@ -621,7 +617,7 @@ public class Game : MonoBehaviour
 
         UpdateCPUStats();
 
-        //m_SQPClient.Update();
+        sqpClient.Update();
 
         endUpdateEvent?.Invoke();
     }
@@ -791,29 +787,6 @@ public class Game : MonoBehaviour
             GameDebug.Log("Cannot connect from current gamemode");
     }
 
-    /*
-    private void CmdSQP(string[] args)
-    {
-        if(m_SQPClient.ClientState != SQPClient.SQPClientState.Idle)
-        {
-            GameDebug.Log("SQPClient is busy");
-            return;
-        }
-        if(args.Length != 1)
-        {
-            Console.Write("Usage sqp <server>");
-            return;
-        }
-        System.Net.IPAddress addr;
-        if(!System.Net.IPAddress.TryParse(args[0], out addr))
-        {
-            Console.Write("Invalid address");
-            return;
-        }
-        m_SQPClient.StartInfoQuery(new System.Net.IPEndPoint(addr, NetworkConfig.serverSQPPort.IntValue));
-    }
-    */
-
     void CmdQuit(string[] args)
     {
 #if UNITY_EDITOR
@@ -968,5 +941,4 @@ public class Game : MonoBehaviour
     System.Diagnostics.Stopwatch m_Clock;
 
     static int s_bMouseLockFrameNo;
-    //SQPClient m_SQPClient;
 }

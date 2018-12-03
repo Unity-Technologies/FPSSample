@@ -10,26 +10,26 @@ public class AnimGraph_Banking : AnimGraphAsset
     public string bankTransform;
     public BankingJob.Settings bankingSettings;
 
-    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner)
     {
-        return new Instance(entityManager, owner, graph, this);
+        return new Instance(entityManager, owner, graph, animStateOwner, this);
     }
     
     class Instance : IAnimGraphInstance, IGraphLogic
     {
-        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_Banking settings)
+        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_Banking settings)
         {
             m_Settings = settings;
             m_EntityManager = entityManager;
             m_Owner = owner;
+            m_AnimStateOwner = animStateOwner;
             
             GameDebug.Assert(entityManager.HasComponent<Animator>(owner), "Owner has no Animator component");
             var animator = entityManager.GetComponentObject<Animator>(owner);
             GameDebug.Assert(entityManager.HasComponent<Skeleton>(owner), "Owner has no Skeleton component");
             var skeleton = entityManager.GetComponentObject<Skeleton>(owner);
-            GameDebug.Assert(entityManager.HasComponent<CharacterPredictedState>(owner),"Owner has no Character component");
-            m_character = entityManager.GetComponentObject<CharacterPredictedState>(owner);
-
+            GameDebug.Assert(entityManager.HasComponent<CharPredictedStateData>(m_AnimStateOwner),"Owner has no CharPredictedState component");
             
             var bankTransform = skeleton.bones[skeleton.GetBoneIndex(settings.bankTransform.GetHashCode())];
     
@@ -67,12 +67,13 @@ public class AnimGraph_Banking : AnimGraphAsset
 
         public void UpdateGraphLogic(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            var predictedState = m_EntityManager.GetComponentData<CharPredictedStateData>(m_AnimStateOwner);
 
-            if (animState.charLocoState != CharacterPredictedState.StateData.LocoState.GroundMove)
+            if (animState.charLocoState != CharPredictedStateData.LocoState.GroundMove)
             {   
-                var groundMoveVec = Vector3.ProjectOnPlane(m_character.State.velocity, Vector3.up);
-                if (animState.charLocoState == CharacterPredictedState.StateData.LocoState.InAir || Vector3.Magnitude(groundMoveVec) < 0.1f)
+                var groundMoveVec = Vector3.ProjectOnPlane(predictedState.velocity, Vector3.up);
+                if (animState.charLocoState == CharPredictedStateData.LocoState.InAir || Vector3.Magnitude(groundMoveVec) < 0.1f)
                 {
                     m_PreviousPosition = animState.position;
                 }
@@ -81,7 +82,7 @@ public class AnimGraph_Banking : AnimGraphAsset
                 
             animState.banking = Mathf.MoveTowards(animState.banking, 0f, m_Settings.bankingSettings.bankDamp * deltaTime);
     
-            if (animState.charLocoState == CharacterPredictedState.StateData.LocoState.GroundMove)
+            if (animState.charLocoState == CharPredictedStateData.LocoState.GroundMove)
             {
                 var movement = new Vector3(animState.position.x, 0f, animState.position.z) - new Vector3(m_PreviousPosition.x, 0f, m_PreviousPosition.z);
                 var delta = -Vector3.SignedAngle(m_PreviousMovement, movement, Vector3.up) * m_Settings.bankingSettings.bankContribution * deltaTime;                
@@ -99,12 +100,12 @@ public class AnimGraph_Banking : AnimGraphAsset
                 m_PreviousMovement = movement;            
             }
             
-            m_EntityManager.SetComponentData(m_Owner, animState);
+            m_EntityManager.SetComponentData(m_AnimStateOwner, animState);
         }
     
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             var job = m_Playable.GetJobData<BankingJob>();
             job.Update(animState, m_Settings.bankingSettings, m_Playable);
         }
@@ -112,7 +113,7 @@ public class AnimGraph_Banking : AnimGraphAsset
         AnimGraph_Banking m_Settings;
         EntityManager m_EntityManager;
         Entity m_Owner;
-        CharacterPredictedState m_character;
+        Entity m_AnimStateOwner;
 
         AnimationScriptPlayable m_Playable;
         Vector3 m_PreviousPosition;

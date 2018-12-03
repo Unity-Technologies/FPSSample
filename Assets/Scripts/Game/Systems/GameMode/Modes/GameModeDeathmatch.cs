@@ -130,8 +130,8 @@ public class GameModeDeathmatch : IGameMode
             var player = players[i];
             if (player.controlledEntity == Entity.Null)
                 continue;
-            var charPredictedState = m_world.GetEntityManager().GetComponentObject<CharacterPredictedState>(player.controlledEntity);
-            var position = charPredictedState.State.position;
+            var charPredictedState = m_world.GetEntityManager().GetComponentData<CharPredictedStateData>(player.controlledEntity);
+            var position = charPredictedState.position;
             player.enableCharacterSwitch = false;
             foreach(var b in m_GameModeSystemServer.teamBases)
             {

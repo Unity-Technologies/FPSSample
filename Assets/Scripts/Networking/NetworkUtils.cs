@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
@@ -131,6 +132,37 @@ public static class NetworkUtils
     public static uint SimpleHashStreaming(uint old_hash, uint value)
     {
         return old_hash * 179 + value + 1;
+    }
+
+    public static bool EndpointParse(string endpoint, out IPAddress address, out int port, int defaultPort)
+    {
+        string address_part;
+        address = null;
+        port = 0;
+
+        if (endpoint.Contains(":"))
+        {
+            int.TryParse(endpoint.AfterLast(":"), out port);
+            address_part = endpoint.BeforeFirst(":");
+        }
+        else
+            address_part = endpoint;
+
+        if (port == 0)
+            port = defaultPort;
+
+        // Resolve in case we got a hostname
+        var resolvedAddress = System.Net.Dns.GetHostAddresses(address_part);
+        foreach (var r in resolvedAddress)
+        {
+            if (r.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            {
+                // Pick first ipv4
+                address = r;
+                return true;
+            }
+        }
+        return false;
     }
 
     public static List<string> GetLocalInterfaceAddresses()

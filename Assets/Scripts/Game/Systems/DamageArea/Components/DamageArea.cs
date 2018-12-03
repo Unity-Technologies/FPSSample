@@ -42,7 +42,7 @@ public class DamageArea : MonoBehaviour
         
         for (var i = 0; i < charactersInside.Count; i++)
         {
-            if (charactersInside[i].hitCollisionOwner == hitCollision)
+            if (charactersInside[i].hitCollisionOwner == hitCollision.owner)
             {
                 charactersInside.EraseSwap(i);
                 break;

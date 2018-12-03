@@ -44,36 +44,33 @@ public struct SplashDamageRequest: IComponentData
 [DisableAutoCreation]
 public class HandleSplashDamageRequests : BaseComponentSystem
 {
-	struct Requests
-	{
-		public EntityArray entities;
-		public ComponentDataArray<SplashDamageRequest> requests;
-	}
-
-	struct HitColliders
-	{
-		public ComponentArray<HitCollisionHistory> hitCollisionArray;
-	}
-
-	[Inject] 
-	Requests RequestGroup;   
-
-	[Inject] 
-	HitColliders ColliderGroup;
+	ComponentGroup RequestGroup;   
+	ComponentGroup ColliderGroup;
 
 	public HandleSplashDamageRequests(GameWorld world) : base(world)
 	{
 		m_hitCollisionLayer = LayerMask.NameToLayer("hitcollision_enabled");
 	}
 
+	protected override void OnCreateManager()
+	{
+		base.OnCreateManager();
+		RequestGroup = GetComponentGroup(typeof(SplashDamageRequest));
+		ColliderGroup = GetComponentGroup(typeof(HitCollisionHistory));
+	}
+
 	protected override void OnUpdate()
 	{
-		for (var i = 0; i < RequestGroup.requests.Length; i++)
+		var entityArray = RequestGroup.GetEntityArray();
+		var requestArray = RequestGroup.GetComponentDataArray<SplashDamageRequest>();
+		var hitCollisionArray = ColliderGroup.GetComponentArray<HitCollisionHistory>();
+		
+		for (var i = 0; i < requestArray.Length; i++)
 		{
-			var request = RequestGroup.requests[i];
+			var request = requestArray[i];
 
             var forceIncluded = request.settings.ownerDamageFraction > 0 ? request.instigator : Entity.Null;
-			HitCollisionHistory.PrepareColliders(ref ColliderGroup.hitCollisionArray, request.tick, request.collisionMask, 
+			HitCollisionHistory.PrepareColliders(EntityManager, ref hitCollisionArray, request.tick, request.collisionMask, 
 	            Entity.Null, forceIncluded, primlib.sphere(request.center, request.settings.radius));
 
 			var hitColliderMask = 1 << m_hitCollisionLayer;
@@ -85,12 +82,17 @@ public class HandleSplashDamageRequests : BaseComponentSystem
 
 			foreach (var collision in colliderCollections.Values)
 			{
-				var collisionOwner = collision.hitCollision.owner;
+				var collisionOwner = collision.hitCollision.owner; 
+				var collisionOwnerEntity = collisionOwner.GetComponent<GameObjectEntity>().Entity;
 
-				var ownerGameObjectEntity = collisionOwner.GetComponent<GameObjectEntity>();
-				var ownerEntity = ownerGameObjectEntity != null ? ownerGameObjectEntity.Entity : Entity.Null;
-				
-				var centerOfMass = collisionOwner.transform.position + Vector3.up * 1.2f;	// TODO dont hardcode COM    
+				var centerOfMass = collision.closestPoint;
+
+				// TODO (mogens) dont hardcode center of mass - and dont get from Character. Should be set on hitCollOwner by some other system
+				if (EntityManager.HasComponent<Character>(collisionOwnerEntity))
+				{
+					var charPredicedState = EntityManager.GetComponentData<CharPredictedStateData>(collisionOwnerEntity);
+					centerOfMass = charPredicedState.position + Vector3.up * 1.2f;	     
+				}
 
 				// Calc damage
 				var damageVector = centerOfMass - (Vector3)request.center;
@@ -108,7 +110,7 @@ public class HandleSplashDamageRequests : BaseComponentSystem
 					impulse -= (request.settings.impulse - request.settings.minImpulse) * falloffFraction;
 				}
 
-				if (request.instigator != Entity.Null && request.instigator == ownerEntity)
+				if (request.instigator != Entity.Null && request.instigator == collisionOwnerEntity)
 					damage = damage * request.settings.ownerDamageFraction;
 
 				//GameDebug.Log(string.Format("SplashDamage. Target:{0} Inst:{1}", collider.hitCollision, m_world.GetGameObjectFromEntity(instigator) ));
@@ -116,7 +118,7 @@ public class HandleSplashDamageRequests : BaseComponentSystem
 			}
 				
 
-			PostUpdateCommands.DestroyEntity(RequestGroup.entities[i]);
+			PostUpdateCommands.DestroyEntity(entityArray[i]);
 		}
 	}
 	

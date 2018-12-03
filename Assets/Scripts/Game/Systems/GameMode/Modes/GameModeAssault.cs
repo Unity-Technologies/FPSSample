@@ -195,8 +195,8 @@ public class GameModeAssault : IGameMode
             if (character.healthState.health <= 0)
                 continue;
 
-            var charPredictedState = m_World.GetEntityManager().GetComponentObject<CharacterPredictedState>(player.controlledEntity);
-            var position = charPredictedState.State.position;
+            var charPredictedState = m_World.GetEntityManager().GetComponentData<CharPredictedStateData>(player.controlledEntity);
+            var position = charPredictedState.position;
 
             bool insideActive = InsideCylinder(position, capturePosition, m_ActiveCapturePoint.height, m_ActiveCapturePoint.radius);
 

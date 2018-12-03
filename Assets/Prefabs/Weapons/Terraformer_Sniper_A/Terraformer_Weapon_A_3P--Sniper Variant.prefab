@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &4431204151990780068
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100050, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_Name
+      value: Terraformer_Weapon_A_3P--Sniper Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: skeletonColor.r
+      value: 0.7921977
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: skeletonColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: skeletonColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 400010, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.197
+      objectReference: {fileID: 0}
+    - target: {fileID: 13700000, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 2fad42fc8357ceb4abacf4b9f16a5401, type: 2}
+    - target: {fileID: 13700000, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_Materials.Array.data[1]
+      value: 
+      objectReference: {fileID: 2100000, guid: df153e60e1d7d0f489b127fa75a58f29, type: 2}
+    - target: {fileID: 13700000, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_Materials.Array.data[2]
+      value: 
+      objectReference: {fileID: 2100000, guid: 07e7080bf1675a4439d96ffaf3d27528, type: 2}
+    - target: {fileID: 13700000, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_Materials.Array.data[3]
+      value: 
+      objectReference: {fileID: 2100000, guid: a44028b783666da4e931e16ad374ac35, type: 2}
+    - target: {fileID: 13700000, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_Materials.Array.data[4]
+      value: 
+      objectReference: {fileID: 2100000, guid: 07e7080bf1675a4439d96ffaf3d27528, type: 2}
+    - target: {fileID: 13700000, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}
+      propertyPath: m_Materials.Array.data[5]
+      value: 
+      objectReference: {fileID: 2100000, guid: 0aad1030c0a8718438005dfa6d1b3804, type: 2}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2923dab520b4a9d46a91c3056c895998, type: 3}

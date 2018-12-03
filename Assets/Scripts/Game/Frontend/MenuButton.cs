@@ -6,6 +6,7 @@ public class MenuButton : MonoBehaviour
 {
     public bool defaultButton;
     public bool ingameOption;
+    public bool mainmenuOption;
 
     void Start()
     {

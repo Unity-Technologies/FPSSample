@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CapturePoint : MonoBehaviour, INetworkSerializable
+public class CapturePoint : MonoBehaviour, INetSerialized
 {
 
     public string objectiveName;

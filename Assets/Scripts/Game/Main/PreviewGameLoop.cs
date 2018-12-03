@@ -40,7 +40,7 @@ public class PreviewGameMode : BaseComponentSystem
             return;
         }
 
-        if (m_world.GetEntityManager().HasComponent<CharacterPredictedState>(m_Player.controlledEntity))
+        if (m_world.GetEntityManager().HasComponent<Character>(m_Player.controlledEntity))
         {
             var character = m_world.GetEntityManager().GetComponentObject<Character>(m_Player.controlledEntity);
             if (!m_respawnPending && character.healthState.health == 0)
@@ -61,15 +61,13 @@ public class PreviewGameMode : BaseComponentSystem
     {
         var playerEntity = m_Player.gameObject.GetComponent<GameObjectEntity>().Entity;
         var charControl = EntityManager.GetComponentObject<PlayerCharacterControl>(playerEntity);
-
-        var controlledTrans = m_Player.controlledEntity != Entity.Null
-            ? EntityManager.GetComponentObject<Transform>(m_Player.controlledEntity)
-            : null;
-         
-        if (keepCharPosition && controlledTrans != null)
+        
+        if (keepCharPosition && m_Player.controlledEntity != Entity.Null && 
+            m_world.GetEntityManager().HasComponent<PresentationState>(m_Player.controlledEntity))
         {
-            m_SpawnPos = controlledTrans.position;
-            m_SpawnRot = controlledTrans.rotation;
+            var charPresentationState = m_world.GetEntityManager().GetComponentData<PresentationState>(m_Player.controlledEntity);
+            m_SpawnPos = charPresentationState.position;
+            m_SpawnRot = Quaternion.Euler(0f, charPresentationState.rotation, 0f);
         } 
         else
             FindSpawnTransform();
@@ -77,7 +75,7 @@ public class PreviewGameMode : BaseComponentSystem
         // Despawn old controlled
         if (m_Player.controlledEntity != Entity.Null)
         {
-            if (EntityManager.HasComponent<CharacterPredictedState>(m_Player.controlledEntity))
+            if (EntityManager.HasComponent<Character>(m_Player.controlledEntity))
             {
                 CharacterDespawnRequest.Create(PostUpdateCommands, m_Player.controlledEntity);
             }  
@@ -133,14 +131,6 @@ public class PreviewGameLoop : Game.IGameLoop
         Console.SetOpen(false);
 
         m_GameWorld = new GameWorld("World[PreviewGameLoop]");
-#if UNITY_EDITOR
-        // As previewmode will keep current scene open in editor we need make sure GameObjectEntities are registered
-        // in our world. This is done rather hackily by calling OnEnable
-        foreach (var gameObjectEntity in GameObject.FindObjectsOfType<GameObjectEntity>())
-            gameObjectEntity.OnEnable();
-#endif       
-        
-        
         
         if (args.Length > 0)
         {
@@ -198,7 +188,7 @@ public class PreviewGameLoop : Game.IGameLoop
         m_EffectModule = new EffectModuleClient(m_GameWorld, m_resourceSystem);
         m_ItemModule = new ItemModule(m_GameWorld);
         
-        m_ragdollSystem = new RagdollModule(m_GameWorld);
+        m_ragdollModule = new RagdollModule(m_GameWorld);
         
         m_DespawnProjectiles = m_GameWorld.GetECSWorld().CreateManager<DespawnProjectiles>(m_GameWorld);
         m_DamageAreaSystemServer = m_GameWorld.GetECSWorld().CreateManager<DamageAreaSystemServer>(m_GameWorld);
@@ -221,7 +211,7 @@ public class PreviewGameLoop : Game.IGameLoop
         m_HandleNamePlateOwnerDespawn = m_GameWorld.GetECSWorld().CreateManager<HandleNamePlateDespawn>(m_GameWorld);
         m_UpdateNamePlates = m_GameWorld.GetECSWorld().CreateManager<UpdateNamePlates>(m_GameWorld);
         
-        
+        m_UpdateReplicatedOwnerFlag = m_GameWorld.GetECSWorld().CreateManager<UpdateReplicatedOwnerFlag>(m_GameWorld);
             
 
         m_TwistSystem = new TwistSystem(m_GameWorld);
@@ -248,7 +238,7 @@ public class PreviewGameLoop : Game.IGameLoop
     {
         m_CharacterModule.Shutdown();
         m_ProjectileModule.Shutdown();
-        m_ragdollSystem.Shutdown();
+        m_ragdollModule.Shutdown();
         m_HitCollisionModule.Shutdown();
         m_PlayerModuleClient.Shutdown();
         m_PlayerModuleServer.Shutdown();
@@ -257,7 +247,7 @@ public class PreviewGameLoop : Game.IGameLoop
         m_SpectatorCamModuleClient.Shutdown();
         m_EffectModule.Shutdown();
         m_ItemModule.Shutdown();
-
+        
         m_GameWorld.GetECSWorld().DestroyManager(m_DamageAreaSystemServer);
         m_GameWorld.GetECSWorld().DestroyManager(m_DespawnProjectiles);
         
@@ -278,6 +268,8 @@ public class PreviewGameLoop : Game.IGameLoop
         m_GameWorld.GetECSWorld().DestroyManager(m_HandleNamePlateOwnerSpawn);
         m_GameWorld.GetECSWorld().DestroyManager(m_HandleNamePlateOwnerDespawn);
         m_GameWorld.GetECSWorld().DestroyManager(m_UpdateNamePlates);
+        
+        m_GameWorld.GetECSWorld().DestroyManager(m_UpdateReplicatedOwnerFlag);
         
         m_TwistSystem.ShutDown();
         m_FanSystem.ShutDown();
@@ -341,26 +333,28 @@ public class PreviewGameLoop : Game.IGameLoop
         m_CharacterModule.HandleSpawnRequests();
         m_ProjectileModule.HandleProjectileRequests();  
         m_HandleGrenadeRequests.Update();
-            
-        // Handle controlled entity changed
-        m_PlayerModuleClient.HandleControlledEntityChanged();
-        m_CharacterModule.HandleControlledEntityChanged();
-
+        m_UpdateReplicatedOwnerFlag.Update();
+        
         // Apply command for frame
         m_PlayerModuleClient.RetrieveCommand(m_GameWorld.worldTime.tick);
         
         // Handle spawn
+        m_CharacterModule.HandleSpawns(); ; // TODO (mogensh) creates presentations, so it needs to be done first. Find better solution for ordering
         m_SpectatorCamModuleServer.HandleSpawnRequests();
-        m_CharacterModule.HandleSpawns();
         m_HitCollisionModule.HandleSpawning();
         m_HandleNamePlateOwnerSpawn.Update();
         m_PlayerModuleClient.HandleSpawn();
-        m_ragdollSystem.HandleSpawning();
+        m_ragdollModule.HandleSpawning();
         m_TwistSystem.HandleSpawning();
         m_FanSystem.HandleSpawning();
         m_TranslateScaleSystem.HandleSpawning();
         m_ProjectileModule.HandleProjectileSpawn();
+        m_ItemModule.HandleSpawn();
 
+        // Handle controlled entity changed
+        m_PlayerModuleClient.HandleControlledEntityChanged();
+        m_CharacterModule.HandleControlledEntityChanged();
+        
         // Update movement of scene objects. Projectiles and grenades can also start update as they use collision data from last frame
         m_SpinSystem.Update();
         m_moverUpdate.Update();
@@ -390,19 +384,20 @@ public class PreviewGameLoop : Game.IGameLoop
         // Update presentation
         m_CharacterModule.UpdatePresentation();
         m_DestructiblePropSystemClient.Update();
-        m_DebugPrimitiveModule.HandleRequests();
         m_TeleporterSystemClient.Update(); 
         m_DebugPrimitiveModule.DrawPrimitives();
-        
+
+        m_DebugPrimitiveModule.HandleRequests();
+
         // Handle despawns
+        m_CharacterModule.HandleDepawns(); // TODO (mogensh) this destroys presentations and needs to be done first so its picked up. Find better solution  
         m_DespawnProjectiles.Update();
         m_ProjectileModule.HandleProjectileDespawn();
         m_HandleNamePlateOwnerDespawn.Update();
         m_TwistSystem.HandleDespawning();
         m_FanSystem.HandleDespawning();
-        m_ragdollSystem.HandleDespawning();
+        m_ragdollModule.HandleDespawning();
         m_HitCollisionModule.HandleDespawn();
-        m_CharacterModule.HandleDepawns();
         m_TranslateScaleSystem.HandleDepawning();
         m_GameWorld.ProcessDespawns();
     }
@@ -414,26 +409,29 @@ public class PreviewGameLoop : Game.IGameLoop
         {
             m_GameWorld.frameDuration = Time.deltaTime;
             
-            m_HitCollisionModule.StoreColliderState();
             
-            m_ItemModule.Update();
-            
-            m_ragdollSystem.Update();
-            m_CharacterModule.CameraUpdate();
-
             m_TranslateScaleSystem.Schedule();
             var twistSystemHandle = m_TwistSystem.Schedule();
             m_FanSystem.Schedule(twistSystemHandle);
                 
-            m_PlayerModuleClient.CameraUpdate();
-
+            m_HitCollisionModule.StoreColliderState();
+            
             m_CharacterModule.LateUpdate();
-
-            // Late update presentation update
+            m_ItemModule.LateUpdate();
+            m_ragdollModule.LateUpdate();
             m_ApplyGrenadePresentation.Update();
-            m_UpdateNamePlates.Update();
             m_ProjectileModule.UpdateClientProjectilesPredicted();
             m_EffectModule.ClientUpdate();
+            
+            // Update camera
+            m_PlayerModuleClient.CameraUpdate();
+
+
+            // Update UI
+            m_CharacterModule.UpdateUI();
+            m_UpdateNamePlates.Update();
+
+            // Finalize jobs that needs to be done before rendering
             m_TranslateScaleSystem.Complete();
             m_FanSystem.Complete();
         }
@@ -448,7 +446,7 @@ public class PreviewGameLoop : Game.IGameLoop
             return;
         
         var charSetupRegistry = m_resourceSystem.GetResourceRegistry<HeroTypeRegistry>();
-        var charSetupCount = charSetupRegistry.entries.Length;
+        var charSetupCount = charSetupRegistry.entries.Count;
 
         var playerEntity = m_Player.gameObject.GetComponent<GameObjectEntity>().Entity; 
         var charControl = m_GameWorld.GetEntityManager().GetComponentObject<PlayerCharacterControl>(playerEntity);
@@ -517,8 +515,9 @@ public class PreviewGameLoop : Game.IGameLoop
     SpectatorCamModuleClient m_SpectatorCamModuleClient;
     EffectModuleClient m_EffectModule;
     ItemModule m_ItemModule;
+    UpdateReplicatedOwnerFlag m_UpdateReplicatedOwnerFlag;
 
-    RagdollModule m_ragdollSystem;
+    RagdollModule m_ragdollModule;
     SpinSystem m_SpinSystem;
     DespawnProjectiles m_DespawnProjectiles;
     

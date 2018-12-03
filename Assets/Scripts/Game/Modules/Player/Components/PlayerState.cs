@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using Unity.Entities;
 
-public class PlayerState : MonoBehaviour, INetworkSerializable
+public class PlayerState : MonoBehaviour, INetSerialized
 {
     public int playerId;
     public string playerName;

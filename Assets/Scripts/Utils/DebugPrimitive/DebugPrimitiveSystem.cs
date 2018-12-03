@@ -7,34 +7,32 @@ using UnityEngine;
 [DisableAutoCreation]
 public class DestroyPrimsInChannel : BaseComponentSystem
 {
-    struct GroupType
-    {
-        public EntityArray entities;
-
-        [ReadOnly]
-        public ComponentDataArray<DebugPrimitive> prims;
-    }
-
-    [Inject]
-    GroupType Group;
+    public int channel;
+    ComponentGroup Group;
+    List<Entity> entityBuffer = new List<Entity>(16);
 
     public DestroyPrimsInChannel(GameWorld world) : base(world) {}
 
-    public int channel;
-    
-    List<Entity> entityBuffer = new List<Entity>(16);
-    
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(DebugPrimitive));
+    }
+
     protected override void OnUpdate()
     {
+        var entityArray = Group.GetEntityArray();
+        var primArray = Group.GetComponentDataArray<DebugPrimitive>();
+        
         entityBuffer.Clear();
-        for (int i = 0, c = Group.prims.Length; i < c; i++)
+        for (int i = 0, c = primArray.Length; i < c; i++)
         {
-            var prim = Group.prims[i];
+            var prim = primArray[i];
             if (prim.channel != channel)
                 continue;
 
-            GameDebug.Assert(!entityBuffer.Contains(Group.entities[i]));
-            entityBuffer.Add(Group.entities[i]);
+            GameDebug.Assert(!entityBuffer.Contains(entityArray[i]));
+            entityBuffer.Add(entityArray[i]);
         }
 
         foreach (var entity in entityBuffer)

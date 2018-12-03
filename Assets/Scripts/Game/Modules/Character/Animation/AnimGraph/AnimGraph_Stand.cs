@@ -55,15 +55,16 @@ public class AnimGraph_Stand : AnimGraphAsset
     [Space(10)]
     public ActionAnimationDefinition[] actionAnimations;
 
-    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner)
     {
-        var animState = new CharacterAnimGraph_3PStand(entityManager, owner, graph, this);
+        var animState = new CharacterAnimGraph_3PStand(entityManager, owner, graph, animStateOwner, this);
         return animState;
     }
 
     class CharacterAnimGraph_3PStand : IAnimGraphInstance, IGraphState
     {
-        public CharacterAnimGraph_3PStand(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_Stand template)
+        public CharacterAnimGraph_3PStand(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_Stand template)
         {            
             if (s_Instances == null)
             {
@@ -76,6 +77,7 @@ public class AnimGraph_Stand : AnimGraphAsset
             m_template = template;
             m_EntityManager = entityManager;
             m_Owner = owner;
+            m_AnimStateOwner = animStateOwner;
 
             GameDebug.Assert(entityManager.HasComponent<Animator>(owner), "Owner has no Animator component");
             var animator = entityManager.GetComponentObject<Animator>(owner);
@@ -83,8 +85,7 @@ public class AnimGraph_Stand : AnimGraphAsset
             GameDebug.Assert(entityManager.HasComponent<Skeleton>(owner), "Owner has no Skeleton component");
             var skeleton = entityManager.GetComponentObject<Skeleton>(owner);
 
-            GameDebug.Assert(entityManager.HasComponent<CharacterPredictedState>(owner), "Owner has no Character component");
-            m_character = entityManager.GetComponentObject<CharacterPredictedState>(owner);
+            GameDebug.Assert(entityManager.HasComponent<CharPredictedStateData>(m_AnimStateOwner),"Owner has no CharPredictedState component");
 
             var leftToes = skeleton.bones[skeleton.GetBoneIndex(template.leftToeBone.GetHashCode())];
             var rightToes = skeleton.bones[skeleton.GetBoneIndex(template.rightToeBone.GetHashCode())];
@@ -149,7 +150,7 @@ public class AnimGraph_Stand : AnimGraphAsset
             // Actions
             m_actionAnimationHandler = new ActionAnimationHandler(m_additiveMixer, template.actionAnimations);
 
-            m_ReloadActionAnimation = m_actionAnimationHandler.GetActionAnimation(CharacterPredictedState.StateData.Action.Reloading);
+            m_ReloadActionAnimation = m_actionAnimationHandler.GetActionAnimation(CharPredictedStateData.Action.Reloading);
 
             // Shoot pose        
             m_animShootPose = AnimationClipPlayable.Create(graph, template.animShootPose);
@@ -176,8 +177,10 @@ public class AnimGraph_Stand : AnimGraphAsset
 
         public void UpdatePresentationState(bool firstUpdate, GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
             Profiler.BeginSample("3PMove8Dir.UpdatePresentationState");
+
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            var predictedState = m_EntityManager.GetComponentData<CharPredictedStateData>(m_AnimStateOwner);
 
             if (firstUpdate)
             {
@@ -238,7 +241,7 @@ public class AnimGraph_Stand : AnimGraphAsset
             }
 
             // Shoot pose update   
-            if (animState.charAction == CharacterPredictedState.StateData.Action.PrimaryFire)
+            if (animState.charAction == CharPredictedStateData.Action.PrimaryFire)
             {
                 animState.shootPoseWeight += m_template.shootPoseEnterSpeed * deltaTime;
             }
@@ -255,7 +258,7 @@ public class AnimGraph_Stand : AnimGraphAsset
             if (m_template.footIK.enabled && useFootIk.IntValue > 0)
             {
                 // Figure out stand state
-                if (m_character.State.velocity.magnitude > 0.001f)
+                if (predictedState.velocity.magnitude > 0.001f)
                     m_StandState = StandState.Moving;
                 else if (animState.turnDirection != 0 && m_StandState != StandState.TurnStart && m_StandState != StandState.Turning)
                     m_StandState = StandState.TurnStart;
@@ -337,7 +340,7 @@ public class AnimGraph_Stand : AnimGraphAsset
             DebugApplyPresentation();
             
             m_footIk.SetJobData(footIkJob);
-            m_EntityManager.SetComponentData(m_Owner, animState);
+            m_EntityManager.SetComponentData(m_AnimStateOwner, animState);
             Profiler.EndSample();
         }
 
@@ -345,7 +348,7 @@ public class AnimGraph_Stand : AnimGraphAsset
         {
             Profiler.BeginSample("CharacterAnimGraph_3PMove8Dir.UpdateNetwork");
 
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
 
             // Handle turning
             float rotateAngleRemaining = 0f;
@@ -373,7 +376,7 @@ public class AnimGraph_Stand : AnimGraphAsset
             // Update aim
             //TODO: Take care of cases where the clip time is 0
             var aimMultiplier = 1f;
-            if (animState.charAction == CharacterPredictedState.StateData.Action.Reloading && m_template.blendOutAimOnReload != null)
+            if (animState.charAction == CharPredictedStateData.Action.Reloading && m_template.blendOutAimOnReload != null)
             {
                 var normalizedTime = (float)(m_ReloadActionAnimation.animation.GetTime() / m_ReloadActionAnimation.animation.GetDuration());
                 aimMultiplier = m_template.blendOutAimOnReload.Evaluate(normalizedTime);
@@ -409,7 +412,7 @@ public class AnimGraph_Stand : AnimGraphAsset
             m_additiveMixer.SetInputWeight(m_ShootPosePort, m_ShootPoseCurvedWeight * m_template.shootPoseMagnitude);
 
             // Shoot pose update   
-            if (animState.charAction == CharacterPredictedState.StateData.Action.PrimaryFire)
+            if (animState.charAction == CharPredictedStateData.Action.PrimaryFire)
             {
                 m_ShootPoseCurvedWeight = m_template.shootPoseEnter.Evaluate(animState.shootPoseWeight);
             }
@@ -522,7 +525,7 @@ public class AnimGraph_Stand : AnimGraphAsset
             return 1f;
         }
 
-        void DebugSceneView(CharAnimState animState)
+        void DebugSceneView(PresentationState animState)
         {
             if (m_template.footIK.debugIdlePos)
             {
@@ -549,7 +552,7 @@ public class AnimGraph_Stand : AnimGraphAsset
             }
         }
         
-        void DebugUpdatePresentation(CharAnimState animState)
+        void DebugUpdatePresentation(PresentationState animState)
         {
             if (debugStandIk.IntValue > 0)
             {                
@@ -629,7 +632,7 @@ public class AnimGraph_Stand : AnimGraphAsset
         AnimGraph_Stand m_template;
         EntityManager m_EntityManager;
         Entity m_Owner;
-        CharacterPredictedState m_character;
+        Entity m_AnimStateOwner;
         AnimationScriptPlayable m_footIk;
 
         AnimationMixerPlayable m_locomotionMixer;

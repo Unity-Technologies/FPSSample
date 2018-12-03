@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using Unity.Entities;
-using Unity.Jobs;
 using UnityEngine;
-using UnityEngine.Profiling;
 
-
-[RequireComponent(typeof(ReplicatedAbility))]
-public class Ability_ProjectileLauncher : MonoBehaviour
+[CreateAssetMenu(fileName = "Ability_ProjectileLauncher",menuName = "FPS Sample/Abilities/Ability_ProjectileLauncher")]
+public class Ability_ProjectileLauncher : CharBehaviorFactory
 {
     public enum Phase
     {
@@ -26,46 +23,33 @@ public class Ability_ProjectileLauncher : MonoBehaviour
     {
         public float activationDuration;        
         public float cooldownDuration;
-        public CharacterPredictedState.StateData.Action fireAction;
+        public CharPredictedStateData.Action fireAction;
         public float projectileRange;
-        [NonSerialized] public uint projectileRegistryId;
+        [NonSerialized] public int projectileRegistryId;
     }
 
-    public struct PredictedState : IPredictedData<PredictedState>, IComponentData
+    public struct PredictedState : INetPredicted<PredictedState>, IComponentData
     {
-        public Phase phase;
-        public int phaseStartTick;
-        public int fireRequestedTick;
+        public int activeTick;
         
-        public void SetPhase(Phase phase, int tick)
-        {
-            this.phase = phase;
-            this.phaseStartTick = tick;
-        }
-
         public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
         {
-            writer.WriteInt32("phase", (int)phase);
-            writer.WriteInt32("phaseStart", phaseStartTick);
-            writer.WriteInt32("fireRequestedTick", fireRequestedTick);
+            writer.WriteInt32("activeTick", activeTick);
         }
 
         public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
         {
-            phase = (Phase)reader.ReadInt32();
-            phaseStartTick = reader.ReadInt32();
-            fireRequestedTick = reader.ReadInt32();
+            activeTick = reader.ReadInt32();
         }
 #if UNITY_EDITOR
         public bool VerifyPrediction(ref PredictedState state)
         {
-            return phase == state.phase
-                   && phaseStartTick == state.phaseStartTick;
+            return activeTick == state.activeTick;
         }
 #endif    
     }
     
-    public struct InterpolatedState : IInterpolatedData<InterpolatedState>, IComponentData
+    public struct InterpolatedState : INetInterpolated<InterpolatedState>, IComponentData
     {
         public int fireTick;
         
@@ -85,69 +69,24 @@ public class Ability_ProjectileLauncher : MonoBehaviour
         }
     }
     
-
     public Settings settings;
     public ProjectileTypeDefinition projectileType;
-    
-    private void OnEnable()
-    {
-        var gameObjectEntity = GetComponent<GameObjectEntity>();
-        var entityManager = gameObjectEntity.EntityManager;
-        var abilityEntity = gameObjectEntity.Entity;
-        
-        // Default components
-        entityManager.AddComponentData(abilityEntity, new CharacterAbility());
-        entityManager.AddComponentData(abilityEntity, new AbilityControl());
 
+    public override Entity Create(EntityManager entityManager, List<Entity> entities)
+    {
+        var entity = CreateCharBehavior(entityManager);
+        entities.Add(entity);
+		
         // Ability components
-        entityManager.AddComponentData(abilityEntity, new LocalState());
-        entityManager.AddComponentData(abilityEntity, new PredictedState());
-        entityManager.AddComponentData(abilityEntity, new InterpolatedState());
         settings.projectileRegistryId = projectileType.registryId; 
-        entityManager.AddComponentData(abilityEntity, settings);
-
-
-        // Setup replicated ability        
-        var replicatedAbility = entityManager.GetComponentObject<ReplicatedAbility>(abilityEntity);
-        replicatedAbility.predictedHandlers = new IPredictedDataHandler[2];
-        replicatedAbility.predictedHandlers[0] = new PredictedEntityHandler<AbilityControl>(entityManager, abilityEntity);
-        replicatedAbility.predictedHandlers[1] = new PredictedEntityHandler<PredictedState>(entityManager, abilityEntity);
-        replicatedAbility.interpolatedHandlers = new IInterpolatedDataHandler[1];
-        replicatedAbility.interpolatedHandlers[0] = new InterpolatedEntityHandler<InterpolatedState>(entityManager, abilityEntity);
+        entityManager.AddComponentData(entity, settings);
+        entityManager.AddComponentData(entity, new LocalState());
+        entityManager.AddComponentData(entity, new PredictedState());
+        entityManager.AddComponentData(entity, new InterpolatedState());
+        return entity;
     }
 }
-
-
-[DisableAutoCreation]
-class ProjectileLauncher_RequestActive : BaseComponentDataSystem<CharacterAbility,AbilityControl,Ability_ProjectileLauncher.PredictedState>
-{
-    public ProjectileLauncher_RequestActive(GameWorld world) : base(world)
-    {
-        ExtraComponentRequirements = new ComponentType[] { typeof(ServerEntity) } ;
-    }
-
-    protected override void Update(Entity entity, CharacterAbility charAbility, AbilityControl abilityCtrl, 
-        Ability_ProjectileLauncher.PredictedState predictedState)
-    {
-        Profiler.BeginSample("ProjectileLauncher_RequestActive");
-        
-        var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character).command;
-        var character = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
-
-        var isAlive = character.State.locoState != CharacterPredictedState.StateData.LocoState.Dead;
-        var fireRequested = command.secondaryFire && isAlive;
-
-        var isActive = predictedState.phase == Ability_ProjectileLauncher.Phase.Active;
-
-        abilityCtrl.requestsActive = !character.State.abilityActive && (isActive || fireRequested) ? 1 : 0;
-        
-        EntityManager.SetComponentData(entity, abilityCtrl);			
-        EntityManager.SetComponentData(entity, predictedState);
-        
-        Profiler.EndSample();
-    }
-}
-                         
+                  
 [DisableAutoCreation]
 class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability_ProjectileLauncher.PredictedState,
     Ability_ProjectileLauncher.Settings>
@@ -157,23 +96,23 @@ class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability
         ExtraComponentRequirements = new ComponentType[] { typeof(ServerEntity) } ;
     }
 
-    protected override void Update(Entity entity, AbilityControl abilityCtrl, Ability_ProjectileLauncher.PredictedState predictedState, Ability_ProjectileLauncher.Settings settings)
+    protected override void Update(Entity entity, AbilityControl abilityCtrl, Ability_ProjectileLauncher.PredictedState predictedState, Ability_ProjectileLauncher.Settings state)
     {
-        Profiler.BeginSample("ProjectileLauncher_Update");
-        
         var time = m_world.worldTime;
-        switch (predictedState.phase)
+        switch (abilityCtrl.behaviorState)
         {
-            case Ability_ProjectileLauncher.Phase.Idle:
-                if (abilityCtrl.activeAllowed == 1)
+            case AbilityControl.State.Idle:
+                if (abilityCtrl.active == 1)
                 {
-                    var charAbility = EntityManager.GetComponentData<CharacterAbility>(entity);
+                    var charAbility = EntityManager.GetComponentData<CharBehaviour>(entity);
                     var character = EntityManager.GetComponentObject<Character>(charAbility.character);
-                    var charPredictedState = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
+                    var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
                     
-                    predictedState.SetPhase(Ability_ProjectileLauncher.Phase.Active, time.tick);
-
-                    charPredictedState.State.SetAction(settings.fireAction, time.tick);
+                    abilityCtrl.behaviorState = AbilityControl.State.Active;
+                    predictedState.activeTick = time.tick;
+                    
+//                    GameDebug.Log("Ability_ProjectileLauncher SetAction:" + state.fireAction + " tick:" + time.tick);
+                    charPredictedState.SetAction(state.fireAction, time.tick);
 
                     // Only spawn once for each tick (so it does not fire again when re-predicting)
                     var localState = EntityManager.GetComponentData<Ability_ProjectileLauncher.LocalState>(entity);
@@ -182,47 +121,54 @@ class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability
                         localState.lastFireTick = time.tick;
                         EntityManager.SetComponentData(entity, localState);
                         
-                        var eyePos = charPredictedState.State.position + Vector3.up*character.eyeHeight;
+                        var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight;
                         var interpolatedState = EntityManager.GetComponentData<Ability_ProjectileLauncher.InterpolatedState>(entity);
                         var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character)
                             .command;
                         
-                        var endPos = eyePos + command.lookDir * settings.projectileRange;
+                        var endPos = eyePos + command.lookDir * state.projectileRange;
                         ProjectileRequest.Create(PostUpdateCommands, time.tick, time.tick - command.renderTick,
-                            settings.projectileRegistryId, charAbility.character, charPredictedState.teamId, eyePos, endPos);
+                            state.projectileRegistryId, charAbility.character, character.teamId, eyePos, endPos);
 
                         interpolatedState.fireTick = time.tick;
                         EntityManager.SetComponentData(entity, interpolatedState);
                     }
+                    
+                    EntityManager.SetComponentData(entity, abilityCtrl);
+                    EntityManager.SetComponentData(entity, predictedState);
+                    EntityManager.SetComponentData(charAbility.character, charPredictedState);
                 }
                 break;
-            case Ability_ProjectileLauncher.Phase.Active:
+            case AbilityControl.State.Active:
             {
-                var phaseDuration = time.DurationSinceTick(predictedState.phaseStartTick);
-                if (phaseDuration > settings.activationDuration)
+                var phaseDuration = time.DurationSinceTick(predictedState.activeTick);
+                if (phaseDuration > state.activationDuration)
                 {
-                    var charAbility = EntityManager.GetComponentData<CharacterAbility>(entity);
-                    var character = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
+                    var charAbility = EntityManager.GetComponentData<CharBehaviour>(entity);
+                    var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
+
+                    abilityCtrl.behaviorState = AbilityControl.State.Cooldown;
                     
-                    predictedState.SetPhase(Ability_ProjectileLauncher.Phase.Cooldown, time.tick);
-                    character.State.SetAction(CharacterPredictedState.StateData.Action.None, time.tick);
+//                    GameDebug.Log("Ability_ProjectileLauncher SetAction:" + CharPredictedStateData.Action.None + " tick:" + time.tick);
+                    charPredictedState.SetAction(CharPredictedStateData.Action.None, time.tick);
+                    
+                    EntityManager.SetComponentData(entity, abilityCtrl);
+                    EntityManager.SetComponentData(charAbility.character, charPredictedState);
                 }
                 break;
             }
-            case Ability_ProjectileLauncher.Phase.Cooldown:
+            case AbilityControl.State.Cooldown:
             {
-                var phaseDuration = time.DurationSinceTick(predictedState.phaseStartTick);
-                if (phaseDuration > settings.cooldownDuration)
+                var phaseDuration = time.DurationSinceTick(predictedState.activeTick);
+                if (phaseDuration > state.cooldownDuration)
                 {
-                    predictedState.SetPhase(Ability_ProjectileLauncher.Phase.Idle, time.tick);
+                    abilityCtrl.behaviorState = AbilityControl.State.Idle;
+                    EntityManager.SetComponentData(entity, abilityCtrl);
                 }
                 break;
             }
         }
 
-        EntityManager.SetComponentData(entity, predictedState);
-        
-        Profiler.EndSample();
     }
 }
 

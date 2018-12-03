@@ -1,8 +1,9 @@
 ﻿using System;
+using UnityEditor;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "HeroType", menuName = "FPS Sample/Hero/HeroType")]
-public class HeroTypeAsset : ScriptableObject 
+public class HeroTypeAsset : ScriptableObjectRegistryEntry
 {
     [Serializable]
     public class ItemEntry
@@ -20,7 +21,23 @@ public class HeroTypeAsset : ScriptableObject
     
     public float health = 100;
     public SprintCameraSettings sprintCameraSettings = new SprintCameraSettings();
+    public float eyeHeight = 1.8f;
+    public CharacterMoveQuery.Settings characterMovementSettings;
+    
+    public ReplicatedEntityFactory behaviorsController;
+    
     public CharacterTypeDefinition character;
     public ItemEntry[] items;
-    public WeakAssetReference[] abilities;
 }
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(HeroTypeAsset))]
+public class HeroTypeAssetEditor : ScriptableObjectRegistryEntryEditor<HeroTypeRegistry, HeroTypeAsset>
+{
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+        DrawDefaultInspector();
+    }
+}
+#endif

@@ -64,26 +64,26 @@ public class HandleGrenadeRequest : BaseComponentDataSystem<GrenadeSpawnRequest>
 [DisableAutoCreation]
 public class StartGrenadeMovement : BaseComponentSystem
 {
-    struct Grenades
-    {
-        public ComponentArray<Grenade> grenades;
-    }
-
-    [Inject]
-    Grenades GrenadeGroup;   
-    
+    ComponentGroup Group;   
     
     public StartGrenadeMovement(GameWorld world) : base(world)
     {}
+
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(Grenade));
+    }
 
     protected override void OnUpdate()  
     {
         var time = m_world.worldTime;
 
         // Update movements
-        for (var i = 0; i < GrenadeGroup.grenades.Length; i++)
+        var grenadeArray = Group.GetComponentArray<Grenade>();
+        for (var i = 0; i < grenadeArray.Length; i++)
         {
-            var grenade = GrenadeGroup.grenades[i];
+            var grenade = grenadeArray[i];
 
             if (!grenade.active || grenade.velocity.magnitude < 0.5f)
                 continue;
@@ -123,10 +123,15 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
         public ComponentArray<GrenadePresentation> presentations;
     }
 
-    [Inject] 
-    public Grenades Group;   
+    ComponentGroup Group;   
     
     public FinalizeGrenadeMovement(GameWorld world) : base(world) {}
+
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(Grenade), typeof(GrenadePresentation));
+    }
 
     protected override void OnUpdate()
     {
@@ -134,10 +139,12 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
         
         var time = m_world.worldTime;
         var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
+        var grenadeArray = Group.GetComponentArray<Grenade>();
+        var grenadePresentArray = Group.GetComponentArray<GrenadePresentation>();
         
-        for (var i = 0; i < Group.grenades.Length; i++)
+        for (var i = 0; i < grenadeArray.Length; i++)
         {
-            var grenade = Group.grenades[i];
+            var grenade = grenadeArray[i];
             if (!grenade.active)
             {
                 // Keep grenades around for a short duration so shortlived grenades gets a chance to get replicated 
@@ -148,9 +155,7 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
                 continue;
             }
 
-            var presentation = Group.presentations[i];
-
-
+            var presentation = grenadePresentArray[i];
             var hitCollisionOwner = Entity.Null;            
             if (grenade.rayQueryId != -1)
             {

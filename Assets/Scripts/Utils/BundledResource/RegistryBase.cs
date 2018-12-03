@@ -7,7 +7,6 @@ using UnityEditor;
 public abstract class RegistryBase : ScriptableObject      
 {
 #if UNITY_EDITOR
-    public virtual void UpdateRegistry(bool dry) { }
     public abstract void GetSingleAssetGUIDs(List<string> guids, bool serverBuild);
     public virtual bool Verify()
     {

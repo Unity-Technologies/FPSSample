@@ -1,5 +1,6 @@
 ﻿using System;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Experimental.Animations;
 
@@ -44,7 +45,7 @@ public struct BankingJob : IAnimationJob
 
     public Settings settings;
     public float bankAmount;
-    public CharAnimState animState;
+    public PresentationState animState;
 
     public bool Setup(Animator animator, EditorSettings editorSettings, float deltaTime, 
         NativeArray<MuscleHandle> headMuscles, NativeArray<MuscleHandle> spineMuscles)
@@ -74,7 +75,7 @@ public struct BankingJob : IAnimationJob
     {
     }
 
-    public void Update(CharAnimState animState, Settings settings, AnimationScriptPlayable playable)
+    public void Update(PresentationState animState, Settings settings, AnimationScriptPlayable playable)
     {
         var job = playable.GetJobData<BankingJob>();
         job.animState = animState;
@@ -86,7 +87,12 @@ public struct BankingJob : IAnimationJob
     public void ProcessRootMotion(AnimationStream stream) { }
 
     public void ProcessAnimation(AnimationStream stream)
-    {        
+    {
+        if (math.abs(bankAmount) < 0.001f)
+        {
+            return; 
+        }
+        
         var bankPosition = new Vector3(
             settings.position.x * bankAmount * 0.01f, 
             settings.position.y * bankAmount * 0.01f, 
@@ -119,11 +125,9 @@ public struct BankingJob : IAnimationJob
             var humanStream = stream.AsHuman();
 
             var position = humanStream.bodyLocalPosition;
-
-            var playerRot = Quaternion.Euler(0f, animState.rotation, 0f);
-            humanStream.bodyRotation = playerRot * weightedBankRotation * humanStream.bodyLocalRotation;
+            humanStream.bodyLocalRotation = weightedBankRotation * humanStream.bodyLocalRotation;
             humanStream.bodyLocalPosition = bankRotation * position + bankPosition;
-           
+			
             var numHandles = m_HeadLeftRightMuscles.Length;
             var multiplier = bankAmount * 0.075f * settings.headMultiplier / numHandles;
             for (var i = 0; i < numHandles; i++)

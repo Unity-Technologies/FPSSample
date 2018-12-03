@@ -44,39 +44,36 @@ public class HandleNamePlateDespawn : DeinitializeComponentSystem<NamePlateOwner
 [DisableAutoCreation]
 public class UpdateNamePlates : BaseComponentSystem
 {
-	public struct NamePlateOwnerGroup
-	{
-		public EntityArray entityArray;		
-		public ComponentArray<NamePlateOwner> namePlateOwners;
-	}
+	ComponentGroup Group;
+	ComponentGroup LocalPlayerGroup;
 	
-	public struct LocalPlayers
+	public UpdateNamePlates(GameWorld world) : base(world) {}
+
+	protected override void OnCreateManager()
 	{
-		public ComponentArray<LocalPlayer> localPlayers;
+		base.OnCreateManager();
+
+		Group = GetComponentGroup(typeof(NamePlateOwner), typeof(CharPresentation));
+		LocalPlayerGroup = GetComponentGroup(typeof(LocalPlayer));
 	}
 
-
-	[Inject] 
-	public NamePlateOwnerGroup Group;
-
-	[Inject] 
-	public LocalPlayers LocalPlayerGroup;
-
-
-	public UpdateNamePlates(GameWorld world) : base(world) {}	
-	
-	protected override void OnUpdate()  
+	protected override void OnUpdate()
 	{
-		if (LocalPlayerGroup.localPlayers.Length == 0)
+		var localPlayerArray = LocalPlayerGroup.GetComponentArray<LocalPlayer>();
+		
+		if (localPlayerArray.Length == 0)
 			return;
 
-		var localPlayer = LocalPlayerGroup.localPlayers[0];
+		var localPlayer = localPlayerArray[0];
 		if (localPlayer.playerState == null)
 			return;
+
+		var nameplateArray = Group.GetComponentArray<NamePlateOwner>();
+		var charPresentationArray = Group.GetComponentArray<CharPresentation>();
 		
-		for (int i = 0; i < Group.namePlateOwners.Length; i++)
+		for (int i = 0; i < nameplateArray.Length; i++)
 		{
-			var plateOwner = Group.namePlateOwners[i];
+			var plateOwner = nameplateArray[i];
 			if (plateOwner.namePlate == null) 
 			{
 				GameDebug.LogError("namePlateOwner.namePlate == null");
@@ -97,13 +94,14 @@ public class UpdateNamePlates : BaseComponentSystem
 				continue;
 			}
 
-			if (Group.entityArray[i] == localPlayer.playerState.controlledEntity)
+			// Dont show our own
+			var character = charPresentationArray[i].character;
+			if (character == localPlayer.playerState.controlledEntity)
 			{
 				SetActiveIfNeeded(root, false);
 				continue;
 			}
 			
-				
             // Dont show nameplate behinds
             var camera = Game.game.TopCamera();// Camera.allCameras[0];
 			var platePosWorld = plateOwner.namePlateTransform.position;
@@ -113,8 +111,6 @@ public class UpdateNamePlates : BaseComponentSystem
 				SetActiveIfNeeded(root,false);
 				continue;
 			}
-			
-			
 			
 			// Test occlusion
 			var rayStart = camera.ScreenToWorldPoint(new Vector3(screenPos.x,screenPos.y,0));

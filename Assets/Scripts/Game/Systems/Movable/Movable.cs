@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class Movable : MonoBehaviour, INetworkSerializable
+public class Movable : MonoBehaviour, INetSerialized
 {
     //Vector3 oldPosition;
     Vector3 newPosition;

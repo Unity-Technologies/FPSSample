@@ -9,19 +9,21 @@ public class AnimGraph_DamageReaction : AnimGraphAsset
 	[Tooltip("Reaction animations starting from S (damage comming from front) going clockwise")]
 	public AnimationClip[] clips;
 
-	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+	    Entity animStateOwner)
 	{
-		return new Instance(entityManager, owner, graph, this);
+		return new Instance(entityManager, owner, graph, animStateOwner, this);
 	}
 	
     public class Instance : IAnimGraphInstance
     {
-        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_DamageReaction settings)
+        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_DamageReaction settings)
         {
             m_settings = settings;
             m_graph = graph;
             m_EntityManager = entityManager;
             m_Owner = owner;
+            m_AnimStateOwner = animStateOwner;
     
             m_rootMixer = AnimationLayerMixerPlayable.Create(graph,2);
             m_rootMixer.SetInputWeight(0, 1f);
@@ -63,7 +65,7 @@ public class AnimGraph_DamageReaction : AnimGraphAsset
     
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             if (animState.damageTick > m_lastReactionTick)
             {
                 // Handle first update
@@ -110,6 +112,7 @@ public class AnimGraph_DamageReaction : AnimGraphAsset
         AnimGraph_DamageReaction m_settings;
         EntityManager m_EntityManager;
         Entity m_Owner;
+        Entity m_AnimStateOwner;
         
         PlayableGraph m_graph;
         AnimationLayerMixerPlayable m_rootMixer;

@@ -6,6 +6,9 @@ using System.Collections.Generic;
 
 using UnityEngine;
 
+/// <summary>
+/// An implementation of the ServerInfo part of the Server Query Protocol
+/// </summary>
 namespace SQP
 {
     [Flags]
@@ -155,7 +158,6 @@ namespace SQP
             public string Map = "";
             public ushort Port;
 
-
             public void ToStream(ref ByteOutputStream writer)
             {
                 writer.WriteUInt16_NBO(CurrentPlayers);
@@ -216,7 +218,7 @@ namespace SQP
             ServerInfoData.FromStream(ref reader);
         }
         static private Encoding encoding = new UTF8Encoding();
-}
+    }
 
     public static class UdpExtensions
     {
@@ -232,7 +234,7 @@ namespace SQP
             }
             catch (SocketException e)
             {
-                error =  e.SocketErrorCode;
+                error = e.SocketErrorCode;
                 throw e;
             }
             return error;
@@ -242,63 +244,102 @@ namespace SQP
     public class SQPClient
     {
         Socket m_Socket;
-        IPEndPoint m_Server;
 
         byte[] m_Buffer = new byte[1472];
 
         System.Net.EndPoint endpoint = new System.Net.IPEndPoint(0, 0);
-
-        uint ChallangeId;
-        long StartTime;
 
         public enum SQPClientState
         {
             Idle,
             WaitingForChallange,
             WaitingForResponse,
-            Success,
-            Failure
         }
-        SQPClientState m_State;
-        public SQPClientState ClientState
+        public class SQPQuery
         {
-            get { return m_State; }
+            public SQPQuery()
+            {
+                m_ServerInfo = new ServerInfo();
+                m_State = SQPClientState.Idle;
+                m_Server = null;
+            }
+            public void Init(IPEndPoint server)
+            {
+                GameDebug.Assert(m_State == SQPClientState.Idle);
+                GameDebug.Assert(m_Server == null);
+                m_Server = server;
+                validResult = false;
+            }
+            public IPEndPoint m_Server;
+            public bool validResult;
+            public SQPClientState m_State;
+            public uint ChallangeId;
+            public long RTT;
+            public long StartTime;
+            public ServerInfo m_ServerInfo;
         }
 
-        public SQPClient(IPEndPoint server)
+        List<SQPQuery> m_Queries = new List<SQPQuery>();
+
+        public SQPClient()
         {
             m_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             m_Socket.SetupAndBind(0);
-
-            m_Server = server;
-
-            m_State = new SQPClientState();
         }
 
-        public void StartInfoQuery()
+        public SQPQuery GetSQPQuery(IPEndPoint server)
         {
-            Debug.Assert(m_State == SQPClientState.Idle);
-            StartTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
+            SQPQuery q = null;
+            foreach (var pending in m_Queries)
+            {
+                if (pending.m_State == SQPClientState.Idle && pending.m_Server == null)
+                {
+                    q = pending;
+                    break;
+                }
+            }
+            if (q == null)
+            {
+                q = new SQPQuery();
+                m_Queries.Add(q);
+            }
+
+            q.Init(server);
+
+            return q;
+        }
+
+        public void ReleaseSQPQuery(SQPQuery q)
+        {
+            q.m_Server = null;
+        }
+
+        public void StartInfoQuery(SQPQuery q)
+        {
+            GameDebug.Assert(q.m_State == SQPClientState.Idle);
+
+            q.StartTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
 
             var writer = new ByteOutputStream(m_Buffer);
             var req = new ChallangeRequest();
             req.ToStream(ref writer);
 
-            m_Socket.SendTo(m_Buffer, writer.GetBytePosition(), SocketFlags.None, m_Server);
-            m_State = SQPClientState.WaitingForChallange;
+            m_Socket.SendTo(m_Buffer, writer.GetBytePosition(), SocketFlags.None, q.m_Server);
+            q.m_State = SQPClientState.WaitingForChallange;
         }
-        void SendServerInfoQuery()
+
+        void SendServerInfoQuery(SQPQuery q)
         {
-            StartTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
+            q.StartTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
             var req = new QueryRequest();
-            req.Header.ChallangeId = ChallangeId;
+            req.Header.ChallangeId = q.ChallangeId;
             req.RequestedChunks = (byte)SQPChunkType.ServerInfo;
 
             var writer = new ByteOutputStream(m_Buffer);
             req.ToStream(ref writer);
 
-            m_State = SQPClientState.WaitingForResponse;
-            m_Socket.SendTo(m_Buffer, writer.GetBytePosition(), SocketFlags.None, m_Server);
+            q.m_State = SQPClientState.WaitingForResponse;
+            m_Socket.SendTo(m_Buffer, writer.GetBytePosition(), SocketFlags.None, q.m_Server);
         }
 
         public void Update()
@@ -312,51 +353,71 @@ namespace SQP
                     var header = new SQPHeader();
                     header.FromStream(ref reader);
 
-                    switch (m_State)
+                    foreach (var q in m_Queries)
                     {
-                        case SQPClientState.Idle:
-                            break;
+                        if (q.m_Server == null || !endpoint.Equals(q.m_Server))
+                            continue;
 
-                        case SQPClientState.WaitingForChallange:
-                            if ((SQPMessageType)header.Type == SQPMessageType.ChallangeResponse)
-                            {
-                                if (endpoint.Equals(m_Server))
+                        switch (q.m_State)
+                        {
+                            case SQPClientState.Idle:
+                                // Just ignore if we get extra data
+                                break;
+
+                            case SQPClientState.WaitingForChallange:
+                                if ((SQPMessageType)header.Type == SQPMessageType.ChallangeResponse)
                                 {
-                                    ChallangeId = header.ChallangeId;
-                                    SendServerInfoQuery();
+                                    q.ChallangeId = header.ChallangeId;
+                                    q.RTT = NetworkUtils.stopwatch.ElapsedMilliseconds - q.StartTime;
+                                    // We restart timer so we can get an RTT that is an average between two measurements
+                                    q.StartTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                                    SendServerInfoQuery(q);
                                 }
-                            }
-                            break;
+                                break;
 
-                        case SQPClientState.WaitingForResponse:
-                            if ((SQPMessageType)header.Type == SQPMessageType.QueryResponse)
-                            {
-                                reader.Reset();
-                                var rsp = new SQP.ServerInfo();
-                                rsp.FromStream(ref reader);
-                                Debug.Log(string.Format("ServerName: {0}, BuildId: {1}, Current Players: {2}, Max Players: {3}, GameType: {4}, Map: {5}, Port: {6}",
-                                    rsp.ServerInfoData.ServerName,
-                                    rsp.ServerInfoData.BuildId,
-                                    (ushort)rsp.ServerInfoData.CurrentPlayers,
-                                    (ushort)rsp.ServerInfoData.MaxPlayers,
-                                    rsp.ServerInfoData.GameType,
-                                    rsp.ServerInfoData.Map,
-                                    (ushort)rsp.ServerInfoData.Port));
-                                m_State = SQPClientState.Success;
-                                StartTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
-                            }
-                            break;
+                            case SQPClientState.WaitingForResponse:
+                                if ((SQPMessageType)header.Type == SQPMessageType.QueryResponse)
+                                {
+                                    reader.Reset();
+                                    q.m_ServerInfo.FromStream(ref reader);
 
-                        default:
-                            break;
+                                    // We report the average of two measurements
+                                    q.RTT = (q.RTT + (NetworkUtils.stopwatch.ElapsedMilliseconds - q.StartTime)) / 2;
+
+                                    /*
+                                    GameDebug.Log(string.Format("ServerName: {0}, BuildId: {1}, Current Players: {2}, Max Players: {3}, GameType: {4}, Map: {5}, Port: {6}",
+                                        m_ServerInfo.ServerInfoData.ServerName,
+                                        m_ServerInfo.ServerInfoData.BuildId,
+                                        (ushort)m_ServerInfo.ServerInfoData.CurrentPlayers,
+                                        (ushort)m_ServerInfo.ServerInfoData.MaxPlayers,
+                                        m_ServerInfo.ServerInfoData.GameType,
+                                        m_ServerInfo.ServerInfoData.Map,
+                                        (ushort)m_ServerInfo.ServerInfoData.Port));
+                                        */
+
+                                    q.validResult = true;
+                                    q.m_State = SQPClientState.Idle;
+                                }
+                                break;
+
+                            default:
+                                break;
+                        }
                     }
                 }
             }
-            var now = NetworkUtils.stopwatch.ElapsedMilliseconds;
-            if (now - StartTime > 1000000)
+
+            foreach (var q in m_Queries)
             {
-                Debug.Log("Failed");
-                m_State = SQPClientState.Failure;
+                // Timeout if stuck in any state but idle for too long
+                if (q.m_State != SQPClientState.Idle)
+                {
+                    var now = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                    if (now - q.StartTime > 3000)
+                    {
+                        q.m_State = SQPClientState.Idle;
+                    }
+                }
             }
         }
     }
@@ -368,7 +429,11 @@ namespace SQP
 
         SQP.ServerInfo m_ServerInfo = new ServerInfo();
 
-        public SQP.ServerInfo.Data ServerInfoData { get; set; }
+        public SQP.ServerInfo.Data ServerInfoData
+        {
+            get { return m_ServerInfo.ServerInfoData; }
+            set { m_ServerInfo.ServerInfoData = value; }
+        }
 
         byte[] m_Buffer = new byte[1472];
 
@@ -380,8 +445,6 @@ namespace SQP
             m_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             m_Socket.SetupAndBind(port);
             m_Random = new System.Random();
-            ServerInfoData = new ServerInfo.Data();
-            m_ServerInfo.ServerInfoData = ServerInfoData;
         }
 
         public void Update()
@@ -404,7 +467,7 @@ namespace SQP
                                 if (!m_OutstandingTokens.ContainsKey(endpoint))
                                 {
                                     uint token = GetNextToken();
-                                    Debug.Log("token generated: " + token);
+                                    //Debug.Log("token generated: " + token);
 
                                     var writer = new ByteOutputStream(m_Buffer);
                                     var rsp = new ChallangeResponse();
@@ -423,7 +486,7 @@ namespace SQP
                                 uint token;
                                 if (!m_OutstandingTokens.TryGetValue(endpoint, out token))
                                 {
-                                    Debug.Log("Failed to find token!");
+                                    //Debug.Log("Failed to find token!");
                                     return;
                                 }
                                 m_OutstandingTokens.Remove(endpoint);

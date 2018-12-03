@@ -135,7 +135,7 @@ public class OptionsMenu : MonoBehaviour
         scrollRect.verticalNormalizedPosition = 1f;
     }
 
-    void Update()
+    public void UpdateMenu()
     {
         foreach(var o in options)
         {
@@ -149,4 +149,24 @@ public class OptionsMenu : MonoBehaviour
                 o.UpdateFromConfigVar();
         }
     }
+
+    public void OnGDRP()
+    {
+#if ENABLE_CLOUD_SERVICES_ANALYTICS
+        UnityEngine.Analytics.DataPrivacy.FetchPrivacyUrl(OnUrlReceived, OnFailure);
+#endif
+    }
+
+#if ENABLE_CLOUD_SERVICES_ANALYTICS
+    private void OnFailure(string err)
+    {
+        GameDebug.LogWarning("Failed to get Data Privacy URL: " + err);
+    }
+
+    private void OnUrlReceived(string url)
+    {
+        Application.OpenURL(url);
+    }
+#endif
+
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 
-public class HealthState : MonoBehaviour, INetworkSerializable      
+public class HealthState : MonoBehaviour, INetSerialized      
 {
     [NonSerialized] public float health = 100;
     [NonSerialized] public float maxHealth = 100;     

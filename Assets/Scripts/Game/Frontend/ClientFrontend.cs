@@ -54,6 +54,7 @@ public class ClientFrontend : MonoBehaviour
         countDownPanel.SetPanelActive(false);
         mainMenu.SetPanelActive(MenuShowing.None);
         chatPanel.SetPanelActive(true); // active always as it has its own display/hide logic
+        chatPanel.ClearMessages();
         serverPanel.SetPanelActive(false);
     }
 
@@ -71,6 +72,8 @@ public class ClientFrontend : MonoBehaviour
 
     public void UpdateGame()
     {
+        mainMenu.UpdateMenus();
+
         // Show/Hide fully for debug purposes
         var show = IngameHUD.showHud.IntValue > 0;
         if (m_ChatPanelCanvas.enabled != show)
@@ -92,7 +95,6 @@ public class ClientFrontend : MonoBehaviour
                     Console.EnqueueCommandNoHistory("menu 1 0.2");
                 else
                     Console.EnqueueCommandNoHistory("menu 2 0.2");
-                GameDebug.Log("lvl: " + Game.game.levelManager.currentLevel.name);
             }
             else
             {
@@ -108,12 +110,6 @@ public class ClientFrontend : MonoBehaviour
             mainMenu.SetPanelActive(menuShowing);
         if (active)
             mainMenu.SetAlpha(fade);
-    }
-
-    public void UpdateMenu(string playerName, IList<ServerInfo> serverInfos, string gameMessage)
-    {
-        if (mainMenu.GetPanelActive())
-            mainMenu.UpdateInfo(playerName, serverInfos, gameMessage);
     }
 
     public void UpdateChat(ChatSystemClient chatSystem)
@@ -153,9 +149,9 @@ class ClientFrontendUpdate : BaseComponentSystem
     {
     }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         m_gameModeGroup = GetComponentGroup(typeof(GameMode));
         m_localPlayerGroup = GetComponentGroup(typeof(LocalPlayer));
     }

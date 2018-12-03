@@ -10,7 +10,8 @@ public class AnimGraph_TwoBoneIk : AnimGraphAsset
     public string targetBone;
     public string drivenBone;
 
-    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner)
     {
         var animator = entityManager.GetComponentObject<Animator>(owner);
         var skeleton = entityManager.GetComponentObject<Skeleton>(owner);

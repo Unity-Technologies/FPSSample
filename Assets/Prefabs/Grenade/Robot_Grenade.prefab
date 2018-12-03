@@ -92,7 +92,7 @@ GameObject:
   - component: {fileID: 114630403320523752}
   - component: {fileID: 114118690314876128}
   m_Layer: 0
-  m_Name: Grenade_Server
+  m_Name: Robot_Grenade
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -138,7 +138,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   guid: fd5e936dd36a9824a9d7982d146472d7
-  netID: 186aec57f8620d44b61bb4f6ecfae264
+  netID: b89ce0e0cc5ad14bacbccd419ea5c22c
+  registryId: 15
 --- !u!114 &114883076583446932
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -177,10 +178,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1798d90d9da9a54caab4d27e82d6683, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  state:
-    position: {x: 0, y: 0, z: 0}
-    exploded: 0
-    bouncetick: 0
 --- !u!114 &114118690314876128
 MonoBehaviour:
   m_ObjectHideFlags: 0

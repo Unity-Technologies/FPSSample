@@ -2,7 +2,7 @@
 using Unity.Entities;
 using UnityEngine;
 
-public class LinePrimitive: MonoBehaviour , INetworkSerializable
+public class LinePrimitive: MonoBehaviour , INetSerialized
 {
 	public Vector3 pA;
 	public Vector3 pB;
@@ -27,20 +27,20 @@ public class LinePrimitive: MonoBehaviour , INetworkSerializable
 [DisableAutoCreation]
 public class DrawLinePrimitives : ComponentSystem
 {
-	struct LineGroup
-	{
-		[ReadOnly]
-		public ComponentArray<LinePrimitive> lines;
-	}
+	ComponentGroup Group;
 
-	[Inject]
-	LineGroup Group;
+	protected override void OnCreateManager()
+	{
+		base.OnCreateManager();
+		Group = GetComponentGroup(typeof(LinePrimitive));
+	}
 
 	protected override void OnUpdate()
 	{
-		for (int i = 0, c = Group.lines.Length; i < c; i++)
+		var primArray = Group.GetComponentArray<LinePrimitive>();
+		for (int i = 0, c = primArray.Length; i < c; i++)
 		{
-			var line = Group.lines[i];
+			var line = primArray[i];
 			Debug.DrawLine(line.pA, line.pB, line.color);
 		}
 	}

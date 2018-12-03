@@ -16,9 +16,9 @@ public class HandleFanSpawns : InitializeComponentGroupSystem<Fan, HandleFanSpaw
     
     public HandleFanSpawns(GameWorld world) : base(world) { }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         Group = GetComponentGroup(typeof(Fan), ComponentType.Subtractive<DespawningEntity>());
     }
     
@@ -37,9 +37,9 @@ public class HandleFanDespawns : DeinitializeComponentGroupSystem<Fan>
 
     public HandleFanDespawns(GameWorld world) : base(world) { }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         Group = GetComponentGroup(typeof(Fan), ComponentType.Subtractive<DespawningEntity>());
     }
     

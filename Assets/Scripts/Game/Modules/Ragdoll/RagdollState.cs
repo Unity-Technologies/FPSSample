@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-public class RagdollState : MonoBehaviour, INetworkSerializable
+public class RagdollState : MonoBehaviour, INetSerialized
 {
     [NonSerialized] public bool ragdollActive;
     [NonSerialized] public Vector3 impulse;

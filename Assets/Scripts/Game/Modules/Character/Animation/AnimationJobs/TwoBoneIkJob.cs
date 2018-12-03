@@ -171,19 +171,7 @@ public struct TwoBoneIKJob : IAnimationJob
             effectorRotation = m_EffectorSceneHandle.GetRotation(stream);
         }
 
-        effectorRotation *= Quaternion.Euler(m_TargetOffset);
-
-        // Changes to the stream seems to kill the foot ik data in the stream. 
-        // TODO: (sunek) Get rid of this workaround once fixed in release
-        if (stream.isHumanStream)
-        {
-            var humanStream = stream.AsHuman();
-            humanStream.SetGoalPosition(AvatarIKGoal.LeftFoot, humanStream.GetGoalPosition(AvatarIKGoal.LeftFoot));
-            humanStream.SetGoalRotation(AvatarIKGoal.LeftFoot, humanStream.GetGoalRotation(AvatarIKGoal.LeftFoot));
-            humanStream.SetGoalPosition(AvatarIKGoal.RightFoot, humanStream.GetGoalPosition(AvatarIKGoal.RightFoot));
-            humanStream.SetGoalRotation(AvatarIKGoal.RightFoot, humanStream.GetGoalRotation(AvatarIKGoal.RightFoot));
-        }
-        
+        effectorRotation *= Quaternion.Euler(m_TargetOffset);        
         
         if (m_IkType == IkType.Generic)
         {

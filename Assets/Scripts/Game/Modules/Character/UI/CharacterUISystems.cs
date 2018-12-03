@@ -4,28 +4,28 @@ using UnityEngine;
 [DisableAutoCreation]
 public class UpdateCharacterUI : BaseComponentSystem
 {
-    public struct Players
-    {
-        public ComponentArray<LocalPlayer> players;
-        public ComponentArray<PlayerCameraSettings> cameraSettings;
-        public ComponentArray<LocalPlayerCharacterControl> characterControl;
-    }
-
-    [Inject] 
-    public Players PlayerGroup;   
+    ComponentGroup Group;   
 
     public UpdateCharacterUI(GameWorld world) : base(world)
     {
         m_prefab = Resources.Load<IngameHUD>("Prefabs/CharacterHUD");       
     }
-    
+
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(LocalPlayer), typeof(PlayerCameraSettings),
+            typeof(LocalPlayerCharacterControl));
+    }
+
     protected override void OnDestroyManager()
     {
-        for (int i = 0; i < PlayerGroup.characterControl.Length; i++)
+        var charControlArray = Group.GetComponentArray<LocalPlayerCharacterControl>();
+        for (int i = 0; i < charControlArray.Length; i++)
         {
-            if (PlayerGroup.characterControl[i].hud == null)
+            if (charControlArray[i].hud == null)
                 continue;
-            m_world.RequestDespawn(PlayerGroup.characterControl[i].hud.gameObject, PostUpdateCommands);
+            m_world.RequestDespawn(charControlArray[i].hud.gameObject, PostUpdateCommands);
         }
     }
 
@@ -33,14 +33,18 @@ public class UpdateCharacterUI : BaseComponentSystem
     {
         var time = m_world.worldTime;
 
-        GameDebug.Assert(PlayerGroup.players.Length <= 1, "There should never be more than 1 local player!");
+        var localPlayerArray = Group.GetComponentArray<LocalPlayer>();
+        var playerCamSettingsArray = Group.GetComponentArray<PlayerCameraSettings>();
+        var charControlArray = Group.GetComponentArray<LocalPlayerCharacterControl>();
+        
+        GameDebug.Assert(localPlayerArray.Length <= 1, "There should never be more than 1 local player!");
 
-        for (var i = 0; i < PlayerGroup.players.Length; i++)
+        for (var i = 0; i < localPlayerArray.Length; i++)
         {
             
-            var player = PlayerGroup.players[i];
-            var characterControl = PlayerGroup.characterControl[i];
-            var cameraSettings = PlayerGroup.cameraSettings[i];
+            var player = localPlayerArray[i];
+            var characterControl = charControlArray[i];
+            var cameraSettings = playerCamSettingsArray[i];
 
             if (characterControl.hud == null)
                 characterControl.hud = m_world.Spawn<IngameHUD>(m_prefab.gameObject);
@@ -62,7 +66,7 @@ public class UpdateCharacterUI : BaseComponentSystem
 
 
                 // Set new controlled entity
-                if (EntityManager.HasComponent<CharacterPredictedState>(player.controlledEntity))
+                if (EntityManager.HasComponent<Character>(player.controlledEntity))
                 {
                     characterControl.lastRegisteredControlledEntity = player.controlledEntity;
                 }
@@ -70,36 +74,41 @@ public class UpdateCharacterUI : BaseComponentSystem
 
                 // Build new UI elements
                 if (characterControl.lastRegisteredControlledEntity != Entity.Null &&
-                    EntityManager.Exists(characterControl.lastRegisteredControlledEntity)) 
+                    EntityManager.Exists(characterControl.lastRegisteredControlledEntity))
                 {
-                    if (EntityManager.HasComponent<CharacterUISetup>(characterControl.lastRegisteredControlledEntity))
+                    var characterEntity = characterControl.lastRegisteredControlledEntity;
+                    var character =
+                        EntityManager.GetComponentObject<Character>(characterEntity);
+
+                    var charPresentation = character.presentation;
+                    
+                    if (EntityManager.HasComponent<CharacterUISetup>(charPresentation))
                     {
-                        var uiSetup = EntityManager.GetComponentObject<CharacterUISetup>(characterControl.lastRegisteredControlledEntity);
+                        // TODO (mogensh) we should move UI setup out to Hero setup (or something similar clientside)
+                        var uiSetup = EntityManager.GetComponentObject<CharacterUISetup>(charPresentation);
                         if (uiSetup.healthUIPrefab != null)
                         {
                             characterControl.healthUI = GameObject.Instantiate(uiSetup.healthUIPrefab);
                             characterControl.healthUI.transform.SetParent(characterControl.hud.transform, false);
-                            characterControl.healthUI.health = uiSetup.gameObject.GetComponent<HealthState>();
+                            
+                            var healthState = EntityManager.GetComponentObject<HealthState>(characterControl.lastRegisteredControlledEntity);
+                            characterControl.healthUI.health = healthState;
                         }
                     }
-                    
-                    var abilityCtrl =
-                        EntityManager.GetComponentObject<AbilityController>(characterControl.lastRegisteredControlledEntity);
-                    for (var j = 0; j < abilityCtrl.abilityEntities.Length; j++)
+
+                    foreach (var cherPresentation in character.presentations)
                     {
-                        var abilityEntity = abilityCtrl.abilityEntities[j];
-                        if (abilityEntity == Entity.Null)
+                        if (cherPresentation.uiPrefabs == null || cherPresentation.uiPrefabs.Length == 0)
                             continue;
+
+                        foreach (var uiPrefab in cherPresentation.uiPrefabs)
+                        {
+                            var abilityUI = GameObject.Instantiate(uiPrefab);
+                            abilityUI.abilityOwner = characterEntity;
                         
-                        var replicatedAbility = EntityManager.GetComponentObject<ReplicatedAbility>(abilityEntity);
-                        if (replicatedAbility.uiPrefab == null)
-                            continue;
-                        
-                        var abilityUI = GameObject.Instantiate(replicatedAbility.uiPrefab);
-                        abilityUI.ability = abilityEntity;
-                        
-                        abilityUI.transform.SetParent(characterControl.hud.transform, false);
-                        characterControl.registeredCharUIs.Add(abilityUI);
+                            abilityUI.transform.SetParent(characterControl.hud.transform, false);
+                            characterControl.registeredCharUIs.Add(abilityUI);
+                        }
                     }
                 }
             }
@@ -118,7 +127,7 @@ public class UpdateCharacterUI : BaseComponentSystem
             }
 
             var charAnimState =
-                EntityManager.GetComponentData<CharAnimState>(characterControl
+                EntityManager.GetComponentData<PresentationState>(characterControl
                     .lastRegisteredControlledEntity);
             if (charAnimState.damageTick > characterControl.lastDamageReceivedTick)
             {

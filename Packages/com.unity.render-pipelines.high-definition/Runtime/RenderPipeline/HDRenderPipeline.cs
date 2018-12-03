@@ -775,6 +775,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         CullResults m_CullResults;
         ReflectionProbeCullResults m_ReflectionProbeCullResults;
+
+        public static float s_OcclusionThreshold;
+
         public override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
             if (!m_ValidAPI)
@@ -1011,7 +1014,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     using (new ProfilingSample(cmd, "CullResults.Cull", CustomSamplerId.CullResultsCull.GetSampler()))
                     {
-                        cullingParams.accurateOcclusionThreshold = 50.0f;
+                        cullingParams.accurateOcclusionThreshold = s_OcclusionThreshold;
                         CullResults.Cull(ref cullingParams, renderContext, ref m_CullResults);
                     }
 

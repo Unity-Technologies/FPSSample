@@ -8,6 +8,7 @@ public class HUDGoal : MonoBehaviour
 {
     public GameObject goalIndicator;
     public RawImage goalArrow;
+    public RawImage goalCenter;
     public Image goalProgress;
 
     private void Awake()
@@ -52,9 +53,17 @@ public class HUDGoal : MonoBehaviour
 
         if (dot < 0.0f || (sp-inner).magnitude > 0.15f)
         {
+            // If outside center area of screen, show arrow pointing in direction of goal
             var d = sp.normalized;
             arrowDirection = Mathf.Atan2(-d.x, d.y) * 180.0f / Mathf.PI;
             sp = inner + (sp - inner).normalized * 0.15f;
+            goalArrow.enabled = true;
+            goalCenter.enabled = false;
+        }
+        else
+        {
+            goalCenter.enabled = true;
+            goalArrow.enabled = false;
         }
 
         sp.x = (sp.x + 0.5f ) * Screen.width;
@@ -64,7 +73,8 @@ public class HUDGoal : MonoBehaviour
         var la = goalArrow.transform.localEulerAngles;
         la.z = arrowDirection;
         goalArrow.transform.localEulerAngles = la;
-        goalArrow.color = Game.game.gameColors[(int)localPlayer.playerState.goalDefendersColor];
+        goalArrow.SetRGB(Game.game.gameColors[(int)localPlayer.playerState.goalDefendersColor]);
+        goalCenter.SetRGB(Game.game.gameColors[(int)localPlayer.playerState.goalDefendersColor]);
         goalProgress.fillAmount = localPlayer.playerState.goalCompletion;
     }
 }

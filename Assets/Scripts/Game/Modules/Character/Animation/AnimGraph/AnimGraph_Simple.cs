@@ -13,17 +13,19 @@ public class AnimGraph_Simple : AnimGraphAsset
 
     public ActionAnimationDefinition[] actionAnimations;
 
-    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner)
     {
-        return new Instance(entityManager, owner, graph, this);
+        return new Instance(entityManager, owner, graph, animStateOwner, this);
     }
         
     class Instance : IAnimGraphInstance, IGraphState
     {
-        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_Simple settings)
+        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_Simple settings)
         {
             m_EntityManager = entityManager;
             m_Owner = owner;
+            m_AnimStateOwner = animStateOwner;
             
             m_layerMixer = AnimationLayerMixerPlayable.Create(graph);
             int port;
@@ -61,19 +63,19 @@ public class AnimGraph_Simple : AnimGraphAsset
     
         public void UpdatePresentationState(bool firstUpdate, GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             animState.rotation = animState.aimYaw;
 
             if (firstUpdate)
                 animState.simpleTime = 0;
             else
                 animState.simpleTime += deltaTime;
-            m_EntityManager.SetComponentData(m_Owner, animState);
+            m_EntityManager.SetComponentData(m_AnimStateOwner, animState);
         }
 
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             m_animIdle.SetTime(animState.simpleTime);
             
             var characterActionDuration = time.DurationSinceTick(animState.charActionTick);
@@ -85,6 +87,7 @@ public class AnimGraph_Simple : AnimGraphAsset
         
         EntityManager m_EntityManager;
         Entity m_Owner;
+        Entity m_AnimStateOwner;
         AnimationLayerMixerPlayable m_layerMixer;
         AnimationClipPlayable m_animIdle;
         AnimationLayerMixerPlayable m_actionMixer;

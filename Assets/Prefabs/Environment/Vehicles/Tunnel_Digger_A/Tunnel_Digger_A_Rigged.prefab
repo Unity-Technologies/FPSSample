@@ -347,7 +347,7 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 5ecf297d840923947838161a695029bf, type: 2}
     - target: {fileID: 11400000, guid: 9558128a1efd0d4418c1f388cedb6a41, type: 3}
       propertyPath: skeletonColor.b
-      value: 0.31491137
+      value: 0.527411
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 9558128a1efd0d4418c1f388cedb6a41, type: 3}
       propertyPath: boneSize
@@ -524,6 +524,22 @@ PrefabInstance:
     - target: {fileID: 13700032, guid: 9558128a1efd0d4418c1f388cedb6a41, type: 3}
       propertyPath: m_AABB.m_Extent.z
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 100164, guid: 9558128a1efd0d4418c1f388cedb6a41, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 126
+      objectReference: {fileID: 0}
+    - target: {fileID: 100168, guid: 9558128a1efd0d4418c1f388cedb6a41, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 126
+      objectReference: {fileID: 0}
+    - target: {fileID: 100166, guid: 9558128a1efd0d4418c1f388cedb6a41, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 126
+      objectReference: {fileID: 0}
+    - target: {fileID: 100162, guid: 9558128a1efd0d4418c1f388cedb6a41, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 126
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9558128a1efd0d4418c1f388cedb6a41, type: 3}

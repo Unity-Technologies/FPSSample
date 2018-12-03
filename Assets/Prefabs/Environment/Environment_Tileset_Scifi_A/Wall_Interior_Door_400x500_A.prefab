@@ -171,7 +171,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.7071068
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_LocalRotation.y
@@ -183,7 +183,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.7071068
+      value: -0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_RootOrder
@@ -199,7 +199,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 180.00002
+      value: 360
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_Name
@@ -215,7 +215,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100006, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 123
+      value: 127
       objectReference: {fileID: 0}
     - target: {fileID: 2300002, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_RenderingLayerMask
@@ -227,7 +227,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 9d48cbcc70eb3c84788154616ed7dfc9, type: 2}
     - target: {fileID: 100008, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 82
+      value: 126
       objectReference: {fileID: 0}
     - target: {fileID: 2300004, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_RenderingLayerMask
@@ -239,7 +239,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 9d48cbcc70eb3c84788154616ed7dfc9, type: 2}
     - target: {fileID: 100010, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 82
+      value: 126
       objectReference: {fileID: 0}
     - target: {fileID: 2300006, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_RenderingLayerMask
@@ -251,7 +251,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 9d48cbcc70eb3c84788154616ed7dfc9, type: 2}
     - target: {fileID: 100012, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 82
+      value: 126
       objectReference: {fileID: 0}
     - target: {fileID: 2300008, guid: c5eed856087892741994a1124cba97a8, type: 3}
       propertyPath: m_RenderingLayerMask

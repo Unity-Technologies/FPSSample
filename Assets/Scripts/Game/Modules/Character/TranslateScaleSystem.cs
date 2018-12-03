@@ -16,9 +16,9 @@ public class HandleTranslateScaleSpawns : InitializeComponentGroupSystem<Transla
     
     public HandleTranslateScaleSpawns(GameWorld world) : base(world) { }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         Group = GetComponentGroup(typeof(TranslateScale), ComponentType.Subtractive<DespawningEntity>());
     }
     
@@ -37,9 +37,9 @@ public class HandleTranslateScaleDespawns : DeinitializeComponentGroupSystem<Tra
 
     public HandleTranslateScaleDespawns(GameWorld world) : base(world) { }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         Group = GetComponentGroup(typeof(TranslateScale), ComponentType.Subtractive<DespawningEntity>());
     }
     

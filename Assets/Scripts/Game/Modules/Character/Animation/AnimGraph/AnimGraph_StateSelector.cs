@@ -42,20 +42,22 @@ public class AnimGraph_StateSelector : AnimGraphAsset
     public ControllerDefinition[] controllers;
 
     
-	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+	    Entity animStateOwner)
 	{
-		return new Instance(entityManager, owner, graph, this);
+		return new Instance(entityManager, owner, graph, animStateOwner, this);
 	}
 
     
     class Instance : IAnimGraphInstance, IGraphLogic
     {
-        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_StateSelector settings)
+        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_StateSelector settings)
         {
             m_settings = settings;
             m_graph = graph;
             m_EntityManager = entityManager;
             m_Owner = owner;
+            m_AnimStateOwner = animStateOwner;
             
             animStateMixer = AnimationMixerPlayable.Create(m_graph, 0, true);
             m_RootPlayable = animStateMixer;
@@ -77,7 +79,7 @@ public class AnimGraph_StateSelector : AnimGraphAsset
                 if (controllers.ContainsKey(controllderDef.template))
                     continue;
     
-                var controller = controllderDef.template.Instatiate(entityManager, owner, m_graph);
+                var controller = controllderDef.template.Instatiate(entityManager, owner, m_graph, animStateOwner);
                 controllers.Add(controllderDef.template, controller);
                 
                 var outputPlayable = Playable.Null;
@@ -144,9 +146,7 @@ public class AnimGraph_StateSelector : AnimGraphAsset
     
         public void UpdateGraphLogic(GameTime time, float deltaTime)
         {
-            var state = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
-
-            var animState = GetAnimState(ref state);
+            var animState = GetAnimState();
             var firstUpdate = animState != m_lastAnimState;
             m_lastAnimState = animState;
             
@@ -156,10 +156,10 @@ public class AnimGraph_StateSelector : AnimGraphAsset
 
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var state = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
-            var animState = GetAnimState(ref state);
+            var animState = GetAnimState();
             
             // If animation state has changed the new state needs to be started with current state duration to syncronize with server
+            var state = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             if (animState != currentAnimationState || state.charLocoTick != currentAnimationStateTick)
             {
                 var previousState = currentAnimationState;
@@ -192,33 +192,28 @@ public class AnimGraph_StateSelector : AnimGraphAsset
             }
         }
         
-        CharacterAnimationState GetAnimState(ref CharAnimState presentationState)   
+        CharacterAnimationState GetAnimState()
         {
-            // Set animation state
-            var animState = CharacterAnimationState.Stand;
-            switch (presentationState.charLocoState)
+            var healthState = m_EntityManager.GetComponentObject<HealthState>(m_AnimStateOwner);
+
+            if (healthState.health <= 0)
+                return CharacterAnimationState.Dead;
+                
+            var state = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            
+            switch (state.charLocoState)
             {
-                case CharacterPredictedState.StateData.LocoState.Stand:
-                    animState = CharacterAnimationState.Stand;
-                    break;
-                case CharacterPredictedState.StateData.LocoState.GroundMove:
-                    animState = CharacterAnimationState.Run;
-                    break;
-                case CharacterPredictedState.StateData.LocoState.Jump:
-                    animState = CharacterAnimationState.Jump;
-                    break;
-                case CharacterPredictedState.StateData.LocoState.DoubleJump:
-                    animState = CharacterAnimationState.InAir;
-                    break;
-                case CharacterPredictedState.StateData.LocoState.InAir:
-                    animState = CharacterAnimationState.InAir;
-                    break;
-                case CharacterPredictedState.StateData.LocoState.Dead:
-                    animState = CharacterAnimationState.Dead;
-                    break;
+                case CharPredictedStateData.LocoState.GroundMove:
+                    return CharacterAnimationState.Run;
+                case CharPredictedStateData.LocoState.Jump:
+                    return CharacterAnimationState.Jump;
+                case CharPredictedStateData.LocoState.DoubleJump:
+                    return CharacterAnimationState.InAir;
+                case CharPredictedStateData.LocoState.InAir:
+                    return CharacterAnimationState.InAir;
             }
     
-            return animState;
+            return CharacterAnimationState.Stand;
         }
 
     
@@ -235,6 +230,7 @@ public class AnimGraph_StateSelector : AnimGraphAsset
         AnimGraph_StateSelector m_settings;
         EntityManager m_EntityManager;
         Entity m_Owner;
+        Entity m_AnimStateOwner;
 
         PlayableGraph m_graph;
         

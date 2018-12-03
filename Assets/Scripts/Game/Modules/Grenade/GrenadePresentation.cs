@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GrenadePresentation : MonoBehaviour, INetworkSerializable
+public class GrenadePresentation : MonoBehaviour, INetSerialized
 {
     public struct State
     {
@@ -46,9 +46,5 @@ public class GrenadePresentation : MonoBehaviour, INetworkSerializable
         state.Deserialize(ref reader);
         
         stateHistory.Add(tick, state);
-
-#if UNITY_EDITOR
-        StateHistory.SetState(this, tick, ref state);
-#endif
     }
 }

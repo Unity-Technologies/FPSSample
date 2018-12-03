@@ -5,15 +5,11 @@ Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_Name: Ventilation_C
   m_Shader: {fileID: 4800000, guid: 81d02e8644315b742b154842a3a2f98c, type: 3}
-  m_ShaderKeywords: _BENTNORMALMAP0 _ENABLESPECULAROCCLUSION _HEIGHTMAP0 _HEIGHTMAP1
-    _HEIGHTMAP2 _HEIGHTMAP3 _HEIGHT_BASED_BLEND _INFLUENCEMASK_MAP _LAYEREDLIT_4_LAYERS
-    _LAYER_MAPPING_TRIPLANAR2 _LAYER_MAPPING_TRIPLANAR3 _MAIN_LAYER_INFLUENCE_MODE
-    _MASKMAP0 _MASKMAP1 _MASKMAP2 _MASKMAP3 _NORMALMAP0 _NORMALMAP1 _NORMALMAP2 _NORMALMAP3
-    _NORMALMAP_TANGENT_SPACE0 _NORMALMAP_TANGENT_SPACE1 _NORMALMAP_TANGENT_SPACE2
-    _NORMALMAP_TANGENT_SPACE3
+  m_ShaderKeywords: _BENTNORMALMAP0 _ENABLESPECULAROCCLUSION _HEIGHTMAP0 _HEIGHTMAP1 _HEIGHTMAP2 _HEIGHTMAP3 _HEIGHT_BASED_BLEND _INFLUENCEMASK_MAP _LAYEREDLIT_4_LAYERS _LAYER_MAPPING_TRIPLANAR2 _LAYER_MAPPING_TRIPLANAR3 _MAIN_LAYER_INFLUENCE_MODE _MASKMAP0 _MASKMAP1 _MASKMAP2 _MASKMAP3 _NORMALMAP0 _NORMALMAP1 _NORMALMAP2 _NORMALMAP3 _NORMALMAP_TANGENT_SPACE0 _NORMALMAP_TANGENT_SPACE1 _NORMALMAP_TANGENT_SPACE2 _NORMALMAP_TANGENT_SPACE3
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -452,12 +448,12 @@ Material:
     - _Smoothness3: 1
     - _SmoothnessRemapMax: 1
     - _SmoothnessRemapMax0: 0.83180124
-    - _SmoothnessRemapMax1: 1
+    - _SmoothnessRemapMax1: 0.7125485
     - _SmoothnessRemapMax2: 1
     - _SmoothnessRemapMax3: 1
     - _SmoothnessRemapMin: 0
     - _SmoothnessRemapMin0: 0
-    - _SmoothnessRemapMin1: 0
+    - _SmoothnessRemapMin1: 0.55721396
     - _SmoothnessRemapMin2: 0
     - _SmoothnessRemapMin3: 0
     - _SpecularAAScreenSpaceVariance: 0.1
@@ -483,6 +479,7 @@ Material:
     - _SubsurfaceRadius2: 1
     - _SubsurfaceRadius3: 1
     - _SupportDBuffer: 1
+    - _SupportDecals: 1
     - _SurfaceType: 0
     - _TexWorldScale: 1
     - _TexWorldScale0: 1

@@ -39,7 +39,7 @@ public class RagdollModule
         m_handleRagdollDespawn.Update();
     }
     
-    public void Update()
+    public void LateUpdate()
     {
         m_updateRagdolls.Update();
     }

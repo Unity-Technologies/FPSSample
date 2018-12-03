@@ -24,7 +24,6 @@ public class CharacterMoveQuery : MonoBehaviour
     [NonSerialized] public float3 moveQueryResult;
     [NonSerialized] public bool isGrounded;
 
-    [NonSerialized] public CharacterPredictedState character;
     [NonSerialized] public CharacterController charController;
     [NonSerialized] public Settings settings;
     
@@ -62,8 +61,9 @@ class HandleMovementQueries : BaseComponentSystem
 	
     public HandleMovementQueries(GameWorld world) : base(world) {}
 	
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
+        base.OnCreateManager();
         Group = GetComponentGroup(typeof(CharacterMoveQuery));
     }
 

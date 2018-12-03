@@ -58,12 +58,38 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Renderer: {fileID: 8374626493932812079}
+--- !u!114 &2305328500936119129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8374626493930809729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42a968b42c86d9146a68f3937c63592f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Renderer: {fileID: 8374626493932812079}
 --- !u!1 &8374626493930809759 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100048, guid: 0c9411a1e8c437a41a0f0adff046d5fa, type: 3}
   m_PrefabInstance: {fileID: 8374626493930909519}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &1121511021129675261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8374626493930809759}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42a968b42c86d9146a68f3937c63592f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Renderer: {fileID: 8374626493932812079}
+--- !u!114 &3981486111745848818
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -94,6 +120,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Renderer: {fileID: 8374626493932812079}
+--- !u!114 &8517420394870790780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8374626493930809757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42a968b42c86d9146a68f3937c63592f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Renderer: {fileID: 8374626493932812079}
 --- !u!1001 &8374626493930909519
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -103,7 +142,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 100000, guid: 0c9411a1e8c437a41a0f0adff046d5fa, type: 3}
       propertyPath: m_Name
-      value: Door_800x500_A_VARIANT
+      value: Door_800x500_A
       objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: 0c9411a1e8c437a41a0f0adff046d5fa, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -243,7 +282,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 0c9411a1e8c437a41a0f0adff046d5fa, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 80
+      value: 81
       objectReference: {fileID: 0}
     - target: {fileID: 2300000, guid: 0c9411a1e8c437a41a0f0adff046d5fa, type: 3}
       propertyPath: m_Materials.Array.data[0]

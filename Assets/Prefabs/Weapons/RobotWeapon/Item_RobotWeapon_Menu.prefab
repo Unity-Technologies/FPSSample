@@ -5,6 +5,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
   m_PrefabInstance: {fileID: 6599717184974817420}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &6599717184974426702 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400066, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
+  m_PrefabInstance: {fileID: 6599717184974817420}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2423239402039603000
 GameObject:
   m_ObjectHideFlags: 0
@@ -34,8 +39,8 @@ Transform:
   m_LocalPosition: {x: 0.0519, y: 0.0032, z: 0.839}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children: []
-  m_Father: {fileID: 6599717184974426676}
-  m_RootOrder: 5
+  m_Father: {fileID: 6599717184974426702}
+  m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!199 &5293595957824365123
 ParticleSystemRenderer:
@@ -4790,7 +4795,7 @@ Transform:
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children: []
   m_Father: {fileID: 6599717184974426676}
-  m_RootOrder: 6
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: -13.306001, y: 0, z: 0}
 --- !u!199 &5174216833669165748
 ParticleSystemRenderer:
@@ -9574,8 +9579,8 @@ Transform:
   m_LocalPosition: {x: -0.0632, y: 0.0021, z: 0.839}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children: []
-  m_Father: {fileID: 6599717184974426676}
-  m_RootOrder: 4
+  m_Father: {fileID: 6599717184974426702}
+  m_RootOrder: 11
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!199 &166895783922882681
 ParticleSystemRenderer:
@@ -14329,8 +14334,8 @@ Transform:
   m_LocalPosition: {x: -0.006, y: 0.099, z: 0.839}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children: []
-  m_Father: {fileID: 6599717184974426676}
-  m_RootOrder: 3
+  m_Father: {fileID: 6599717184974426702}
+  m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!199 &2972911073321439320
 ParticleSystemRenderer:
@@ -19120,7 +19125,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
       propertyPath: skeletonColor.b
-      value: 0.21715021
+      value: 0.6173115
       objectReference: {fileID: 0}
     - target: {fileID: 13700114, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
       propertyPath: m_RenderingLayerMask

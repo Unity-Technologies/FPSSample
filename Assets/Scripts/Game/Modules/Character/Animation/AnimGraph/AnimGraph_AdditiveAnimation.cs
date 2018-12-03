@@ -10,7 +10,8 @@ public class AnimGraph_AdditiveAnimation : AnimGraphAsset
     [Range(0f, 1f)]
     public float weight;
 
-	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+	    Entity animStateOwner)
 	{
 		return new Instance(entityManager, owner, graph, this);
 	}

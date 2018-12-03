@@ -17,7 +17,7 @@ public class AnimStateController : MonoBehaviour
         Deinitialize();
     }
 
-    public void Initialize(EntityManager entityManager, Entity owner)
+    public void Initialize(EntityManager entityManager, Entity owner, Entity character)
     {
         m_Animator = entityManager.GetComponentObject<Animator>(owner);
 
@@ -34,7 +34,7 @@ public class AnimStateController : MonoBehaviour
 #endif
         
         Profiler.BeginSample("Instantiate playables");
-        m_animGraph = animStateDefinition.Instatiate(entityManager, owner, m_PlayableGraph);
+        m_animGraph = animStateDefinition.Instatiate(entityManager, owner, m_PlayableGraph, character);
         Profiler.EndSample();
         
         m_animGraphLogic = m_animGraph as IGraphLogic;
@@ -94,7 +94,10 @@ public class HandleAnimStateCtrlSpawn : InitializeComponentSystem<AnimStateContr
     
     protected override void Initialize(Entity entity, AnimStateController component)
     {
-        component.Initialize(EntityManager, entity);
+
+        var charPresentation = EntityManager.GetComponentObject<CharPresentation>(entity);
+        
+        component.Initialize(EntityManager, entity, charPresentation.character);
     }
 }
 

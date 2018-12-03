@@ -28,14 +28,9 @@ public class HandleHitCollisionSpawning : InitializeComponentGroupSystem<HitColl
             var hitCollHistoryEntity = hitCollHistory.gameObject.GetComponent<GameObjectEntity>().Entity;
             var externalSetup = hitCollHistory.settings.collisionSetup != null;
             var colliderSetup = externalSetup ? hitCollHistory.settings.collisionSetup.transform : hitCollHistory.transform;
-    
-            if (!EntityManager.HasComponent<HitCollisionOwner>(hitCollHistoryEntity))
-            {
-                GameDebug.Log("WHAT;" + hitCollHistory.name);
-            }
-
-            hitCollHistory.entity = hitCollHistoryEntity;
-            hitCollHistory.hitCollisionOwner = hitCollHistory.gameObject.GetComponent<HitCollisionOwner>();
+            var hitCollisionOwner =
+                EntityManager.GetComponentObject<HitCollisionOwner>(hitCollHistory.hitCollisionOwner);
+            
             GameDebug.Assert(hitCollHistory.hitCollisionOwner != null,"HitCollisionHistory requires HitCollisionOwner component");
             
             // Find and disable all all colliders on collisionOwner
@@ -74,8 +69,7 @@ public class HandleHitCollisionSpawning : InitializeComponentGroupSystem<HitColl
                 var collider = GameObject.Instantiate(sourceCollider);
     
                 var hitColl = collider.gameObject.AddComponent<HitCollision>();
-                hitColl.owner = hitCollHistory.hitCollisionOwner;
-    //                hitColl.ownerEntity = hitCollisionEntity;
+                hitColl.owner = hitCollisionOwner;
                 collider.enabled = true;
                 collider.gameObject.layer = HitCollisionModule.DisabledHitCollisionLayer;
                 collider.transform.SetParent(hitCollHistory.collidersRoot.transform);
@@ -154,8 +148,21 @@ public class HandleHitCollisionDespawning : DeinitializeComponentGroupSystem<Hit
 
         for (var i = 0; i < hitCollHistoryArray.Length; i++)
         {
-            hitCollHistoryArray[i].Shutdown();
-        }
+            var hitCollHistory = hitCollHistoryArray[i];
+            if(hitCollHistory.colliderParents.isCreated)
+                hitCollHistory.colliderParents.Dispose();
+    
+            if (hitCollHistory.colliders == null)
+                return;
+
+            for (var j = 0; j < hitCollHistory.colliders.Length; j++)
+            {
+                var go = hitCollHistory.colliders[j].collider.gameObject;
+                GameObject.Destroy(go);
+            }
+            GameObject.Destroy(hitCollHistory.collidersRoot);
+            hitCollHistory.colliders = null;
+        }            
     }
 }
 

@@ -1,6 +1,4 @@
-﻿//#define USE_UNET
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 using NetworkCompression;
@@ -37,9 +35,9 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         m_PlayerModule = new PlayerModuleServer(m_GameWorld, resourceSystem);
         m_DebugPrimitiveModule = new DebugPrimitiveModule(m_GameWorld, 0.4f, 0.02f);
         m_SpectatorCamModule = new SpectatorCamModuleServer(m_GameWorld, resourceSystem);
-        
         m_ReplicatedEntityModule = new ReplicatedEntityModuleServer(m_GameWorld, resourceSystem, m_NetworkServer);
         m_ReplicatedEntityModule.ReserveSceneEntities(networkServer);
+        m_ItemModule = new ItemModule(m_GameWorld);
 
         m_GameModeSystem = m_GameWorld.GetECSWorld().CreateManager<GameModeSystemServer>(m_GameWorld, m_ChatSystem, resourceSystem);
 
@@ -79,7 +77,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         m_GameWorld.GetECSWorld().DestroyManager(m_platformSystem);
 
         m_ReplicatedEntityModule.Shutdown();
-
+        m_ItemModule.Shutdown();
         
         m_CameraSystem.Shutdown();
         m_MoveableSystem.Shutdown();
@@ -92,7 +90,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         if(player.controlledEntity == Entity.Null)
             return;
 
-        if (m_GameWorld.GetEntityManager().HasComponent<CharacterPredictedState>(player.controlledEntity))
+        if (m_GameWorld.GetEntityManager().HasComponent<Character>(player.controlledEntity))
             CharacterDespawnRequest.Create(m_GameWorld,player.controlledEntity);
         
         player.controlledEntity = Entity.Null;
@@ -180,13 +178,14 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         m_DebugPrimitiveModule.HandleRequests();
         m_HandleGrenadeRequests.Update();
         
-        // Handle controlled entity changed
-        m_CharacterModule.HandleControlledEntityChanged();    
-
         // Handle newly spawned entities          
         m_CharacterModule.HandleSpawns();
         m_HitCollisionModule.HandleSpawning();  
         m_ReplicatedEntityModule.HandleSpawning();
+        m_ItemModule.HandleSpawn();
+
+        // Handle controlled entity changed
+        m_CharacterModule.HandleControlledEntityChanged();    
 
         // Start movement of scene objects. Scene objects that player movement
         // depends on should finish movement in this phase
@@ -224,8 +223,8 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 
 
         // Handle despawns
+        m_CharacterModule.HandleDepawns(); // TODO (mogensh) this destroys presentations and needs to be done first so its picked up. We need better way of handling destruction ordering
         m_HitCollisionModule.HandleDespawn();
-        m_CharacterModule.HandleDepawns();
         m_ReplicatedEntityModule.HandleDespawning();
         m_GameWorld.ProcessDespawns();
 
@@ -283,7 +282,8 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     readonly DebugPrimitiveModule m_DebugPrimitiveModule;
     readonly SpectatorCamModuleServer m_SpectatorCamModule;
     readonly ReplicatedEntityModuleServer m_ReplicatedEntityModule;
-
+    readonly ItemModule m_ItemModule;
+    
     readonly ServerCameraSystem m_CameraSystem;
     readonly GameModeSystemServer m_GameModeSystem;
 
@@ -315,25 +315,6 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
         m_StateMachine.SwitchTo(ServerState.Idle);
 
-#if USE_UNET        
-        m_NetworkTransport = new UNETTransport();
-        if (!m_NetworkTransport.Init(serverPort.IntValue, 32))
-            return false;
-        m_NetworkServer = new NetworkServer(m_NetworkTransport);
-
-        m_ServerBroadcast = new UNETServerBroadcast(m_NetworkTransport.hostId, new UNETBroadcastConfig(), 7913);
-
-        // TODO (petera) what if these (max clients and name) changes during play
-        m_ServerBroadcast.gameInfo.maxPlayers = serverMaxClients.IntValue;
-        if (serverServerName.Value.Length == 0)
-            serverServerName.Value = MakeServername();
-        m_ServerBroadcast.gameInfo.servername = serverServerName.Value;
-        GameDebug.Log("Server name: '" + m_ServerBroadcast.gameInfo.servername + "'");
-
-        m_ServerBroadcast.gameInfo.levelname = "-";
-        m_ServerBroadcast.gameInfo.gamemode = "-";
-        m_ServerBroadcast.Start();
-#else
         m_NetworkTransport = new SocketTransport(serverPort.IntValue);
         GameDebug.Log("Listening on " + string.Join(", ", NetworkUtils.GetLocalInterfaceAddresses()) + " on port " + serverPort.IntValue);
         m_NetworkServer = new NetworkServer(m_NetworkTransport);
@@ -348,19 +329,15 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
                 serverPanel.serverInfo.text += a + ":" + serverPort.IntValue + "\n";
             }
         }
-#endif
+
         m_NetworkServer.UpdateClientInfo();
         m_NetworkServer.clientInfo.compressionModel = m_Model;
 
-        m_ServerQueryProtocolServer = new SQP.SQPServer(serverSQPPort.IntValue);
-        var info = m_ServerQueryProtocolServer.ServerInfoData;
-        info.BuildId = Game.game.buildId;
-        info.Port = (ushort)serverPort.IntValue;
-        info.CurrentPlayers = 0;
-        info.GameType = "Deathmatch";
-        info.Map = "";
-        info.MaxPlayers = 32;
-        info.ServerName = MakeServername();
+        if (serverServerName.Value == "")
+            serverServerName.Value = MakeServername();
+
+        m_ServerQueryProtocolServer = new SQP.SQPServer(NetworkConfig.serverSQPPort.IntValue);
+
 
 #if UNITY_EDITOR        
         Game.game.levelManager.UnloadLevel();
@@ -401,9 +378,6 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         m_StateMachine.Shutdown();
         m_NetworkServer.Shutdown();
 
-#if USE_UNET
-        m_ServerBroadcast.Stop();
-#endif
         m_NetworkTransport.Shutdown();
         Game.game.levelManager.UnloadLevel();
         
@@ -459,8 +433,6 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
         if (m_serverGameWorld != null)
             m_serverGameWorld.HandleClientConnect(client);
-
-        m_ServerQueryProtocolServer.ServerInfoData.CurrentPlayers = (ushort)m_Clients.Count;
     }
 
     public void OnDisconnect(int id)
@@ -473,7 +445,6 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
             m_Clients.Remove(id);
         }
-        m_ServerQueryProtocolServer.ServerInfoData.CurrentPlayers = (ushort)m_Clients.Count;
     }
 
     public void OnEvent(int clientId, NetworkEvent info)
@@ -530,9 +501,16 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         if (m_serverGameWorld != null && m_serverGameWorld.TickRate != Game.serverTickRate.IntValue)
             m_serverGameWorld.TickRate = Game.serverTickRate.IntValue;
 
-#if USE_UNET
-        m_ServerBroadcast.UpdateBroadcast();
-#endif
+        // Update SQP data with current values
+        var sid = m_ServerQueryProtocolServer.ServerInfoData;
+        sid.BuildId = Game.game.buildId;
+        sid.Port = (ushort)serverPort.IntValue;
+        sid.CurrentPlayers = (ushort)m_Clients.Count;
+        sid.GameType = GameModeSystemServer.modeName.Value;
+        sid.Map = Game.game.levelManager.currentLevel.name;
+        sid.MaxPlayers = (ushort)serverMaxClients.IntValue;
+        sid.ServerName = serverServerName.Value;
+
         m_ServerQueryProtocolServer.Update();
 
         m_NetworkServer.Update(this);
@@ -566,8 +544,6 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
         m_GameWorld.RegisterSceneEntities();
         
-        m_ServerQueryProtocolServer.ServerInfoData.Map = Game.game.levelManager.currentLevel.name;
-
         m_resourceSystem = new BundledResourceManager("BundledResources/Server");
 
         m_NetworkServer.InitializeMap((ref NetworkWriter data) =>
@@ -580,12 +556,6 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         {
             m_serverGameWorld.HandleClientConnect(pair.Value);
         }
-
-#if USE_UNET
-        //m_ServerBroadcast.gameInfo.levelname = Game.game.levelManager.currentLevel.name;
-        //m_ServerBroadcast.gameInfo.gamemode = "Deathmatch";
-        //m_ServerBroadcast.UpdateGameInfo();
-#endif
     }
 
     Dictionary<int, int> m_TickStats = new Dictionary<int, int>();
@@ -701,11 +671,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     {
         if (args.Length > 0)
         {
-#if USE_UNET
-            m_ServerBroadcast.gameInfo.servername = args[0];
-            m_ServerBroadcast.UpdateGameInfo();
-            GameDebug.Log("Server name : '" + m_ServerBroadcast.gameInfo.servername + "'");
-#endif
+            // TODO (petera) fix or remove this?
         }
         else
             Console.Write("Invalid argument to servername (usage : servername name)");
@@ -828,11 +794,9 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     string MakeServername()
     {
 
-        var f = new string[] { "Ultimate", "Furry", "Quick", "Laggy", "Hot", "Curious", "Flappy", "Sneaky", "Undercover", "Nested", "Public", "Deep", "Blue", "Hipster", "Artificial", "Bespoke" };
-        var l = new string[] { "Speedrun", "Fragfest", "Portal", "Framerate", "Execution", "Exception", "Pipeline", "Prefab", "Scene", "Garbage", "System", "Glacier", "Souls", "Whitespace", "Dolphin" };
-        var q1 = Random.Range(0, 10) == 0 ? "'" : "";
-        var q2 = Random.Range(0, 10) == 0 ? "'" : "";
-        return q1 + f[Random.Range(0, f.Length)] + q1 + " " + q2 + l[Random.Range(0, l.Length)] + q2;
+        var f = new string[] { "Ultimate", "Furry", "Quick", "Laggy", "Hot", "Curious", "Flappy", "Sneaky", "Nested", "Deep", "Blue", "Hipster", "Artificial"};
+        var l = new string[] { "Speedrun", "Fragfest", "Win", "Exception", "Prefab", "Scene", "Garbage", "System", "Souls", "Whitespace", "Dolphin" };
+        return f[Random.Range(0, f.Length)] + " " + l[Random.Range(0, l.Length)];
     }
 
     void OnDebugDrawGameloopInfo()
@@ -880,12 +844,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     NetworkStatisticsServer m_NetworkStatistics;
     NetworkCompressionModel m_Model = NetworkCompressionModel.DefaultModel;
 
-#if USE_UNET
-    UNETTransport m_NetworkTransport;
-    UNETServerBroadcast m_ServerBroadcast;
-#else
     SocketTransport m_NetworkTransport;
-#endif
 
     BundledResourceManager m_resourceSystem;
     ChatSystemServer m_ChatSystem;
@@ -914,14 +873,11 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     [ConfigVar(Name = "server.recycleinterval", DefaultValue = "0", Description = "Exit when N seconds old AND when 0 players. 0 means never.")]
     static ConfigVar serverRecycleInterval;
 
-    [ConfigVar(Name = "server.sqp_port", DefaultValue = "7912", Description = "Port used for server query protocol")]
-    static ConfigVar serverSQPPort;
-
     [ConfigVar(Name = "debug.servertickstats", DefaultValue = "0", Description = "Show stats about how many ticks we run per Unity update (headless only)")]
     static ConfigVar debugServerTickStats;
 
-    [ConfigVar(Name = "server.maxclients", DefaultValue = "32", Description = "Maximum allowed clients")]
-    static ConfigVar serverMaxClients;
+    [ConfigVar(Name = "server.maxclients", DefaultValue = "8", Description = "Maximum allowed clients")]
+    public static ConfigVar serverMaxClients;
 
     [ConfigVar(Name = "server.servername", DefaultValue = "", Description = "Servername")]
     static ConfigVar serverServerName;

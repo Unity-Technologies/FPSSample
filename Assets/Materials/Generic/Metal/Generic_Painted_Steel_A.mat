@@ -5,7 +5,8 @@ Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_Name: Generic_Painted_Steel_A
   m_Shader: {fileID: 4800000, guid: 6e4ae4064600d784cac1e41a9e6f2e59, type: 3}
   m_ShaderKeywords: _HEIGHTMAP _MASKMAP _NORMALMAP _NORMALMAP_TANGENT_SPACE
@@ -18,7 +19,7 @@ Material:
   - DistortionVectors
   - TransparentBackfaceDebugDisplay
   - TransparentDepthPrepass
-  - TransparentDepthPostPass
+  - TransparentDepthPostpass
   - TransparentBackface
   - MOTIONVECTORS
   m_SavedProperties:
@@ -161,11 +162,13 @@ Material:
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _EnableFpsMode: 0
+    - _EnableGeometricSpecularAA: 0
     - _EnableMotionVectorForVertexAnimation: 0
     - _EnableSpecularOcclusion: 0
     - _EnableWind: 0
     - _EnergyConservingSpecularColor: 1
     - _FpsModeFov: 60
+    - _HdrpVersion: 2
     - _HeightAmplitude: 0.099999994
     - _HeightCenter: 0.5
     - _HeightMapParametrization: 0
@@ -193,11 +196,15 @@ Material:
     - _PPDPrimitiveWidth: 1
     - _PreRefractionPass: 0
     - _RefractionMode: 0
+    - _RefractionModel: 0
+    - _SSRefractionProjectionModel: 0
     - _ShiverDirectionality: 0.5
     - _ShiverDrag: 0.2
     - _Smoothness: 1
-    - _SmoothnessRemapMax: 1
-    - _SmoothnessRemapMin: 0
+    - _SmoothnessRemapMax: 0.7125485
+    - _SmoothnessRemapMin: 0.55721396
+    - _SpecularAAScreenSpaceVariance: 0.1
+    - _SpecularAAThreshold: 0.2
     - _SrcBlend: 1
     - _StencilRef: 2
     - _StencilRefMV: 128
@@ -208,6 +215,7 @@ Material:
     - _SubsurfaceProfile: 0
     - _SubsurfaceRadius: 1
     - _SupportDBuffer: 1
+    - _SupportDecals: 1
     - _SurfaceType: 0
     - _TexWorldScale: 1
     - _TexWorldScaleEmissive: 1

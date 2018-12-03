@@ -1,0 +1,16 @@
+{
+    "name": "Unity.Networking.Transport.EditorTests",
+    "references": [
+        "Unity.Collections",
+        "Unity.Mathematics",
+        "Unity.Networking.Transport"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true
+}

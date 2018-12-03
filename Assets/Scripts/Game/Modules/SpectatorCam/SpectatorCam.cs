@@ -1,7 +1,7 @@
 ﻿using Unity.Entities;
 using UnityEngine;
 
-public class SpectatorCam : MonoBehaviour, INetworkSerializable
+public class SpectatorCam : MonoBehaviour, INetSerialized
 {
     public Vector3 position;
     public Quaternion rotation;
@@ -42,25 +42,25 @@ public struct SpectatorCamSpawnRequest : IComponentData
 [DisableAutoCreation]
 public class UpdateSpectatorCam : BaseComponentSystem
 {
-    struct GroupType
-    {
-        public ComponentArray<UserCommandComponent> userCommands;
-        public ComponentArray<SpectatorCam> spectatorCams;
-    }
-
-    [Inject]
-    GroupType Group;
+    ComponentGroup Group;
     
     public UpdateSpectatorCam(GameWorld world) : base(world)
+    {}
+
+    protected override void OnCreateManager()
     {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(UserCommandComponent), typeof(SpectatorCam));
     }
 
     protected override void OnUpdate()
     {
-        for (var i = 0; i < Group.spectatorCams.Length; i++)
+        var spectatorCamArray = Group.GetComponentArray<SpectatorCam>();
+        var userCommandArray = Group.GetComponentArray<UserCommandComponent>();
+        for (var i = 0; i < spectatorCamArray.Length; i++)
         {
-            var command = Group.userCommands[i].command;
-            var spectatorCam = Group.spectatorCams[i];
+            var command = userCommandArray[i].command;
+            var spectatorCam = spectatorCamArray[i];
 
             spectatorCam.rotation = Quaternion.Euler(new Vector3(90 - command.lookPitch, command.lookYaw, 0));
 
@@ -77,15 +77,7 @@ public class UpdateSpectatorCam : BaseComponentSystem
 [DisableAutoCreation]
 public class HandleSpectatorCamRequests : BaseComponentSystem
 {
-    public struct SpawnRequests
-    {
-        public EntityArray entities;
-        public ComponentDataArray<SpectatorCamSpawnRequest> requests;
-    }
-
-    [Inject] 
-    public SpawnRequests SpawnGroup;   
-
+    ComponentGroup Group;   
 
     public HandleSpectatorCamRequests(GameWorld world, BundledResourceManager resourceManager) : base(world)
     {
@@ -93,18 +85,27 @@ public class HandleSpectatorCamRequests : BaseComponentSystem
         m_Settings = Resources.Load<SpectatorCamSettings>("SpectatorCamSettings");
     }
 
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(SpectatorCamSpawnRequest));
+    }
 
     protected override void OnUpdate()
     {
-        if (SpawnGroup.requests.Length == 0)
+        var requestArray = Group.GetComponentDataArray<SpectatorCamSpawnRequest>();
+        if (requestArray.Length == 0)
             return;
 
+        var entityArray = Group.GetEntityArray();
+
+        
         // Copy requests as spawning will invalidate Group
-        var spawnRequests = new SpectatorCamSpawnRequest[SpawnGroup.requests.Length];
-        for (var i = 0; i < SpawnGroup.requests.Length; i++)
+        var spawnRequests = new SpectatorCamSpawnRequest[requestArray.Length];
+        for (var i = 0; i < requestArray.Length; i++)
         {
-            spawnRequests[i] = SpawnGroup.requests[i];
-            PostUpdateCommands.DestroyEntity(SpawnGroup.entities[i]);
+            spawnRequests[i] = requestArray[i];
+            PostUpdateCommands.DestroyEntity(entityArray[i]);
         }
 
         for(var i =0;i<spawnRequests.Length;i++)

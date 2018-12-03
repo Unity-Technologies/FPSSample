@@ -5,21 +5,15 @@ using UnityEngine;
 [DisableAutoCreation]
 public class HandleHitscanEffectRequests : BaseComponentSystem 
 {
-	struct Requests
-	{
-		public EntityArray entities;
-		public ComponentDataArray<HitscanEffectRequest> requests;
-	}
-
-	[Inject] Requests RequestGroup;
+	ComponentGroup RequestGroup;
 	
 	public HandleHitscanEffectRequests(GameWorld world, GameObject systemRoot, BundledResourceManager resourceSystem) : base(world)
 	{
 		var effectBundle = resourceSystem.GetResourceRegistry<HitscanEffectRegistry>();
 		GameDebug.Assert(effectBundle != null,"No HitscanEffectRegistry defined in registry");
 
-		m_Pools = new Pool[effectBundle.entries.Length];
-		for(var i=0;i<effectBundle.entries.Length;i++)
+		m_Pools = new Pool[effectBundle.entries.Count];
+		for(var i=0;i<effectBundle.entries.Count;i++)
 		{
 			var entry = effectBundle.entries[i]; 
 			var resource = resourceSystem.LoadSingleAssetResource(entry.prefab.guid);
@@ -45,6 +39,12 @@ public class HandleHitscanEffectRequests : BaseComponentSystem
 		}
 	}
 
+	protected override void OnCreateManager()
+	{
+		base.OnCreateManager();
+		RequestGroup = GetComponentGroup(typeof(HitscanEffectRequest));
+	}
+
 	protected override void OnDestroyManager()
 	{
 		if (m_Pools != null)
@@ -60,17 +60,21 @@ public class HandleHitscanEffectRequests : BaseComponentSystem
 
 	protected override void OnUpdate()
 	{
-		for (var i = 0; i < RequestGroup.requests.Length; i++)
-		{
-			var request = RequestGroup.requests[i];
+		var entityArray = RequestGroup.GetEntityArray();
+		var requestArray = RequestGroup.GetComponentDataArray<HitscanEffectRequest>();
 
-			var pool = m_Pools[request.effectTypeRegistryId - 1];
+		
+		for (var i = 0; i < requestArray.Length; i++)
+		{
+			var request = requestArray[i];
+
+			var pool = m_Pools[request.effectTypeRegistryId];
 			
 			var index = pool.nextInstanceId % pool.instances.Length;
 			pool.instances[index].StartEffect(request.startPos, request.endPos);
 			pool.nextInstanceId++;
 			
-			PostUpdateCommands.DestroyEntity(RequestGroup.entities[i]);
+			PostUpdateCommands.DestroyEntity(entityArray[i]);
 		}
 	}
 

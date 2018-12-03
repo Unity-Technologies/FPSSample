@@ -4,6 +4,9 @@ using System;
 
 public class GeometryImporter : AssetPostprocessor
 {
+    uint m_Version = 2;
+    public override uint GetVersion() {return m_Version;}
+
 	void OnPreprocessModel()
 	{
 		var importer = assetImporter as ModelImporter;

@@ -1,15 +1,16 @@
 ﻿using System.Net;
-using Experimental.Multiplayer;
+using Unity.Networking.Transport;
 using Unity.Collections;
-using UdpNetworkDriver = Experimental.Multiplayer.BasicNetworkDriver<Experimental.Multiplayer.IPv4UDPSocket>;
-using EventType = Experimental.Multiplayer.NetworkEvent.Type; 
+using UdpNetworkDriver = Unity.Networking.Transport.BasicNetworkDriver<Unity.Networking.Transport.IPv4UDPSocket>;
+using EventType = Unity.Networking.Transport.NetworkEvent.Type;
+using NetworkEvent = Unity.Networking.Transport.NetworkEvent;
 
 public class SocketTransport : INetworkTransport
 {
     public SocketTransport(int port = 0, int maxConnections = 16)
     {
         m_IdToConnection = new NativeArray<NetworkConnection>(maxConnections, Allocator.Persistent);
-        m_Socket = new UdpNetworkDriver(new NetworkBitStreamParameter { size = 10 * NetworkConfig.maxPackageSize });
+        m_Socket = new UdpNetworkDriver(new NetworkDataStreamParameter { size = 10 * NetworkConfig.maxPackageSize });
         m_Socket.Bind(new IPEndPoint(IPAddress.Any, port));
 
         if (port != 0)
@@ -29,21 +30,38 @@ public class SocketTransport : INetworkTransport
         m_IdToConnection[connection] = default(NetworkConnection);
     }
 
-    public int Update()
+    public void Update()
     {
-        return m_Socket.Update();
+        m_Socket.ScheduleUpdate().Complete();
     }
 
     public bool NextEvent(ref TransportEvent e)
     {
         NetworkConnection connection;
 
-        BitSlice slice;
-        var ev = m_Socket.PopEvent(out connection, out slice);
-        
-        GameDebug.Assert(m_Buffer.Length >= slice.Length);
-        slice.ReadBytesIntoArray(ref m_Buffer, slice.Length);
-        var size = slice.Length;
+        connection = m_Socket.Accept();
+        if (connection.IsCreated)
+        {
+            e.type = TransportEvent.Type.Connect;
+            e.connectionId = connection.InternalId;
+            m_IdToConnection[connection.InternalId] = connection;
+            return true;
+        }
+
+        DataStreamReader reader;
+        var context = default(DataStreamReader.Context);
+        var ev = m_Socket.PopEvent(out connection, out reader);
+
+        if (ev == EventType.Empty)
+            return false;
+
+        int size = 0;
+        if (reader.IsCreated)
+        {
+            GameDebug.Assert(m_Buffer.Length >= reader.Length);
+            reader.ReadBytesIntoArray(ref context, ref m_Buffer, reader.Length);
+            size = reader.Length;
+        }
         
         switch (ev)
         {
@@ -71,8 +89,9 @@ public class SocketTransport : INetworkTransport
 
     public void SendData(int connectionId, byte[] data, int sendSize)
     {
-        using (var sendStream = new BitStream(data, Allocator.Temp, sendSize))
+        using (var sendStream = new DataStreamWriter(sendSize, Allocator.Persistent))
         {
+            sendStream.Write(data, sendSize);
             m_Socket.Send(m_IdToConnection[connectionId], sendStream);
         }
     }

@@ -8,13 +8,14 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Robot_Weapon_A_1P
-  m_Shader: {fileID: 4800000, guid: 6e4ae4064600d784cac1e41a9e6f2e59, type: 3}
-  m_ShaderKeywords: _BENTNORMALMAP _ENABLESPECULAROCCLUSION _FPS_MODE _MASKMAP _MATERIAL_FEATURE_IRIDESCENCE _NORMALMAP _NORMALMAP_TANGENT_SPACE
+  m_Shader: {fileID: 4800000, guid: b52793709e82eb54695861286c7eb00e, type: 3}
+  m_ShaderKeywords: _BENTNORMALMAP _ENABLEFPSMODE_ON _ENABLESPECULAROCCLUSION _FPS_MODE _MASKMAP _MATERIAL_FEATURE_IRIDESCENCE _NORMALMAP _NORMALMAP_TANGENT_SPACE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 2000
-  stringTagMap: {}
+  m_CustomRenderQueue: -1
+  stringTagMap:
+    MotionVector: User
   disabledShaderPasses:
   - DistortionVectors
   - TransparentDepthPrepass
@@ -53,7 +54,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissiveColorMap:
-        m_Texture: {fileID: 2800000, guid: 8e6f59332f7baa945a11b13dbb7b5498, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _HeightMap:
@@ -109,6 +110,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
+    - Vector1_9154D9D: 1
     - _AORemapMax: 1
     - _AORemapMin: 0
     - _ATDistance: 1

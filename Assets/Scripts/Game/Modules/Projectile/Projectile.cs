@@ -2,10 +2,16 @@
 using Unity.Mathematics;
 using UnityEngine;
 
-public struct ProjectileData : IComponentData, INetworkSerializable
+// Component set on projectiles that should be updated. Client only puts this on predicted projectiles
+public struct UpdateProjectileFlag : IComponentData    
+{
+    public int foo;
+}
+
+public struct ProjectileData : IComponentData, INetSerialized
 {
     public int test;        // TODO remove this test no longer needed  
-    public uint projectileTypeRegistryId;
+    public int projectileTypeRegistryId;
     public Entity projectileOwner;
     public int startTick;
     public float3 startPos;
@@ -47,7 +53,7 @@ public struct ProjectileData : IComponentData, INetworkSerializable
     public float maxAge;
     public int impactTick;
     
-    public void Initialize(ProjectileRequest request)
+    public void SetupFromRequest(ProjectileRequest request)
     {
         rayQueryId = -1;
         projectileOwner = request.owner;
@@ -56,16 +62,14 @@ public struct ProjectileData : IComponentData, INetworkSerializable
         startPos = request.startPosition;
         endPos = request.endPosition;
         teamId = request.teamId;
-        position = request.startPosition;
         collisionCheckTickDelay = request.collisionTestTickDelay;
     }
-    
-    public void LoadSettings(BundledResourceManager resourceSystem) 
+
+    public void Initialize(ProjectileRegistry registry) 
     {
-        var projectileRegistry = resourceSystem.GetResourceRegistry<ProjectileRegistry>();
-        var index = projectileRegistry.GetIndexByRegistryId(projectileTypeRegistryId);
-        settings = projectileRegistry.entries[index].definition.properties;
+        settings = registry.GetEntryById(projectileTypeRegistryId).properties;
         
         maxAge = Vector3.Magnitude(endPos - startPos) / settings.velocity;
+        position = startPos;
     }
 }    

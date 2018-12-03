@@ -65,7 +65,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bf10cdea1344482e91a4f2b58506b77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &7275296113354275909
+--- !u!114 &7455488442214220236
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -74,41 +74,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 6823697678259717171}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d9950ae7cf068c46a6abc01020cb0c0, type: 3}
+  m_Script: {fileID: 11500000, guid: 1a1b51c963888964296f7203eb73c860, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_SerializedData:
-    position: {x: 0, y: 0, z: 0}
-    rotation: 0
-    aimYaw: 0
-    aimPitch: 0
-    moveYaw: 0
-    charLocoState: 0
-    charLocoTick: 0
-    charAction: 0
-    charActionTick: 0
-    damageTick: 0
-    damageDirection: 0
-    sprinting: 0
-    sprintWeight: 0
-    previousCharLocoState: 0
-    groundMoveExitTick: 0
-    moveAngleLocal: 0
-    shootPoseWeight: 0
-    locomotionVector: {x: 0, y: 0}
-    locomotionPhase: 0
-    banking: 0
-    landAnticWeight: 0
-    turnStartAngle: 0
-    turnDirection: 0
-    squashTime: 0
-    squashWeight: 0
-    inAirTime: 0
-    jumpTime: 0
-    simpleTime: 0
-    footIkOffset: {x: 0, y: 0}
-    footIkNormalLeft: {x: 0, y: 0, z: 0}
-    footIkNormaRight: {x: 0, y: 0, z: 0}
+  geomtry: {fileID: 6823697678259717405}
+  itemAttachBone: {fileID: 6823697678259689653}
+  uiPrefabs: []
+  weaponBoneDebug: {fileID: 0}
+  weaponOffsetDebug: {x: 0, y: 0, z: 0}
 --- !u!114 &8195856519734921981
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,7 +209,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 11400022, guid: 88f9dc305d66788419809b4a8f0c1fd3, type: 3}
       propertyPath: skeletonColor.r
-      value: 0.41527987
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11400022, guid: 88f9dc305d66788419809b4a8f0c1fd3, type: 3}
       propertyPath: skeletonColor.g
@@ -244,7 +217,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 11400022, guid: 88f9dc305d66788419809b4a8f0c1fd3, type: 3}
       propertyPath: skeletonColor.b
-      value: 0
+      value: 0.841177
       objectReference: {fileID: 0}
     - target: {fileID: 100012, guid: 88f9dc305d66788419809b4a8f0c1fd3, type: 3}
       propertyPath: m_Layer

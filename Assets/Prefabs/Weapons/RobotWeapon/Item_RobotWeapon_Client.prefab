@@ -19075,6 +19075,25 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
   m_PrefabInstance: {fileID: 6519526125598770102}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &83560407
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6519526125598672238}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a1b51c963888964296f7203eb73c860, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  geomtry: {fileID: 6519526125598672138}
+  itemAttachBone: {fileID: 0}
+  uiPrefabs:
+  - {fileID: 114970133203470120, guid: 8b9bd84d5736e9e4ab79315afb151720, type: 3}
+  - {fileID: 114419565097373530, guid: 7e040a5e809542f47b0788cf29ef5d36, type: 3}
+  weaponBoneDebug: {fileID: 0}
+  weaponOffsetDebug: {x: 0, y: 0, z: 0}
 --- !u!114 &1282129484930024517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19143,77 +19162,6 @@ MonoBehaviour:
   secondaryFireParticle: {fileID: 2654314214546827930}
   meleeImpactSound: {fileID: 11400000, guid: cca41e15f9355ef4aa6ac647c05aad16, type: 2}
   meleeImpactEffect: {fileID: 0}
---- !u!114 &3259756672385726974
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6519526125598672238}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d9950ae7cf068c46a6abc01020cb0c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SerializedData:
-    position: {x: 0, y: 0, z: 0}
-    rotation: 0
-    aimYaw: 0
-    aimPitch: 0
-    moveYaw: 0
-    charLocoState: 0
-    charLocoTick: 0
-    charAction: 0
-    charActionTick: 0
-    damageTick: 0
-    damageDirection: 0
-    sprinting: 0
-    sprintWeight: 0
-    previousCharLocoState: 0
-    groundMoveExitTick: 0
-    moveAngleLocal: 0
-    shootPoseWeight: 0
-    locomotionVector: {x: 0, y: 0}
-    locomotionPhase: 0
-    banking: 0
-    landAnticWeight: 0
-    turnStartAngle: 0
-    turnDirection: 0
-    squashTime: 0
-    squashWeight: 0
-    inAirTime: 0
-    jumpTime: 0
-    simpleTime: 0
-    footIkOffset: {x: 0, y: 0}
-    footIkNormalLeft: {x: 0, y: 0, z: 0}
-    footIkNormaRight: {x: 0, y: 0, z: 0}
---- !u!114 &5615300589442422518
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6519526125598672238}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 29d565454cf9d6d4d9897392b4667659, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  geomery: {fileID: 6519526125598672138}
---- !u!114 &6548075949506743182
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6519526125598672238}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  guid: 2a821a45658c2714a802b6cec7acae17
-  netID: 3be6a5b6b0d6c5429fa751495bd20a55
 --- !u!114 &6663058666849607974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19238,6 +19186,18 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 100056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
+      propertyPath: m_Name
+      value: Item_RobotWeapon_Client
+      objectReference: {fileID: 0}
+    - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.4335432
@@ -19250,45 +19210,17 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 11.554546
       objectReference: {fileID: 0}
-    - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: m_LocalRotation.x
+    - target: {fileID: 11400000, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
+      propertyPath: skeletonColor.r
+      value: 0.51077366
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
+      propertyPath: skeletonColor.g
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: m_RootOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100056, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: m_Name
-      value: Item_RobotWeapon_Client
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
       propertyPath: skeletonColor.b
-      value: 0.52587414
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 13700114, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
       propertyPath: m_RenderingLayerMask
@@ -19298,13 +19230,5 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 896d78dfb225da04a9d7578931aee630, type: 2}
-    - target: {fileID: 11400000, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: skeletonColor.g
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 11400000, guid: 80192c2428557e14daa00a06fae74d87, type: 3}
-      propertyPath: skeletonColor.r
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 80192c2428557e14daa00a06fae74d87, type: 3}

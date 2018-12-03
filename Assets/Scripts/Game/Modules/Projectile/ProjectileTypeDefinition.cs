@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEditor;
 using UnityEngine;
 #if UNITY_EDITOR
 #endif
@@ -14,11 +15,25 @@ public struct ProjectileSettings
 }
 
 [CreateAssetMenu(fileName = "ProjectileTypeDefinition", menuName = "FPS Sample/Projectile/ProjectileTypeDefinition")]
-public class ProjectileTypeDefinition : DynamicEnum
+public class ProjectileTypeDefinition : ScriptableObjectRegistryEntry
 {
     public ProjectileSettings properties;
         
-    // Clientprojectile settings. 
+    // Clientprojectile settings.  
     public int clientProjectileBufferSize = 20;
     public WeakAssetReference clientProjectilePrefab;
 }
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(ProjectileTypeDefinition))]
+public class
+    ProjectileTypeDefinitionEditor : ScriptableObjectRegistryEntryEditor<ProjectileRegistry, ProjectileTypeDefinition>
+{
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+        DrawDefaultInspector();
+    }
+}
+#endif
+

@@ -3,7 +3,7 @@ using Unity.Entities;
 
 public struct SpatialEffectRequest : IComponentData 
 {
-    public uint effectTypeRegistryId;
+    public int effectTypeRegistryId;
     public Vector3 position;
     public Quaternion rotation;
 

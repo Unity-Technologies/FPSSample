@@ -5,7 +5,7 @@ using Unity.Entities;
 
 
 // Component specifies that entity is on server or is predicted
-public struct ServerEntity : IComponentData    
+public struct ServerEntity : IComponentData    // TODO (mogensh) move to ReplicatedModule rename to something relevant (as it is now tied to replicated entity predictiongPlayer) 
 {
     public int foo;
 }

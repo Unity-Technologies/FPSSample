@@ -5,22 +5,8 @@ using Unity.Entities;
 [DisableAutoCreation]
 public class GameModeSystemClient : ComponentSystem
 {
-    struct Players
-    {
-        public ComponentArray<PlayerState> players;
-    }
-
-    struct GameModes
-    {
-        public ComponentArray<GameMode> gameModes;
-    }
-
-    
-    [Inject]
-    Players PlayersGroup;
-
-    [Inject]
-    GameModes GameModesGroup;   
+    ComponentGroup PlayersGroup;
+    ComponentGroup GameModesGroup;   
 
     
     public GameModeSystemClient(GameWorld world, ScoreboardUIBinding scoreboard, GameScore overlay)
@@ -30,6 +16,13 @@ public class GameModeSystemClient : ComponentSystem
 
         m_OverlayUI = overlay;
         m_OverlayUI.Clear();
+    }
+
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        PlayersGroup = GetComponentGroup(typeof(PlayerState));
+        GameModesGroup = GetComponentGroup(typeof(GameMode));
     }
 
     public void Shutdown()
@@ -46,14 +39,17 @@ public class GameModeSystemClient : ComponentSystem
 
     protected override void OnUpdate()
     {
+        var playerStateArray = PlayersGroup.GetComponentArray<PlayerState>();
+        var gameModeArray = GameModesGroup.GetComponentArray<GameMode>();
+        
         // Update individual player stats
 
         // Use these indexes to fill up each of the team lists
         var scoreBoardPlayerIndexes = new int[m_ScoreboardUI.teams.Length];
 
-        for(int i = 0, c = PlayersGroup.players.Length; i < c; ++i)
+        for(int i = 0, c = playerStateArray.Length; i < c; ++i)
         {
-            var player = PlayersGroup.players[i];
+            var player = playerStateArray[i];
             var teamIndex = player.teamIndex;
 
             // TODO (petera) this feels kind of hacky
@@ -83,9 +79,9 @@ public class GameModeSystemClient : ComponentSystem
 
             if (player.controlledEntity != Entity.Null)
             {
-                if (EntityManager.HasComponent<CharacterPredictedState>(player.controlledEntity))
+                if (EntityManager.HasComponent<Character>(player.controlledEntity))
                 {
-                    var character = EntityManager.GetComponentObject<CharacterPredictedState>(player.controlledEntity);
+                    var character = EntityManager.GetComponentObject<Character>(player.controlledEntity);
                     character.teamId = player.teamIndex;
                 }
             } 
@@ -104,8 +100,8 @@ public class GameModeSystemClient : ComponentSystem
             return;
         
         // Update gamemode overlay
-        GameDebug.Assert(GameModesGroup.gameModes.Length < 2);
-        var gameMode = GameModesGroup.gameModes.Length > 0 ? GameModesGroup.gameModes[0] : null;
+        GameDebug.Assert(gameModeArray.Length < 2);
+        var gameMode = gameModeArray.Length > 0 ? gameModeArray[0] : null;
         if(gameMode != null)
         {
             if (m_LocalPlayer.displayGameResult)

@@ -12,10 +12,15 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
         m_assetRegistry = resourceSystem.GetResourceRegistry<ReplicatedEntityRegistry>();
         m_entityCollection = new ReplicatedEntityCollection(m_world);
         
+        m_UpdateReplicatedOwnerFlag = m_world.GetECSWorld().CreateManager<UpdateReplicatedOwnerFlag>(m_world);
+        
         // Load all replicated entity resources
-        for(var i=0;i< m_assetRegistry.entries.Length;i++)
+        for(var i=0;i< m_assetRegistry.entries.Count;i++)
         {
             if (m_assetRegistry.entries[i].factory != null)
+                continue;
+            
+            if (m_assetRegistry.entries[i].prefab.guid == "")
                 continue;
 
             var prefabGuid = m_assetRegistry.entries[i].prefab.guid;
@@ -31,11 +36,12 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
 
     public void Shutdown()
     {
+        m_world.GetECSWorld().DestroyManager(m_UpdateReplicatedOwnerFlag);
+
         if(m_SystemRoot != null)
             GameObject.Destroy(m_SystemRoot);
     }
     
-//    private List<INetworkSerializable> networkSerializables = new List<INetworkSerializable>(16);
     public void ProcessEntitySpawn(int servertick, int id, ushort typeId)
     {
         if (m_showInfo.IntValue > 0)
@@ -48,7 +54,7 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
             var gameObjectEntity = e.gameObject.GetComponent<GameObjectEntity>();
             GameDebug.Assert(gameObjectEntity != null,"Replicated entity " + e.name + " has no GameObjectEntity component");
 
-            m_entityCollection.Register(id, gameObjectEntity.Entity, e.GetComponentsInChildren<INetworkSerializable>());
+            m_entityCollection.Register(m_world.GetEntityManager(), id, gameObjectEntity.Entity);
             return;
         }
         
@@ -57,18 +63,17 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
 
         // If factory present it should be used to create entity
         
-        GameDebug.Assert(index < m_assetRegistry.entries.Length,"TypeId:" +typeId + " not in range. Array Length:" + m_assetRegistry.entries.Length);
+        GameDebug.Assert(index < m_assetRegistry.entries.Count,"TypeId:" +typeId + " not in range. Array Length:" + m_assetRegistry.entries.Count);
         
         var factory = m_assetRegistry.entries[index].factory;
         if (factory)
         {
-            var entity = factory.Create(m_world.GetEntityManager());
+            var entity = factory.Create(m_world.GetEntityManager(), -1);
 
             var replicatedDataEntity = m_world.GetEntityManager().GetComponentData<ReplicatedDataEntity>(entity);
             replicatedDataEntity.id = id;
-            
-            var serializables = factory.CreateSerializables(m_world.GetEntityManager(), entity);
-            m_entityCollection.Register(id, entity, serializables);
+
+            m_entityCollection.Register(m_world.GetEntityManager(),id, entity);
             
             m_world.GetEntityManager().SetComponentData(entity, replicatedDataEntity);
             return;
@@ -92,8 +97,8 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
             GameDebug.Assert(replicatedEntity != null, "GameObject has no ReplicatedEntity component");
             replicatedEntity.id = id;
         
-            m_entityCollection.Register(id, entity, replicatedEntity.GetComponentsInChildren<INetworkSerializable>());
-
+            m_entityCollection.Register(m_world.GetEntityManager(),id, entity);
+            
             Profiler.EndSample();
         }
     }
@@ -130,7 +135,7 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
     {
         foreach(var id in m_despawnedEntities)
         {
-            var entity = m_entityCollection.Unregister(id);
+            var entity = m_entityCollection.Unregister(m_world.GetEntityManager(), id);
 
             if (m_world.GetEntityManager().HasComponent<ReplicatedEntity>(entity))
             {
@@ -139,21 +144,96 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
                 continue;
             }
             
-            m_world.GetEntityManager().AddComponent(entity, typeof(DespawningEntity));
+            m_world.RequestDespawn(entity);
         }
 
         m_despawnedEntities.Clear();
     }
 
+    public void Rollback()
+    {
+        m_entityCollection.Rollback();
+    }
     
-    private readonly GameWorld m_world;
-    private readonly GameObject m_SystemRoot;
-    private readonly BundledResourceManager m_resourceSystem;
-    private readonly ReplicatedEntityRegistry m_assetRegistry;
-    private readonly ReplicatedEntityCollection m_entityCollection;
+    public void Interpolate(GameTime time)
+    {
+        m_entityCollection.Interpolate(time);
+    }
+
+    public void SetLocalPlayerId(int id)
+    {
+        m_UpdateReplicatedOwnerFlag.SetLocalPlayerId(id);
+    }
+
+    public void UpdateControlledEntityFlags()
+    {
+        m_UpdateReplicatedOwnerFlag.Update();
+    }
+    
+#if UNITY_EDITOR
+
+    public int GetEntityCount()
+    {
+        return m_entityCollection.GetEntityCount();
+    }
+
+    public int GetSampleCount()
+    {
+        return m_entityCollection.GetSampleCount();
+    }
+
+    public int GetSampleTick(int sampleIndex)
+    {
+        return m_entityCollection.GetSampleTick(sampleIndex);
+    }
+    
+    public int GetLastServerTick(int sampleIndex)
+    {
+        return m_entityCollection.GetLastServerTick(sampleIndex);
+    }
+
+    public int GetNetIdFromEntityIndex(int entityIndex)
+    {
+        return m_entityCollection.GetNetIdFromEntityIndex(entityIndex);
+    }    
+
+    public ReplicatedEntityCollection.ReplicatedData GetReplicatedDataForNetId(int netId)
+    {
+        return m_entityCollection.GetReplicatedDataForNetId(netId);
+    }
+    
+    
+    public void StorePredictedState(int predictedTick, int finalTick)
+    {
+        m_entityCollection.StorePredictedState(predictedTick, finalTick);
+    }
+
+    public void FinalizedStateHistory(int tick, int lastServerTick, ref UserCommand command)
+    {
+        m_entityCollection.FinalizedStateHistory(tick, lastServerTick, ref command);
+    }
+
+    public int FindSampleIndexForTick(int tick)
+    {
+        return m_entityCollection.FindSampleIndexForTick(tick);
+    }
+
+    public bool IsPredicted(int entityIndex)
+    {
+        return m_entityCollection.IsPredicted(entityIndex);
+    }
+    
+#endif
+    
+    readonly GameWorld m_world;
+    readonly GameObject m_SystemRoot;
+    readonly BundledResourceManager m_resourceSystem;
+    readonly ReplicatedEntityRegistry m_assetRegistry;
+    readonly ReplicatedEntityCollection m_entityCollection;
+    readonly UpdateReplicatedOwnerFlag m_UpdateReplicatedOwnerFlag;
 
     private List<int> m_despawnedEntities = new List<int>();
 
-    [ConfigVar(Name = "client.replicatedsysteminfo", DefaultValue = "0", Description = "Show replicated system info")]
+    [ConfigVar(Name = "replicatedentity.showclientinfo", DefaultValue = "0", Description = "Show replicated system info")]
     static ConfigVar m_showInfo;
 }

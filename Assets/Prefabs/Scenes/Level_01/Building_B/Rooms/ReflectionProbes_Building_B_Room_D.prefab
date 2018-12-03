@@ -41,8 +41,6 @@ GameObject:
   m_Component:
   - component: {fileID: 9114332519753880634}
   - component: {fileID: 9114332519753880614}
-  - component: {fileID: 9114332519753880615}
-  - component: {fileID: 9114332519753880612}
   - component: {fileID: 9114332519753880613}
   m_Layer: 0
   m_Name: Reflection_Probe_Building_B_Room_D
@@ -98,51 +96,6 @@ ReflectionProbe:
   m_UseOcclusionCulling: 1
   m_Importance: 1
   m_CustomBakedTexture: {fileID: 0}
---- !u!23 &9114332519753880615
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9114332519753880635}
-  m_Enabled: 0
-  m_CastShadows: 0
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_MotionVectors: 2
-  m_LightProbeUsage: 0
-  m_ReflectionProbeUsage: 1
-  m_RenderingLayerMask: 4294967295
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 0}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 0
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
---- !u!33 &9114332519753880612
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9114332519753880635}
-  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!114 &9114332519753880613
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,6 +134,7 @@ MonoBehaviour:
     m_SphereBlendDistance: 0
     m_SphereBlendNormalDistance: 0
   m_FrameSettings:
+    overrides: 0
     enableShadow: 1
     enableContactShadows: 1
     enableShadowMask: 1
@@ -190,6 +144,7 @@ MonoBehaviour:
     enableTransmission: 1
     enableAtmosphericScattering: 1
     enableVolumetrics: 1
+    enableReprojectionForVolumetrics: 1
     enableLightLayers: 1
     diffuseGlobalDimmer: 1
     specularGlobalDimmer: 1
@@ -208,12 +163,14 @@ MonoBehaviour:
       renderScale: 0
       viewportScale: 0
       useOcclusionMesh: 0
-      occlusionMaskScale: 0
+      occlusionMeshScale: 1
     enableAsyncCompute: 1
     enableOpaqueObjects: 1
     enableTransparentObjects: 1
+    enableRealtimePlanarReflection: 1
     enableMSAA: 0
     lightLoopSettings:
+      overrides: 0
       enableTileAndCluster: 1
       enableComputeLightEvaluation: 1
       enableComputeLightVariants: 1
@@ -221,12 +178,35 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 1
       enableBigTilePrepass: 1
       isFptlEnabled: 1
+  m_CaptureSettings:
+    overrides: 0
+    clearColorMode: 0
+    backgroundColorHDR: {r: 0.023529412, g: 0.07058824, b: 0.1882353, a: 0}
+    clearDepth: 1
+    cullingMask:
+      serializedVersion: 2
+      m_Bits: 4294962943
+    useOcclusionCulling: 1
+    volumeLayerMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    volumeAnchorOverride: {fileID: 0}
+    projection: 0
+    nearClipPlane: 0.3
+    farClipPlane: 5000
+    fieldOfView: 90
+    orthographicSize: 5
+    renderingPath: 0
+    shadowDistance: 500
   m_Multiplier: 1
   m_Weight: 1
   m_Mode: 0
   m_RefreshMode: 0
+  m_CustomTexture: {fileID: 0}
+  m_BakedTexture: {fileID: 0}
+  m_RenderDynamicObjects: 0
   lightLayers: 1
-  m_Version: 4
+  m_Version: 5
   influenceShape: 0
   influenceSphereRadius: 3
   blendDistancePositive: {x: 0, y: 0, z: 0}

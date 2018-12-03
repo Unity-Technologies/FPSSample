@@ -47,6 +47,8 @@ public static class RenderSettings
     public static ConfigVar rResolution;
     [ConfigVar(Name = "r.latesync", DefaultValue = "1", Description = "Sync with render thread late", Flags = ConfigVar.Flags.None)]
     public static ConfigVar rLateSync;
+    [ConfigVar(Name = "r.occlusionthreshold", DefaultValue = "50", Description = "Occlusion threshold", Flags = ConfigVar.Flags.None)]
+    public static ConfigVar rOcclusionThreshold;
 
     public static void Init()
     {
@@ -68,12 +70,14 @@ public static class RenderSettings
     static int currentResX, currentResY, currentResRate;
     public static void Update()
     {
-        /* TODO (petera) Remove post 18.3b7
         if (rLateSync.ChangeCheck())
         {
             GraphicsDeviceSettings.waitForPresentSyncPoint = rLateSync.IntValue > 0 ? WaitForPresentSyncPoint.EndFrame : WaitForPresentSyncPoint.BeginFrame;
         }
-        */
+        if(rOcclusionThreshold.ChangeCheck())
+        {
+            HDRenderPipeline.s_OcclusionThreshold = rOcclusionThreshold.FloatValue;
+        }
 
         bool updateAAFlags = false;
         bool updateFrameSettings = false;

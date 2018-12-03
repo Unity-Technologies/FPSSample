@@ -9,9 +9,9 @@ public class TeleporterSystemServer : ComponentSystem
         m_GameWorld = gameWorld;
     }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         m_TeleporterServerGroup = GetComponentGroup(typeof(TeleporterServer));
     }
 
@@ -24,10 +24,10 @@ public class TeleporterSystemServer : ComponentSystem
 
             if (t.characterInside != null)
             {
-                CharacterPredictedState character = null;
+                Character character = null;
 
                 if (t.characterInside.owner != null)
-                    character = t.characterInside.owner.GetComponent<CharacterPredictedState>();
+                    character = t.characterInside.owner.GetComponent<Character>();
 
                 if (character != null)
                 {

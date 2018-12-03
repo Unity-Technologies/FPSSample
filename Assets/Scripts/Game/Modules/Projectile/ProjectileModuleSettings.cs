@@ -4,5 +4,5 @@
 public class ProjectileModuleSettings : ScriptableObject
 {
 //    public WeakAssetReference projectilePrefab;
-    public ReplicatedEntityFactor projectileFactory;
+    public ReplicatedEntityFactory projectileFactory;
 }

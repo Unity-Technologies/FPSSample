@@ -15,21 +15,23 @@ public class AnimGraph_InAir : AnimGraphAsset
 
     public ActionAnimationDefinition[] actionAnimations;
 
-    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner)
     {
-        return new Instance(entityManager, owner, graph, this);
+        return new Instance(entityManager, owner, graph, animStateOwner, this);
     }
     
     class Instance : IAnimGraphInstance, IGraphState
     {
-        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_InAir settings)
+        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_InAir settings)
         {
             m_settings = settings;
             m_EntityManager = entityManager;
             m_Owner = owner;
+            m_AnimStateOwner = animStateOwner;
             
-            GameDebug.Assert(entityManager.HasComponent<CharacterPredictedState>(owner),"Owner has no Character component");
-            m_character = entityManager.GetComponentObject<CharacterPredictedState>(owner);
+            GameDebug.Assert(entityManager.HasComponent<Character>(m_AnimStateOwner),"Owner has no Character component");
+            m_character = entityManager.GetComponentObject<Character>(m_AnimStateOwner);
 
             m_mainMixer = AnimationMixerPlayable.Create(graph);
     
@@ -71,7 +73,7 @@ public class AnimGraph_InAir : AnimGraphAsset
     
         public void UpdatePresentationState(bool firstUpdate, GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             if (firstUpdate)
             {
                 animState.inAirTime = 0;
@@ -88,12 +90,12 @@ public class AnimGraph_InAir : AnimGraphAsset
             var deltaWeight = deltaTime / m_settings.blendDuration;
             animState.landAnticWeight += nearGround ? deltaWeight : -deltaWeight;
             animState.landAnticWeight = Mathf.Clamp(animState.landAnticWeight, 0, 1);
-            m_EntityManager.SetComponentData(m_Owner, animState);
+            m_EntityManager.SetComponentData(m_AnimStateOwner, animState);
         }
 
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             m_animInAir.SetTime(animState.inAirTime);
             m_animLandAntic.SetTime(animState.inAirTime);
             
@@ -112,8 +114,9 @@ public class AnimGraph_InAir : AnimGraphAsset
         AnimGraph_InAir m_settings;
         EntityManager m_EntityManager;
         Entity m_Owner;
+        Entity m_AnimStateOwner;
 
-        CharacterPredictedState m_character;
+        Character m_character;
         
     
         

@@ -3,10 +3,57 @@ using System.Collections.Generic;
 using Object = UnityEngine.Object;
 
 using Unity.Entities;
+using UnityEditor;
 using UnityEngine.Profiling;
+
+
+#if UNITY_EDITOR
+[InitializeOnLoad]
+// Class makes sure we have world when starting game in editor (GameObjectEntities in scene needs world in OnEnable)   
+class EditorWorldCreator
+{
+    static EditorWorldCreator()
+    {
+        EditorApplication.playModeStateChanged -= EditorApplicationOnPlayModeStateChanged;
+        EditorApplication.playModeStateChanged += EditorApplicationOnPlayModeStateChanged;
+
+        CreateWorld();
+    }
+
+    private static void EditorApplicationOnPlayModeStateChanged(PlayModeStateChange change)
+    {
+        if (change == PlayModeStateChange.ExitingEditMode) 
+            ShutdownWorld();
+    }
+
+    static void CreateWorld()
+    {
+        if(World.Active == null)
+            World.Active = new World("EditorWorld"); 
+    }
+
+    static void ShutdownWorld()
+    {
+        if (World.Active != null)
+        {
+            World.Active.Dispose();
+            World.Active = null;
+        }
+    }
+}
+#endif        
+
+
 
 public struct DespawningEntity : IComponentData
 {
+}
+
+
+[InternalBufferCapacity(16)]
+public struct EntityGroupChildren : IBufferElementData
+{
+    public Entity entity;
 }
 
 [DisableAutoCreation]
@@ -14,9 +61,9 @@ public class DestroyDespawning : ComponentSystem
 {
     ComponentGroup Group;
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         Group = GetComponentGroup(typeof(DespawningEntity));
     }
     
@@ -29,7 +76,6 @@ public class DestroyDespawning : ComponentSystem
         }
     }
 }
-
 
 public class GameWorld
 {
@@ -64,13 +110,17 @@ public class GameWorld
             GameObject.DontDestroyOnLoad(m_sceneRoot);
         }
 
+#if UNITY_EDITOR
+        // When running in editor the world could be created, so we silently keep it.
+        m_ECSWorld = World.Active != null ? World.Active : new World(name); 
+#else
+        GameDebug.Assert(World.Active == null);
         m_ECSWorld = new World(name);
+#endif        
+        
+
         World.Active = m_ECSWorld;
         m_EntityManager = m_ECSWorld.GetOrCreateManager<EntityManager>();
-
-        //InjectionHookSupport.RegisterHook(new GameObjectArrayInjectionHook());
-        //InjectionHookSupport.RegisterHook(new TransformAccessArrayInjectionHook());
-        InjectionHookSupport.RegisterHook(new ComponentArrayInjectionHook());
 
         GameDebug.Assert(m_EntityManager.IsCreated);
 
@@ -102,10 +152,15 @@ public class GameWorld
             RequestDespawn(entity);
         }
         ProcessDespawns();
-        m_ECSWorld.DestroyManager(m_destroyDespawningSystem);
+
         s_Worlds.Remove(this);
-        m_ECSWorld.Dispose();
-        m_ECSWorld = null;
+
+        if (m_ECSWorld.IsCreated)
+        {
+            m_ECSWorld.Dispose();
+            m_ECSWorld = null;
+            World.Active = null;
+        }
 
         GameObject.Destroy(m_sceneRoot);
     }
@@ -121,10 +176,6 @@ public class GameWorld
             sceneEntities[i].id = i;
         }
         m_sceneEntities.AddRange(sceneEntities);
-
-        // Then all scene entities (replicated or not) are registrered in ECS
-        foreach (var gameEntity in Object.FindObjectsOfType<SceneEntity>())
-            RegisterInternal(gameEntity.gameObject, false);
     }
     
     public EntityManager GetEntityManager()    
@@ -213,6 +264,49 @@ public class GameWorld
         m_DespawnRequests.Add(entity);
     }
 
+    public void RequestDespawn(Entity entity)
+    {
+        m_EntityManager.AddComponent(entity, typeof(DespawningEntity));
+        m_DespawnEntityRequests.Add(entity);
+        
+        if (m_EntityManager.HasComponent<EntityGroupChildren>(entity))
+        {
+            // Copy buffer as we dont have EntityCommandBuffer to perform changes            
+            var buffer = m_EntityManager.GetBuffer<EntityGroupChildren>(entity);
+            var entities = new Entity[buffer.Length];
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                entities[i] = buffer[i].entity;
+            }
+            
+            for (int i = 0; i < entities.Length; i++)
+            {
+                m_EntityManager.AddComponent(entities[i], typeof(DespawningEntity));
+                m_DespawnEntityRequests.Add(entities[i]);
+            }
+        }
+    }
+    
+    public void RequestDespawn(EntityCommandBuffer commandBuffer, Entity entity)
+    {
+        if (m_DespawnEntityRequests.Contains(entity))
+        {
+            GameDebug.Assert(false, "Trying to request depawn of same gameobject({0}) multiple times",entity);
+            return;
+        }
+        commandBuffer.AddComponent(entity, new DespawningEntity());
+        m_DespawnEntityRequests.Add(entity);
+
+        if (m_EntityManager.HasComponent<EntityGroupChildren>(entity))
+        {
+            var buffer = m_EntityManager.GetBuffer<EntityGroupChildren>(entity);
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                commandBuffer.AddComponent(buffer[i].entity, new DespawningEntity());
+                m_DespawnEntityRequests.Add(buffer[i].entity);
+            }
+        }
+    }
     
     public void ProcessDespawns()
     {
@@ -222,6 +316,11 @@ public class GameWorld
             Object.Destroy(gameObject);
         }
 
+        foreach (var entity in m_DespawnEntityRequests)
+        {
+            m_EntityManager.DestroyEntity(entity);
+        }
+        m_DespawnEntityRequests.Clear();
         m_DespawnRequests.Clear();
 
         m_destroyDespawningSystem.Update();
@@ -250,6 +349,7 @@ public class GameWorld
     List<GameObject> m_dynamicEntities = new List<GameObject>();
     List<ReplicatedEntity> m_sceneEntities = new List<ReplicatedEntity>();
     List<GameObject> m_DespawnRequests = new List<GameObject>(32);
+    List<Entity> m_DespawnEntityRequests = new List<Entity>(32);
 
     [ConfigVar(Name = "gameobjecthierarchy", Description = "Should gameobject be organized in a gameobject hierarchy", DefaultValue = "0")]
     static ConfigVar gameobjectHierarchy;

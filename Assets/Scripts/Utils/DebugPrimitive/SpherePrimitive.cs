@@ -2,7 +2,7 @@
 using Unity.Entities;
 using UnityEngine;
 
-public class SpherePrimitive: MonoBehaviour , INetworkSerializable
+public class SpherePrimitive: MonoBehaviour , INetSerialized
 {
     public Vector3 center;
     public float radius;
@@ -27,20 +27,20 @@ public class SpherePrimitive: MonoBehaviour , INetworkSerializable
 [DisableAutoCreation]
 public class DrawSpherePrimitives : ComponentSystem
 {
-    struct SphereGroup
-    {
-        [ReadOnly]
-        public ComponentArray<SpherePrimitive> spheres;
-    }
+    ComponentGroup Group;
 
-    [Inject]
-    SphereGroup Group;
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(SpherePrimitive));
+    }
 
     protected override void OnUpdate()
     {
-        for (int i = 0, c = Group.spheres.Length; i < c; i++)
+        var spherePrimArray = Group.GetComponentArray<SpherePrimitive>();
+        for (int i = 0, c = spherePrimArray.Length; i < c; i++)
         {
-            var sphere = Group.spheres[i];
+            var sphere = spherePrimArray[i];
             DebugDraw.Sphere(sphere.center, sphere.radius, sphere.color);
         }
     }

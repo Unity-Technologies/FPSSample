@@ -24,20 +24,21 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
     
     public ActionAnimationDefinition[] actionAnimations;
 
-    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner)
     {
-        var animState = new Instance(entityManager, owner, graph, this);
+        var animState = new Instance(entityManager, owner, graph, animStateOwner, this);
         return animState;
     }
         
     class Instance : IAnimGraphInstance, IGraphState
     {
-        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_Move8Dir settings)
+        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_Move8Dir settings)
         {
             m_settings = settings;
             m_EntityManager = entityManager;
             m_Owner = owner;
-
+            m_AnimStateOwner = animStateOwner;
             m_locomotionMixer = AnimationLayerMixerPlayable.Create(graph, 3);
     
             // Movement
@@ -84,12 +85,12 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
         public void UpdatePresentationState(bool firstUpdate, GameTime time, float deltaTime)
         {
             Profiler.BeginSample("AnimGraph_Move8Dir.UpdatePresentationState");
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             
             if (firstUpdate)
             {
                 // Do phase projection for time not spent in state
-                var ticksSincePreviousGroundMove = time.tick - animState.groundMoveExitTick;                
+                var ticksSincePreviousGroundMove = time.tick - animState.lastGroundMoveTick;                
                 if (ticksSincePreviousGroundMove > 1)
                 {
                     animState.locomotionPhase += m_playSpeed * (ticksSincePreviousGroundMove - 1f);
@@ -97,7 +98,7 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
                 
                 // Reset the phase and position in blend space if appropriate
                 var timeSincePreviousGroundMove = ticksSincePreviousGroundMove / (float)time.tickRate;                
-                if (animState.previousCharLocoState != CharacterPredictedState.StateData.LocoState.GroundMove && timeSincePreviousGroundMove >  m_settings.stateResetWindow)
+                if (animState.previousCharLocoState != CharPredictedStateData.LocoState.GroundMove && timeSincePreviousGroundMove >  m_settings.stateResetWindow)
                 {
 //                    Debug.Log("Reset movement run! (Ticks since: " + ticksSincePreviousGroundMove + " Time since: " + timeSincePreviousGroundMove + ")");
                     animState.locomotionPhase = 0f;
@@ -125,8 +126,7 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
             m_DoUpdateBlendPositions = false;
             animState.locomotionPhase += m_playSpeed;
             
-            animState.groundMoveExitTick = time.tick;
-            m_EntityManager.SetComponentData(m_Owner,animState);
+            m_EntityManager.SetComponentData(m_AnimStateOwner,animState);
             
             Profiler.EndSample();
         }
@@ -135,7 +135,7 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
         {
             Profiler.BeginSample("CharacterAnimGraph_3PMove8Dir.UpdateNetwork");
             
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
 
             if (m_DoUpdateBlendPositions)
             {
@@ -180,6 +180,7 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
         AnimGraph_Move8Dir m_settings;
         EntityManager m_EntityManager;
         Entity m_Owner;        
+        Entity m_AnimStateOwner;
         AnimationLayerMixerPlayable m_locomotionMixer;
     
         AnimationClipPlayable m_clipAim;

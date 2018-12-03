@@ -23,23 +23,24 @@ public class HandlePlayerCameraControlSpawn : InitializeComponentSystem<PlayerCa
 [DisableAutoCreation]
 public class UpdatePlayerCameras : BaseComponentSystem
 {
-    public struct Cameras
-    {
-        public ComponentArray<PlayerCamera> playerCamera;
-        public ComponentArray<Camera> camera;
-    }
-
-    [Inject]
-    public Cameras Group;
+    public ComponentGroup Group;
 
     public UpdatePlayerCameras(GameWorld world) : base(world) { }
 
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(PlayerCamera), typeof(Camera));
+    }
+
     protected override void OnUpdate()
     {
-        for (var i = 0; i < Group.camera.Length; i++)
+        var cameraArray = Group.GetComponentArray<Camera>();
+        var playerCameraArray = Group.GetComponentArray<PlayerCamera>();
+        for (var i = 0; i < cameraArray.Length; i++)
         {
-            var camera = Group.camera[i];
-            var playerCamera = Group.playerCamera[i];
+            var camera = cameraArray[i];
+            var playerCamera = playerCameraArray[i];
             var settings = playerCamera.cameraSettings;
             var enabled = settings.isEnabled;
             var isActive = camera.gameObject.activeSelf;

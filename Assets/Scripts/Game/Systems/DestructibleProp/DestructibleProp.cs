@@ -70,9 +70,9 @@ public class UpdateDestructableProps : BaseComponentSystem<HitCollisionOwner,Des
 			if (prop.splashDamage.radius > 0)
 			{
 				var collisionMask = ~0;
-				if (instigator != Entity.Null && EntityManager.HasComponent<CharacterPredictedState>(instigator))
+				if (instigator != Entity.Null && EntityManager.HasComponent<Character>(instigator))
 				{
-					var character = EntityManager.GetComponentObject<CharacterPredictedState>(instigator);
+					var character = EntityManager.GetComponentObject<Character>(instigator);
 					collisionMask = ~(1 << character.teamId);
 				}
 				

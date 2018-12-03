@@ -6,6 +6,7 @@ using UnityEngine.Playables;
 
 public abstract class AnimGraphAsset : ScriptableObject 
 {
-    public abstract IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph);
+    public abstract IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner);
 }
 

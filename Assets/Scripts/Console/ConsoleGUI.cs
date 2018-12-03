@@ -15,7 +15,7 @@ public class ConsoleGUI : MonoBehaviour, IConsoleUI
 
     public void Init()
     {
-        buildIdText.text = Game.game.buildId;
+        buildIdText.text = Game.game.buildId + " (" + Application.unityVersion + ")";
     }
 
     public void Shutdown()

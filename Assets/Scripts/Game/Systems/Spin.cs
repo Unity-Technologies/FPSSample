@@ -4,32 +4,32 @@ using Unity.Entities;
 using System.Collections.Generic;
 
 [ClientOnlyComponent]
-public class Spin : SceneEntity
+public class Spin : MonoBehaviour
 {
     public float speed = 10f;
     public Vector3 rotationAxis;
-
 }
 
 [DisableAutoCreation]
 public class SpinSystem : BaseComponentSystem
 {
-    struct Spinners
-    {
-        public ComponentArray<Spin> spinners;
-    }
-
-    [Inject] 
-    Spinners Group; 
+    ComponentGroup Group; 
     
     public SpinSystem(GameWorld gameWorld) : base(gameWorld) {}
 
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(Spin));
+    }
+
     protected override void OnUpdate()
     {
+        var spinnerArray = Group.GetComponentArray<Spin>();
         float dt = m_world.frameDuration;
-        for(int i = 0, c = Group.spinners.Length; i<c; i++)
+        for(int i = 0, c = spinnerArray.Length; i<c; i++)
         {
-            var g = Group.spinners[i];
+            var g = spinnerArray[i];
             g.gameObject.transform.Rotate(g.rotationAxis, g.speed * dt);
         }
     }

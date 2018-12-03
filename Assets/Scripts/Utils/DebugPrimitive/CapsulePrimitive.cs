@@ -2,7 +2,7 @@
 using UnityEngine;
 using Unity.Entities;
 
-public class CapsulePrimitive : MonoBehaviour, INetworkSerializable
+public class CapsulePrimitive : MonoBehaviour, INetSerialized
 {
     public Vector3 pA;
     public Vector3 pB;
@@ -30,20 +30,20 @@ public class CapsulePrimitive : MonoBehaviour, INetworkSerializable
 [DisableAutoCreation]
 public class DrawCapsulePrimitives : ComponentSystem
 {
-    struct CapsulesGroup
-    {
-        [ReadOnly]
-        public ComponentArray<CapsulePrimitive> capsules;
-    }
+    ComponentGroup Group;
 
-    [Inject]
-    CapsulesGroup Group;
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(CapsulePrimitive));
+    }
 
     protected override void OnUpdate()
     {
-        for (int i = 0, c = Group.capsules.Length; i < c; i++)
+        var capsuleArray = Group.GetComponentArray<CapsulePrimitive>();
+        for (int i = 0, c = capsuleArray.Length; i < c; i++)
         {
-            var capsule = Group.capsules[i];
+            var capsule = capsuleArray[i];
             var v = capsule.pB - capsule.pA;
             var center = capsule.pA + v * 0.5f;
             DebugDraw.Capsule(center, v.normalized, capsule.radius, v.magnitude + capsule.radius*2, capsule.color);

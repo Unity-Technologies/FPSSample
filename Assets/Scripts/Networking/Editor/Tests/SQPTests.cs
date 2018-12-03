@@ -181,28 +181,40 @@ namespace TransportTests
             var port = 13337;
             var server = new SQPServer(port);
             var endpoint = new IPEndPoint(IPAddress.Loopback, port);
-            var client = new SQPClient(endpoint);
+            var client = new SQPClient();
 
-            server.ServerInfoData.ServerName = "Banana Boy Adventures";
-            server.ServerInfoData.BuildId = "2018-1";
-            server.ServerInfoData.CurrentPlayers = 1;
-            server.ServerInfoData.MaxPlayers = 20;
-            server.ServerInfoData.Port = 1337;
-            server.ServerInfoData.GameType = "Capture the egg.";
-            server.ServerInfoData.Map = "Great escape to the see";
+            var sid = server.ServerInfoData;
+            sid.ServerName = "Banana Boy Adventures";
+            sid.BuildId = "2018-1";
+            sid.CurrentPlayers = 1;
+            sid.MaxPlayers = 20;
+            sid.Port = 1337;
+            sid.GameType = "Capture the egg.";
+            sid.Map = "Great escape to the see";
 
-            client.StartInfoQuery();
+            server.ServerInfoData = sid;
+
+            var handle = client.GetSQPQuery(endpoint);
+            client.StartInfoQuery(handle);
 
             var iterations = 0;
-            while (!(client.ClientState == SQPClient.SQPClientState.Success ||
-                     client.ClientState == SQPClient.SQPClientState.Failure) &&
-                     iterations++ < 1000)
+            while (handle.m_State != SQPClient.SQPClientState.Idle && iterations++ < 1000)
             {
                 server.Update();
                 client.Update();
             }
             Assert.Less(iterations, 1000);
-            Assert.AreEqual(client.ClientState, SQPClient.SQPClientState.Success);
+
+            Assert.AreEqual(handle.m_State, SQPClient.SQPClientState.Idle);
+            Assert.AreEqual(handle.validResult, true);
+            var sidRecieved = handle.m_ServerInfo.ServerInfoData;
+            Assert.AreEqual(sidRecieved.BuildId, sid.BuildId);
+            Assert.AreEqual(sidRecieved.CurrentPlayers, sid.CurrentPlayers);
+            Assert.AreEqual(sidRecieved.GameType, sid.GameType);
+            Assert.AreEqual(sidRecieved.Map, sid.Map);
+            Assert.AreEqual(sidRecieved.MaxPlayers, sid.MaxPlayers);
+            Assert.AreEqual(sidRecieved.Port, sid.Port);
+            Assert.AreEqual(sidRecieved.ServerName, sid.ServerName);
         }
 
         //[Test]
@@ -211,13 +223,15 @@ namespace TransportTests
             var port = 10001;
             var server = new SQPServer(port);
 
-            server.ServerInfoData.ServerName = "Banana Boy Adventures";
-            server.ServerInfoData.BuildId = "2018-1";
-            server.ServerInfoData.CurrentPlayers = 1;
-            server.ServerInfoData.MaxPlayers = 20;
-            server.ServerInfoData.Port = 1337;
-            server.ServerInfoData.GameType = "Capture the egg.";
-            server.ServerInfoData.Map = "Great escape to the see";
+            var sid = server.ServerInfoData;
+            sid.ServerName = "Banana Boy Adventures";
+            sid.BuildId = "2018-1";
+            sid.CurrentPlayers = 1;
+            sid.MaxPlayers = 20;
+            sid.Port = 1337;
+            sid.GameType = "Capture the egg.";
+            sid.Map = "Great escape to the see";
+            server.ServerInfoData = sid;
 
             var start = NetworkUtils.stopwatch.ElapsedMilliseconds;
             while(true)

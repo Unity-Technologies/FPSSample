@@ -1,10 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &2259151211980422956 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
-  m_PrefabInstance: {fileID: 2259151211980519820}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3196000595361048681
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19,6 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 8
   rotationAxis: {x: 0, y: 1, z: 0}
+--- !u!114 &8827816219303670192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2259151211980422956}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bf10cdea1344482e91a4f2b58506b77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2259151211980519820
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -26,63 +33,91 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
+    - target: {fileID: 2259151211980422956}
+      propertyPath: m_Name
+      value: Ventilation_1200x1200_A_Fan_A
+      objectReference: {fileID: 0}
+    - target: {fileID: 2259151211980382988}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
+    - target: {fileID: 2259151211980382988}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
+    - target: {fileID: 2259151211980382988}
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
+    - target: {fileID: 2259151211980382988}
       propertyPath: m_LocalRotation.x
       value: -1
       objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
+    - target: {fileID: 2259151211980382988}
       propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
+    - target: {fileID: 2259151211980382988}
       propertyPath: m_LocalRotation.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2259151211980382988}
+      propertyPath: m_LocalRotation.w
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2259151211980382988}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2259151211980382988}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -180
+      objectReference: {fileID: 0}
+    - target: {fileID: 2259151211980382988}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2259151211980382988}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2259151211978482152}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: f4e66461bf5f6c541accaddb7d502d21, type: 2}
+    - target: {fileID: 2259151211978482154}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: f4e66461bf5f6c541accaddb7d502d21, type: 2}
+    - target: {fileID: 2259151211978482156}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: f4e66461bf5f6c541accaddb7d502d21, type: 2}
+    - target: {fileID: 2259151211978482158}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: f4e66461bf5f6c541accaddb7d502d21, type: 2}
+    - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
       propertyPath: m_LocalRotation.w
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
-      propertyPath: m_RootOrder
+      propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: -180
       objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
-      propertyPath: m_Name
-      value: Ventilation_1200x1200_A_Fan_A_VARIANT
-      objectReference: {fileID: 0}
-    - target: {fileID: 2300006, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: f4e66461bf5f6c541accaddb7d502d21, type: 2}
     - target: {fileID: 2300004, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: f4e66461bf5f6c541accaddb7d502d21, type: 2}
-    - target: {fileID: 2300002, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
+    - target: {fileID: 2300006, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: f4e66461bf5f6c541accaddb7d502d21, type: 2}
@@ -90,5 +125,45 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: f4e66461bf5f6c541accaddb7d502d21, type: 2}
+    - target: {fileID: 2300002, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: f4e66461bf5f6c541accaddb7d502d21, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1fd4f2e277269da46a5d681481ff3fff, type: 3}
+--- !u!1 &2259151211980422956 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100000, guid: 1fd4f2e277269da46a5d681481ff3fff,
+    type: 3}
+  m_PrefabInstance: {fileID: 2259151211980519820}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2259151211980382988 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400000, guid: 1fd4f2e277269da46a5d681481ff3fff,
+    type: 3}
+  m_PrefabInstance: {fileID: 2259151211980519820}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &2259151211978482156 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2300000, guid: 1fd4f2e277269da46a5d681481ff3fff,
+    type: 3}
+  m_PrefabInstance: {fileID: 2259151211980519820}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &2259151211978482158 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2300002, guid: 1fd4f2e277269da46a5d681481ff3fff,
+    type: 3}
+  m_PrefabInstance: {fileID: 2259151211980519820}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &2259151211978482152 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2300004, guid: 1fd4f2e277269da46a5d681481ff3fff,
+    type: 3}
+  m_PrefabInstance: {fileID: 2259151211980519820}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &2259151211978482154 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2300006, guid: 1fd4f2e277269da46a5d681481ff3fff,
+    type: 3}
+  m_PrefabInstance: {fileID: 2259151211980519820}
+  m_PrefabAsset: {fileID: 0}

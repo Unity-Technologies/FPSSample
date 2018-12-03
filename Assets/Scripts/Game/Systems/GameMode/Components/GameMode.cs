@@ -8,7 +8,7 @@ using UnityEngine;
 // This is data is replicated to the clients about the 'global' state of
 // the game mode, scores etc.
 
-public class GameMode : MonoBehaviour, INetworkSerializable
+public class GameMode : MonoBehaviour, INetSerialized
 {
     public int gameTimerSeconds;
     public string gameTimerMessage;

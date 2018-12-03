@@ -53,6 +53,8 @@
     #ifdef ATTRIBUTES_NEED_COLOR
     #define VARYINGS_NEED_COLOR
     #endif
+#elif defined(LOD_FADE_CROSSFADE)
+    #define VARYINGS_NEED_POSITION_WS // Required to get view vector and to get planar/triplanar mapping working
 #endif
 
 // This include will define the various Attributes/Varyings structure

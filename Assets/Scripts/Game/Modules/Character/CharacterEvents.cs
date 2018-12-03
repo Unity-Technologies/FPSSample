@@ -19,7 +19,7 @@ public class CharacterEvents : MonoBehaviour
 	[FormerlySerializedAs("jumpStartSound")]
 	public SoundDef jumpStart;
 	
-	public CharacterPredictedState.StateData.LocoState previousLocoState;
+	public CharPredictedStateData.LocoState previousLocoState;
 	
 	[NonSerialized] public bool active = false;
 	[NonSerialized] public bool nextFootLeft;
@@ -49,27 +49,27 @@ public class CharacterEvents : MonoBehaviour
         }  
     }
 
-	public void GenerateStateChangeEvents(ref CharAnimState animState)
+	public void GenerateStateChangeEvents(ref PresentationState animState)
 	{
 		if (animState.charLocoState != previousLocoState)
 
 		{
-			if (animState.charLocoState == CharacterPredictedState.StateData.LocoState.DoubleJump)
+			if (animState.charLocoState == CharPredictedStateData.LocoState.DoubleJump)
 			{
 				onDoubleJump = true;
 			}
 
-			if (animState.charLocoState == CharacterPredictedState.StateData.LocoState.Stand ||
-				animState.charLocoState == CharacterPredictedState.StateData.LocoState.GroundMove)
+			if (animState.charLocoState == CharPredictedStateData.LocoState.Stand ||
+				animState.charLocoState == CharPredictedStateData.LocoState.GroundMove)
 			{
-				if (previousLocoState == CharacterPredictedState.StateData.LocoState.InAir ||
-					previousLocoState == CharacterPredictedState.StateData.LocoState.DoubleJump)
+				if (previousLocoState == CharPredictedStateData.LocoState.InAir ||
+					previousLocoState == CharPredictedStateData.LocoState.DoubleJump)
 				{
 					onLand = true;
 				}
 			}
 
-			if (animState.charLocoState == CharacterPredictedState.StateData.LocoState.Jump)
+			if (animState.charLocoState == CharPredictedStateData.LocoState.Jump)
 			{
 				onJumpStart = true;
 			}
@@ -85,22 +85,24 @@ public class HandleCharacterEvents : ComponentSystem
 {
 	ComponentGroup Group;
 
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
-		Group = GetComponentGroup(typeof(CharacterEvents), typeof(CharAnimState));
+		base.OnCreateManager();
+		Group = GetComponentGroup(typeof(CharacterEvents), typeof(CharPresentation));
 	}
 
 	protected override void OnUpdate()
 	{
 //		var entityArray = Group.GetEntityArray();
 		var eventArray = Group.GetComponentArray<CharacterEvents>();
-		var animStateArray = Group.GetComponentDataArray<CharAnimState>();
+		var charPresentArray = Group.GetComponentArray<CharPresentation>();
 		for (var i = 0; i < eventArray.Length; i++)
 		{
 			var charEvents = eventArray[i];
-			var animState = animStateArray[i];
-			charEvents.GenerateStateChangeEvents(ref animState);
+			var charPresentation = charPresentArray[i];
+			
+			var presentationState = EntityManager.GetComponentData<PresentationState>(charPresentation.character);  
+			charEvents.GenerateStateChangeEvents(ref presentationState);
 			
 			//Fire sounds based on active events
 			if (!charEvents.active)

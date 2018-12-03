@@ -6,6 +6,10 @@ public class ChaingunUI : AbilityUI
 {
     public override void UpdateAbilityUI(EntityManager entityManager, ref GameTime time)
     {
+        var character = entityManager.GetComponentObject<Character>(abilityOwner);
+        var ability = character.FindAbilityWithComponent(entityManager,typeof(Ability_Chaingun.PredictedState));
+        GameDebug.Assert(ability != Entity.Null,"AbilityController does not own a Ability_Chaingun ability");
+
         var state = entityManager.GetComponentData<Ability_Chaingun.PredictedState>(ability);
         var settings = entityManager.GetComponentData<Ability_Chaingun.Settings>(ability);
 

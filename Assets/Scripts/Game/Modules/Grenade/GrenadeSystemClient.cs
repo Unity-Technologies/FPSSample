@@ -7,22 +7,23 @@ using Unity.Entities;
 [DisableAutoCreation]
 public class InterpolateGrenadePresentation : BaseComponentSystem
 {
-    public struct Grenades
-    {
-        public ComponentArray<GrenadePresentation> presentations;
-    }
-
-    [Inject] 
-    public Grenades Group;   
+    ComponentGroup Group;   
     
     public InterpolateGrenadePresentation(GameWorld world) : base(world) { }
 
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(GrenadePresentation));
+    }
+
     protected override void OnUpdate()
     {
+        var grenadeArray = Group.GetComponentArray<GrenadePresentation>();
         var time = m_world.worldTime;
-        for (var i = 0; i < Group.presentations.Length; i++)
+        for (var i = 0; i < grenadeArray.Length; i++)
         {
-            var presentation = Group.presentations[i];
+            var presentation = grenadeArray[i];
             int lowIndex = 0, highIndex = 0;
             float interpVal = 0;
             var interpValid = presentation.stateHistory.GetStates(time.tick, time.TickDurationAsFraction, ref lowIndex, ref highIndex, ref interpVal);
@@ -47,18 +48,25 @@ public class ApplyGrenadePresentation : BaseComponentSystem
         
     }
 
-    [Inject] 
-    public Grenades Group;   
+    ComponentGroup Group;   
     
     public ApplyGrenadePresentation(GameWorld world) : base(world) { }
 
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(GrenadePresentation), typeof(GrenadeClient));
+    }
+
     protected override void OnUpdate()
     {
+        var grenadePresentArray = Group.GetComponentArray<GrenadePresentation>();
+        var grenadeClientArray = Group.GetComponentArray<GrenadeClient>();
         var time = m_world.worldTime;
-        for (var i = 0; i < Group.presentations.Length; i++)
+        for (var i = 0; i < grenadePresentArray.Length; i++)
         {
-            var presentation = Group.presentations[i];
-            var grenadeClient = Group.grenadeClients[i];
+            var presentation = grenadePresentArray[i];
+            var grenadeClient = grenadeClientArray[i];
             
             presentation.transform.position = presentation.state.position;
             

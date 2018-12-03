@@ -3,7 +3,7 @@ using Unity.Entities;
 
 public struct HitscanEffectRequest : IComponentData 
 {
-    public uint effectTypeRegistryId;
+    public int effectTypeRegistryId;
     public Vector3 startPos;
     public Vector3 endPos;
 

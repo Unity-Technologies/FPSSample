@@ -24,15 +24,16 @@ public abstract class BaseComponentSystem : ComponentSystem
 	string name;
 
  	public BaseComponentSystem(GameWorld world) : base(world) {}
- 	
- 	protected override void OnCreateManager(int capacity)
+
+    protected override void OnCreateManager()
  	{
- 		base.OnCreateManager(capacity);
+ 		base.OnCreateManager();
 		name = GetType().Name;
  		var list = new List<ComponentType>(6);
 		if(ExtraComponentRequirements != null)		
 			list.AddRange(ExtraComponentRequirements);
  		list.AddRange(new ComponentType[] { typeof(T1) } );
+		list.Add(ComponentType.Subtractive<DespawningEntity>());
  		Group = GetComponentGroup(list.ToArray());
  	}
  
@@ -66,14 +67,15 @@ public abstract class BaseComponentSystem<T1,T2> : BaseComponentSystem
 	
 	public BaseComponentSystem(GameWorld world) : base(world) {}
 	
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		var list = new List<ComponentType>(6);
 		if(ExtraComponentRequirements != null)		
 			list.AddRange(ExtraComponentRequirements);
-		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2) } );
+		list.AddRange(new ComponentType[] {typeof(T1), typeof(T2)});
+		list.Add(ComponentType.Subtractive<DespawningEntity>());
 		Group = GetComponentGroup(list.ToArray());
 	}
 
@@ -109,14 +111,15 @@ public abstract class BaseComponentSystem<T1,T2,T3> : BaseComponentSystem
 	
 	public BaseComponentSystem(GameWorld world) : base(world) {}
 	
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		var list = new List<ComponentType>(6);
 		if(ExtraComponentRequirements != null)		
 			list.AddRange(ExtraComponentRequirements);
 		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2), typeof(T3) } );
+		list.Add(ComponentType.Subtractive<DespawningEntity>());
 		Group = GetComponentGroup(list.ToArray());
 	}
 
@@ -150,14 +153,15 @@ public abstract class BaseComponentDataSystem<T1> : BaseComponentSystem
 	
 	public BaseComponentDataSystem(GameWorld world) : base(world) {}
 	
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		var list = new List<ComponentType>(6);
 		if(ExtraComponentRequirements != null)		
 			list.AddRange(ExtraComponentRequirements);
 		list.AddRange(new ComponentType[] { typeof(T1) } );
+		list.Add(ComponentType.Subtractive<DespawningEntity>());
 		Group = GetComponentGroup(list.ToArray());
 	}
 
@@ -190,14 +194,15 @@ public abstract class BaseComponentDataSystem<T1,T2> : BaseComponentSystem
 	
 	public BaseComponentDataSystem(GameWorld world) : base(world) {}
 	
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
 		name = GetType().Name;
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		var list = new List<ComponentType>(6);
 		if(ExtraComponentRequirements != null)		
 			list.AddRange(ExtraComponentRequirements);
 		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2) } );
+		list.Add(ComponentType.Subtractive<DespawningEntity>());
 		Group = GetComponentGroup(list.ToArray());
 	}
 
@@ -232,14 +237,15 @@ public abstract class BaseComponentDataSystem<T1,T2,T3> : BaseComponentSystem
 	
 	public BaseComponentDataSystem(GameWorld world) : base(world) {}
 	
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		var list = new List<ComponentType>(6);
 		if(ExtraComponentRequirements != null)		
 			list.AddRange(ExtraComponentRequirements);
 		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2), typeof(T3) } );
+		list.Add(ComponentType.Subtractive<DespawningEntity>());
 		Group = GetComponentGroup(list.ToArray());
 	}
 
@@ -277,14 +283,15 @@ public abstract class BaseComponentDataSystem<T1,T2,T3,T4> : BaseComponentSystem
 	
 	public BaseComponentDataSystem(GameWorld world) : base(world) {}
 	
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		var list = new List<ComponentType>(6);
 		if(ExtraComponentRequirements != null)		
 			list.AddRange(ExtraComponentRequirements);
 		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2), typeof(T3), typeof(T4) } );
+		list.Add(ComponentType.Subtractive<DespawningEntity>());
 		Group = GetComponentGroup(list.ToArray());
 	}
 
@@ -323,14 +330,15 @@ public abstract class BaseComponentDataSystem<T1,T2,T3,T4, T5> : BaseComponentSy
 	
 	public BaseComponentDataSystem(GameWorld world) : base(world) {}
 	
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		var list = new List<ComponentType>(6);
 		if(ExtraComponentRequirements != null)		
 			list.AddRange(ExtraComponentRequirements);
 		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5) } );
+		list.Add(ComponentType.Subtractive<DespawningEntity>());
 		Group = GetComponentGroup(list.ToArray());
 	}
 
@@ -367,9 +375,9 @@ public abstract class InitializeComponentSystem<T> : BaseComponentSystem
 	
 	public InitializeComponentSystem(GameWorld world) : base(world) {}
 
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		IncomingGroup = GetComponentGroup(typeof(T),ComponentType.Subtractive<SystemState>());
 	}
@@ -400,20 +408,21 @@ public abstract class InitializeComponentSystem<T> : BaseComponentSystem
 
 [DisableAutoCreation]
 [AlwaysUpdateSystem]
-public abstract class InitializeComponentDataSystem<T> : BaseComponentSystem
+public abstract class InitializeComponentDataSystem<T,K> : BaseComponentSystem
 	where T : struct, IComponentData
+	where K : struct, IComponentData
 {
-	struct SystemState : IComponentData{}
+	
 	ComponentGroup IncomingGroup;
 	string name;
 	
 	public InitializeComponentDataSystem(GameWorld world) : base(world) {}
 
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
-		IncomingGroup = GetComponentGroup(typeof(T),ComponentType.Subtractive<SystemState>());
+		IncomingGroup = GetComponentGroup(typeof(T),ComponentType.Subtractive<K>());
 	}
     
 	protected override void OnUpdate()
@@ -427,7 +436,7 @@ public abstract class InitializeComponentDataSystem<T> : BaseComponentSystem
 			for (var i = 0; i < incomingComponentDataArray.Length; i++)
 			{
 				var entity = incomingEntityArray[i];
-				PostUpdateCommands.AddComponent(entity,new SystemState());
+				PostUpdateCommands.AddComponent(entity,new K());
 
 				Initialize(entity, incomingComponentDataArray[i]);
 			}
@@ -451,9 +460,9 @@ public abstract class DeinitializeComponentSystem<T> : BaseComponentSystem
 
 	public DeinitializeComponentSystem(GameWorld world) : base(world) {}
 
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		OutgoingGroup = GetComponentGroup(typeof(T), typeof(DespawningEntity));
 	}
@@ -486,9 +495,9 @@ public abstract class DeinitializeComponentDataSystem<T> : BaseComponentSystem
 
 	public DeinitializeComponentDataSystem(GameWorld world) : base(world) {}
 
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		OutgoingGroup = GetComponentGroup(typeof(T), typeof(DespawningEntity));
 	}
@@ -521,9 +530,9 @@ public abstract class InitializeComponentGroupSystem<T,S> : BaseComponentSystem
 
 	public InitializeComponentGroupSystem(GameWorld world) : base(world) {}
 
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		IncomingGroup = GetComponentGroup(typeof(T),ComponentType.Subtractive<S>());
 	}
@@ -560,9 +569,9 @@ public abstract class DeinitializeComponentGroupSystem<T> : BaseComponentSystem
 
 	public DeinitializeComponentGroupSystem(GameWorld world) : base(world) {}
 
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 		name = GetType().Name;
 		OutgoingGroup = GetComponentGroup(typeof(T), typeof(DespawningEntity));
 	}

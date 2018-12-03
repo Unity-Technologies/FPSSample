@@ -39,7 +39,7 @@ public class TerraformerWeaponA : MonoBehaviour
     public int nextVentIndex;
 
     public Vector3 m_lastGrenadeFuelWorldPos;
-    public CharacterPredictedState.StateData.Action m_prevAction;
+    public CharPredictedStateData.Action m_prevAction;
 
     void Awake()
     {
@@ -50,27 +50,27 @@ public class TerraformerWeaponA : MonoBehaviour
 
 // System
 [DisableAutoCreation]
-public class UpdateTerraformerWeaponA : BaseComponentSystem<CharacterItem,TerraformerWeaponA>
+public class UpdateTerraformerWeaponA : BaseComponentSystem<CharPresentation,TerraformerWeaponA>
 {
     public UpdateTerraformerWeaponA(GameWorld world) : base(world)
     {
         ExtraComponentRequirements = new[] {ComponentType.Subtractive<DespawningEntity>(),};
     }
     
-    protected override void Update(Entity entity, CharacterItem item, TerraformerWeaponA weapon)
+    protected override void Update(Entity entity, CharPresentation charPresentation, TerraformerWeaponA weapon)
     {
-        if (!item.visible)
+        if (!charPresentation.IsVisible)
             return;
-        
-        var abilityCtrl = EntityManager.GetComponentObject<AbilityController>(item.character);
-        Update(m_world.worldTime, weapon, abilityCtrl);
+
+        var character = EntityManager.GetComponentObject<Character>(charPresentation.character);
+        Update(m_world.worldTime, weapon, character);
     }
 
 
-    void Update(GameTime time, TerraformerWeaponA weapon, AbilityController abilityCtrl)
+    void Update(GameTime time, TerraformerWeaponA weapon, Character character)
     {
         // Update using AutoRifle ability state
-        var autoRifleAbility = abilityCtrl.GetAbilityEntity(EntityManager,typeof(Ability_AutoRifle));
+        var autoRifleAbility = character.FindAbilityWithComponent(EntityManager,typeof(Ability_AutoRifle.InterpolatedState));
         GameDebug.Assert(autoRifleAbility != Entity.Null,"AbilityController does not own a Ability_AutoRifle ability");
         var autoRifleInterpolatedState = EntityManager.GetComponentData<Ability_AutoRifle.InterpolatedState>(autoRifleAbility);
         if (weapon.primaryFireEvent.Update(time, autoRifleInterpolatedState.fireTick))
@@ -106,7 +106,7 @@ public class UpdateTerraformerWeaponA : BaseComponentSystem<CharacterItem,Terraf
         }
    
         // Update using ProjectileLauncher ability state
-        var rocketAbility = abilityCtrl.GetAbilityEntity(EntityManager,typeof(Ability_ProjectileLauncher));
+        var rocketAbility = character.FindAbilityWithComponent(EntityManager,typeof(Ability_ProjectileLauncher.InterpolatedState));
         GameDebug.Assert(rocketAbility != Entity.Null,"AbilityController does not own a Ability_ProjectileLauncher ability");
         var rocketLaunchInterpolatedState = EntityManager.GetComponentData<Ability_ProjectileLauncher.InterpolatedState>(rocketAbility);
         if (weapon.secondaryFireEvent.Update(time, rocketLaunchInterpolatedState.fireTick))
@@ -119,7 +119,7 @@ public class UpdateTerraformerWeaponA : BaseComponentSystem<CharacterItem,Terraf
         }
 
         // Update using Melee ability ability state
-        var meleeAbility = abilityCtrl.GetAbilityEntity(EntityManager,typeof(Ability_Melee));
+        var meleeAbility = character.FindAbilityWithComponent(EntityManager,typeof(Ability_Melee.InterpolatedState));
         GameDebug.Assert(meleeAbility != Entity.Null,"AbilityController does not own a Ability_Melee ability");
         var meleeInterpolatedState = EntityManager.GetComponentData<Ability_Melee.InterpolatedState>(meleeAbility);
         if (weapon.meleeImpactEvent.Update(time, meleeInterpolatedState.impactTick))
@@ -206,17 +206,17 @@ public class TerraformerWeaponClientProjectileSpawnHandler : InitializeComponent
     public TerraformerWeaponClientProjectileSpawnHandler(GameWorld world) : base(world)
     {}
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
-        WeaponGroup = GetComponentGroup(typeof(TerraformerWeaponA), typeof(CharacterItem));
+        base.OnCreateManager();
+        WeaponGroup = GetComponentGroup(typeof(TerraformerWeaponA), typeof(CharPresentation));
     }
 
     protected override void Initialize(ref ComponentGroup group)
     {
         var clientProjectileArray = group.GetComponentArray<ClientProjectile>();
         var weaponArray = WeaponGroup.GetComponentArray<TerraformerWeaponA>();
-        var itemArray =  WeaponGroup.GetComponentArray<CharacterItem>();
+        var charPresentationArray =  WeaponGroup.GetComponentArray<CharPresentation>();
         
         for (var i = 0; i < clientProjectileArray.Length; i++)
         {
@@ -225,14 +225,14 @@ public class TerraformerWeaponClientProjectileSpawnHandler : InitializeComponent
          var projectileData = EntityManager.GetComponentData<ProjectileData>(clientProjectile.projectile);
          var projectileOwner = projectileData.projectileOwner;
         
-         for (var j = 0; j < itemArray.Length; j++)
+         for (var j = 0; j < charPresentationArray.Length; j++)
          {
-             var item = itemArray[j];
+             var charPresentation = charPresentationArray[j];
         
-             if (!item.visible)
+             if (!charPresentation.IsVisible)
                  continue;
              
-             if (item.character == projectileOwner)
+             if (charPresentation.character == projectileOwner)
              {
                  var weapon = weaponArray[j];
                  var pos =  weapon.muzzle.position;

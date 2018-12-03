@@ -50,7 +50,10 @@ public class InputSystem
         command.reload = command.reload || Game.Input.GetKey(KeyCode.R) || Game.Input.GetKey(KeyCode.Joystick1Button2);
 
         command.melee = command.melee || Game.Input.GetKey(KeyCode.V) || Game.Input.GetKey(KeyCode.Joystick1Button1);
-        command.use = command.melee || Game.Input.GetKey(KeyCode.E);
+        command.use = command.use || Game.Input.GetKey(KeyCode.E);
+
+        command.emote = Game.Input.GetKeyDown(KeyCode.J) ? CharacterEmote.Victory : CharacterEmote.None;
+        command.emote = Game.Input.GetKeyDown(KeyCode.K) ? CharacterEmote.Defeat : command.emote;
     }
 
     public void ClearInput(ref UserCommand command)     

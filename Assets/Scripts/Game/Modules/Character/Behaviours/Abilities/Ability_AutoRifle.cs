@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Profiling;
 
-
-[RequireComponent(typeof(ReplicatedAbility))]
-public class Ability_AutoRifle : MonoBehaviour
+[CreateAssetMenu(fileName = "Ability_AutoRifle",menuName = "FPS Sample/Abilities/Ability_AutoRifle")]
+public class Ability_AutoRifle : CharBehaviorFactory
 {
-	public enum Phase
+    public enum Action
 	{
 		Idle,
-		Firing,
-		Reloading,
+		Fire,
+		Reload,
 	}
 	
 	public enum ImpactType
@@ -39,44 +39,38 @@ public class Ability_AutoRifle : MonoBehaviour
 	    public float COFDecreaseVel;
     }
 
-	public struct LocalState : IComponentData
+	public struct InternalState : IComponentData
 	{
 		public int lastHitCheckTick;
 		public int rayQueryId;
 	}
 	
-    public struct PredictedState : IPredictedData<PredictedState>, IComponentData
+    public struct PredictedState : INetPredicted<PredictedState>, IComponentData
     {
-        public Phase phase;
+        public Action action;
         public int phaseStartTick;
 
-	    public int reloadRequested;
-	    public int fireRequested;
         public int ammoInClip;
 	    public float COF;
         
-	    public void SetPhase(Phase phase, int tick)
+	    public void SetPhase(Action action, int tick)
 	    {
-		    this.phase = phase;
+		    this.action = action;
 		    this.phaseStartTick = tick;
 	    }
 	    
         public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
         {
-            writer.WriteInt32("phase", (int)phase);
+            writer.WriteInt32("phase", (int)action);
             writer.WriteInt32("phaseStart", phaseStartTick);
-	        writer.WriteBoolean("fireRequested", fireRequested == 1);
-	        writer.WriteBoolean("reloadRequested", reloadRequested == 1);
             writer.WriteInt32("ammoInClip", ammoInClip);
 	        writer.WriteFloatQ("COF", COF,0);
         }
 
         public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
         {
-            phase = (Phase)reader.ReadInt32();
+            action = (Action)reader.ReadInt32();
             phaseStartTick = reader.ReadInt32();
-	        fireRequested = reader.ReadBoolean() ? 1 : 0;
-	        reloadRequested = reader.ReadBoolean() ? 1 : 0;
             ammoInClip = reader.ReadInt32();
 	        COF = reader.ReadFloatQ();
         }
@@ -89,8 +83,7 @@ public class Ability_AutoRifle : MonoBehaviour
 #endif        
     }
     
-        
-    public struct InterpolatedState : IInterpolatedData<InterpolatedState>, IComponentData
+    public struct InterpolatedState : INetInterpolated<InterpolatedState>, IComponentData
     {
         public int fireTick;
         public float3 fireEndPos;
@@ -119,214 +112,204 @@ public class Ability_AutoRifle : MonoBehaviour
         }
     }
 
-	public Settings settings;
     
-    private void OnEnable()
-    {
-        var gameObjectEntity = GetComponent<GameObjectEntity>();
-        var entityManager = gameObjectEntity.EntityManager;
-		var abilityEntity = gameObjectEntity.Entity;
-	    
-	    // Default components
-	    entityManager.AddComponentData(abilityEntity, new CharacterAbility());
-	    entityManager.AddComponentData(abilityEntity, new AbilityControl());
+    public Settings settings;
+	
+	public override Entity Create(EntityManager entityManager, List<Entity> entities)
+	{
+		var entity = CreateCharBehavior(entityManager);
+		entities.Add(entity);
+		
+		// Ability components
+		var internalState = new InternalState
+		{
+			rayQueryId = -1
+		};
+		var predictedState = new PredictedState
+		{
+			action = Action.Idle,
+			ammoInClip = settings.clipSize,
+			COF = settings.minCOF,
+		};
+		entityManager.AddComponentData(entity, settings);
+		entityManager.AddComponentData(entity, internalState);
+		entityManager.AddComponentData(entity, predictedState);
+		entityManager.AddComponentData(entity, new InterpolatedState());
+		
+		return entity;
+	}
 
-	    // Ability components
-        var localState = new LocalState
-        {
-            rayQueryId = -1
-        };
-        var predictedState = new PredictedState
-        {
-            phase = Phase.Idle,
-            ammoInClip = settings.clipSize,
-            COF = settings.minCOF,
-        };
-	    entityManager.AddComponentData(abilityEntity, settings);
-	    entityManager.AddComponentData(abilityEntity, localState);
-	    entityManager.AddComponentData(abilityEntity, predictedState);
-	    entityManager.AddComponentData(abilityEntity, new InterpolatedState());
+	static public Action GetCommandRequest(ref PredictedState predictedState, ref Settings settings, 
+		ref UserCommand command)
+	{
+		if (command.reload && predictedState.ammoInClip < settings.clipSize)
+		{
+			return Action.Reload;
+		}
+		
+		var isIdle = predictedState.action == Action.Idle;
+		if (isIdle)
+		{
+			if (command.primaryFire && predictedState.ammoInClip == 0)
+			{
+				return Action.Reload;
+			}
+		}
 
-	    // Setup replicated ability
-	    var replicatedAbility = entityManager.GetComponentObject<ReplicatedAbility>(abilityEntity);
-	    replicatedAbility.predictedHandlers = new IPredictedDataHandler[2];
-	    replicatedAbility.predictedHandlers[0] = new PredictedEntityHandler<AbilityControl>(entityManager, abilityEntity);
-	    replicatedAbility.predictedHandlers[1] = new PredictedEntityHandler<PredictedState>(entityManager, abilityEntity);
-	    replicatedAbility.interpolatedHandlers = new IInterpolatedDataHandler[1];
-	    replicatedAbility.interpolatedHandlers[0] = new InterpolatedEntityHandler<InterpolatedState>(entityManager, abilityEntity);
-    }
+		return command.primaryFire ? Action.Fire : Action.Idle;
+	}
 }
 
-
 [DisableAutoCreation]
-class AutoRifle_RequestActive : BaseComponentDataSystem<CharacterAbility,AbilityControl,Ability_AutoRifle.PredictedState,Ability_AutoRifle.Settings>
+class AutoRifle_RequestActive : BaseComponentDataSystem<CharBehaviour,AbilityControl,Ability_AutoRifle.PredictedState,Ability_AutoRifle.Settings>
 {
 	public AutoRifle_RequestActive(GameWorld world) : base(world)
 	{
 		ExtraComponentRequirements = new ComponentType[] { typeof(ServerEntity) } ;
 	}
 
-	
-	protected override void Update(Entity entity, CharacterAbility charAbility, AbilityControl abilityCtrl, 
+	protected override void Update(Entity entity, CharBehaviour charAbility, AbilityControl abilityCtrl, 
 		Ability_AutoRifle.PredictedState predictedState, Ability_AutoRifle.Settings settings)
 	{
-		Profiler.BeginSample("AutoRifle_RequestActive");
+		if (abilityCtrl.behaviorState == AbilityControl.State.Active || abilityCtrl.behaviorState == AbilityControl.State.Cooldown)
+			return;
 		
 		var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character).command;
-		var character = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
-		
-		var isAlive = character.State.locoState != CharacterPredictedState.StateData.LocoState.Dead;
-		predictedState.fireRequested = (command.primaryFire && isAlive) ? 1 : 0;
-		
-		if (command.reload && isAlive && predictedState.ammoInClip < settings.clipSize)
-		{
-			predictedState.reloadRequested = 1;
-		}
-
-		var isIdle = predictedState.phase == Ability_AutoRifle.Phase.Idle;
-		if (isIdle)
-		{
-			if (predictedState.fireRequested == 1 && predictedState.ammoInClip == 0)
-			{
-				predictedState.reloadRequested = 1;
-			}
-		}
-		
-		abilityCtrl.requestsActive = !character.State.abilityActive && (!isIdle || predictedState.fireRequested == 1 
-		                                                                        || predictedState.reloadRequested == 1) ? 1 : 0;
-		
+		var request = Ability_AutoRifle.GetCommandRequest(ref predictedState, ref settings, ref command);
+		abilityCtrl.behaviorState = request != Ability_AutoRifle.Action.Idle ?  AbilityControl.State.RequestActive : AbilityControl.State.Idle;
 		EntityManager.SetComponentData(entity, abilityCtrl);			
-		EntityManager.SetComponentData(entity, predictedState);
-		
-		Profiler.EndSample();
 	}
 }
 
-
 [DisableAutoCreation]
-class AutoRifle_Update : BaseComponentDataSystem<AbilityControl,Ability_AutoRifle.PredictedState,Ability_AutoRifle.Settings>
+class AutoRifle_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl,Ability_AutoRifle.PredictedState,Ability_AutoRifle.Settings>
 {
 	public AutoRifle_Update(GameWorld world) : base(world)
 	{
 		ExtraComponentRequirements = new ComponentType[] { typeof(ServerEntity) } ;
 	}
 	
-	protected override void Update(Entity abilityEntity, AbilityControl abilityCtrl, 
+	protected override void Update(Entity abilityEntity, CharBehaviour charAbility, AbilityControl abilityCtrl, 
 		Ability_AutoRifle.PredictedState predictedState, Ability_AutoRifle.Settings settings)
 	{
-		Profiler.BeginSample("AutoRifle_Update");
-		
-		switch (predictedState.phase)
-		{
-			case Ability_AutoRifle.Phase.Idle:
-			{
-				if(abilityCtrl.activeAllowed == 0)
-					break;
-				
-				if (predictedState.reloadRequested == 1)
-				{
-					EnterReloadingPhase(abilityEntity, ref predictedState, m_world.worldTime.tick);
-					break;
-				}
-
-				if (predictedState.fireRequested == 1)
-				{
-					EnterFiringPhase(abilityEntity, ref predictedState, m_world.worldTime.tick);
-					break;
-				}
-
-				break;
-			}
-			case Ability_AutoRifle.Phase.Firing:
-			{
-				var fireDuration = 1.0f / settings.roundsPerSecond; 
-				var phaseDuration = m_world.worldTime.DurationSinceTick(predictedState.phaseStartTick);
-				if (phaseDuration > fireDuration)
-				{
-
-					if (predictedState.fireRequested == 1 && predictedState.ammoInClip > 0)
-						EnterFiringPhase(abilityEntity, ref predictedState, m_world.worldTime.tick);
-					else
-						EnterIdlePhase(abilityEntity, ref predictedState, m_world.worldTime.tick);
-				}
-
-				break;
-			}
-			case Ability_AutoRifle.Phase.Reloading:
-			{
-				var phaseDuration = m_world.worldTime.DurationSinceTick(predictedState.phaseStartTick);
-				if (phaseDuration > settings.reloadDuration)
-				{
-					predictedState.reloadRequested = 0;
-					var neededInClip = settings.clipSize - predictedState.ammoInClip;
-					predictedState.ammoInClip += neededInClip;
-
-					EnterIdlePhase(abilityEntity, ref predictedState, m_world.worldTime.tick);
-					break;
-				}
-
-				break;
-			}
-		}
-
 		// Decrease cone
-		if (predictedState.phase != Ability_AutoRifle.Phase.Firing)
+		if (predictedState.action != Ability_AutoRifle.Action.Fire)
 		{
 			predictedState.COF -= settings.COFDecreaseVel * m_world.worldTime.tickDuration;
 			if (predictedState.COF < settings.minCOF)
 				predictedState.COF = settings.minCOF;
 		}
-		
-		
-		
 		EntityManager.SetComponentData(abilityEntity, predictedState);
+
+		if (abilityCtrl.active == 0)
+		{
+			return;
+		}
 		
-		Profiler.EndSample();
+		var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character).command;
+		var request = Ability_AutoRifle.GetCommandRequest(ref predictedState, ref settings, ref command);
+		
+		switch (predictedState.action)
+		{
+			case Ability_AutoRifle.Action.Idle:
+			{
+				if (request == Ability_AutoRifle.Action.Reload)
+				{
+					EnterReloadingPhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.tick);
+					break;
+				}
+
+				if (request == Ability_AutoRifle.Action.Fire)
+				{
+					EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.tick);
+					break;
+				}
+
+				break;
+			}
+			case Ability_AutoRifle.Action.Fire:
+			{
+				var fireDuration = 1.0f / settings.roundsPerSecond; 
+				var phaseDuration = m_world.worldTime.DurationSinceTick(predictedState.phaseStartTick);
+				if (phaseDuration > fireDuration)
+				{
+					if (request == Ability_AutoRifle.Action.Fire && predictedState.ammoInClip > 0)
+						EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.tick);
+					else
+						EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.tick);
+				}
+
+				break;
+			}
+			case Ability_AutoRifle.Action.Reload:
+			{
+				var phaseDuration = m_world.worldTime.DurationSinceTick(predictedState.phaseStartTick);
+				if (phaseDuration > settings.reloadDuration)
+				{
+					var neededInClip = settings.clipSize - predictedState.ammoInClip;
+					predictedState.ammoInClip += neededInClip;
+
+					EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.tick);
+				}
+
+				break;
+			}
+		}
 	}
 
-
-
-	void EnterReloadingPhase(Entity abilityEntity, ref Ability_AutoRifle.PredictedState predictedState, int tick)
+	void EnterReloadingPhase(Entity abilityEntity, ref AbilityControl abilityCtrl, 
+		ref Ability_AutoRifle.PredictedState predictedState, int tick)
 	{
 		//GameDebug.Log("EnterReloadingPhase");
 
-		var charAbility = EntityManager.GetComponentData<CharacterAbility>(abilityEntity);
-		var character = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
+		var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);
+		var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
 
-		predictedState.SetPhase(Ability_AutoRifle.Phase.Reloading, tick);
-		character.State.SetAction(CharacterPredictedState.StateData.Action.Reloading, tick);
+		abilityCtrl.behaviorState = AbilityControl.State.Active;
+		predictedState.SetPhase(Ability_AutoRifle.Action.Reload, tick);
+		charPredictedState.SetAction(CharPredictedStateData.Action.Reloading, tick);
+
+		EntityManager.SetComponentData(abilityEntity, abilityCtrl);
+		EntityManager.SetComponentData(abilityEntity, predictedState);
+		EntityManager.SetComponentData(charAbility.character, charPredictedState);
 	}
 
-	void EnterIdlePhase(Entity abilityEntity, ref Ability_AutoRifle.PredictedState predictedState, int tick)
+	void EnterIdlePhase(Entity abilityEntity, ref AbilityControl abilityCtrl, 
+		ref Ability_AutoRifle.PredictedState predictedState, int tick)
 	{
 		//GameDebug.Log("EnterIdlePhase");
+		var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);
+		var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
 
-		var charAbility = EntityManager.GetComponentData<CharacterAbility>(abilityEntity);
-		var character = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
+		abilityCtrl.behaviorState = AbilityControl.State.Idle;
+		predictedState.SetPhase(Ability_AutoRifle.Action.Idle, tick);
+		charPredictedState.SetAction(CharPredictedStateData.Action.None, tick);
 
-		predictedState.SetPhase(Ability_AutoRifle.Phase.Idle, tick);
-		character.State.SetAction(CharacterPredictedState.StateData.Action.None, tick);
+		EntityManager.SetComponentData(abilityEntity, abilityCtrl);
+		EntityManager.SetComponentData(abilityEntity, predictedState);
+		EntityManager.SetComponentData(charAbility.character, charPredictedState);
 	}
 
-	void EnterFiringPhase(Entity abilityEntity, ref Ability_AutoRifle.PredictedState predictedState, int tick) 
+	void EnterFiringPhase(Entity abilityEntity, ref AbilityControl abilityCtrl,
+		ref Ability_AutoRifle.PredictedState predictedState, int tick) 
 	{
 		//GameDebug.Log("EnterFiringPhase");
 
-		var charAbility = EntityManager.GetComponentData<CharacterAbility>(abilityEntity);
+		var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);
 		var settings = EntityManager.GetComponentData<Ability_AutoRifle.Settings>(abilityEntity);
 		var character = EntityManager.GetComponentObject<Character>(charAbility.character);
-		var charPredictedState = EntityManager.GetComponentObject<CharacterPredictedState>(charAbility.character);
+		var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
 		
-		predictedState.SetPhase(Ability_AutoRifle.Phase.Firing, tick);
-		charPredictedState.State.SetAction(CharacterPredictedState.StateData.Action.PrimaryFire, tick);
-
+		abilityCtrl.behaviorState = AbilityControl.State.Active;
+		predictedState.SetPhase(Ability_AutoRifle.Action.Fire, tick);
 		predictedState.ammoInClip -= 1;
-
+		charPredictedState.SetAction(CharPredictedStateData.Action.PrimaryFire, tick);
+		
 		// Only fire shot once for each tick (so it does not fire again when re-predicting)
-		var localState = EntityManager.GetComponentData<Ability_AutoRifle.LocalState>(abilityEntity);
-		if (tick > localState.lastHitCheckTick)
+		var internalState = EntityManager.GetComponentData<Ability_AutoRifle.InternalState>(abilityEntity);
+		if (tick > internalState.lastHitCheckTick)
 		{
-			localState.lastHitCheckTick = tick;
+			internalState.lastHitCheckTick = tick;
 
 			var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character).command;
 
@@ -334,26 +317,26 @@ class AutoRifle_Update : BaseComponentDataSystem<AbilityControl,Ability_AutoRifl
 
 			var cross = math.cross(new float3(0, 1, 0),aimDir);
 			var cofAngle = math.radians(predictedState.COF)*0.5f;
-			var direction = math.mul(quaternion.axisAngle(cross, cofAngle), aimDir);
+			var direction = math.mul(quaternion.AxisAngle(cross, cofAngle), aimDir);
 
 			// TODO use tick as random seed so server and client calculates same angle for given tick  
 			var rndAngle = UnityEngine.Random.Range(0, (float) math.PI * 2);
-			var rndRot = quaternion.axisAngle(aimDir, rndAngle);
+			var rndRot = quaternion.AxisAngle(aimDir, rndAngle);
 			direction = math.mul(rndRot, direction);
 
 			predictedState.COF  += settings.shotCOFIncrease;
 			if (predictedState.COF > settings.maxCOF)
 				predictedState.COF = settings.maxCOF;
 
-			var eyePos = charPredictedState.State.position + Vector3.up*character.eyeHeight; 
+			var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight; 
 			
 //            Debug.DrawRay(rayStart, direction * 1000, Color.green, 1.0f);
 
 			const int distance = 500;
-			var collisionMask = ~(1 << charPredictedState.teamId);
+			var collisionMask = ~(1 << character.teamId);
 
 			var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
-			localState.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
+			internalState.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
 			{
 				origin = eyePos,
 				direction = direction,
@@ -365,30 +348,34 @@ class AutoRifle_Update : BaseComponentDataSystem<AbilityControl,Ability_AutoRifl
 				sphereCastMask = collisionMask,
 			});
 
-			EntityManager.SetComponentData(abilityEntity,localState);
+			EntityManager.SetComponentData(abilityEntity,internalState);
 		}
+		
+		EntityManager.SetComponentData(abilityEntity, abilityCtrl);
+		EntityManager.SetComponentData(abilityEntity, predictedState);
+		EntityManager.SetComponentData(charAbility.character, charPredictedState);
 	}
 }
 
 [DisableAutoCreation]
-class AutoRifle_HandleCollisionQuery : BaseComponentDataSystem<Ability_AutoRifle.LocalState,Ability_AutoRifle.InterpolatedState>
+class AutoRifle_HandleCollisionQuery : BaseComponentDataSystem<Ability_AutoRifle.InternalState,Ability_AutoRifle.InterpolatedState>
 {
 	public AutoRifle_HandleCollisionQuery(GameWorld world) : base(world)
 	{
 		ExtraComponentRequirements = new ComponentType[] { typeof(ServerEntity) } ;
 	}
 	
-	protected override void Update(Entity abilityEntity, Ability_AutoRifle.LocalState localState, Ability_AutoRifle.InterpolatedState interpolatedState)
+	protected override void Update(Entity abilityEntity, Ability_AutoRifle.InternalState internalState, Ability_AutoRifle.InterpolatedState interpolatedState)
 	{
-		if (localState.rayQueryId == -1)
+		if (internalState.rayQueryId == -1)
 			return;
 
 		Profiler.BeginSample("-get result");
 		var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
 		RaySphereQueryReciever.Query query;
 		RaySphereQueryReciever.Result result;
-		queryReciever.GetResult(localState.rayQueryId, out query, out result);
-		localState.rayQueryId = -1;
+		queryReciever.GetResult(internalState.rayQueryId, out query, out result);
+		internalState.rayQueryId = -1;
 		Profiler.EndSample();
 		
 		float3 endPos;
@@ -406,7 +393,7 @@ class AutoRifle_HandleCollisionQuery : BaseComponentDataSystem<Ability_AutoRifle
 			if (hitCollisionHit)
 			{
 				Profiler.BeginSample("-add damage");
-				var charAbility = EntityManager.GetComponentData<CharacterAbility>(abilityEntity);
+				var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);
 				var settings = EntityManager.GetComponentData<Ability_AutoRifle.Settings>(abilityEntity);
 				var hitCollisionOwner = EntityManager.GetComponentObject<HitCollisionOwner>(result.hitCollisionOwner);
 				hitCollisionOwner.damageEvents.Add(new DamageEvent(charAbility.character, settings.damage, query.direction, 
@@ -424,7 +411,7 @@ class AutoRifle_HandleCollisionQuery : BaseComponentDataSystem<Ability_AutoRifle
 		interpolatedState.fireTick = m_world.worldTime.tick;
 		interpolatedState.fireEndPos = endPos;
 		
-		EntityManager.SetComponentData(abilityEntity,localState);
+		EntityManager.SetComponentData(abilityEntity,internalState);
 		EntityManager.SetComponentData(abilityEntity,interpolatedState);
 	}
 }

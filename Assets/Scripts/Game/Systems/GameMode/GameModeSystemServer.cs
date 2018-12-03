@@ -110,9 +110,9 @@ public class GameModeSystemServer : ComponentSystem
         m_World.RequestDespawn(gameModeState.gameObject);
     }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         playersComponentGroup = GetComponentGroup(typeof(PlayerState));
         m_TeamBaseComponentGroup = GetComponentGroup(typeof(TeamBase));
         m_SpawnPointComponentGroup = GetComponentGroup(typeof(SpawnPoint));
@@ -197,6 +197,7 @@ public class GameModeSystemServer : ComponentSystem
             var controlledEntity = player.controlledEntity;
             var playerEntity = playerEntities[i];
 
+            
             player.actionString = player.enableCharacterSwitch ? "Press H to change character" : "";
 
             var charControl = playerCharacterControls[i];
@@ -206,7 +207,8 @@ public class GameModeSystemServer : ComponentSystem
             {
                 var position = new Vector3(0.0f, 0.2f, 0.0f);
                 var rotation = Quaternion.identity;
-
+                GetRandomSpawnTransform(player.teamIndex, ref position, ref rotation);
+                
                 m_GameMode.OnPlayerRespawn(player, ref position, ref rotation);
 
                 if (charControl.characterType == -1)
@@ -236,13 +238,13 @@ public class GameModeSystemServer : ComponentSystem
                     {
 
                         // Despawn current controlled entity. New entity will be created later
-                        if (EntityManager.HasComponent<CharacterPredictedState>(controlledEntity))
+                        if (EntityManager.HasComponent<Character>(controlledEntity))
                         {
-                            var cps = EntityManager.GetComponentObject<CharacterPredictedState>(controlledEntity);
-                            var rotation = cps.State.velocity.magnitude > 0.01f ? Quaternion.LookRotation(cps.State.velocity.normalized) : Quaternion.identity;
+                            var predictedState = EntityManager.GetComponentData<CharPredictedStateData>(controlledEntity);
+                            var rotation = predictedState.velocity.magnitude > 0.01f ? Quaternion.LookRotation(predictedState.velocity.normalized) : Quaternion.identity;
 
                             CharacterDespawnRequest.Create(PostUpdateCommands, controlledEntity);
-                            CharacterSpawnRequest.Create(PostUpdateCommands, charControl.characterType, cps.State.position, rotation, playerEntity);
+                            CharacterSpawnRequest.Create(PostUpdateCommands, charControl.characterType, predictedState.position, rotation, playerEntity);
                         }
                         player.controlledEntity = Entity.Null;
                     }
@@ -251,7 +253,7 @@ public class GameModeSystemServer : ComponentSystem
                 continue;
             }
 
-            if (EntityManager.HasComponent<CharacterPredictedState>(controlledEntity))
+            if (EntityManager.HasComponent<Character>(controlledEntity))
             {
                 // Is character dead ?
                 var character = EntityManager.GetComponentObject<Character>(controlledEntity);
@@ -284,7 +286,7 @@ public class GameModeSystemServer : ComponentSystem
                         m_World.worldTime.tickInterval > respawnDelay.IntValue)
                     {
                         // Despawn current controlled entity. New entity will be created later
-                        if (EntityManager.HasComponent<CharacterPredictedState>(controlledEntity))
+                        if (EntityManager.HasComponent<Character>(controlledEntity))
                             CharacterDespawnRequest.Create(PostUpdateCommands, controlledEntity);
                         player.controlledEntity = Entity.Null;
                     }
@@ -300,7 +302,7 @@ public class GameModeSystemServer : ComponentSystem
 
         var heroTypeRegistry = m_ResourceSystem.GetResourceRegistry<HeroTypeRegistry>();
         var c = player.GetComponent<PlayerCharacterControl>();
-        c.requestedCharacterType = (c.characterType + 1) % heroTypeRegistry.entries.Length;
+        c.requestedCharacterType = (c.characterType + 1) % heroTypeRegistry.entries.Count;
 
         chatSystem.SendChatMessage(player.playerId, "Switched to: " + heroTypeRegistry.entries[c.requestedCharacterType].name);
     }

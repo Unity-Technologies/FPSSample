@@ -11,40 +11,40 @@ public class PlayerCharacterControl : MonoBehaviour
 [DisableAutoCreation]
 public class PlayerCharacterControlSystem : ComponentSystem
 {
-    public struct Players
-    {
-        public ComponentArray<PlayerCharacterControl> characterControls;
-        public ComponentArray<PlayerState> playerStates;
-    }
-
-    [Inject] 
-    public Players Group;
+    ComponentGroup Group;
 
     public PlayerCharacterControlSystem(GameWorld gameWorld)
     {}
 
-    
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(PlayerCharacterControl), typeof(PlayerState));
+    }
+
     protected override void OnUpdate()
     {
-        for(var i=0;i< Group.characterControls.Length;i++)
+        var playerCharControlArray = Group.GetComponentArray<PlayerCharacterControl>();
+        var playerStateArray = Group.GetComponentArray<PlayerState>();
+        
+        for(var i=0;i< playerCharControlArray.Length;i++)
         {
-            var player = Group.playerStates[i];
+            var player = playerStateArray[i];
             var controlledEntity = player.controlledEntity;
 
-            if (controlledEntity == Entity.Null || !EntityManager.HasComponent<CharacterPredictedState>(controlledEntity))
+            if (controlledEntity == Entity.Null || !EntityManager.HasComponent<Character>(controlledEntity))
                 continue;
             
-            var charPredictedState = EntityManager.GetComponentObject<CharacterPredictedState>(controlledEntity); 
             var character = EntityManager.GetComponentObject<Character>(controlledEntity);
             
             // Update character team
-            charPredictedState.teamId = player.teamIndex;
+            character.teamId = player.teamIndex;
             
             // Update hit collision
             if (EntityManager.HasComponent<HitCollisionOwner>(controlledEntity))
             {
                 var hitCollisionOwner = EntityManager.GetComponentObject<HitCollisionOwner>(controlledEntity);
-                hitCollisionOwner.colliderFlags = 1 << charPredictedState.teamId;
+                hitCollisionOwner.colliderFlags = 1 << character.teamId;
             }
 
             character.characterName = player.playerName;

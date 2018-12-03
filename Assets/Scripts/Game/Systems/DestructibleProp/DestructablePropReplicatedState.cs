@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DestructablePropReplicatedState : MonoBehaviour, INetworkSerializable
+public class DestructablePropReplicatedState : MonoBehaviour, INetSerialized
 {
     public int destroyedTick;      
 

@@ -70,37 +70,6 @@ namespace NetcodeTests
             Delta_RandomBaseline<HuffmanInputStream, HuffmanOutputStream>();
         }
 
-        [Test]
-        public void Delta_FloatCompressedNoBaseline_Rans()
-        {
-            Delta_FloatCompressedNoBaseline<RansInputStream, RansOutputStream>();
-        }
-
-        [Test]
-        public void Delta_FloatCompressed_Rans()
-        {
-            Delta_FloatCompressed<RansInputStream, RansOutputStream>();
-        }
-
-        [Test]
-        public void Delta_FloatCompressedNoDrift_Rans()
-        {
-            Delta_FloatCompressedNoDrift<RansInputStream, RansOutputStream>();
-        }
-
-        [Test]
-        public void Delta_Vector3Compressed_Rans()
-        {
-            Delta_Vector3Compressed<RansInputStream, RansOutputStream>();
-        }
-
-        [Test]
-        public void Delta_RandomBaseline_Rans()
-        {
-            Delta_RandomBaseline<RansInputStream, RansOutputStream>();
-        }
-
-
         public void Delta_FloatCompressedNoBaseline<TInputStream, TOutputStream>() where TInputStream : NetworkCompression.IInputStream, new()
                                                                                    where TOutputStream : NetworkCompression.IOutputStream, new()
         {

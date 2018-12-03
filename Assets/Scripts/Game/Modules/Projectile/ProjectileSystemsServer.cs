@@ -7,20 +7,19 @@ using UnityEngine.Profiling;
 [DisableAutoCreation]
 public class HandleServerProjectileRequests : BaseComponentSystem
 {
-	public struct Reqests
-	{
-		[ReadOnly] public EntityArray entities;
-		[ReadOnly] public ComponentDataArray<ProjectileRequest> requests;
-	}
-
-	[Inject] 
-	public Reqests Group;
+	ComponentGroup Group;
 
 	public HandleServerProjectileRequests(GameWorld world, BundledResourceManager resourceSystem) : base(world)
 	{
 		m_resourceSystem = resourceSystem;
     
 		m_settings = Resources.Load<ProjectileModuleSettings>("ProjectileModuleSettings");
+	}
+
+	protected override void OnCreateManager()
+	{
+		base.OnCreateManager();
+		Group = GetComponentGroup(typeof(ProjectileRequest));
 	}
 
 	protected override void OnDestroyManager()
@@ -31,26 +30,30 @@ public class HandleServerProjectileRequests : BaseComponentSystem
 
 	protected override void OnUpdate()
 	{
+		var entityArray = Group.GetEntityArray();
+		var requestArray = Group.GetComponentDataArray<ProjectileRequest>();
+		
 		// Copy requests as spawning will invalidate Group 
-		var requests = new ProjectileRequest[Group.requests.Length];
-		for (var i = 0; i < Group.requests.Length; i++)
+		var requests = new ProjectileRequest[requestArray.Length];
+		for (var i = 0; i < requestArray.Length; i++)
 		{
-			requests[i] = Group.requests[i];
-			PostUpdateCommands.DestroyEntity(Group.entities[i]);
+			requests[i] = requestArray[i];
+			PostUpdateCommands.DestroyEntity(entityArray[i]);
 		}
 
 		// Handle requests
 		foreach (var request in requests)
 		{
-			var projectileEntity = m_settings.projectileFactory.Create(EntityManager);
+			var projectileEntity = m_settings.projectileFactory.Create(EntityManager, -1);
 			
 			var projectileData = EntityManager.GetComponentData<ProjectileData>(projectileEntity);
 
-			projectileData.Initialize(request);
-			projectileData.LoadSettings(m_resourceSystem);
+			projectileData.SetupFromRequest(request);
+			var projectileRegistry = m_resourceSystem.GetResourceRegistry<ProjectileRegistry>();
+			projectileData.Initialize(projectileRegistry);
 			
 			PostUpdateCommands.SetComponent(projectileEntity, projectileData);
-			PostUpdateCommands.AddComponent(projectileEntity, new ServerEntity());
+			PostUpdateCommands.AddComponent(projectileEntity, new UpdateProjectileFlag());
 		}
 	}
 

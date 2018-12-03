@@ -15,14 +15,13 @@ public class HandleReplicatedEntitySpawn : InitializeComponentSystem<ReplicatedE
 
     protected override void Initialize(Entity entity, ReplicatedEntity spawned)
     {
-        GameDebug.Assert(m_assetRegistry.guidToIndexMap.ContainsKey(spawned.guid), "An entity was spawned but we have no type for that guid?");
+//        GameDebug.Assert(m_assetRegistry.guidToIndexMap.ContainsKey(spawned.guid), "An entity was spawned but we have no type for that guid?");
 
-        var typeId = (ushort)m_assetRegistry.guidToIndexMap[spawned.guid];
+        var typeId = (ushort)spawned.registryId;
         spawned.id = m_network.RegisterEntity(spawned.id, typeId, spawned.predictingPlayerId);
         spawned.name = spawned.name + "_" + spawned.id;
-
-        var serializableArray = spawned.GetComponentsInChildren<INetworkSerializable>();
-        m_entityCollection.Register(spawned.id, entity, serializableArray);
+        m_entityCollection.Register(EntityManager, spawned.id, entity);
+        
 #if UNITY_EDITOR
         if(m_systemRoot != null)
             spawned.transform.SetParent(m_systemRoot.transform);
@@ -37,8 +36,10 @@ public class HandleReplicatedEntitySpawn : InitializeComponentSystem<ReplicatedE
 
 
 [DisableAutoCreation]
-public class HandleReplicatedEntityDataSpawn : InitializeComponentDataSystem<ReplicatedDataEntity>
+public class HandleReplicatedEntityDataSpawn : InitializeComponentDataSystem<ReplicatedDataEntity,HandleReplicatedEntityDataSpawn.Initialized>
 {
+    public struct Initialized : IComponentData{}
+    
     public HandleReplicatedEntityDataSpawn(GameWorld world, NetworkServer network,
         ReplicatedEntityRegistry assetRegistry, ReplicatedEntityCollection entityCollection) : base(world)
     {
@@ -54,11 +55,10 @@ public class HandleReplicatedEntityDataSpawn : InitializeComponentDataSystem<Rep
         spawned.id = m_network.RegisterEntity(spawned.id, (ushort)typeId, spawned.predictingPlayerId);
 //        spawned.name = spawned.name + "_" + spawned.id;
 
-        GameDebug.Assert(typeId < m_assetRegistry.entries.Length,"TypeId:{0} outside range Length:{1}", typeId, m_assetRegistry.entries.Length);
+        GameDebug.Assert(typeId < m_assetRegistry.entries.Count,"TypeId:{0} outside range Length:{1}", typeId, m_assetRegistry.entries.Count);
         GameDebug.Assert(m_assetRegistry.entries[typeId].factory != null,"No valid factory for replicated type:{0}", typeId);
 
-        var serializableArray = m_assetRegistry.entries[typeId].factory.CreateSerializables(EntityManager, entity);
-        m_entityCollection.Register(spawned.id, entity, serializableArray);
+        m_entityCollection.Register(EntityManager, spawned.id, entity);
 
         PostUpdateCommands.SetComponent(entity, spawned);
 
@@ -84,7 +84,7 @@ public class HandleReplicatedEntityDespawn : DeinitializeComponentSystem<Replica
 
     protected override void Deinitialize(Entity entity, ReplicatedEntity component)
     {
-        m_entityCollection.Unregister(component.id);
+        m_entityCollection.Unregister(EntityManager, component.id);
         m_network.UnregisterEntity(component.id);
     }
 
@@ -106,7 +106,7 @@ public class HandleReplicatedEntityDataDespawn : DeinitializeComponentDataSystem
     {
         if(ReplicatedEntityModuleServer.m_showInfo.IntValue > 0)
             GameDebug.Log("HandleReplicatedEntityDataDespawn.Deinitialize entity:" + entity + " type:" + component.typeId + " id:" + component.id);
-        m_entityCollection.Unregister(component.id);
+        m_entityCollection.Unregister(EntityManager, component.id);
         m_network.UnregisterEntity(component.id);
     }
 
@@ -142,10 +142,15 @@ public class ReplicatedEntityModuleServer
             m_entityCollection);
         
         
+        m_UpdateReplicatedOwnerFlag = m_world.GetECSWorld().CreateManager<UpdateReplicatedOwnerFlag>(m_world);
+        m_UpdateReplicatedOwnerFlag.SetLocalPlayerId(-1);
+        
         // Make sure all replicated entities are streamed in
-        for (var i = 0; i < m_assetRegistry.entries.Length; i++)
+        for (var i = 0; i < m_assetRegistry.entries.Count; i++)
         {
             if (m_assetRegistry.entries[i].factory != null)
+                continue;
+            if (m_assetRegistry.entries[i].prefab.guid == "")
                 continue;
             resourceSystem.LoadSingleAssetResource(m_assetRegistry.entries[i].prefab.guid);
         }
@@ -159,6 +164,7 @@ public class ReplicatedEntityModuleServer
         m_world.GetECSWorld().DestroyManager(m_handleDespawn);
         m_world.GetECSWorld().DestroyManager(m_handleDataDespawn);
         
+        m_world.GetECSWorld().DestroyManager(m_UpdateReplicatedOwnerFlag);
             
         if(m_SystemRoot != null)
             GameObject.Destroy(m_SystemRoot);
@@ -177,6 +183,7 @@ public class ReplicatedEntityModuleServer
     {
         m_handleSpawn.Update();
         m_handleDataSpawn.Update();
+        m_UpdateReplicatedOwnerFlag.Update();
     }
 
     public void HandleDespawning()
@@ -209,4 +216,5 @@ public class ReplicatedEntityModuleServer
     private readonly HandleReplicatedEntityDespawn m_handleDespawn;
     private readonly HandleReplicatedEntityDataDespawn m_handleDataDespawn;
     
+    readonly UpdateReplicatedOwnerFlag m_UpdateReplicatedOwnerFlag;
 }

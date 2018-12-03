@@ -40,7 +40,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400048, guid: d8a208e861797f14db629d906d9e98d1, type: 3}
   m_PrefabInstance: {fileID: 2416683450432523354}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3441132737485150667
+--- !u!114 &2144793619028701335
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -49,11 +49,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 2416683450432555658}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
+  m_Script: {fileID: 11500000, guid: 1a1b51c963888964296f7203eb73c860, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  guid: 4359548176124f24ba75a91a5755e199
-  netID: 1f7f9f861ee7f64f849c3d1800227e4d
+  geomtry: {fileID: 2416683450432555766}
+  itemAttachBone: {fileID: 0}
+  uiPrefabs:
+  - {fileID: 114823020095081306, guid: f57cd56866552a946b5f8f093dc7cbdb, type: 3}
+  - {fileID: 114314670124693304, guid: 3f4574358766e6b418b2b923bf6cf408, type: 3}
+  weaponBoneDebug: {fileID: 0}
+  weaponOffsetDebug: {x: 0, y: 0, z: 0}
 --- !u!114 &3992288650454496198
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -86,63 +91,6 @@ MonoBehaviour:
   nextVentIndex: 0
   m_lastGrenadeFuelWorldPos: {x: 0, y: 0, z: 0}
   m_prevAction: 0
---- !u!114 &4864628113382459904
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2416683450432555658}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 29d565454cf9d6d4d9897392b4667659, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  geomery: {fileID: 2416683450432555766}
---- !u!114 &5749053695918601744
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2416683450432555658}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d9950ae7cf068c46a6abc01020cb0c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SerializedData:
-    position: {x: 0, y: 0, z: 0}
-    rotation: 0
-    aimYaw: 0
-    aimPitch: 0
-    moveYaw: 0
-    charLocoState: 0
-    charLocoTick: 0
-    charAction: 0
-    charActionTick: 0
-    damageTick: 0
-    damageDirection: 0
-    sprinting: 0
-    sprintWeight: 0
-    previousCharLocoState: 0
-    groundMoveExitTick: 0
-    moveAngleLocal: 0
-    shootPoseWeight: 0
-    locomotionVector: {x: 0, y: 0}
-    locomotionPhase: 0
-    banking: 0
-    landAnticWeight: 0
-    turnStartAngle: 0
-    turnDirection: 0
-    squashTime: 0
-    squashWeight: 0
-    inAirTime: 0
-    jumpTime: 0
-    simpleTime: 0
-    footIkOffset: {x: 0, y: 0}
-    footIkNormalLeft: {x: 0, y: 0, z: 0}
-    footIkNormaRight: {x: 0, y: 0, z: 0}
 --- !u!114 &7183777438541328760
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9833,7 +9781,7 @@ PrefabInstance:
       objectReference: {fileID: 9000000, guid: 9a473cf544f5f0842badbe82cb09097d, type: 3}
     - target: {fileID: 11400000, guid: d8a208e861797f14db629d906d9e98d1, type: 3}
       propertyPath: skeletonColor.b
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 13700000, guid: d8a208e861797f14db629d906d9e98d1, type: 3}
       propertyPath: m_RenderingLayerMask
@@ -9857,11 +9805,11 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 583df8e4be29f944b8cd0fb8820a5e53, type: 2}
     - target: {fileID: 11400000, guid: d8a208e861797f14db629d906d9e98d1, type: 3}
       propertyPath: skeletonColor.g
-      value: 0.8240806
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: d8a208e861797f14db629d906d9e98d1, type: 3}
       propertyPath: skeletonColor.r
-      value: 1
+      value: 0.96977234
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d8a208e861797f14db629d906d9e98d1, type: 3}

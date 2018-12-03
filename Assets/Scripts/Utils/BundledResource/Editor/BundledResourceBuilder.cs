@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using System.IO;
+using UnityEditor.Build.Pipeline;
+using Object = UnityEngine.Object;
 
 [InitializeOnLoad]
 public class BundledResourceBuilder
 {
     static bool saveAssets;
-    
+
     static BundledResourceBuilder()
     {
         EditorApplication.update += Update;
@@ -22,33 +25,6 @@ public class BundledResourceBuilder
             AssetDatabase.SaveAssets();
             GameDebug.Log("BundledResourceBuilder saving done");
         }
-    }
-
-    public static void UpdateRegistries(bool dry)     
-    {
-        if (dry)
-            Debug.Log("Updating registries");
-        var assets = AssetDatabase.FindAssets("t:" + typeof(RegistryBase).Name);
-        foreach (var a in assets)
-        {
-            var path = AssetDatabase.GUIDToAssetPath(a);
-            Debug.Log("Updating " + path);
-            var handle = AssetDatabase.LoadAssetAtPath<RegistryBase>(path);
-            handle.UpdateRegistry(dry);
-
-            if(!dry)
-                EditorUtility.SetDirty(handle);
-        }
-
-        if (!dry)
-            saveAssets = true;
-    }
-
-    [MenuItem("FPS Sample/Registries/Dryrun update")]
-    public static void DryrunUpdateRegistries()
-    {
-        BuildWindowProgress.Open("Dryrun Registry Update");
-        UpdateRegistries(true);
     }
 
     [MenuItem("FPS Sample/Registries/Test registries")]
@@ -90,8 +66,8 @@ public class BundledResourceBuilder
                         ok = false;
                         Debug.Log("<color=red>ERROR- Registry:" + baseRegistry + " could not be verified</color>");
                     }
-                        
-                    
+
+
                     baseRegistry.GetSingleAssetGUIDs(singleAssetGUIDs, registryRoot.serverBuild);
                     foreach(var g in singleAssetGUIDs)
                     {
@@ -169,7 +145,7 @@ public class BundledResourceBuilder
                 var baseRegistry = registry as RegistryBase;
                 if (baseRegistry != null)
                 {
-                    baseRegistry.GetSingleAssetGUIDs(singleAssetGUIDs, registryRoot.serverBuild);    
+                    baseRegistry.GetSingleAssetGUIDs(singleAssetGUIDs, registryRoot.serverBuild);
                 }
             }
 
@@ -195,9 +171,14 @@ public class BundledResourceBuilder
                 builds.Add(build);
                 singleAssetBundlesHandled.Add(singleAssetBundleGUID);
             }
+            
 
-
+            // TODO (mogensh) Settle on what buildpipline to use. LegacyBuildPipeline uses SBP internally and is faster.   
+//            LegacyBuildPipeline.BuildAssetBundles(bundlePath, builds.ToArray(), assetBundleOptions, target);
             BuildPipeline.BuildAssetBundles(bundlePath, builds.ToArray(), assetBundleOptions, target);
+            
+            // Set write time so tools can show time since build
+            Directory.SetLastWriteTime(bundlePath, DateTime.Now);
         }
     }
 }

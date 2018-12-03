@@ -10,7 +10,6 @@ using UnityEngine.Jobs;
 using UnityEngine.Profiling;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(HitCollisionOwner))]
 public class HitCollisionHistory : MonoBehaviour
 {
     // Collider data
@@ -37,10 +36,10 @@ public class HitCollisionHistory : MonoBehaviour
         public float boundsHeight = 1.0f;
     }
 
-    [NonSerialized] public Settings settings;
+    public Settings settings;
+    
     [NonSerialized] public GameObject collidersRoot; 
-    [NonSerialized] public HitCollisionOwner hitCollisionOwner;
-    [NonSerialized] public Entity entity;
+    [NonSerialized] public Entity hitCollisionOwner;
     [NonSerialized] public ColliderData[] colliders;
     [NonSerialized] public TransformAccessArray colliderParents;
     
@@ -58,27 +57,10 @@ public class HitCollisionHistory : MonoBehaviour
 #if UNITY_EDITOR    
     private void OnDisable()
     {
-        Shutdown();
-    }
-#endif    
-
-    public void Shutdown()
-    {
         if(colliderParents.isCreated)
             colliderParents.Dispose();
-        
-        if (colliders == null)
-            return;
-
-        for (var i = 0; i < colliders.Length; i++)
-        {
-            var go = colliders[i].collider.gameObject;
-            DestroyImmediate(go);
-        }
-        DestroyImmediate(collidersRoot);
-        colliders = null;
     }
-    
+#endif    
 
     public int GetStateIndex(int tick)
     {
@@ -190,7 +172,7 @@ public class HitCollisionHistory : MonoBehaviour
         }
     }
     
-    static bool IsRelevant(HitCollisionHistory hitCollHistory, int flagMask, Entity forceExcluded, Entity forceIncluded)
+    static bool IsRelevant(EntityManager entityManager, HitCollisionHistory hitCollHistory, int flagMask, Entity forceExcluded, Entity forceIncluded)
     {
 
         if (hitCollHistory.hitCollisionOwner == null)
@@ -203,18 +185,19 @@ public class HitCollisionHistory : MonoBehaviour
             return false;
 
         Profiler.BeginSample("IsRelevant");
-       
-        var valid = (forceIncluded != Entity.Null && forceIncluded == hitCollHistory.entity) ||
-                    (hitCollHistory.hitCollisionOwner.collisionEnabled &&
-                     (hitCollHistory.hitCollisionOwner.colliderFlags & flagMask) != 0 &&
-                     !(forceExcluded != Entity.Null && forceExcluded == hitCollHistory.entity));
+
+        var hitCollisionOwner = entityManager.GetComponentObject<HitCollisionOwner>(hitCollHistory.hitCollisionOwner);
+        var valid = (forceIncluded != Entity.Null && forceIncluded == hitCollHistory.hitCollisionOwner) ||
+                    (hitCollisionOwner.collisionEnabled &&
+                     (hitCollisionOwner.colliderFlags & flagMask) != 0 &&
+                     !(forceExcluded != Entity.Null && forceExcluded == hitCollHistory.hitCollisionOwner));
         
         Profiler.EndSample();
                                                            
         return valid;
     }
     
-    public static void PrepareColliders(ref ComponentArray<HitCollisionHistory> collections, int tick, int mask, Entity forceExcluded, Entity forceIncluded, ray ray, float rayDist)
+    public static void PrepareColliders(EntityManager entityManager, ref ComponentArray<HitCollisionHistory> collections, int tick, int mask, Entity forceExcluded, Entity forceIncluded, ray ray, float rayDist)
     {
         Profiler.BeginSample("HitCollisionHistory.PrepareColliders [Ray]");
         
@@ -222,7 +205,7 @@ public class HitCollisionHistory : MonoBehaviour
         for (var i = 0; i < collections.Length; i++)
         {
             var collection = collections[i];
-            if(!IsRelevant(collection, mask, forceExcluded, forceIncluded))
+            if(!IsRelevant(entityManager, collection, mask, forceExcluded, forceIncluded))
             {
                 collection.DisableHitCollision();
                 continue;
@@ -254,14 +237,14 @@ public class HitCollisionHistory : MonoBehaviour
         Profiler.EndSample();
     }
     
-    public static void PrepareColliders(ref ComponentArray<HitCollisionHistory> collections, int tick, int mask, Entity forceExcluded, Entity forceIncluded, ray ray, float rayDist, float radius)
+    public static void PrepareColliders(EntityManager entityManager,ref ComponentArray<HitCollisionHistory> collections, int tick, int mask, Entity forceExcluded, Entity forceIncluded, ray ray, float rayDist, float radius)
     {
         Profiler.BeginSample("HitCollisionHistory.PrepareColliders [SphereCast]");
 
         for (var i = 0; i < collections.Length; i++)
         {
             var collection = collections[i];
-            if(!IsRelevant(collection, mask, forceExcluded, forceIncluded))
+            if(!IsRelevant(entityManager, collection, mask, forceExcluded, forceIncluded))
             {
                 collection.DisableHitCollision();
                 continue;
@@ -298,14 +281,14 @@ public class HitCollisionHistory : MonoBehaviour
         Profiler.EndSample();
     }
 
-    public static void PrepareColliders(ref ComponentArray<HitCollisionHistory> collections, int tick, int mask, Entity forceExcluded, Entity forceIncluded, sphere sphere)
+    public static void PrepareColliders(EntityManager entityManager,ref ComponentArray<HitCollisionHistory> collections, int tick, int mask, Entity forceExcluded, Entity forceIncluded, sphere sphere)
     {
         Profiler.BeginSample("HitCollisionHistory.PrepareColliders [Sphere]");
         
         for (var i = 0; i < collections.Length; i++)
         {
             var collection = collections[i];
-            if(!IsRelevant(collection, mask, forceExcluded, forceIncluded))
+            if(!IsRelevant(entityManager, collection, mask, forceExcluded, forceIncluded))
             {
                 collection.DisableHitCollision();
                 continue;

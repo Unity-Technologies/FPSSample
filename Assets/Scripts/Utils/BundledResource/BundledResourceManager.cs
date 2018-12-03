@@ -42,9 +42,9 @@ public class BundledResourceManager  {
             var bundlePath = GetBundlePath();
             var assetPath = bundlePath + "/" + registryName;
 
-            m_assetRegistryRootBundle = AssetBundle.LoadFromFile(assetPath);     
             if (verbose.IntValue > 0)
-                GameDebug.Log("resource: loading bundle: " + assetPath);
+                GameDebug.Log("resource: loading bundle (" + assetPath + ")");
+            m_assetRegistryRootBundle = AssetBundle.LoadFromFile(assetPath);     
 
             var registryRoots = m_assetRegistryRootBundle.LoadAllAssets<AssetRegistryRoot>();
 

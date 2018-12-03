@@ -151,15 +151,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b2d570ad5f01478498e1292d4f9409d1, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -227.568
+      value: -90.00001
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b2d570ad5f01478498e1292d4f9409d1, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 31.495987
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b2d570ad5f01478498e1292d4f9409d1, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -99.721985
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: b2d570ad5f01478498e1292d4f9409d1, type: 3}
       propertyPath: m_Name
@@ -196,6 +196,18 @@ PrefabInstance:
     - target: {fileID: 2300008, guid: b2d570ad5f01478498e1292d4f9409d1, type: 3}
       propertyPath: m_RenderingLayerMask
       value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 100012, guid: b2d570ad5f01478498e1292d4f9409d1, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 126
+      objectReference: {fileID: 0}
+    - target: {fileID: 100008, guid: b2d570ad5f01478498e1292d4f9409d1, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 126
+      objectReference: {fileID: 0}
+    - target: {fileID: 100010, guid: b2d570ad5f01478498e1292d4f9409d1, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 126
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b2d570ad5f01478498e1292d4f9409d1, type: 3}

@@ -18,9 +18,8 @@ namespace NetcodeTests
             m_Id = id;
         }
 
-        public int Update()
+        public void Update()
         {
-            return 0;
         }
 
         public bool NextEvent(ref TransportEvent e)

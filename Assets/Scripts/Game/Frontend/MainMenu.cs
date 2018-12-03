@@ -13,15 +13,6 @@ public class MainMenu : MonoBehaviour
 
         public TMPro.TextMeshProUGUI buildId;
 
-        // Player menu
-        public InputField playername;
-
-        // Join menu
-        public ScrollRect servers;
-        public Text selectedServer;
-        public Button connectButton;
-        public InputField serverAddress;
-
         // Create menu
         public InputField servername;
         public Dropdown gamemode;
@@ -31,6 +22,8 @@ public class MainMenu : MonoBehaviour
     }
 
     public UIBinding uiBinding;
+    public JoinMenu joinMenu;
+    public OptionsMenu optionMenu;
 
     // Currently active submenu, used by menu backdrop to track what is going on
     public int activeSubmenuNumber;
@@ -45,7 +38,7 @@ public class MainMenu : MonoBehaviour
         {
             foreach(var a in GetComponentsInChildren<MenuButton>(true))
             {
-                var enabled = a.ingameOption || menuShowing == ClientFrontend.MenuShowing.Main;
+                var enabled = (a.ingameOption && menuShowing == ClientFrontend.MenuShowing.Ingame) || (a.mainmenuOption && menuShowing == ClientFrontend.MenuShowing.Main);
                 a.gameObject.SetActive(enabled);
             }
             // Close any open menu
@@ -61,8 +54,6 @@ public class MainMenu : MonoBehaviour
     public void Awake()
     {
         m_CanvasGroup = GetComponent<CanvasGroup>();
-
-        m_ListItemTemplate = uiBinding.servers.content.GetChild(0).gameObject;
 
         uiBinding.gamemode.options.Clear();
         uiBinding.gamemode.options.Add(new Dropdown.OptionData("Assault"));
@@ -84,15 +75,18 @@ public class MainMenu : MonoBehaviour
         uiBinding.buildId.text = Game.game.buildId;
     }
 
+    public void UpdateMenus()
+    {
+        if(joinMenu.gameObject.activeInHierarchy)
+            joinMenu.UpdateMenu();
+
+        if(optionMenu.gameObject.activeInHierarchy)
+            optionMenu.UpdateMenu();
+    }
+
     internal void SetAlpha(float v)
     {
         m_CanvasGroup.alpha = v;
-    }
-
-    public void UpdateInfo(string playerName, IList<ServerInfo> serverInfos, string gameMessage)
-    {
-        if(!uiBinding.playername.isFocused)
-            uiBinding.playername.text = ClientGameLoop.clientPlayerName.Value;
     }
 
     // Called from the Menu/Button_* UI.Buttons
@@ -112,32 +106,19 @@ public class MainMenu : MonoBehaviour
         }
     }
 
-    public void OnNameChanged(UnityEngine.UI.InputField field)
-    {
-        Console.EnqueueCommand("client.playername \"" + field.text + '"');
-    }
-
     public void OnQuitGame()
     {
         Console.EnqueueCommand("quit");
     }
 
-    public void OnJoinGame()
+    public void OnLeaveGame()
     {
-        Console.EnqueueCommand("connect " + uiBinding.serverAddress.text);
-    }
-
-    public void OnFindMatch()
-    {
-        Console.EnqueueCommand("matchmake");
+        Console.EnqueueCommand("disconnect");
     }
 
     public void OnCreateGame()
     {
         var servername = uiBinding.servername.text;
-
-        // TODO : Fix console handling of whitespaces
-        servername = servername.Replace(" ", "");
 
         var levelname = uiBinding.levelname.options[uiBinding.levelname.value].text;
 
@@ -180,9 +161,9 @@ public class MainMenu : MonoBehaviour
             }
 
             process.StartInfo.UseShellExecute = false;
-            process.StartInfo.Arguments = " -batchmode -nographics -consolerestorefocus" +
+            process.StartInfo.Arguments = " -batchmode -nographics -noboot -consolerestorefocus" +
                                           " +serve " + levelname + " +game.modename " + gamemode.ToLower() +
-                                          " +servername " + servername;
+                                          " +servername \"" + servername + "\"";
             if (process.Start())
             {
                 Console.EnqueueCommand("connect localhost");
@@ -191,102 +172,11 @@ public class MainMenu : MonoBehaviour
         else
         {
             Console.EnqueueCommand("serve " + levelname);
-            Console.EnqueueCommand("servername " + servername);
+            Console.EnqueueCommand("servername \"" + servername + "\"");
         }
-    }
-
-    public void OnServerItemPointerClick(BaseEventData e)
-    {
-        var item = ((PointerEventData)e).pointerPress;
-        for (int i = 0; i < m_Options.Count; ++i)
-        {
-            if (m_Options[i].listItem == item)
-            {
-                SetSelectedOption(m_Options[i]);
-                return;
-            }
-        }
-    }
-
-    OptionData FindOption(ServerInfo info)
-    {
-        for(int i = 0; i < m_Options.Count; ++i)
-        {
-            if (m_Options[i].info == info)
-                return m_Options[i];
-        }
-        return null;
-    }
-
-    void SetSelectedOption(OptionData option)
-    {
-        if (m_SelectedOption == null || m_SelectedOption != option)
-        {
-            if(m_SelectedOption != null)
-                SetListItemColor(m_SelectedOption, Color.white);
-
-            m_SelectedOption = option;
-            if (m_SelectedOption != null)
-            {
-                uiBinding.selectedServer.text = m_SelectedOption.info.Address;
-                SetListItemColor(m_SelectedOption, new Color(0, 255, 202));
-            }
-            else
-            {
-                uiBinding.selectedServer.text = "";
-            }
-        }
-    }
-
-    void SetListItemColor(OptionData data, Color color)
-    {
-        data.serverNameField.color = color;
-        data.serverModeField.color = color;
-        data.serverPlayersField.color = color;
-        data.serverPingField.color = color;
-    }
-
-    void UpdateData(OptionData data)
-    {
-        if (data.info.LastSeenTime > data.lastUpdated)
-        {
-            data.serverNameField.text = data.info.Name;
-            data.serverModeField.text = data.info.GameMode;
-            data.serverPlayersField.text = data.info.Players + "/" + data.info.MaxPlayers;
-            data.serverPingField.text = "-";
-            data.lastUpdated = data.info.LastSeenTime;
-        }
-    }
-
-    void PositionItem(GameObject item, int index)
-    {
-        var trans = (RectTransform)item.transform;
-        trans.localPosition = new Vector3(0.0f, -128.0f * index, 0.0f);
-
-        var image = item.GetComponent<Image>();
-        var color = image.color;
-        color.a = index % 2 == 0 ? 1/16 : 1/8;
-        image.color = color;
-    }
-
-    class OptionData
-    {
-        public ServerInfo info;
-        public GameObject listItem;
-
-        public float lastUpdated;
-
-        public Text serverNameField;
-        public Text serverModeField;
-        public Text serverPlayersField;
-        public Text serverPingField;
     }
 
     static readonly string k_AutoBuildPath = "AutoBuild";
     static readonly string k_AutoBuildExe = "AutoBuild.exe";
 
-    GameObject m_ListItemTemplate;
-
-    OptionData m_SelectedOption;
-    List<OptionData> m_Options = new List<OptionData>();
 }

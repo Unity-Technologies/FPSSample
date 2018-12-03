@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-public class UserCommandComponent: MonoBehaviour, INetworkSerializable    
+public class UserCommandComponent: MonoBehaviour, INetSerialized    
 {   
     [NonSerialized] public UserCommand command;
     [NonSerialized] public UserCommand prevCommand;

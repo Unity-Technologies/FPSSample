@@ -17,9 +17,9 @@ public class HandleTwistSpawns : InitializeComponentGroupSystem<Twist, HandleTwi
     
     public HandleTwistSpawns(GameWorld world) : base(world) { }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         Group = GetComponentGroup(typeof(Twist), ComponentType.Subtractive<DespawningEntity>());
     }
 
@@ -38,9 +38,9 @@ public class HandleTwistDespawns : DeinitializeComponentGroupSystem<Twist>
     
     public HandleTwistDespawns(GameWorld world) : base(world) { }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         Group = GetComponentGroup(typeof(Twist), ComponentType.Subtractive<DespawningEntity>());
     }
     

@@ -15,24 +15,32 @@ public class UpdateSpectatorCamControl : BaseComponentSystem
         public ComponentArray<SpectatorCamControl> spectatorCamCtrls;
     }
 
-    [Inject]
-    GroupType Group;
+
+    ComponentGroup Group;
     
     public UpdateSpectatorCamControl(GameWorld world) : base(world)
+    {}
+
+    protected override void OnCreateManager()
     {
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(LocalPlayer), typeof(PlayerCameraSettings), typeof(SpectatorCamControl));
     }
 
     protected override void OnUpdate()
     {
-        for (var i = 0; i < Group.localPlayers.Length; i++)
+        var localPlayerArray = Group.GetComponentArray<LocalPlayer>();
+        var cameraSettingsArray = Group.GetComponentArray<PlayerCameraSettings>();
+        
+        for (var i = 0; i < localPlayerArray.Length; i++)
         {
-            var controlledEntity = Group.localPlayers[i].controlledEntity;
+            var controlledEntity = localPlayerArray[i].controlledEntity;
             
             if (controlledEntity == Entity.Null || !EntityManager.HasComponent<SpectatorCam>(controlledEntity))
                 continue;
 
             var spectatorCam = EntityManager.GetComponentObject<SpectatorCam>(controlledEntity);
-            var cameraSettings = Group.cameraSettings[i];
+            var cameraSettings = cameraSettingsArray[i];
             cameraSettings.isEnabled = true;
             cameraSettings.position = spectatorCam.position;
             cameraSettings.rotation = spectatorCam.rotation;

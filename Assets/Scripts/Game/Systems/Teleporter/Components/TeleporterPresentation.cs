@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class TeleporterPresentation : MonoBehaviour, INetworkSerializable
+public class TeleporterPresentation : MonoBehaviour, INetSerialized
 {
     [NonSerialized] public int effectTick;
     

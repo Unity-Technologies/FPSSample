@@ -148,7 +148,6 @@ public class ChatSystemServer
 
     long m_StartTime;
 
-    //Regex m_CommandRegex = new Regex(@"^[/|\\]([^\s]*)\s*(.*)\s*");
     Regex m_CommandRegex = new Regex(@"^/(\w+)\s+(.*)"); // e.g. "/all hey"
     Regex m_TargetRegex = new Regex(@"^(?:""(.*)""|([^\s]*))\s*(.+)"); // e.g. "some user" hey there
 

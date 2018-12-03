@@ -15,9 +15,10 @@ public class AnimGraph_AimDrag : AnimGraphAsset
 //    public NativeQueue<Quaternion> m_DragHistory;
 
 
-	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+	    Entity animStateOwner)
 	{
-		return new Instance(entityManager, owner, graph, this);
+		return new Instance(entityManager, owner, graph, animStateOwner, this);
 	}
 	
     class Instance : IAnimGraphInstance
@@ -26,11 +27,12 @@ public class AnimGraph_AimDrag : AnimGraphAsset
 
         
         
-        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_AimDrag settings)
+        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_AimDrag settings)
         {
             m_settings = settings;
             m_EntityManager = entityManager;
             m_Owner = owner;
+            m_AnimStateOwner = animStateOwner;
             m_graph = graph;
     
             GameDebug.Assert(entityManager.HasComponent<Animator>(owner),"Owner has no Animator component");
@@ -92,7 +94,7 @@ public class AnimGraph_AimDrag : AnimGraphAsset
     
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             var lookDir = Quaternion.Euler(new Vector3(-animState.aimPitch, animState.aimYaw, 0)) * Vector3.down;
             var job = m_AimDragPlayable.GetJobData<AimDragJob>();            
             job.Update(lookDir, m_settings.aimDragSettings, animState, m_AimDragPlayable);
@@ -102,6 +104,7 @@ public class AnimGraph_AimDrag : AnimGraphAsset
         AnimGraph_AimDrag m_settings;
         EntityManager m_EntityManager;
         Entity m_Owner;
+        Entity m_AnimStateOwner;
         PlayableGraph m_graph;
         AnimationScriptPlayable m_AimDragPlayable;
         AnimationScriptPlayable m_IKPlayable;

@@ -63,7 +63,8 @@ MonoBehaviour:
   height: 5
   captureIndex: 0
   captureTime: 10
-  progress: {fileID: 0}
+  spawns: []
+  animator: {fileID: 0}
 --- !u!114 &114618805322151538
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,4 +90,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   guid: f5a96fee457b4d9429a9fdaebd2b70a1
-  netID: be00f16433286f4d989012510360e5a3
+  netID: 070346382ecd8941a7fdc09049234741
+  registryId: 16

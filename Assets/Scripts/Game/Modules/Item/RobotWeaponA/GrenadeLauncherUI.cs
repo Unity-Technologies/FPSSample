@@ -10,6 +10,10 @@ public class GrenadeLauncherUI : AbilityUI
 
     public override void UpdateAbilityUI(EntityManager entityManager, ref GameTime time)
     {
+        var character = entityManager.GetComponentObject<Character>(abilityOwner);
+        var ability = character.FindAbilityWithComponent(entityManager,typeof(Ability_GrenadeLauncher.PredictedState));
+        GameDebug.Assert(ability != Entity.Null,"AbilityController does not own a Ability_GrenadeLauncher ability");
+
         var state = entityManager.GetComponentData<Ability_GrenadeLauncher.PredictedState>(ability);
         var settings = entityManager.GetComponentData<Ability_GrenadeLauncher.Settings>(ability);
 

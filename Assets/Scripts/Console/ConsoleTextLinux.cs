@@ -14,7 +14,7 @@ public class ConsoleTextLinux : IConsoleUI
 {
     bool IsDumb()
     {
-        return System.Console.IsInputRedirected || System.Console.IsOutputRedirected;
+        return System.Console.BufferWidth == 0 || System.Console.IsInputRedirected || System.Console.IsOutputRedirected;
     }
 
     void ReaderThread()

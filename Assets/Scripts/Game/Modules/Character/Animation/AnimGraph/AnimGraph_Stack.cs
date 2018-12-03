@@ -12,19 +12,21 @@ public class AnimGraph_Stack : AnimGraphAsset
 {
     public List<AnimGraphAsset> rootNodes = new List<AnimGraphAsset>();
 
-    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner)
     {
-        var instance = new GraphInstance(entityManager, owner, graph, this);
+        var instance = new GraphInstance(entityManager, owner, graph, animStateOwner, this);
         return instance;
     }
 
     class GraphInstance : IAnimGraphInstance, IGraphLogic
     {
-        public GraphInstance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_Stack graphAsset)
+        public GraphInstance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner,
+            AnimGraph_Stack graphAsset)
         {
             for (var i = 0; i < graphAsset.rootNodes.Count; i++)
             {
-                var subGraph = graphAsset.rootNodes[i].Instatiate(entityManager, owner, graph);
+                var subGraph = graphAsset.rootNodes[i].Instatiate(entityManager, owner, graph, animStateOwner);
                 subGraph.SetPlayableInput(0, m_RootPlayable, 0);
 
                 var outputPort = 0;

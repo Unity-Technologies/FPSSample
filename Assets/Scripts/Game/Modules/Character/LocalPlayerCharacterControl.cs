@@ -1,18 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using Unity.Collections;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
-using UnityEngine.Analytics;
-using UnityEngine.Assertions.Must;
+using UnityEditor;
 
-public enum CameraMode
-{
-    Undefined,
-    FirstPerson,
-    ThirdPerson,
-    FreeCam,
-}
 
 [RequireComponent(typeof(LocalPlayer))]
 [RequireComponent(typeof(PlayerCameraSettings))]
@@ -26,8 +16,6 @@ public class LocalPlayerCharacterControl : MonoBehaviour
     public CharacterHealthUI healthUI;
     public IngameHUD hud;
 
-    public CameraMode cameraMode;
-
     public int lastDamageInflictedTick;
     public int lastDamageReceivedTick;
 
@@ -37,7 +25,7 @@ public class LocalPlayerCharacterControl : MonoBehaviour
     {
         public Entity char3P;
         public Entity char1P;
-        public List<Entity> items = new List<Entity>();
+        public List<CharPresentation> presentations = new List<CharPresentation>();
     }
 
     public FirstPersonData firstPerson = new FirstPersonData(); 
@@ -48,24 +36,21 @@ public class LocalPlayerCharacterControl : MonoBehaviour
 public class UpdateCharacter1PSpawn : BaseComponentSystem  
 {   
     ComponentGroup Group;
-    ComponentGroup ItemGroup;    
     
     public UpdateCharacter1PSpawn(GameWorld world, BundledResourceManager resourceManager) : base(world)
     {
         m_ResourceManager = resourceManager;
     }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         Group = GetComponentGroup(typeof(LocalPlayer), typeof(LocalPlayerCharacterControl));
-        ItemGroup = GetComponentGroup(typeof(CharacterItem));
     }
 
 
     private List<LocalPlayerCharacterControl> charControlBuffer = new List<LocalPlayerCharacterControl>(2);
     private List<Entity> entityBuffer = new List<Entity>(2);
-    private List<Entity> itemEntityBuffer = new List<Entity>(8);
     protected override void OnUpdate()
     {
         charControlBuffer.Clear();
@@ -77,7 +62,7 @@ public class UpdateCharacter1PSpawn : BaseComponentSystem
             var localPlayer = localPlayerArray[i];
             var characterControl = charControlArray[i];
             
-            var controlledChar3PEntity = EntityManager.Exists(localPlayer.controlledEntity) && EntityManager.HasComponent<CharacterPredictedState>(localPlayer.controlledEntity)
+            var controlledChar3PEntity = EntityManager.Exists(localPlayer.controlledEntity) && EntityManager.HasComponent<Character>(localPlayer.controlledEntity)
                 ? localPlayer.controlledEntity
                 : Entity.Null;
 
@@ -90,103 +75,55 @@ public class UpdateCharacter1PSpawn : BaseComponentSystem
 
         if (charControlBuffer.Count > 0)
         {
-            var itemArray = ItemGroup.GetComponentArray<CharacterItem>();
-            var itemEntityArray = ItemGroup.GetEntityArray();
 
             for (var i = 0; i < charControlBuffer.Count; i++)
             {
                 var charCtrl = charControlBuffer[i];
                 var charClientEntity = entityBuffer[i];
-                
-                // Get items owned by character
-                itemEntityBuffer.Clear();
-                for (var j = 0; j < itemArray.Length; j++)
+
+                // Despawn all previous presentation
+                foreach (var charPresentation in charCtrl.firstPerson.presentations)
                 {
-                    var item = itemArray[j];
-                    if (item.character == charClientEntity)
-                        itemEntityBuffer.Add(itemEntityArray[j]);
+                    m_world.RequestDespawn(charPresentation.gameObject, PostUpdateCommands);
                 }
-                
-                // Despawn current firstperson
-                if (charCtrl.firstPerson.char1P != Entity.Null)
-                {
-                    GameDebug.Log("Despawning 1P char and items");
-                    
-                    var go = EntityManager.GetComponentObject<Transform>(charCtrl.firstPerson.char1P).gameObject;
-                    m_world.RequestDespawn(go, PostUpdateCommands);
-        
-                    
-                    foreach (var entity in charCtrl.firstPerson.items)
-                    {
-                        var item = EntityManager.GetComponentObject<Transform>(entity).gameObject;
-                
-                        // In preview mode the server code will despawn all items so we need to check it isnt already requested
-                        if(!EntityManager.HasComponent<DespawningEntity>(entity)) 
-                            m_world.RequestDespawn(item, PostUpdateCommands);
-                    }
-                    
-                    charCtrl.firstPerson.items.Clear();
-                    charCtrl.firstPerson.char1P = Entity.Null;
-                }
-        
+                charCtrl.firstPerson.presentations.Clear();
+                charCtrl.firstPerson.char1P = Entity.Null;
                 charCtrl.firstPerson.char3P = charClientEntity;
-                    
-                
 
-
-                // Spawn new
+                // TODO (mogensh) do all creation of character presentation one place ?
+                // Spawn new 1P Presentation
                 if (charClientEntity != Entity.Null)
                 {
                     GameDebug.Log("Spawning 1P char and items");
 
+                    var character = EntityManager.GetComponentObject<Character>(charClientEntity);
         
                     // Create 1P character
-                    {
-                        var replicatedEntity = EntityManager.GetComponentObject<ReplicatedEntity>(charClientEntity);
-                        var registry = m_ResourceManager.GetResourceRegistry<CharacterTypeRegistry>();
-                        var registryIndex = registry.GetIndexByClientGUID(replicatedEntity.guid);
-                        GameDebug.Assert(registryIndex != -1);
-                        var char1PGUID = registry.entries[registryIndex].prefab1P.guid;
-                        if (char1PGUID != "")
-                        {
-                            var prefab1P = m_ResourceManager.LoadSingleAssetResource(char1PGUID) as GameObject;
-                            var gameObjectEntity = m_world.Spawn<GameObjectEntity>(prefab1P);
-                            var char1P = EntityManager.GetComponentObject<Character1P>(gameObjectEntity.Entity);
-                            char1P.character = charClientEntity;
-                            charCtrl.firstPerson.char1P = gameObjectEntity.Entity;
-                        }
-                    }
+                    var char1PGUID = character.heroTypeData.character.prefab1P.guid;
+                    var prefab1P = m_ResourceManager.LoadSingleAssetResource(char1PGUID) as GameObject;
+                    var char1PGOE = m_world.Spawn<GameObjectEntity>(prefab1P);
+                    charCtrl.firstPerson.char1P = char1PGOE.Entity;
+
+                    var char1PEntity = char1PGOE.Entity;
+                    var char1PPresentation = EntityManager.GetComponentObject<CharPresentation>(char1PEntity);
+                    char1PPresentation.character = charClientEntity;
+                    char1PPresentation.updateTransform = false;
+                    charCtrl.firstPerson.presentations.Add(char1PPresentation);
                     
                     // Create 1P items
+                    foreach (var itemEntry in character.heroTypeData.items)
                     {
-                        for (var j = 0; j < itemEntityBuffer.Count; j++)
+                        var item1PGUID = itemEntry.itemType.prefab1P.guid;
+                        if (item1PGUID != "")
                         {
-                            var itemEntity = itemEntityBuffer[j];
+                            var itemPrefab1P = m_ResourceManager.LoadSingleAssetResource(item1PGUID) as GameObject;
+                            var itemGOE = m_world.Spawn<GameObjectEntity>(itemPrefab1P);
+                            var itemEntity = itemGOE.Entity;
                             
-                            var replicatedEntity = EntityManager.GetComponentObject<ReplicatedEntity>(itemEntity);
-                            var itemGUID = replicatedEntity.guid;
-                            var itemRegistry = m_ResourceManager.GetResourceRegistry<ItemRegistry>();
-                            var itemDefIndex = itemRegistry.GetIndexByClientGUID(itemGUID);
-                            if (itemDefIndex != -1)
-                            {
-                                var item1PGUID = itemRegistry.entries[itemDefIndex].prefab1P.guid;
-                                if (item1PGUID != "")
-                                {
-                                    var itemPrefab1P = m_ResourceManager.LoadSingleAssetResource(item1PGUID) as GameObject;
-                                    var gameObejctEntity = m_world.Spawn<GameObjectEntity>(itemPrefab1P);
-                                    
-                                    var item = EntityManager.GetComponentObject<CharacterItem>(gameObejctEntity.Entity);
-                                    item.character = charClientEntity;
-                                        
-                                    var item1P = EntityManager.GetComponentObject<CharacterItem1P>(gameObejctEntity.Entity);
-                                    item1P.item = itemEntity;
-                                    item1P.character1P = charCtrl.firstPerson.char1P;
-                                    
-                                    
-                                    
-                                    charCtrl.firstPerson.items.Add(gameObejctEntity.Entity);
-                                }
-                            }
+                            var itemPresentation = EntityManager.GetComponentObject<CharPresentation>(itemEntity);
+                            itemPresentation.character = charClientEntity;
+                            itemPresentation.attachToPresentation = char1PEntity;
+                            charCtrl.firstPerson.presentations.Add(itemPresentation);
                         }
                     }
                 }
@@ -201,8 +138,11 @@ public class UpdateCharacter1PSpawn : BaseComponentSystem
 
 
 [DisableAutoCreation]
-public class UpdateCharacterCamera : BaseComponentSystem<LocalPlayer,LocalPlayerCharacterControl,PlayerCameraSettings> 
-{   
+public class UpdateCharacterCamera : BaseComponentSystem<LocalPlayer,LocalPlayerCharacterControl,PlayerCameraSettings>
+{
+    private const float k_default3PDisst = 2.5f;
+    private float camDist3P = k_default3PDisst; 
+    
     public UpdateCharacterCamera(GameWorld world) : base(world) {}
 
     public void ToggleFOrceThirdPerson()   
@@ -212,7 +152,9 @@ public class UpdateCharacterCamera : BaseComponentSystem<LocalPlayer,LocalPlayer
 
     protected override void Update(Entity entity, LocalPlayer localPlayer, LocalPlayerCharacterControl characterControl, PlayerCameraSettings cameraSettings)
     {
-        if (localPlayer.controlledEntity == Entity.Null || !EntityManager.HasComponent<CharacterPredictedState>(localPlayer.controlledEntity))
+    
+        
+        if (localPlayer.controlledEntity == Entity.Null || !EntityManager.HasComponent<Character>(localPlayer.controlledEntity))
         {
             controlledEntity = Entity.Null;
             return;
@@ -224,12 +166,12 @@ public class UpdateCharacterCamera : BaseComponentSystem<LocalPlayer,LocalPlayer
             return;
         }
 
-        GameDebug.Assert(EntityManager.HasComponent<CharAnimState>(localPlayer.controlledEntity),"Controlled entity has no animstate");
+        GameDebug.Assert(EntityManager.HasComponent<PresentationState>(localPlayer.controlledEntity),"Controlled entity has no animstate");
 
         var character = EntityManager.GetComponentObject<Character>(localPlayer.controlledEntity);
-        var charPredictedState = EntityManager.GetComponentObject<CharacterPredictedState>(localPlayer.controlledEntity);
+        var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(localPlayer.controlledEntity);
         
-        var animState = EntityManager.GetComponentData<CharAnimState>(localPlayer.controlledEntity);
+        var animState = EntityManager.GetComponentData<PresentationState>(localPlayer.controlledEntity);
         var character1P = EntityManager.GetComponentObject<Character1P>(characterControl.firstPerson.char1P);
 
         // Check if this is first time update is called with this controlled entity
@@ -240,27 +182,17 @@ public class UpdateCharacterCamera : BaseComponentSystem<LocalPlayer,LocalPlayer
             
         }            
 
-        // Update camera mode
-        var newCamMode = CameraMode.FreeCam;
-        if (charPredictedState != null)
-        {
-            var characterEntity = charPredictedState.gameObject.GetComponent<GameObjectEntity>().Entity;
-            var healthState = EntityManager.GetComponentObject<HealthState>(characterEntity);
-            var isAlive = healthState.health > 0;
-            newCamMode = isAlive ? CameraMode.FirstPerson : CameraMode.ThirdPerson;
-        }
-        if (forceThirdPerson)
-        {
-            newCamMode = CameraMode.ThirdPerson;
-        }
-        characterControl.cameraMode = newCamMode;
-
-        
         // Update character visibility
-        var thirdPerson = characterControl.cameraMode == CameraMode.ThirdPerson;
-        
-        character.isVisible = thirdPerson;
-        character1P.isVisible = !thirdPerson;
+        var camProfile = forceThirdPerson ? CameraProfile.ThirdPerson : charPredictedState.cameraProfile; 
+        var thirdPerson = camProfile != CameraProfile.FirstPerson;
+        foreach (var charPress in character.presentations)
+        {
+            charPress.SetVisible(thirdPerson);
+        }
+        foreach (var charPress in characterControl.firstPerson.presentations)
+        {
+            charPress.SetVisible(!thirdPerson);
+        }
       
         // Update camera settings
         var userCommand = EntityManager.GetComponentObject<UserCommandComponent>(localPlayer.controlledEntity);
@@ -276,43 +208,64 @@ public class UpdateCharacterCamera : BaseComponentSystem<LocalPlayer,LocalPlayer
         var speed = targetFOV > cameraSettings.fieldOfView ? settings.FOVInceraetSpeed : settings.FOVDecreaseSpeed;
         cameraSettings.fieldOfView = Mathf.MoveTowards(cameraSettings.fieldOfView, targetFOV, speed);
         
-        switch (characterControl.cameraMode)
+        switch (camProfile)
         {
-            case CameraMode.FirstPerson:
-
-                // Set camera position and adjust 1P char. As 1P char is scaled we need to "up-scale" camera
-                // animation to world space and adjust char1P position accordingly
+            case CameraProfile.FirstPerson:
+            {
+                var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight;
+                
+                // Set camera position and adjust 1P char. As 1P char is scaled down we need to "up-scale" camera
+                // animation to world space. We dont want to upscale cam transform relative to 1PChar so we adjust
+                // position accordingly
                 var camLocalOffset = character1P.cameraTransform.position - character1P.transform.position;
+                var cameraRotationOffset = Quaternion.Inverse(character1P.transform.rotation)*character1P.cameraTransform.rotation;
                 var camWorldOffset = camLocalOffset/character1P.transform.localScale.x;  
-                var camWorldPos = character1P.transform.position + camWorldOffset;
+                var camWorldPos = eyePos + camWorldOffset;
                 var charWorldPos = camWorldPos - camLocalOffset;
 
                 cameraSettings.position = camWorldPos;
-                cameraSettings.rotation = character1P.cameraTransform.rotation; //lookRotation * cameraRotationOffset;
+                cameraSettings.rotation = userCommand.command.lookRotation * cameraRotationOffset;
 
-                character1P.transform.position = charWorldPos;
-
+                var char1PPresentation = EntityManager.GetComponentObject<CharPresentation>(characterControl.firstPerson.char1P);
+                char1PPresentation.transform.position = charWorldPos;
+                char1PPresentation.transform.rotation = userCommand.command.lookRotation;
 
                 break;
-            case CameraMode.ThirdPerson:
-                var eyePos = charPredictedState.State.position + Vector3.up*character.eyeHeight;
+            }
+
+            case CameraProfile.Shoulder:
+            case CameraProfile.ThirdPerson:
+            {
+#if UNITY_EDITOR
+                if (Input.GetAxis("Mouse ScrollWheel") > 0)
+                {
+                    camDist3P -= 0.2f;
+                }
+                if (Input.GetAxis("Mouse ScrollWheel") < 0)
+                {
+                    camDist3P += 0.2f;
+                }
+#endif                    
+                
+                
+                var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight;
                 cameraSettings.position = eyePos; 
                 cameraSettings.rotation = lookRotation;
 
                 // Simpe offset of camera for better 3rd person view. This is only for animation debug atm
                 var viewDir = cameraSettings.rotation * Vector3.forward;
-                cameraSettings.position += -2.5f * viewDir;
+                cameraSettings.position += -camDist3P * viewDir;
                 cameraSettings.position += lookRotation*Vector3.right*0.5f + lookRotation*Vector3.up*0.5f;
                 break;
+            }
         }
         
         
-#if UNITY_EDITOR            
+        // TODO (mogensh) find better place to put this. 
         if (LocalPlayerCharacterControl.ShowHistory.IntValue > 0)
         {
-            charPredictedState.ShowHistory(m_world);
+            character.ShowHistory(m_world.worldTime.tick);
         }
-#endif
     }
 
     bool forceThirdPerson;

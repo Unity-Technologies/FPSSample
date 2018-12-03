@@ -4,23 +4,22 @@ using UnityEngine;
 [DisableAutoCreation]
 public class HandleSpatialEffectRequests : BaseComponentSystem 
 {
-	struct Requests
-	{
-		public EntityArray entities;
-		public ComponentDataArray<SpatialEffectRequest> requests;
-	}
 
-	[Inject] Requests RequestGroup;
+	ComponentGroup Group;
 
 	public HandleSpatialEffectRequests(GameWorld world, GameObject systemRoot, BundledResourceManager resourceSystem) : base(world)
 	{
 		var effectBundle = resourceSystem.GetResourceRegistry<SpatialEffectRegistry>();
 		GameDebug.Assert(effectBundle != null,"No HitscanEffectRegistry defined in registry");
 
-		m_Pools = new Pool[effectBundle.entries.Length];
-		for(var i=0;i<effectBundle.entries.Length;i++)
+		m_Pools = new Pool[effectBundle.entries.Count];
+		for(var i=0;i<effectBundle.entries.Count;i++)
 		{
-			var entry = effectBundle.entries[i]; 
+			var entry = effectBundle.entries[i];
+
+			if (entry.prefab.guid == "")
+				continue;
+			
 			var resource = resourceSystem.LoadSingleAssetResource(entry.prefab.guid);
 			GameDebug.Assert(resource != null);
 
@@ -44,6 +43,12 @@ public class HandleSpatialEffectRequests : BaseComponentSystem
 		}
 	}
 
+	protected override void OnCreateManager()
+	{
+		base.OnCreateManager();
+		Group = GetComponentGroup(typeof(SpatialEffectRequest));
+	}
+
 	protected override void OnDestroyManager()
 	{
 		if (m_Pools != null)
@@ -59,15 +64,18 @@ public class HandleSpatialEffectRequests : BaseComponentSystem
 
 	protected override void OnUpdate()
 	{
-		for (var i = 0; i < RequestGroup.requests.Length; i++)
+		var requestArray = Group.GetComponentDataArray<SpatialEffectRequest>();
+		var entityArray = Group.GetEntityArray();
+		
+		for (var i = 0; i < requestArray.Length; i++)
 		{
-			var request = RequestGroup.requests[i];
-			var pool = m_Pools[request.effectTypeRegistryId - 1];
+			var request = requestArray[i];
+			var pool = m_Pools[request.effectTypeRegistryId];
 			var index = pool.nextInstanceId % pool.instances.Length;
 			pool.instances[index].StartEffect(request.position,request.rotation);
 			pool.nextInstanceId++;
 			
-			PostUpdateCommands.DestroyEntity(RequestGroup.entities[i]);
+			PostUpdateCommands.DestroyEntity(entityArray[i]);
 		}
 	}
 

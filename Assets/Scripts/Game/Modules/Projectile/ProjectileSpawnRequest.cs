@@ -4,7 +4,7 @@ using Unity.Mathematics;
 
 public struct ProjectileRequest : IComponentData        
 {
-    public static void Create(EntityCommandBuffer commandBuffer, int tick, int tickDelay, uint projectileRegistryId, Entity owner, int teamId, float3 startPosition, float3 endPosition)
+    public static void Create(EntityCommandBuffer commandBuffer, int tick, int tickDelay, int projectileRegistryId, Entity owner, int teamId, float3 startPosition, float3 endPosition)
     {
         var request = new ProjectileRequest
         {
@@ -21,7 +21,7 @@ public struct ProjectileRequest : IComponentData
         commandBuffer.AddComponent(request);
     }
     
-    public uint projectileTypeRegistryId;
+    public int projectileTypeRegistryId;
     public int startTick;
     public float3 startPosition;
     public float3 endPosition;

@@ -314,11 +314,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.000001989305
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.000001989305
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_LocalRotation.w
@@ -338,7 +338,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 319.302
+      value: 360
       objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_Name
@@ -370,7 +370,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 6132c73d458dcde488e4d4629cea35b0, type: 2}
     - target: {fileID: 100012, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 82
+      value: 126
       objectReference: {fileID: 0}
     - target: {fileID: 2300008, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_RenderingLayerMask
@@ -386,7 +386,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 6132c73d458dcde488e4d4629cea35b0, type: 2}
     - target: {fileID: 100014, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 82
+      value: 126
       objectReference: {fileID: 0}
     - target: {fileID: 2300010, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_RenderingLayerMask
@@ -402,7 +402,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 6132c73d458dcde488e4d4629cea35b0, type: 2}
     - target: {fileID: 100016, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_StaticEditorFlags
-      value: 82
+      value: 126
       objectReference: {fileID: 0}
     - target: {fileID: 2300012, guid: b63271d68b8776f4888694d188913397, type: 3}
       propertyPath: m_RenderingLayerMask

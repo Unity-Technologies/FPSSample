@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1953259897 &8574412962073106934
+TerrainLayer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Sand_Pebbles_A_Terrain
+  m_DiffuseTexture: {fileID: 2800000, guid: 3424f62bc9113b242ab57ee9a83a53e5, type: 3}
+  m_NormalMapTexture: {fileID: 2800000, guid: 9e9a4770a35fbe74d8d404b61573da80, type: 3}
+  m_MaskMapTexture: {fileID: 2800000, guid: 83703259305fa3549aa085c0719a58f4, type: 3}
+  m_TileSize: {x: -4, y: 4}
+  m_TileOffset: {x: 0, y: 0}
+  m_Specular: {r: 0, g: 0, b: 0, a: 0}
+  m_Metallic: 0
+  m_Smoothness: 0
+  m_NormalScale: 0.7
+  m_DiffuseRemapMin: {x: 0, y: 0, z: 0, w: 0}
+  m_DiffuseRemapMax: {x: 0.8113208, y: 0.64014924, z: 0.5319509, w: 1}
+  m_MaskMapRemapMin: {x: 0, y: 0, z: 0, w: 0}
+  m_MaskMapRemapMax: {x: 0, y: 1, z: 1, w: 0.18841249}

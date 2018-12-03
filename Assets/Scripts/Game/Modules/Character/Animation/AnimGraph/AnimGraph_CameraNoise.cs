@@ -10,19 +10,21 @@ public class AnimGraph_CameraNoise : AnimGraphAsset
 	public string characterRootBone;
 	public CameraNoiseJob.JobSettings cameraNoiseJobSettings;
 
-	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+	    Entity animStateOwner)
 	{
-		return new Instance(entityManager, owner, graph, this);
+		return new Instance(entityManager, owner, graph, animStateOwner, this);
 	}
 	
     class Instance : IAnimGraphInstance
     {
-        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_CameraNoise settings)
+        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_CameraNoise settings)
         {
             m_Settings = settings;
             m_graph = graph;
             m_EntityManager = entityManager;
             m_Owner = owner;
+            m_AnimStateOwner = animStateOwner;
 
             GameDebug.Assert(entityManager.HasComponent<Animator>(owner),"Owner has no Animator component");
             var animator = entityManager.GetComponentObject<Animator>(owner);
@@ -62,7 +64,7 @@ public class AnimGraph_CameraNoise : AnimGraphAsset
     
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             var lookDir = Quaternion.Euler(new Vector3(-animState.aimPitch, animState.aimYaw, 0)) * Vector3.down;                        
             var job = m_NoisePlayable.GetJobData<CameraNoiseJob>();
             job.Update(lookDir, m_Settings.cameraNoiseJobSettings, m_NoisePlayable);
@@ -74,6 +76,7 @@ public class AnimGraph_CameraNoise : AnimGraphAsset
         AnimGraph_CameraNoise m_Settings;
         EntityManager m_EntityManager;
         Entity m_Owner;
+        Entity m_AnimStateOwner;
         AnimationScriptPlayable m_NoisePlayable;
         
         PlayableGraph m_graph;

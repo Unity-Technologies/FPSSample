@@ -39,17 +39,10 @@ public abstract class CharacterModuleShared
     protected SystemCollection m_AbilityStartSystems = new SystemCollection();
     protected SystemCollection m_AbilityResolveSystems = new SystemCollection();
 
-#if UNITY_EDITOR    
-    readonly StoreStateHistory m_storeStateHistory;
-#endif
     
     public CharacterModuleShared(GameWorld world)
     {
         m_world = world;
-       
-#if UNITY_EDITOR    
-        m_storeStateHistory = m_world.GetECSWorld().CreateManager<StoreStateHistory>(m_world);
-#endif        
     }
 
     public virtual void Shutdown()
@@ -61,10 +54,6 @@ public abstract class CharacterModuleShared
         m_MovementResolveSystems.Shutdown(m_world.GetECSWorld());
         m_AbilityStartSystems.Shutdown(m_world.GetECSWorld());
         m_AbilityResolveSystems.Shutdown(m_world.GetECSWorld());
-        
-#if UNITY_EDITOR 
-        m_world.GetECSWorld().DestroyManager(m_storeStateHistory);
-#endif
     }
     
     public void HandleSpawns()
@@ -74,7 +63,7 @@ public abstract class CharacterModuleShared
     
     public void HandleDepawns()
     {
-        m_HandleSpawnSystems.Update();
+        m_HandleDespawnSystems.Update();
     }
     
     public void HandleControlledEntityChanged()
@@ -100,10 +89,5 @@ public abstract class CharacterModuleShared
     public void AbilityResolve()
     {
         m_AbilityResolveSystems.Update();
-        
-        
-#if UNITY_EDITOR         
-        m_storeStateHistory.Update();
-#endif        
     }
 }

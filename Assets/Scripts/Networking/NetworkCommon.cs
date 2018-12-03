@@ -23,7 +23,7 @@ public interface INetworkTransport
 
     string GetConnectionDescription(int connectionId);
 
-    int Update();
+    void Update();
 
     void Shutdown();
 }
@@ -61,9 +61,12 @@ public static class NetworkConfig
     [ConfigVar(Name = "net.debug", DefaultValue = "0", Description = "Dump lots of debug info about network")]
     public static ConfigVar netDebug;
 
-    // TODO (petera) change away from string
-    // Increase this when you make a change to 
-    public const string protocolVersion = "1";
+    [ConfigVar(Name = "server.sqp_port", DefaultValue = "7912", Description = "Port used for server query protocol")]
+    public static ConfigVar serverSQPPort;
+
+
+    // Increase this when you make a change to the protocol
+    public const uint protocolVersion = 2;
 
     public const int defaultServerPort = 7913;
 
@@ -98,7 +101,7 @@ public static class NetworkConfig
 
     public const int maxFixedSchemaIds = 2;
     public const int maxEventTypeSchemaIds = 8;
-    public const int maxEntityTypeSchemaIds = 32;
+    public const int maxEntityTypeSchemaIds = 40;
 
     public const int networkClientQueueCommandSchemaId = 0;
     public const int mapSchemaId = 1;

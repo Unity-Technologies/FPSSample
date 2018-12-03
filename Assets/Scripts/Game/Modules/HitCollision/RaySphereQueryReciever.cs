@@ -67,10 +67,10 @@ public class RaySphereQueryReciever : BaseComponentSystem
 		m_environmentMask = 1 << m_defaultLayer | 1 << m_detailLayer | 1 << m_teamAreaALayer | 1 << m_teamAreaBLayer;
 	}
 	
-	protected override void OnCreateManager(int capacity)
+	protected override void OnCreateManager()
 	{
 		m_colliderGroup = GetComponentGroup(typeof(HitCollisionHistory));
-		base.OnCreateManager(capacity);
+		base.OnCreateManager();
 	}
 
 	public int RegisterQuery(Query query)
@@ -131,7 +131,7 @@ public class RaySphereQueryReciever : BaseComponentSystem
 		}
 
 		var hitCollisionArray = m_colliderGroup.GetComponentArray<HitCollisionHistory>();
-		HandleRequests(count, queries, results, hitCollisionArray, m_environmentMask, m_hitCollisionLayer, raycastHitBuffer);
+		HandleRequests(EntityManager, count, queries, results, hitCollisionArray, m_environmentMask, m_hitCollisionLayer, raycastHitBuffer);
 		
 		bufferIndex = 0;
 		for (var id = startId; id <= endId; id++)
@@ -167,7 +167,7 @@ public class RaySphereQueryReciever : BaseComponentSystem
 	}
 
 
-	static void HandleRequests(int queryCount, Query[] queries, Result[] results, ComponentArray<HitCollisionHistory> hitCollisionArray,
+	static void HandleRequests(EntityManager entityManager, int queryCount, Query[] queries, Result[] results, ComponentArray<HitCollisionHistory> hitCollisionArray,
 		int environmentMask, int hitCollisionLayer, RaycastHit[] raycastHitBuffer)
 	{
 //		GameDebug.Log("HandleRequests id:" + startId + " to " + endId + "  index:" + startId%c_bufferSize + " to " + endId%c_bufferSize);
@@ -246,7 +246,7 @@ public class RaySphereQueryReciever : BaseComponentSystem
 			
 			if (query.sphereCastRadius == 0)
 			{
-				HitCollisionHistory.PrepareColliders(ref hitCollisionArray, query.hitCollisionTestTick,query.sphereCastMask,
+				HitCollisionHistory.PrepareColliders(entityManager, ref hitCollisionArray, query.hitCollisionTestTick,query.sphereCastMask,
 					query.sphereCastExcludeOwner, Entity.Null, ray(query.origin, query.direction), query.distance);
 
 				// HitCollision test
@@ -267,7 +267,7 @@ public class RaySphereQueryReciever : BaseComponentSystem
 			}
 			else
 			{
-				HitCollisionHistory.PrepareColliders(ref hitCollisionArray, query.hitCollisionTestTick, query.sphereCastMask,
+				HitCollisionHistory.PrepareColliders(entityManager, ref hitCollisionArray, query.hitCollisionTestTick, query.sphereCastMask,
 					query.sphereCastExcludeOwner, Entity.Null, ray(query.origin, query.direction), query.distance,
 					query.sphereCastRadius);
 

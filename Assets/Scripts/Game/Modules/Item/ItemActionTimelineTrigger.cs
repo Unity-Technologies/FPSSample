@@ -11,14 +11,14 @@ public class ItemActionTimelineTrigger : MonoBehaviour
     [Serializable]
     public struct ActionTimelines
     {
-        public CharacterPredictedState.StateData.Action action;
+        public CharPredictedStateData.Action action;
         public PlayableDirector director;   
     }
     public ActionTimelines[] actionTimelines;
 
-    public Dictionary<CharacterPredictedState.StateData.Action, PlayableDirector> m_actionTimelines = new Dictionary<CharacterPredictedState.StateData.Action, PlayableDirector>();
+    public Dictionary<CharPredictedStateData.Action, PlayableDirector> m_actionTimelines = new Dictionary<CharPredictedStateData.Action, PlayableDirector>();
     public PlayableDirector m_currentActionTimeline = null;
-    public CharacterPredictedState.StateData.Action m_prevAction;
+    public CharPredictedStateData.Action m_prevAction;
     public int m_prevActionTick;
 
     void Awake()
@@ -34,20 +34,20 @@ public class ItemActionTimelineTrigger : MonoBehaviour
 
 // System
 [DisableAutoCreation]
-public class UpdateItemActionTimelineTrigger : BaseComponentSystem<CharacterItem, ItemActionTimelineTrigger>
+public class UpdateItemActionTimelineTrigger : BaseComponentSystem<CharPresentation, ItemActionTimelineTrigger>
 {
     public UpdateItemActionTimelineTrigger(GameWorld world) : base(world) {}
     
-    protected override void Update(Entity entity, CharacterItem item, ItemActionTimelineTrigger behavior)
+    protected override void Update(Entity entity, CharPresentation charPresentation, ItemActionTimelineTrigger behavior)
     {
-        if (!item.visible)
+        if (!charPresentation.IsVisible)
             return;
             
-        var animState = EntityManager.GetComponentData<CharAnimState>(item.character);
+        var animState = EntityManager.GetComponentData<PresentationState>(charPresentation.character);
         Update(behavior, animState);
     }
     
-    public static void Update(ItemActionTimelineTrigger behavior, CharAnimState animState)
+    public static void Update(ItemActionTimelineTrigger behavior, PresentationState animState)
     {
         var newAction = behavior.m_prevAction != animState.charAction;
         var newActionTick = behavior.m_prevActionTick != animState.charActionTick;

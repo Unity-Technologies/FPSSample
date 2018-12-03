@@ -7,7 +7,7 @@ using UnityEditorInternal;
 
 public class SkeletonImporter : AssetPostprocessor
 {
-    uint m_Version = 2;
+    uint m_Version = 3;
     public override uint GetVersion() {return m_Version;}
 
     List<TwistConfig> m_TwistConfigs = new List<TwistConfig>();

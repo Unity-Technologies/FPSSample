@@ -23,28 +23,30 @@ public class AnimGraph_SprintBlend : AnimGraphAsset
         public int port;
     }
     
-    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner)
     {
-        var animState = new Instance(entityManager, owner, graph, this);
+        var animState = new Instance(entityManager, owner, graph, animStateOwner, this);
         return animState;
     }
 
     class Instance : IAnimGraphInstance, IGraphState
     {
-        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_SprintBlend settings)
+        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_SprintBlend settings)
         {
             // TODO: Remove the members that are not needed
             m_Settings = settings;
             m_EntityManager = entityManager;
             m_Owner = owner;
+            m_AnimStateOwner = animStateOwner;
        
             m_RunController = new AnimationControllerEntry();
-            m_RunController.controller = settings.runTemplate.Instatiate(entityManager, owner, graph);
+            m_RunController.controller = settings.runTemplate.Instatiate(entityManager, owner, graph, animStateOwner);
             m_RunController.animStateUpdater = m_RunController.controller as IGraphState;
             m_RunController.port = 0;
             
             m_SprintController = new AnimationControllerEntry();
-            m_SprintController.controller = settings.sprintTemplate.Instatiate(entityManager, owner, graph);
+            m_SprintController.controller = settings.sprintTemplate.Instatiate(entityManager, owner, graph, animStateOwner);
             m_SprintController.animStateUpdater = m_SprintController.controller as IGraphState;
             m_SprintController.port = 1;
             
@@ -76,10 +78,10 @@ public class AnimGraph_SprintBlend : AnimGraphAsset
         public void UpdatePresentationState(bool firstUpdate, GameTime time, float deltaTime)
         {
             Profiler.BeginSample("AnimGraph_SprintBlend.UpdatePresentationState");
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
-            if (firstUpdate && animState.previousCharLocoState != CharacterPredictedState.StateData.LocoState.Jump && 
-                animState.previousCharLocoState != CharacterPredictedState.StateData.LocoState.DoubleJump && 
-                animState.previousCharLocoState != CharacterPredictedState.StateData.LocoState.InAir)
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            if (firstUpdate && animState.previousCharLocoState != CharPredictedStateData.LocoState.Jump && 
+                animState.previousCharLocoState != CharPredictedStateData.LocoState.DoubleJump && 
+                animState.previousCharLocoState != CharPredictedStateData.LocoState.InAir)
             {
                 animState.sprintWeight = animState.sprinting;
             }
@@ -94,7 +96,7 @@ public class AnimGraph_SprintBlend : AnimGraphAsset
                 animState.sprintWeight = math.clamp(animState.sprintWeight - transitionSpeed, 0f, 1f); 
             }
             
-            m_EntityManager.SetComponentData(m_Owner, animState);
+            m_EntityManager.SetComponentData(m_AnimStateOwner,animState);
                         
             if (animState.sprinting == 0)
             {
@@ -115,7 +117,7 @@ public class AnimGraph_SprintBlend : AnimGraphAsset
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
             Profiler.BeginSample("AnimGraph_SprintBlend.ApplyPresentationState");
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
 
             var smoothedWeight = math.smoothstep(0f, 1f, animState.sprintWeight);
             m_RootMixer.SetInputWeight(0, 1f - smoothedWeight);
@@ -136,6 +138,7 @@ public class AnimGraph_SprintBlend : AnimGraphAsset
 
         EntityManager m_EntityManager;
         Entity m_Owner;
+        Entity m_AnimStateOwner;
         AnimGraph_SprintBlend m_Settings;
         
         AnimationMixerPlayable m_RootMixer;        

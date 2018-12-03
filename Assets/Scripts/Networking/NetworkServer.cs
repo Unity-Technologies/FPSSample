@@ -363,9 +363,6 @@ public class NetworkServer
                 case NetworkCompression.IOStreamType.Huffman:
                     pair.Value.SendPackage<HuffmanOutputStream>(m_NetworkCompressionCapture);
                     break;
-                case NetworkCompression.IOStreamType.Rans:
-                    pair.Value.SendPackage<RansOutputStream>(m_NetworkCompressionCapture);
-                    break;
                 default:
                     GameDebug.Assert(false);
             }
@@ -403,6 +400,13 @@ public class NetworkServer
     void OnConnect(int connectionId, INetworkCallbacks loop)
     {
         GameDebug.Assert(!m_Connections.ContainsKey(connectionId));
+
+        if(m_Connections.Count >= ServerGameLoop.serverMaxClients.IntValue)
+        {
+            GameDebug.Log("Refusing incoming connection " + connectionId + " due to server.maxclients");
+            m_Transport.Disconnect(connectionId);
+            return;
+        }
 
         var connection = new ServerConnection(this, connectionId, m_Transport, clientInfo);
 
@@ -442,11 +446,6 @@ public class NetworkServer
             case NetworkCompression.IOStreamType.Huffman:
                 {
                     m_Connections[connectionId].ReadPackage<HuffmanInputStream>(data, size, NetworkCompressionModel.DefaultModel, loop);
-                    break;
-                }
-            case NetworkCompression.IOStreamType.Rans:
-                {
-                    m_Connections[connectionId].ReadPackage<RansInputStream>(data, size, NetworkCompressionModel.DefaultModel, loop);
                     break;
                 }
             default:
@@ -715,11 +714,7 @@ public class NetworkServer
             AddMessage(NetworkMessage.ClientInfo);
             output.WriteRawBits((uint)connectionId, 8);
             output.WriteRawBits((uint)serverInfo.serverTickRate, 8);
-
-            var protocolId = NetworkConfig.encoding.GetBytes(NetworkConfig.protocolVersion);
-
-            output.WriteRawBits((uint)protocolId.Length, 8);
-            output.WriteRawBytes(protocolId, 0, protocolId.Length);
+            output.WriteRawBits(NetworkConfig.protocolVersion, 8);
 
             byte[] modelData = serverInfo.compressionModel.modelData;
             output.WriteRawBits((uint)modelData.Length, 16);

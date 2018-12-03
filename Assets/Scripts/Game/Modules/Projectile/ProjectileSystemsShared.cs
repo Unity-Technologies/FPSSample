@@ -11,10 +11,11 @@ public class CreateProjectileMovementCollisionQueries : BaseComponentSystem
 
     public CreateProjectileMovementCollisionQueries(GameWorld world) : base(world) { }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
-        ProjectileGroup = GetComponentGroup(typeof(ServerEntity), typeof(ProjectileData));
+        base.OnCreateManager();
+        ProjectileGroup = GetComponentGroup(typeof(UpdateProjectileFlag), typeof(ProjectileData), 
+            ComponentType.Subtractive<DespawningEntity>());
     }
 
     protected override void OnUpdate()
@@ -27,12 +28,8 @@ public class CreateProjectileMovementCollisionQueries : BaseComponentSystem
             var projectileData = projectileDataArray[i];
             if (projectileData.impactTick > 0)
                 continue;
-            
-            if (!EntityManager.HasComponent<ReplicatedEntity>(projectileData.projectileOwner) &&
-                !EntityManager.HasComponent<ReplicatedDataEntity>(projectileData.projectileOwner))
-            {
-                GameDebug.LogError("Owner has no rep component 4. Owner:" + projectileData.projectileOwner);
-            }
+
+            var entity = entityArray[i];
 
             var collisionTestTick = time.tick - projectileData.collisionCheckTickDelay;
 
@@ -57,7 +54,7 @@ public class CreateProjectileMovementCollisionQueries : BaseComponentSystem
                 sphereCastMask = collisionMask,
                 sphereCastExcludeOwner = projectileData.projectileOwner,
             });
-            PostUpdateCommands.SetComponent(entityArray[i],projectileData);
+            PostUpdateCommands.SetComponent(entity,projectileData);
         }
     }
 }
@@ -69,10 +66,11 @@ public class HandleProjectileMovementCollisionQuery : BaseComponentSystem
 
     public HandleProjectileMovementCollisionQuery(GameWorld world) : base(world) { }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
-        ProjectileGroup = GetComponentGroup(typeof(ServerEntity), typeof(ProjectileData));
+        base.OnCreateManager();
+        ProjectileGroup = GetComponentGroup(typeof(UpdateProjectileFlag), typeof(ProjectileData), 
+            ComponentType.Subtractive<DespawningEntity>());
     }
     
     protected override void OnUpdate()
@@ -103,8 +101,8 @@ public class HandleProjectileMovementCollisionQuery : BaseComponentSystem
                 projectileData.impactNormal = result.hitNormal;
                 projectileData.impactTick = m_world.worldTime.tick;
 
-                var damageInstigator = projectileData.projectileOwner;
-                //                GameDebug.Assert(damageInstigator == Entity.Null || !EntityManager.Exists(damageInstigator) || EntityManager.HasComponent<Character>(damageInstigator),"Damage instigator is not a character");
+                // Owner can despawn while projectile is in flight, so we need to make sure we dont send non existing instigator
+                var damageInstigator = EntityManager.Exists(projectileData.projectileOwner) ? projectileData.projectileOwner : Entity.Null;
 
                 var collisionHit = result.hitCollisionOwner != Entity.Null;
                 if (collisionHit)
@@ -152,9 +150,9 @@ public class DespawnProjectiles : BaseComponentSystem
 
     public DespawnProjectiles(GameWorld world) : base(world) { }
 
-    protected override void OnCreateManager(int capacity)
+    protected override void OnCreateManager()
     {
-        base.OnCreateManager(capacity);
+        base.OnCreateManager();
         ProjectileGroup = GetComponentGroup(typeof(ProjectileData));
     }
     

@@ -874,6 +874,14 @@ PrefabInstance:
       propertyPath: m_ScaleInLightmap
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2300042, guid: eb0d6334c451c3a4d94475637b8369da, type: 3}
+      propertyPath: m_StitchLightmapSeams
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300050, guid: eb0d6334c451c3a4d94475637b8369da, type: 3}
+      propertyPath: m_StitchLightmapSeams
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eb0d6334c451c3a4d94475637b8369da, type: 3}
 --- !u!1001 &1105683019615036594
@@ -991,6 +999,10 @@ PrefabInstance:
     - target: {fileID: 4626517541475364409, guid: 4ca4c44682fdb174ba09f812edbc059e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: -359.997
+      objectReference: {fileID: 0}
+    - target: {fileID: 4626517541477788889, guid: 4ca4c44682fdb174ba09f812edbc059e, type: 3}
+      propertyPath: m_StitchLightmapSeams
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4ca4c44682fdb174ba09f812edbc059e, type: 3}

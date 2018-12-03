@@ -62,6 +62,7 @@ MonoBehaviour:
   playerName: 
   teamIndex: 0
   score: 0
+  gameModeSystemInitialized: 0
   displayCountDown: 0
   countDown: 0
   displayScoreBoard: 0
@@ -75,7 +76,9 @@ MonoBehaviour:
   goalAttackers: 0
   goalDefenders: 0
   goalString: 
+  actionString: 
   goalCompletion: 0
+  enableCharacterSwitch: 0
 --- !u!114 &114599586741864288
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,7 +92,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   guid: 7487763fdab730d44b6d03c0589993e4
-  netID: 1eb5d3fae991f7458ab4fda07ef95a96
+  netID: dbf886d0d4b91747bcb096a4995f175c
+  registryId: 19
 --- !u!114 &114633368909359266
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -7,19 +7,21 @@ public class AnimGraph_AnimatorController : AnimGraphAsset
 {
     public RuntimeAnimatorController animatorController;
 
-    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph)
+    public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
+        Entity animStateOwner)
     {
-        var animState = new Instance(entityManager, owner, graph, this);
+        var animState = new Instance(entityManager, owner, graph, animStateOwner, this);
         return animState;
     }
     
     class Instance : IAnimGraphInstance
     {
-        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, AnimGraph_AnimatorController settings)
+        public Instance(EntityManager entityManager, Entity owner, PlayableGraph graph, Entity animStateOwner, AnimGraph_AnimatorController settings)
         {
             m_settings = settings;
             m_EntityManager = entityManager;
             m_Owner = owner;
+            m_AnimStateOwner = animStateOwner;
 
             m_characterAnimatorController = new CharacterAnimatorController(graph, m_settings.animatorController);
             m_characterAnimatorController.Start();
@@ -41,13 +43,14 @@ public class AnimGraph_AnimatorController : AnimGraphAsset
 
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<CharAnimState>(m_Owner);
+            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
             m_characterAnimatorController.Update(ref animState);
         }
 
         AnimGraph_AnimatorController m_settings;
         EntityManager m_EntityManager;
         Entity m_Owner;
+        Entity m_AnimStateOwner;
         CharacterAnimatorController m_characterAnimatorController;
     }
 }

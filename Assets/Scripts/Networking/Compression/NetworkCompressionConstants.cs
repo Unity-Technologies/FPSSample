@@ -5,8 +5,7 @@ namespace NetworkCompression
     public enum IOStreamType
     {
         Raw,
-        Huffman,
-        Rans
+        Huffman
     }
 
     public static class NetworkCompressionConstants

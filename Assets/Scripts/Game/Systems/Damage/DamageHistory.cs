@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-public class DamageHistory : MonoBehaviour, INetworkSerializable             
+public class DamageHistory : MonoBehaviour, INetSerialized             
 {
     [System.Serializable]
     public struct InflictedDamage
