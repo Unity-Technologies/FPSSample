@@ -176,7 +176,7 @@ public class ReplicatedEntityRegistry : RegistryBase
                 }
 
                 var replicatedEntity = go.GetComponent<ReplicatedEntity>();
-                if (go == null)
+                if (replicatedEntity == null)
                 {
                     Debug.Log(go + " has no ReplicatedEntity component");
                     verified = false;
