@@ -28,11 +28,12 @@ public class HandleHitCollisionSpawning : InitializeComponentGroupSystem<HitColl
             var hitCollHistoryEntity = hitCollHistory.gameObject.GetComponent<GameObjectEntity>().Entity;
             var externalSetup = hitCollHistory.settings.collisionSetup != null;
             var colliderSetup = externalSetup ? hitCollHistory.settings.collisionSetup.transform : hitCollHistory.transform;
+            
+            GameDebug.Assert(hitCollHistory.hitCollisionOwner != Entity.Null,"HitCollisionHistory requires HitCollisionOwner component");
+
             var hitCollisionOwner =
                 EntityManager.GetComponentObject<HitCollisionOwner>(hitCollHistory.hitCollisionOwner);
-            
-            GameDebug.Assert(hitCollHistory.hitCollisionOwner != null,"HitCollisionHistory requires HitCollisionOwner component");
-            
+
             // Find and disable all all colliders on collisionOwner
             var sourceColliders = new List<Collider>();
             RecursiveGetCollidersInChildren(colliderSetup.transform, sourceColliders);
