@@ -106,7 +106,7 @@ public class HandleCharacterSpawnRequests : BaseComponentSystem
     {
         var heroTypeRegistry = resourceSystem.GetResourceRegistry<HeroTypeRegistry>();
 
-        heroIndex = Mathf.Min(heroIndex, heroTypeRegistry.entries.Count);
+        heroIndex = Mathf.Min(heroIndex, heroTypeRegistry.entries.Count-1);
         var heroTypeAsset = heroTypeRegistry.entries[heroIndex];
 
         var charPrefabGUID = m_settings.characterPrefab.guid;
