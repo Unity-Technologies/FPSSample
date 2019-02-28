@@ -1,0 +1,64 @@
+// Forward pass
+Pass
+{		
+	Tags { "LightMode"="DepthOnly" }
+	
+	ZWrite On
+	Blend Off
+	
+	HLSLPROGRAM
+	#pragma target 4.5	
+	#define UNITY_MATERIAL_LIT
+	#pragma multi_compile _ WRITE_NORMAL_BUFFER		
+		
+	struct ps_input
+	{
+		linear noperspective centroid float4 pos : SV_POSITION;
+		float2 uv : TEXCOORD1;
+		float4 posWS : TEXCOORD2;
+		float4 sphereInfo : TEXCOORD3;
+	};
+		
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_UV uv
+#define VFX_VARYING_POSWS posWS.xyz	
+#define VFX_VARYING_SPHERECENTER sphereInfo.xyz
+#define VFX_VARYING_SPHERERADIUS sphereInfo.w
+
+#ifdef WRITE_NORMAL_BUFFER
+#define VFX_VARYING_SMOOTHNESS posWS.w
+#endif
+
+${VFXBegin:VFXVertexAdditionalProcess}
+${VFXHDRPLitFillVaryings}
+${VFXEnd}
+	
+	${VFXInclude("Shaders/ParticleSpheres/Pass.template")}	
+	#define SHADERPASS SHADERPASS_DEPTH_ONLY
+	${VFXInclude("Shaders/RenderPipeline/HDRP/VFXLit.template")}
+					
+	#pragma fragment frag
+	void frag(ps_input i
+#ifdef WRITE_NORMAL_BUFFER
+	, out float4 outNormalBuffer : SV_Target0
+#else
+    , out float4 outColor : SV_Target
+#endif
+	, out float oDepth : SV_DepthLessEqual)
+	{
+		float3 normalWS;
+		VFXClipSphereAndGetDepthOffsetAndNormal(oDepth, normalWS, i);		
+		
+#ifdef WRITE_NORMAL_BUFFER
+		VFXUVData uvData = (VFXUVData)0;
+		VFXComputePixelOutputToNormalBuffer(i,normalWS,uvData,outNormalBuffer);
+#elif defined(SCENESELECTIONPASS)
+		// We use depth prepass for scene selection in the editor, this code allow to output the outline correctly
+		outColor = float4(_ObjectId, _PassValue, 1.0, 1.0);
+#else
+		outColor = (float4)0;
+#endif
+	}
+	ENDHLSL
+}

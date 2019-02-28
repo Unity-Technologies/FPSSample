@@ -12,6 +12,7 @@ public interface IConsoleUI
     void SetOpen(bool open);
     void ConsoleUpdate();
     void ConsoleLateUpdate();
+    void SetPrompt(string prompt);
 }
 
 public class ConsoleNullUI : IConsoleUI
@@ -42,6 +43,10 @@ public class ConsoleNullUI : IConsoleUI
     }
 
     public void SetOpen(bool open)
+    {
+    }
+
+    public void SetPrompt(string prompt)
     {
     }
 }
@@ -155,6 +160,11 @@ public class Console
     public static void SetOpen(bool open)
     {
         s_ConsoleUI.SetOpen(open);
+    }
+
+    public static void SetPrompt(string prompt)
+    {
+        s_ConsoleUI.SetPrompt(prompt);
     }
 
     public static void ConsoleUpdate()

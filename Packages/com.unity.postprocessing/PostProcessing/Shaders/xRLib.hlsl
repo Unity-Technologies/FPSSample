@@ -65,6 +65,13 @@ float2 UnityStereoClamp(float2 uv)
     scaleOffset.xy *= _RenderViewportScaleFactor;
     return UnityStereoClampScaleOffset(uv, scaleOffset);
 }
+
+float4 UnityStereoAdjustedTexelSize(float4 texelSize) // Should take in _MainTex_TexelSize
+{
+	texelSize.x = texelSize.x * 2.0; // texelSize.x = 1/w. For a double-wide texture, the true resolution is given by 2/w. 
+	texelSize.z = texelSize.z * 0.5; // texelSize.z = w. For a double-wide texture, the true size of the eye texture is given by w/2. 
+	return texelSize;
+}
 #else
 float2 TransformStereoScreenSpaceTex(float2 uv, float w)
 {
@@ -80,6 +87,11 @@ float2 UnityStereoClamp(float2 uv)
 {
     float4 scaleOffset = float4(_RenderViewportScaleFactor, _RenderViewportScaleFactor, 0.f, 0.f);
     return UnityStereoClampScaleOffset(uv, scaleOffset);
+}
+
+float4 UnityStereoAdjustedTexelSize(float4 texelSize)
+{
+	return texelSize;
 }
 #endif
 

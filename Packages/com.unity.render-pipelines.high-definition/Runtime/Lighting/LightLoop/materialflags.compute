@@ -8,9 +8,9 @@
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.cs.hlsl"
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-#define UNITY_MATERIAL_LIT // Need to be define before including Material.hlsl
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl" // This includes Material.hlsl
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightDefinition.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
+
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
@@ -54,9 +54,10 @@ void MATERIALFLAGSGEN(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupI
         int idx = i * NR_THREADS + threadID;
         uint2 uCrd = min( uint2(viTilLL.x + (idx & 0xf), viTilLL.y + (idx >> 4)), uint2(iWidth - 1, iHeight - 1));
 
-        // StencilTexture here contain the result of testing if we are not equal to stencil usage NoLighting. i.e (stencil value != NoLighting). The 1.0 mean true.
+        // StencilTexture here contain the result of testing if we are not equal to stencil usage NoLighting. i.e (stencil value != NoLighting). A value > 0 means true.
         // This test if we are the sky/background or a forward opaque (which tag the stencil as NoLighting)
-        if (LOAD_TEXTURE2D(_StencilTexture, uCrd).r == 1.0)
+        uint stencilVal = UnpackByte(LOAD_TEXTURE2D(_StencilTexture, uCrd).r);
+        if (stencilVal > 0)
         {
             PositionInputs posInput = GetPositionInput(uCrd, invScreenSize);
             materialFeatureFlags |= MATERIAL_FEATURE_FLAGS_FROM_GBUFFER(posInput.positionSS);

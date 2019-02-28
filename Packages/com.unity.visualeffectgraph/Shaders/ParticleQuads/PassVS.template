@@ -1,0 +1,43 @@
+#pragma vertex vert
+VFX_VARYING_PS_INPUTS vert(uint id : SV_VertexID, uint instanceID : SV_InstanceID)
+{
+	uint index = (id >> 2) + instanceID * 2048;
+	VFX_VARYING_PS_INPUTS o = (VFX_VARYING_PS_INPUTS)0;
+	
+	${VFXLoadAttributesOrCull}
+	${VFXProcessBlocks}
+	
+	if (!alive)
+		return o;
+	
+	o.VFX_VARYING_UV.x = float(id & 1);
+	o.VFX_VARYING_UV.y = float((id & 2) >> 1);
+	
+	${VFXLoadSize}
+	
+	const float2 vOffsets = o.VFX_VARYING_UV.xy - 0.5f;
+	const float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);
+	const float3 vPos = mul(elementToVFX,float4(vOffsets,0.0f,1.0f)).xyz;
+
+	o.VFX_VARYING_POSCS = TransformPositionVFXToClip(vPos);
+	
+	#ifdef VFX_VARYING_NORMAL
+	float normalFlip = (size3.x * size3.y * size3.z) < 0 ? -1 : 1;
+	o.VFX_VARYING_NORMAL = normalFlip * normalize(TransformDirectionVFXToWorld(normalize(-transpose(elementToVFX)[2].xyz)));
+	#endif
+	#ifdef VFX_VARYING_TANGENT
+	o.VFX_VARYING_TANGENT = normalize(TransformDirectionVFXToWorld(normalize(transpose(elementToVFX)[0].xyz)));
+	#endif
+	#ifdef VFX_VARYING_BENTFACTORS
+	${VFXLoadParameter:{bentNormalFactor}}
+	o.VFX_VARYING_BENTFACTORS = vOffsets * bentNormalFactor;
+	#endif
+
+	${VFXVertexCommonProcess}
+	
+	${VFXVertexSetFlipbooksInterpolants}
+
+	${VFXVertexAdditionalProcess}
+
+	return o;
+}

@@ -53,7 +53,7 @@ public class UpdateNamePlates : BaseComponentSystem
 	{
 		base.OnCreateManager();
 
-		Group = GetComponentGroup(typeof(NamePlateOwner), typeof(CharPresentation));
+		Group = GetComponentGroup(typeof(NamePlateOwner), typeof(CharacterPresentationSetup));
 		LocalPlayerGroup = GetComponentGroup(typeof(LocalPlayer));
 	}
 
@@ -69,7 +69,7 @@ public class UpdateNamePlates : BaseComponentSystem
 			return;
 
 		var nameplateArray = Group.GetComponentArray<NamePlateOwner>();
-		var charPresentationArray = Group.GetComponentArray<CharPresentation>();
+		var charPresentationArray = Group.GetComponentArray<CharacterPresentationSetup>();
 		
 		for (int i = 0; i < nameplateArray.Length; i++)
 		{
@@ -120,7 +120,7 @@ public class UpdateNamePlates : BaseComponentSystem
 			var occluded = Physics.Raycast(rayStart, v.normalized, distance, defaultLayerMask);
 			
 			var friendly = plateOwner.team == localPlayer.playerState.teamIndex;
-			var color = friendly ? plateOwner.namePlate.friendColor : plateOwner.namePlate.enemyColor;
+            var color = friendly ? Game.game.gameColors[(int)Game.GameColor.Friend] : Game.game.gameColors[(int)Game.GameColor.Enemy];
 
 			var showPlate = friendly || !occluded;
 

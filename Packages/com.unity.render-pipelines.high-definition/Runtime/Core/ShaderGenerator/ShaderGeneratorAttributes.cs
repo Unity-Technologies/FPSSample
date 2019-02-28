@@ -16,13 +16,15 @@ namespace UnityEngine.Experimental.Rendering
         public bool needAccessors; // Whether or not to generate the accessors
         public bool needParamDebug; // // Whether or not to generate define for each field of the struct + debug function (use in HDRenderPipeline)
         public int paramDefinesStart; // Start of the generated define
+        public bool omitStructDeclaration; // Whether to skip "struct <name> {" etc
 
-        public GenerateHLSL(PackingRules rules = PackingRules.Exact, bool needAccessors = true, bool needParamDebug = false, int paramDefinesStart = 1)
+        public GenerateHLSL(PackingRules rules = PackingRules.Exact, bool needAccessors = true, bool needParamDebug = false, int paramDefinesStart = 1, bool omitStructDeclaration = false)
         {
             packingRules = rules;
             this.needAccessors = needAccessors;
             this.needParamDebug = needParamDebug;
             this.paramDefinesStart = paramDefinesStart;
+            this.omitStructDeclaration = omitStructDeclaration;
         }
     }
 

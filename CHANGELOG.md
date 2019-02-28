@@ -2,6 +2,34 @@
 
 This file contains a summary of the changes that went into each release.
 
+## [0.3.0] - NEXT NEXT NEXT NEXT
+
+- UNITY_DISABLE_AUTOMATIC_SYSTEM_BOOTSTRAP no longer set in project settings. This means ECS systems automatically starts and runs in edit mode (Unless [DisableAutoCreation] attribute is set, which it is for most of our game systems)
+- HitCollision no longer uses Unity collision system for queries against moving colliders. For lag compensation server needs to do queries using different historical data and moving Unity physics colliders multiple times per frame is very inefficient. Now queries are handled using custom collision primitives and burst jobs. The structure of the collider and history data is still WIP.
+- Unified how ECS components are serialized. Serialized components should now implement either IReplicatedComponent, IPredictedComponent or IInterpolatedComponent and will automatically be serialized appropriately (if attached to entity with replicatedentity component). IMPORTANT: It is currently also required to define a static methods _CreateSerializerFactory_ that returns a serializer factory for the component type. This is something we are working on getting rid of.
+- Removed support for replicated monobehavior. All serialization is now performed by ECS component.
+- Config var debugmove 2  now also makes character shoot secondary weapon
+- UserCommand buttons now uses single int property together with enum to defined pressed buttons. 
+- Removed sprint button from UserCommand. This is now handled by button Ability1.
+- Removed DebugPrimitive module from project. Not used and needed cleanup.
+- Added VFXSystem that manages VFX assets. Currently has interface for starting spatial and hitscan effects. 
+- SpatialEffect and HitscanEffect now uses VFX system. Pools of effect prefabs are no longer created as effects can be triggered without gameobject instantiation (Yay!)
+- SpatialEffect and HitscanEffect registries removed.
+- Character properties that should be replicated to all clients have been moved to to new ECS component CharacterRepAll
+- Replicated MonoBehavior components converted to ECS components. Including GameEntityType, ReplicatedEntity, RagdollState, SpectatorCam, DamageHistory, HealthState, UserCommand, HitCollisionOwner , TeleporterPresentation, Moveable.
+- GameMode, PlayerState and CapturePoint are now replicated through an ECS component (they need to stay MonoBehavior as they contain strings properties and we don’t have good solution for storing strings on data components atm)
+- All abilities now have a request phase that is executed before movement update. This allows for multiple different movement abilities (before Ability_Movement was always active)
+- Renamed DefaultBehaviorController to AbilityCollection. AbilityCollection now has a general way to handle all abilities (before there where hardcoded handling of e.g. movement and death). All abilities are registered in one list and what abilities are active are determined by their requests (acquired in the request phase) and rules for what other abilities an ability can run together with and what it can interrupt (This is setup on AbilityCollection) 
+- Setup of buttons that should trigger an ability is now setup on each individual ability scriptable object.
+- Item registry removed (Items are not currently being replicated - they will probably be when weapon switching is implemented. All abilities are owned and replicated by AbilityCollection)
+- Added new module called Presentation. This is responsible for creating and attaching presentation geometry and logic to replicated entities. Entities can have different presentation depending on platform (e.g. Server, Client) and other properties. Only grenades use this atm. 
+- Grenades are now replicated as pure ECS entity. Client presentation handled by Presentation module.
+- Fixed error spam from BuildWindow after deleting scene. Build window now regenerates level list when it finds invalid level info.
+- Registries are now automatically generated before bundled are build (Manual generation can be triggered from _FPS Sample->Registries->Prepare Registries_). Manual fix-up of registries no longer needed after deleting registered objects.
+- ReplicatedEntityFactories are now stored in bundles. The goal is to generalize creation of entities (from prefabs or ReplicatedEntityFactory). Note: ReplicatedEntityFactory is currently used to create pure entities, but a prefab like workflow might be used in the future.   
+- WeakAssetReference are now blitable (struct and guid saved as ints) and can be stored on pure ECS components.
+
+
 ## [0.2.0] - 2018-11-29
 - Removed “Update Registries” button from Project Tools. Prefabs and scriptable objects that should be referenced by a registry now each have custom inspector that is used to register them.
 - Removed support for client and server specific versions of the same replicated prefab. 

@@ -1,0 +1,60 @@
+Pass
+{		
+	Tags { "LightMode"="GBuffer" }
+	
+	Stencil
+	{
+		WriteMask 7
+		Ref  2
+		Comp Always
+		Pass Replace
+	}	
+		
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	#pragma multi_compile _ LIGHT_LAYERS
+	#pragma multi_compile _ DEBUG_DISPLAY
+	
+	#define UNITY_MATERIAL_LIT
+		
+	${VFXInclude("Shaders/RenderPipeline/HDRP/VFXLitVaryings.template")}		
+		
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		
+		${VFXHDRPLitDeclareVaryings}
+		
+		float2 uv : TEXCOORD1;
+		float3 posWS : TEXCOORD2;
+		float4 sphereInfo : TEXCOORD3;
+	};
+	
+${VFXHDRPLitVaryingsMacros}	
+	
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_UV uv
+#define VFX_VARYING_POSWS posWS	
+#define VFX_VARYING_SPHERECENTER sphereInfo.xyz
+#define VFX_VARYING_SPHERERADIUS sphereInfo.w
+
+${VFXBegin:VFXVertexAdditionalProcess}
+${VFXHDRPLitFillVaryings}
+${VFXEnd}
+	
+	${VFXInclude("Shaders/ParticleSpheres/Pass.template")}	
+	#define SHADERPASS SHADERPASS_GBUFFER
+	${VFXInclude("Shaders/RenderPipeline/HDRP/VFXLit.template")}
+					
+	#pragma fragment frag
+	void frag(ps_input i, OUTPUT_GBUFFER(outGBuffer), out float oDepth : SV_DepthLessEqual)
+	{
+		float3 normalWS;
+		VFXUVData uvData = (VFXUVData)0;
+		VFXClipSphereAndGetDepthOffsetAndNormal(oDepth, normalWS, i);		
+		VFXComputePixelOutputToGBuffer(i,normalWS,uvData,outGBuffer);
+	}
+	ENDHLSL
+}

@@ -1,32 +1,46 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Entities;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
-public class Movable : MonoBehaviour, INetSerialized
+
+
+public struct MovableData : IComponentData, IInterpolatedComponent<MovableData>
 {
-    //Vector3 oldPosition;
-    Vector3 newPosition;
-    //Quaternion oldRotation;
-    Quaternion newRotation;
+    Vector3 position;
+    Quaternion rotation;
 
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+    public static IInterpolatedComponentSerializerFactory CreateSerializerFactory()
     {
-        //oldPosition = newPosition;
-        //oldRotation = newRotation;
-        newPosition = reader.ReadVector3Q();
-        newRotation = reader.ReadQuaternionQ();
-        transform.position = newPosition;
-        transform.rotation = newRotation;
+        return new InterpolatedComponentSerializerFactory<MovableData>();
     }
-
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
     {
+        var transform = context.entityManager.GetComponentObject<Transform>(context.entity);
+        
         writer.WriteVector3Q("position", transform.position);
         writer.WriteQuaternionQ("rotation", transform.rotation);
     }
 
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
+    {
+        position = reader.ReadVector3Q();
+        rotation = reader.ReadQuaternionQ();
+    }
+
+    public void Interpolate(ref SerializeContext context, ref MovableData first, ref MovableData last, float t)
+    {
+        var transform = context.entityManager.GetComponentObject<Transform>(context.entity);
+        transform.position = Vector3.Lerp(first.position, last.position, t);
+        transform.rotation = Quaternion.Lerp(first.rotation, last.rotation, t);
+    }
+}
+
+[RequireComponent(typeof(Rigidbody))]
+public class Movable : ComponentDataWrapper<MovableData>
+{
     public void Start()
     {
         if(Game.GetGameLoop<ServerGameLoop>() == null)

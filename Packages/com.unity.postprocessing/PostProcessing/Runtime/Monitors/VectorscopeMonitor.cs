@@ -2,10 +2,20 @@ using System;
 
 namespace UnityEngine.Rendering.PostProcessing
 {
+    /// <summary>
+    /// This class holds settings for the Vectorscope monitor.
+    /// </summary>
     [Serializable]
     public sealed class VectorscopeMonitor : Monitor
     {
+        /// <summary>
+        /// The width and height of the rendered vectorscope.
+        /// </summary>
         public int size = 256;
+
+        /// <summary>
+        /// The exposure multiplier applied to the vectorscope values.
+        /// </summary>
         public float exposure = 0.12f;
 
         ComputeBuffer m_Data;

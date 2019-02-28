@@ -58,7 +58,31 @@ namespace UnityEditor.Experimental.Rendering
             GUI.changed |= temp;
             return angleValue;
         }
-        
+
+        static int s_SliderSpotAngleId;
+
+        static float SizeSliderSpotAngle(Vector3 position, Vector3 forward, Vector3 axis, float range, float spotAngle)
+        {
+            if (Math.Abs(spotAngle) <= 0.05f && GUIUtility.hotControl != s_SliderSpotAngleId)
+                return spotAngle;
+            var angledForward = Quaternion.AngleAxis(Mathf.Max(spotAngle, 0.05f) * 0.5f, axis) * forward;
+            var centerToLeftOnSphere = (angledForward * range + position) - (position + forward * range);
+            bool temp = GUI.changed;
+            GUI.changed = false;
+            var newMagnitude = Mathf.Max(0f, SliderLineHandle(position + forward * range, centerToLeftOnSphere.normalized, centerToLeftOnSphere.magnitude));
+            if (GUI.changed)
+            {
+                s_SliderSpotAngleId = GUIUtility.hotControl;
+                centerToLeftOnSphere = centerToLeftOnSphere.normalized * newMagnitude;
+                angledForward = (centerToLeftOnSphere + (position + forward * range) - position).normalized;
+                spotAngle = Mathf.Clamp(Mathf.Acos(Vector3.Dot(forward, angledForward)) * Mathf.Rad2Deg * 2, 0f, 179f);
+                if (spotAngle <= 0.05f || float.IsNaN(spotAngle))
+                    spotAngle = 0f;
+            }
+            GUI.changed |= temp;
+            return spotAngle;
+        }
+
         public static Color GetLightHandleColor(Color wireframeColor)
         {
             Color color = wireframeColor;
@@ -97,70 +121,6 @@ namespace UnityEditor.Experimental.Rendering
                 pos = newPos;
             }
             Gizmos.DrawLine(pos, lastPos);
-        }
-
-        [Obsolete("DrawSpotlightGizmo is out of date. Should use the DrawSpotlightWireframe/Handle instead", true)]
-        public static void DrawSpotlightGizmo(Light spotlight, float innerSpotPercent, bool selected)
-        {
-            var flatRadiusAtRange = spotlight.range * Mathf.Tan(spotlight.spotAngle * Mathf.Deg2Rad * 0.5f);
-
-            var vectorLineUp = Vector3.Normalize(spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * spotlight.range + spotlight.gameObject.transform.up * flatRadiusAtRange - spotlight.gameObject.transform.position);
-            var vectorLineDown = Vector3.Normalize(spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * spotlight.range + spotlight.gameObject.transform.up * -flatRadiusAtRange - spotlight.gameObject.transform.position);
-            var vectorLineRight = Vector3.Normalize(spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * spotlight.range + spotlight.gameObject.transform.right * flatRadiusAtRange - spotlight.gameObject.transform.position);
-            var vectorLineLeft = Vector3.Normalize(spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * spotlight.range + spotlight.gameObject.transform.right * -flatRadiusAtRange - spotlight.gameObject.transform.position);
-
-            var rangeDiscDistance = Mathf.Cos(Mathf.Deg2Rad * spotlight.spotAngle / 2) * spotlight.range;
-            var rangeDiscRadius = spotlight.range * Mathf.Sin(spotlight.spotAngle * Mathf.Deg2Rad * 0.5f);
-            var nearDiscDistance = Mathf.Cos(Mathf.Deg2Rad * spotlight.spotAngle / 2) * spotlight.shadowNearPlane;
-            var nearDiscRadius = spotlight.shadowNearPlane * Mathf.Sin(spotlight.spotAngle * Mathf.Deg2Rad * 0.5f);
-
-            //Draw Range disc
-            DrawWireDisc(spotlight.gameObject.transform.rotation, spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * rangeDiscDistance, spotlight.gameObject.transform.forward, rangeDiscRadius);
-
-            //Draw Lines
-            Gizmos.DrawLine(spotlight.gameObject.transform.position, spotlight.gameObject.transform.position + vectorLineUp * spotlight.range);
-            Gizmos.DrawLine(spotlight.gameObject.transform.position, spotlight.gameObject.transform.position + vectorLineDown * spotlight.range);
-            Gizmos.DrawLine(spotlight.gameObject.transform.position, spotlight.gameObject.transform.position + vectorLineRight * spotlight.range);
-            Gizmos.DrawLine(spotlight.gameObject.transform.position, spotlight.gameObject.transform.position + vectorLineLeft * spotlight.range);
-
-            if (selected)
-            {
-                //Draw Range Arcs
-                Handles.DrawWireArc(spotlight.gameObject.transform.position, spotlight.gameObject.transform.right, vectorLineUp, spotlight.spotAngle, spotlight.range);
-                Handles.DrawWireArc(spotlight.gameObject.transform.position, spotlight.gameObject.transform.up, vectorLineLeft, spotlight.spotAngle, spotlight.range);
-                //Draw Near Plane Disc
-                if (spotlight.shadows != LightShadows.None)
-                    DrawWireDisc(spotlight.gameObject.transform.rotation, spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * nearDiscDistance, spotlight.gameObject.transform.forward, nearDiscRadius);
-                
-                //Inner Cone
-                DrawInnerCone(spotlight, innerSpotPercent);
-            }
-        }
-
-        // innerSpotPercent - 0 to 1 value (percentage 0 - 100%)
-        public static void DrawInnerCone(Light spotlight, float innerSpotPercent)
-        {
-            var flatRadiusAtRange = spotlight.range * Mathf.Tan(spotlight.spotAngle * innerSpotPercent * Mathf.Deg2Rad * 0.5f);
-
-            var vectorLineUp = Vector3.Normalize(spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * spotlight.range + spotlight.gameObject.transform.up * flatRadiusAtRange - spotlight.gameObject.transform.position);
-            var vectorLineDown = Vector3.Normalize(spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * spotlight.range + spotlight.gameObject.transform.up * -flatRadiusAtRange - spotlight.gameObject.transform.position);
-            var vectorLineRight = Vector3.Normalize(spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * spotlight.range + spotlight.gameObject.transform.right * flatRadiusAtRange - spotlight.gameObject.transform.position);
-            var vectorLineLeft = Vector3.Normalize(spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * spotlight.range + spotlight.gameObject.transform.right * -flatRadiusAtRange - spotlight.gameObject.transform.position);
-
-            //Draw Lines
-            Gizmos.DrawLine(spotlight.gameObject.transform.position, spotlight.gameObject.transform.position + vectorLineUp * spotlight.range);
-            Gizmos.DrawLine(spotlight.gameObject.transform.position, spotlight.gameObject.transform.position + vectorLineDown * spotlight.range);
-            Gizmos.DrawLine(spotlight.gameObject.transform.position, spotlight.gameObject.transform.position + vectorLineRight * spotlight.range);
-            Gizmos.DrawLine(spotlight.gameObject.transform.position, spotlight.gameObject.transform.position + vectorLineLeft * spotlight.range);
-
-            var innerAngle = spotlight.spotAngle * innerSpotPercent;
-            if (innerAngle > 0)
-            {
-                var innerDiscDistance = Mathf.Cos(Mathf.Deg2Rad * innerAngle * 0.5f) * spotlight.range;
-                var innerDiscRadius = spotlight.range * Mathf.Sin(innerAngle * Mathf.Deg2Rad * 0.5f);
-                //Draw Range disc
-                DrawWireDisc(spotlight.gameObject.transform.rotation, spotlight.gameObject.transform.position + spotlight.gameObject.transform.forward * innerDiscDistance, spotlight.gameObject.transform.forward, innerDiscRadius);
-            }
         }
 
         public static void DrawSpotlightWireframe(Vector3 outerAngleInnerAngleRange, float shadowPlaneDistance = -1f)
@@ -216,7 +176,20 @@ namespace UnityEditor.Experimental.Rendering
             float innerAngle = outerAngleInnerAngleRange.y;
             float range = outerAngleInnerAngleRange.z;
 
-            //[TO BE COMPLETED] @martint I'll let you put your handle here when ready, I only redone the wireframe to patch as soon as possible
+            if (innerAngle > 0f)
+            {
+                innerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.right, range, innerAngle);
+                innerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.left, range, innerAngle);
+                innerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.up, range, innerAngle);
+                innerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.down, range, innerAngle);
+            }
+
+            outerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.right, range, outerAngle);
+            outerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.left, range, outerAngle);
+            outerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.up, range, outerAngle);
+            outerAngle = SizeSliderSpotAngle(Vector3.zero, Vector3.forward, Vector3.down, range, outerAngle);
+
+            range = SliderLineHandle(Vector3.zero, Vector3.forward, range);
 
             return new Vector3(outerAngle, innerAngle, range);
         }
@@ -255,78 +228,72 @@ namespace UnityEditor.Experimental.Rendering
 
         // Same as Gizmo.DrawFrustum except that when aspect is below one, fov represent fovX instead of fovY
         // Use to match our light frustum pyramid behavior
-        public static void DrawPyramidFrustumWireframe(Vector4 aspectFovMaxRangeMinRange)
+        public static void DrawPyramidFrustumWireframe(Vector4 aspectFovMaxRangeMinRange, float distanceTruncPlane = 0f)
         {
             float aspect = aspectFovMaxRangeMinRange.x;
             float fov = aspectFovMaxRangeMinRange.y;
             float maxRange = aspectFovMaxRangeMinRange.z;
             float minRange = aspectFovMaxRangeMinRange.w;
             float tanfov = Mathf.Tan(Mathf.Deg2Rad * fov * 0.5f);
-            float minXYFarEndSize = maxRange * tanfov;
-            Vector3 farEnd = new Vector3(0, 0, maxRange);
-            Vector3 endSizeX;
-            Vector3 endSizeY;
+            
+            var startAngles = new Vector3[4];
+            if (minRange > 0.0f)
+            {
+                startAngles = GetProjectedRectAngles(minRange, aspect, tanfov);
+                Handles.DrawLine(startAngles[0], startAngles[1]);
+                Handles.DrawLine(startAngles[1], startAngles[2]);
+                Handles.DrawLine(startAngles[2], startAngles[3]);
+                Handles.DrawLine(startAngles[3], startAngles[0]);
+            }
 
+            if (distanceTruncPlane > 0f)
+            {
+                var truncAngles = GetProjectedRectAngles(distanceTruncPlane, aspect, tanfov);
+                Handles.DrawLine(truncAngles[0], truncAngles[1]);
+                Handles.DrawLine(truncAngles[1], truncAngles[2]);
+                Handles.DrawLine(truncAngles[2], truncAngles[3]);
+                Handles.DrawLine(truncAngles[3], truncAngles[0]);
+            }
+
+            var endAngles = GetProjectedRectAngles(maxRange, aspect, tanfov);
+            Handles.DrawLine(endAngles[0], endAngles[1]);
+            Handles.DrawLine(endAngles[1], endAngles[2]);
+            Handles.DrawLine(endAngles[2], endAngles[3]);
+            Handles.DrawLine(endAngles[3], endAngles[0]);
+
+            Handles.DrawLine(startAngles[0], endAngles[0]);
+            Handles.DrawLine(startAngles[1], endAngles[1]);
+            Handles.DrawLine(startAngles[2], endAngles[2]);
+            Handles.DrawLine(startAngles[3], endAngles[3]);
+        }
+
+        static Vector3[] GetProjectedRectAngles(float distance, float aspect, float tanFOV)
+        {
+            Vector3 sizeX;
+            Vector3 sizeY;
+            float minXYTruncSize = distance * tanFOV;
             if (aspect >= 1.0f)
             {
-                endSizeX = new Vector3(minXYFarEndSize * aspect, 0, 0);
-                endSizeY = new Vector3(0, minXYFarEndSize, 0);
+                sizeX = new Vector3(minXYTruncSize * aspect, 0, 0);
+                sizeY = new Vector3(0, minXYTruncSize, 0);
             }
             else
             {
-                endSizeX = new Vector3(minXYFarEndSize, 0, 0);
-                endSizeY = new Vector3(0, minXYFarEndSize / aspect, 0);
+                sizeX = new Vector3(minXYTruncSize, 0, 0);
+                sizeY = new Vector3(0, minXYTruncSize / aspect, 0);
             }
-
-            Vector3 s1 = Vector3.zero;
-            Vector3 s2 = Vector3.zero;
-            Vector3 s3 = Vector3.zero;
-            Vector3 s4 = Vector3.zero;
-
-            Vector3 e1 = farEnd + endSizeX + endSizeY;
-            Vector3 e2 = farEnd - endSizeX + endSizeY;
-            Vector3 e3 = farEnd - endSizeX - endSizeY;
-            Vector3 e4 = farEnd + endSizeX - endSizeY;
-
-            if (minRange > 0.0f)
+            Vector3 center = new Vector3(0, 0, distance);
+            Vector3[] angles =
             {
-                Vector3 nearEnd = new Vector3(0, 0, minRange);
+                center + sizeX + sizeY,
+                center - sizeX + sizeY,
+                center - sizeX - sizeY,
+                center + sizeX - sizeY
+            };
 
-                Vector3 startSizeX;
-                Vector3 startSizeY;
-                float minXYStartSize = minRange * tanfov;
-                if (aspect >= 1.0f)
-                {
-                    startSizeX = new Vector3(minXYStartSize * aspect, 0, 0);
-                    startSizeY = new Vector3(0, minXYStartSize, 0);
-                }
-                else
-                {
-                    startSizeX = new Vector3(minXYStartSize, 0, 0);
-                    startSizeY = new Vector3(0, minXYStartSize / aspect, 0);
-                }
-                Vector3 startPoint = nearEnd;
-                s1 = startPoint + startSizeX + startSizeY;
-                s2 = startPoint - startSizeX + startSizeY;
-                s3 = startPoint - startSizeX - startSizeY;
-                s4 = startPoint + startSizeX - startSizeY;
-
-                Handles.DrawLine(s1, s2);
-                Handles.DrawLine(s2, s3);
-                Handles.DrawLine(s3, s4);
-                Handles.DrawLine(s4, s1);
-            }
-
-            Handles.DrawLine(s1, e1);
-            Handles.DrawLine(s2, e2);
-            Handles.DrawLine(s3, e3);
-            Handles.DrawLine(s4, e4);
-
-            Handles.DrawLine(e1, e2);
-            Handles.DrawLine(e2, e3);
-            Handles.DrawLine(e3, e4);
-            Handles.DrawLine(e4, e1);
+            return angles;
         }
+
         public static Vector4 DrawPyramidFrustumHandle(Vector4 aspectFovMaxRangeMinRange, bool useNearPlane, float minAspect = 0.05f, float maxAspect = 20f, float minFov = 1f)
         {
             float aspect = aspectFovMaxRangeMinRange.x;
@@ -334,29 +301,8 @@ namespace UnityEditor.Experimental.Rendering
             float maxRange = aspectFovMaxRangeMinRange.z;
             float minRange = aspectFovMaxRangeMinRange.w;
             float tanfov = Mathf.Tan(Mathf.Deg2Rad * fov * 0.5f);
-            float minXYFarEndSize = maxRange * tanfov;
-            Vector3 farEnd = new Vector3(0, 0, maxRange);
-            Vector3 endSizeX;
-            Vector3 endSizeY;
 
-            if (aspect >= 1.0f)
-            {
-                endSizeX = new Vector3(minXYFarEndSize * aspect, 0, 0);
-                endSizeY = new Vector3(0, minXYFarEndSize, 0);
-            }
-            else
-            {
-                endSizeX = new Vector3(minXYFarEndSize, 0, 0);
-                endSizeY = new Vector3(0, minXYFarEndSize / aspect, 0);
-            }
-            
-            Vector3[] e = new Vector3[]
-            {
-                farEnd + endSizeX + endSizeY,
-                farEnd - endSizeX + endSizeY,
-                farEnd - endSizeX - endSizeY,
-                farEnd + endSizeX - endSizeY
-            };
+            var e = GetProjectedRectAngles(maxRange, aspect, tanfov);
             
             if (useNearPlane)
             {
@@ -364,30 +310,30 @@ namespace UnityEditor.Experimental.Rendering
             }
 
             maxRange = SliderLineHandle(Vector3.zero, Vector3.forward, maxRange);
+            
+            float distanceRight = HandleUtility.DistanceToLine(e[0], e[3]);
+            float distanceLeft = HandleUtility.DistanceToLine(e[1], e[2]);
+            float distanceUp = HandleUtility.DistanceToLine(e[0], e[1]);
+            float distanceDown = HandleUtility.DistanceToLine(e[2], e[3]);
 
-            //find the righttop corner in screen
-            Vector2[] screenPositions = new Vector2[]
+            int pointIndex = 0;
+            if (distanceRight < distanceLeft)
             {
-                Camera.current.WorldToScreenPoint(Handles.matrix * e[0]),
-                Camera.current.WorldToScreenPoint(Handles.matrix * e[1]),
-                Camera.current.WorldToScreenPoint(Handles.matrix * e[2]),
-                Camera.current.WorldToScreenPoint(Handles.matrix * e[3])
-            };
-            float maxWeight = float.MinValue;
-            int maxIndex = 0;
-            Vector2 support = new Vector2(Camera.current.pixelWidth, Camera.current.pixelHeight);
-            Vector2 supportOrtho = new Vector2(support.y, -support.x);
-            for (int i = 0; i < 4; ++i)
-            {
-                float weight = Vector3.Dot(screenPositions[i], support) - 0.5f * Mathf.Abs(Vector3.Dot(screenPositions[i], supportOrtho));
-                if (weight > maxWeight)
-                {
-                    maxWeight = weight;
-                    maxIndex = i;
-                }
+                if (distanceUp < distanceDown)
+                    pointIndex = 0;
+                else
+                    pointIndex = 3;
             }
-
-            Vector2 send = e[maxIndex];
+            else
+            {
+                if (distanceUp < distanceDown)
+                    pointIndex = 1;
+                else
+                    pointIndex = 2;
+            }
+            
+            Vector2 send = e[pointIndex];
+            Vector3 farEnd = new Vector3(0, 0, maxRange);
             EditorGUI.BeginChangeCheck();
             Vector2 received = SliderPlaneHandle(farEnd, Vector3.right, Vector3.up, send);
             if (EditorGUI.EndChangeCheck())
@@ -435,7 +381,7 @@ namespace UnityEditor.Experimental.Rendering
             return new Vector4(aspect, fov, maxRange, minRange);
         }
 
-        public static void DrawOrthoFrustumWireframe(Vector4 widthHeightMaxRangeMinRange)
+        public static void DrawOrthoFrustumWireframe(Vector4 widthHeightMaxRangeMinRange, float distanceTruncPlane = 0f)
         {
             float halfWidth = widthHeightMaxRangeMinRange.x * 0.5f;
             float halfHeight = widthHeightMaxRangeMinRange.y * 0.5f;
@@ -471,6 +417,20 @@ namespace UnityEditor.Experimental.Rendering
             Handles.DrawLine(s2, e2);
             Handles.DrawLine(s3, e3);
             Handles.DrawLine(s4, e4);
+
+            if (distanceTruncPlane> 0f)
+            {
+                Vector3 truncPoint = new Vector3(0, 0, distanceTruncPlane);
+                Vector3 t1 = truncPoint + sizeX + sizeY;
+                Vector3 t2 = truncPoint - sizeX + sizeY;
+                Vector3 t3 = truncPoint - sizeX - sizeY;
+                Vector3 t4 = truncPoint + sizeX - sizeY;
+
+                Handles.DrawLine(t1, t2);
+                Handles.DrawLine(t2, t3);
+                Handles.DrawLine(t3, t4);
+                Handles.DrawLine(t4, t1);
+            }
         }
         public static Vector4 DrawOrthoFrustumHandle(Vector4 widthHeightMaxRangeMinRange, bool useNearHandle)
         {

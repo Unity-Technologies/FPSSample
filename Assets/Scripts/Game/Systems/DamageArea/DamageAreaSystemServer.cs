@@ -35,14 +35,21 @@ public class DamageAreaSystemServer : ComponentSystem
             // Iterating backwards as we need to clear out any destroyed characters
             for (var i = charactersInside.Count - 1; i >= 0; --i)
             {
-                if (charactersInside[i].hitCollisionOwner == null)
+                if (charactersInside[i].hitCollisionOwner == Entity.Null || !EntityManager.Exists(charactersInside[i].hitCollisionOwner))
                 {
                     charactersInside.EraseSwap(i);
                     continue;
                 }
+
+                var healthState = EntityManager.GetComponentData<HealthStateData>(charactersInside[i].hitCollisionOwner);
+                if (healthState.health <= 0)
+                    continue;
+                
                 if (m_GameWorld.worldTime.tick > charactersInside[i].nextDamageTick)
                 {
-                    charactersInside[i].hitCollisionOwner.damageEvents.Add(new DamageEvent(Entity.Null, damageAmount, Vector3.zero, 0));
+                    var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(charactersInside[i].hitCollisionOwner);
+                    DamageEvent.AddEvent(damageEventBuffer, Entity.Null, damageAmount, Vector3.zero, 0);
+
                     var info = charactersInside[i];
                     info.nextDamageTick = m_GameWorld.worldTime.tick + ticksBetweenDamage;
                     charactersInside[i] = info;

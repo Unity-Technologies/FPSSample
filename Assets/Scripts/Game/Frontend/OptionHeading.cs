@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class OptionHeading  : OptionUI
 {
-    public Text title;
+    public TMPro.TextMeshProUGUI title;
 
     public override void UpdateFromConfigVar()
     {

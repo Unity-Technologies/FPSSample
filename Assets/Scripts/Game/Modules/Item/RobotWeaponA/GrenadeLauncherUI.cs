@@ -5,13 +5,13 @@ using UnityEngine.UI;
 public class GrenadeLauncherUI : AbilityUI 
 {
     public RawImage activeIcon;
-    public Text cooldownText;
+    public TMPro.TextMeshProUGUI cooldownText;
     public GameObject disabledOverlay;
 
     public override void UpdateAbilityUI(EntityManager entityManager, ref GameTime time)
     {
-        var character = entityManager.GetComponentObject<Character>(abilityOwner);
-        var ability = character.FindAbilityWithComponent(entityManager,typeof(Ability_GrenadeLauncher.PredictedState));
+        var charRepAll = entityManager.GetComponentData<CharacterReplicatedData>(abilityOwner);
+        var ability = charRepAll.FindAbilityWithComponent(entityManager,typeof(Ability_GrenadeLauncher.PredictedState));
         GameDebug.Assert(ability != Entity.Null,"AbilityController does not own a Ability_GrenadeLauncher ability");
 
         var state = entityManager.GetComponentData<Ability_GrenadeLauncher.PredictedState>(ability);

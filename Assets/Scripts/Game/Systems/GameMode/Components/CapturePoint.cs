@@ -1,10 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
+using Unity.Entities;
 using UnityEngine;
 
-public class CapturePoint : MonoBehaviour, INetSerialized
+public class CapturePoint : MonoBehaviour
 {
-
     public string objectiveName;
     public float radius;
     public float height;
@@ -28,34 +27,11 @@ public class CapturePoint : MonoBehaviour, INetSerialized
     [System.NonSerialized]
     public float captured;
 
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+    private void OnEnable()
     {
-        writer.WriteString("objectiveName", objectiveName);
-
-        writer.WriteByte("status", (byte)status);
-        writer.WriteFloatQ("captured", captured, 2);
-    }
-
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
-    {
-        objectiveName = reader.ReadString();
-
-        status = (Status)reader.ReadByte();
-        captured = reader.ReadFloatQ();
-
-        // TODO (petera) replace with proper cross scene reference system
-        foreach(var i in CapturePointReference.capturePointReferences)
-        {
-            if(i.index == captureIndex && i.animator != null)
-            {
-                int captured = 0;
-                if (status == Status.Capturing || status == Status.Contested)
-                    captured = 1;
-                else if (status == Status.Completed)
-                    captured = 2;
-                i.animator.SetInteger("Captured", captured);
-            }
-        }
+        // TODO (mogensh) As we dont have good way of having strings on ECS data components we keep this as monobehavior and only use GameModeData for serialization 
+        var goe = GetComponent<GameObjectEntity>();
+        goe.EntityManager.AddComponent(goe.Entity,typeof(CapturePointData));
     }
 
 #if UNITY_EDITOR
@@ -80,4 +56,51 @@ public class CapturePoint : MonoBehaviour, INetSerialized
         DebugDraw.Cylinder(position, Vector3.up, radius, halfHeight, Color.red);
     }
 #endif
+}
+
+
+
+[Serializable]
+public struct CapturePointData : IComponentData, IReplicatedComponent
+{
+    public int foo;
+    
+    public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
+    {
+        return new ReplicatedComponentSerializerFactory<CapturePointData>();
+    }    
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
+    {
+        var behaviour = context.entityManager.GetComponentObject<CapturePoint>(context.entity);
+
+        writer.WriteString("objectiveName", behaviour.objectiveName);
+
+        writer.WriteByte("status", (byte)behaviour.status);
+        writer.WriteFloatQ("captured", behaviour.captured, 2);
+    }
+
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
+    {
+        var behaviour = context.entityManager.GetComponentObject<CapturePoint>(context.entity);
+        
+        behaviour.objectiveName = reader.ReadString();
+
+        behaviour.status = (CapturePoint.Status)reader.ReadByte();
+        behaviour.captured = reader.ReadFloatQ();
+
+        // TODO (petera) replace with proper cross scene reference system
+        foreach(var i in CapturePointReference.capturePointReferences)
+        {
+            if(i.index == behaviour.captureIndex && i.animator != null)
+            {
+                int captured = 0;
+                if (behaviour.status == CapturePoint.Status.Capturing || behaviour.status == CapturePoint.Status.Contested)
+                    captured = 1;
+                else if (behaviour.status == CapturePoint.Status.Completed)
+                    captured = 2;
+                i.animator.SetInteger("Captured", captured);
+            }
+        }
+    }
 }

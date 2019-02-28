@@ -15,25 +15,43 @@ public struct ProjectileSettings
 }
 
 [CreateAssetMenu(fileName = "ProjectileTypeDefinition", menuName = "FPS Sample/Projectile/ProjectileTypeDefinition")]
-public class ProjectileTypeDefinition : ScriptableObjectRegistryEntry
+public class ProjectileTypeDefinition : ScriptableObject
 {
+    [HideInInspector]
+    public WeakAssetReference guid;  
+    
     public ProjectileSettings properties;
         
     // Clientprojectile settings.  
     public int clientProjectileBufferSize = 20;
     public WeakAssetReference clientProjectilePrefab;
-}
-
+    
+    
 #if UNITY_EDITOR
-[CustomEditor(typeof(ProjectileTypeDefinition))]
-public class
-    ProjectileTypeDefinitionEditor : ScriptableObjectRegistryEntryEditor<ProjectileRegistry, ProjectileTypeDefinition>
-{
-    public override void OnInspectorGUI()
+            
+    private void OnValidate()
     {
-        base.OnInspectorGUI();
-        DrawDefaultInspector();
+        UpdateAssetGuid();
     }
-}
-#endif
+    
+    public void SetAssetGUID(string guidStr)
+    {
+        var newRef = new WeakAssetReference(guidStr);
+        if (!newRef.Equals(guid))
+        {
+            guid = newRef;
+            EditorUtility.SetDirty(this);
+        }
+    }
 
+    public void UpdateAssetGuid()
+    {
+        var path = AssetDatabase.GetAssetPath(this);
+        if (path != null && path != "")
+        {
+            var guidStr = AssetDatabase.AssetPathToGUID(path);
+            SetAssetGUID(guidStr);
+        }
+    }
+#endif
+}

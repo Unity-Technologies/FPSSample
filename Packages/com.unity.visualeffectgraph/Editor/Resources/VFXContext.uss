@@ -1,0 +1,318 @@
+VFXContextUI.graphElement {
+    font-size:18;
+    flex-direction: column;
+    margin-top:0;
+    padding-left:0;
+    padding-right:0;
+
+}
+VFXContextUI > #node-border
+{
+    width:368;
+    background-color:rgba(29,29,29,0.8);
+    border-radius:8;
+    border-left-width:1;
+    border-right-width:1;
+    border-top-width:1;
+    border-bottom-width:1;
+    padding-top : 5;
+    padding-bottom : 5;
+    margin-top : 19;
+    margin-bottom : 19;
+    marging-top:2;
+    margin-left:3;
+    margin-right:3;
+}
+
+VFXContextUI > #node-border > #inside > #contents
+{
+    margin-top : 0;
+}
+
+VFXContextUI > #node-border.empty > #inside > #contents
+{
+    margin-top : 0;
+    padding-top : 0;
+    margin-bottom : 0;
+    padding-bottom : 0;
+}
+
+/*  update */
+
+VFXContextUI.outputTypenone > #node-border
+{
+    end-color:#C24F30;
+}
+
+
+VFXContextUI.inputTypeparticle > #node-border
+{
+start-color:#BF9220;
+}
+VFXContextUI.outputTypeparticle > #node-border
+{
+    end-color:#BF9220;
+}
+
+VFXFlowAnchor.port.EdgeConnector.typeparticle
+{
+    port-color: #FFBC21;
+}
+
+/*  output */
+
+
+VFXContextUI.typemesh  > #node-border
+{
+    start-color: #3b5e92;
+    end-color: #3b5e92;
+}
+
+VFXFlowAnchor.port.EdgeConnector.typemesh
+{
+    port-color: #0763eb;
+}
+
+/* spawner */
+
+VFXContextUI.inputTypespawnevent  > #node-border,VFXContextUI.inputTypeevent  > #node-border
+{
+    start-color: #17AB6A;
+}
+VFXContextUI.outputTypespawnevent  > #node-border,VFXContextUI.outputTypeevent  > #node-border
+{
+    end-color: #17AB6A;
+}
+
+VFXFlowAnchor.port.EdgeConnector.typespawnevent, VFXFlowAnchor.port.EdgeConnector.typeevent
+{
+    port-color: #00ff8f;
+}
+
+/* event */
+
+VFXContextUI.typenone  > #node-border
+{
+    border-color: #27FFA0;
+}
+
+VFXContextUI > #selection-border
+{
+    border-radius:10;
+    margin-top:18;
+    margin-bottom:18;
+}
+VFXContextUI #inside
+{
+    margin-left: 8;
+    margin-right:8;
+}
+
+VFXContextUI .extremity
+{
+    border-radius:2;
+    justify-content:center;
+    align-items:center;
+    flex-direction:row;
+}
+
+VFXContextUI #HeaderContainer
+{
+    flex-direction:row;
+    justify-content:center;
+    align-items:center;
+}
+
+VFXContextUI #footer
+{
+    flex-direction:row;
+    margin-bottom:1;
+}
+
+VFXContextUI #node-border > #inside > #title > #title-label
+{
+    text-alignment:middle-center;
+
+    text-color:#c4c4c4;
+    font-size:18;
+    height:24;
+}
+VFXContextUI #footer #title-label
+{
+    font-size:11;
+    font-style: normal;
+    height:16;
+}
+
+VFXContextUI #title #icon
+{
+    image:resource("VFX/Execution");
+    margin-right:6;
+}
+
+VFXContextUI #header-space
+{
+    position-type:absolute;
+    position-right:5;
+    position-top:5;
+    width:48;
+    height:16;
+}
+VFXContextUI > #node-border > #inside > #contents
+{
+    border-radius:6;
+    background-color: rgba(63,63,63,0.8);
+    margin-left:4;
+    margin-right:4;
+}
+VFXContextUI > #node-border > #inside > #contents > #settings
+{
+    background-color: rgba(0,0,0,0);
+}
+
+VFXContextUI #header-space.spaceLocal
+{
+    image:resource("VFX/title-local");
+}
+
+VFXContextUI #header-space.spaceWorld
+{
+    image:resource("VFX/title-world");
+}
+
+VFXContextUI #header-space.spaceCamera
+{
+    image:resource("VFX/title-camera");
+}
+
+VFXContextUI #footer #icon
+{
+    image:resource("VFX/Execution");
+}
+
+VFXContextUI *
+{
+    font-size:11;
+}
+
+VFXContextUI #block-container {
+    text-alignment:upper-center;
+
+    text-color:#8FC1DF;
+
+    font-size:12;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top:2;
+    padding-bottom:2;
+}
+
+.flow-container
+{
+    flex-direction: row;
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+    position-type: Absolute;
+    position-left: 0;
+    position-right: 0;
+    height: 28;
+}
+
+#flow-outputs
+{
+    position-bottom: 0;
+}
+VFXContextUI #no-blocks
+{
+    border-left-width: 1;
+    border-right-width: 1;
+    border-bottom-width: 1;
+    border-top-width: 1;
+    border-color: #393939;
+    text-color: #393939;
+    height: 24;
+    text-alignment: middle-center;
+    border-radius:8;
+}
+
+VFXContextUI.graphElement #user-label
+{
+    border-top-width:1;
+    border-left-width:1;
+    border-right-width:1;
+    border-bottom-width:1;
+    border-top: 1;
+    border-left: 1;
+    border-right: 1;
+    border-bottom: 1;
+    margin-left:12;
+    margin-right:12;
+    margin-top:1;
+    margin-bottom:1;
+    padding-left:0;
+    padding-right:0;
+}
+
+#user-title
+{
+    flex-direction:column;
+    align-items:stretch;
+}
+
+VFXContextUI.graphElement #user-label:hover
+{
+    border-color: rgba(68,192,255, 0.5);
+}
+
+* Label#user-label, * TextField#user-title-textfield
+{
+    font:resource("GraphView/DummyFont(LucidaGrande).ttf");
+}
+
+TextField#user-title-textfield
+{
+    padding-left:0;
+    padding-right:0;
+    padding-top:0;
+    padding-bottom:0;
+    margin-left:1;
+    margin-right:0;
+    margin-top:2;
+    margin-bottom:0;
+    background-color:#000;
+    position-type:Absolute;
+    min-height:24;
+}
+
+#user-label, #user-title-textfield
+{
+    font-size:18;
+    word-wrap: true;
+}
+
+#user-label
+{
+    text-color:#c4c4c4;
+    min-height:24;
+}
+
+VFXContextUI.inputTypespawnevent #user-label
+{
+    text-color:#00ff8f;
+}
+VFXContextUI.inputTypeparticle #user-label
+{
+    text-color:#FFBC21;
+}
+
+#user-label.empty
+{
+    height : 4;
+    min-height:0;
+}
+
+VFXContextUI > #node-border > #inside > #contents
+{
+    background-color: rgba(45,45,45,0.8);
+}

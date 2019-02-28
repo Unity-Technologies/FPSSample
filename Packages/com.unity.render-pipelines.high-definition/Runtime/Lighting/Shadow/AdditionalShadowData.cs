@@ -38,7 +38,7 @@ namespace UnityEngine.Experimental.Rendering
         public float normalBiasScale = 1.0f;
         public bool sampleBiasScale = true;
         public bool edgeLeakFixup = false; // Causes large banding artifacts
-        public bool edgeToleranceNormal = true;
+        public bool edgeToleranceNormal = false;
         [Range(0.0F, 1.0F)]
         public float edgeTolerance = 1.0f;
 

@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.Experimental.Animations;
 using UnityEngine.Playables;
+using UnityEngine.Profiling;
 
 [CreateAssetMenu(fileName = "CameraNoise", menuName = "FPS Sample/Animation/AnimGraph/CameraNoise")]
 public class AnimGraph_CameraNoise : AnimGraphAsset
@@ -64,12 +65,15 @@ public class AnimGraph_CameraNoise : AnimGraphAsset
     
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            Profiler.BeginSample("CameraNoise.Apply");
+
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             var lookDir = Quaternion.Euler(new Vector3(-animState.aimPitch, animState.aimYaw, 0)) * Vector3.down;                        
             var job = m_NoisePlayable.GetJobData<CameraNoiseJob>();
             job.Update(lookDir, m_Settings.cameraNoiseJobSettings, m_NoisePlayable);
     
     //        Debug.Log(job.debugValue.x + " : " + job.debugValue.y + " : " + job.debugValue.z);
+            Profiler.EndSample();
         }
 
         

@@ -4,7 +4,92 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [4.1.0-preview] - 2018-09-28
+## [4.6.0-preview] - 2018-12-07
+
+### Added
+
+### Fixed
+- Fixed forward clustered lighting for VR (double-wide).
+- Fixed HDRenderPipelineAsset inspector broken when displaying its FrameSettings from project windows.
+- Fixed Decals and SSR diable flags for all shader graph master node (Lit, Fabric, StackLit, PBR)
+- Fixed Distortion blend mode for shader graph master node (Lit, StackLit)
+- Fixed bent Normal for Fabric master node in shader graph
+- Fixed PBR master node lightlayers
+- Fixed stacklit transmission and sun highlight
+- Fixed logic to disable FPTL with stereo rendering
+- Fixed an issue with flipped depth buffer during postprocessing
+- Fixed decals with stereo rendering
+- Fixed flip logic for postprocessing + VR
+- Fixed copyStencilBuffer pass for Switch
+- Fixed point light shadow map culling that wasn't taking into account far plane
+- Fixed usage of SSR with transparent on all master node
+- Fixed SSR and microshadowing on fabric material
+- Fixed shader stripping for built-in lit shaders.
+
+### Changed
+- Removing the simple lightloop used by the simple lit shader
+- Added a StackLit master node replacing the InspectorUI version. IMPORTANT: All previously authored StackLit Materials will be lost. You need to recreate them with the master node.
+
+## [4.3.0-preview] - 2018-11-23
+
+### Added
+- Added option to run Contact Shadows and Volumetrics Voxelization stage in Async Compute
+- Added camera freeze debug mode - Allow to visually see culling result for a camera
+- Added support of LuxAtDistance for punctual lights
+- Added option to remove more shader variants and display information when building a player
+
+### Fixed
+- Fixed issue in pyramid shaped spotlight handles manipulation
+- Fixed Debug.DrawLine and Debug.Ray call to work in game view
+- Fixed DebugMenu's enum resetted on change
+- Fixed divide by 0 in refraction causing NaN
+- Fixed disable rough refraction support
+- Fixed refraction, SSS and atmospheric scattering for VR
+- Fixed Light's UX to not allow negative intensity
+
+### Changed
+- Rename "Regular" in Diffusion profile UI "Thick Object"
+- Changed VBuffer depth parametrization for volumetric from distanceRange to depthExtent - Require update of volumetric settings - Fog start at near plan
+- SpotLight with box shape use Lux unit only
+
+## [4.2.0-preview] - 2018-11-16
+
+### Added
+- Added a y-axis offset for the PlanarReflectionProbe and offset tool.
+- Exposed the option to run SSR and SSAO on async compute.
+- Added support for the _GlossMapScale parameter in the Legacy to HDRP Material converter.
+- Added wave intrinsic instructions for use in Shaders (for AMD GCN).
+
+
+### Fixed
+- Fixed cubemap assignation on custom ReflectionProbe
+- Fixed Reflection Probes’ capture settings' shadow distance.
+- Fixed an issue with the SRP batcher and Shader variables declaration.
+- Fixed thickness and subsurface slots for fabric Shader master node that wasn't appearing with the right combination of flags.
+- Fixed d3d debug layer warning.
+- Fixed PCSS sampling quality.
+- Fixed the Subsurface and transmission Material feature enabling for fabric Shader.
+- Fixed the Shader Graph UV node’s dimensions when using it in a vertex Shader.
+- Fixed the planar reflection mirror gizmo's rotation.
+- Fixed HDRenderPipelineAsset's FrameSettings not showing the selected enum in the Inspector drop-down.
+- Fixed an error with async compute.
+- MSAA now supports transparency.
+- The HDRP Material upgrader tool now converts metallic values correctly.
+- Volumetrics now render in Reflection Probes.
+- Fixed a crash that occurred whenever you set a viewport size to 0.
+- Fixed the Camera physic parameter that the UI previously did not display.
+
+
+### Changed
+- Updated default FrameSettings used for realtime Reflection Probes when you create a new HDRenderPipelineAsset.
+- Remove multi-camera support. LWRP and HDRP will not support multi-camera layered rendering.
+- Updated Shader Graph subshaders to use the new instancing define.
+- Changed fog distance calculation from distance to plane to distance to sphere.
+- Optimized forward rendering using AMD GCN by scalarizing the light loop.
+- Changed the UI of the Light Editor.
+- Change ordering of includes in HDRP Materials in order to reduce iteration time for faster compilation.
+
+## [4.1.0-preview] - 2018-10-18
 
 ### Added
 - Added occlusion mesh to depth prepass for VR (VR still disabled for now)
@@ -18,6 +103,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added support for shadow bias for thin object transmission
 - Added FrameSettings to control realtime planar reflection
 - Added control for SRPBatcher on HDRP Asset
+- Added an option to clear the shadow atlases in the debug menu
+- Added a color visualization of the shadow atlas rescale in debug mode
+- Added support for disabling SSR on materials
+- Added intrinsic for XBone
+- Added new light volume debugging tool
+- Added a new SSR debug view mode
+- Added translaction's scale invariance on DensityVolume
+- Added multiple supported LitShadermode and per renderer choice in case of both Forward and Deferred supported
+- Added custom specular occlusion mode to Lit Shader Graph Master node
+- Added separate editor resources file for those resources to not be taken in player builds.
+- Added support for disabling SSR on materials in shader graph
+- Added support of MSAA when Both ListShaderMode is enabled (previously only Forward mode was supported)
+- Added support of emissive color override in debug mode
+- Exposed max light for lightloop settings in hdrp asset UI
+- Disable NormalDBuffer pass update if no there is no decal
+- Added distant (fallback) volumetric fog + improved fog evaluation precision
+- Add an option to reflect sky in SSR
 
 ### Fixed
 - Fixed a normal bias issue with Stacklit (Was causing light leaking)
@@ -32,6 +134,34 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed an issue where sometime the lookup texture used for GGX convolution was broken, causing broken rendering
 - Fixed an issue where you wouldn't see any fog for certain pipeline/scene configurations
 - Fixed an issue with volumetric lighting where the anisotropy value of 0 would not result in perfectly isotropic lighting
+- Fixed shadow bias when the atlas is rescaled
+- Fixed shadow cascade sampling outside of the atlas when cascade count is inferior to 4
+- Fixed shadow filter width in deferred rendering not matching shader config
+- Fixed stereo sampling of depth texture in MSAA DepthValues.shader
+- Fixed box light UI which allowed negative and zero sizes, thus causing NaNs
+- Fixed stereo rendering in HDRISky.shader (VR)
+- Fixed normal blend and blend sphere influence for reflection probe
+- Fixed distortion filtering (was point filtering, now trilinear)
+- Fixed contact shadow for large distance
+- Fixed depth pyramid debug view mode
+- Fixed sphere shaped influence handles clamping in reflection probes
+- Fixed reflection probes data migration for project created before using hdrp
+- Fixed sphere shaped influence handles clamping in reflection probes
+- Fixed reflection probes data migration for project created before using hdrp
+- Fixed UI of layered material where scrollbar was rendered above copy button.
+- Fixed material tesselation's parameters "start fade distance" and "end fade distance" that were clamped while being modified.
+- Fixed various distortion and refraction issues - handle a better fallback
+- Fixed SSR for multiple views
+- Fixed SSR issues related to self-intersections
+- Fixed shape density volume handle speed
+- Fixed density volume shape handle moving too fast
+- Fixed camera velocity pass that was remove by mistake
+- Fixed some null pointer exceptions when disabling motion vectors support
+- Fixed viewports for both SSS combine pass and transparent depth prepass
+- Fixed blend mode pop up in UI not appearing when pre refraction is on
+- Fixed some null pointer exceptions when disabling motion vectors support
+- Fixed layered lit UI issue with scrollbar
+- Fixed ambient occlusion for Lit Master Node when slot is connected
 
 ### Changed
 - Use samplerunity_ShadowMask instead of samplerunity_samplerLightmap for shadow mask
@@ -41,6 +171,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Remove all the debug mode from SSR that are obsolete now
 - Expose frameSettings and Capture settings for reflection and planar probe
 - Update UI for reflection probe, planar probe, camera and HDRP Asset
+- Implement proper linear blending for volumetric lighting via deep compositing as described in the paper "Deep Compositing Using Lie Algebras"
+- Changed  planar mapping to match terrain convention (XZ instead of ZX)
+- XRGraphicsConfig is no longer Read/Write. Instead, it's read-only. This improves consistency of XR behavior between the legacy render pipeline and SRP
+- Change reflection probe data migration code (to update old reflection probe to new one)
+- Updated gizmo for ReflectionProbes
+- Updated UI and Gizmo of DensityVolume
+- Renamed "Line" shaped lights to "Tube" light
+- Use the "mean height" fog parametrization
+- Shadow quality settings are setup to "All" when using HDRP (Not visile in UI when using SRP). Avoid to have disabled shadow.
+- Internally use premultiplied alpha for all fog
 
 ## [4.0.0-preview] - 2018-09-28
 
@@ -382,7 +522,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Renamed RTHandle to RTHandleSystem.RTHandle
 - Move code for PreIntegratedFDG (Lit.shader) into its dedicated folder to be share with other material
 - Move code for LTCArea (Lit.shader) into its dedicated folder to be share with other material
- 
+
 ### Removed
 - Removed Planar Probe mirror plane position and normal fields in inspector, always display mirror plane and normal gizmos
 

@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4453389850298440}
   - component: {fileID: 114635541759174400}
-  - component: {fileID: 114089745592822908}
   - component: {fileID: 114796866119240744}
+  - component: {fileID: 114089745592822908}
   m_Layer: 0
   m_Name: GameMode
   m_TagString: Untagged
@@ -45,6 +45,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bf10cdea1344482e91a4f2b58506b77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &114796866119240744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1080775768306528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SerializedData:
+    assetGuid:
+      val0: 782681048
+      val1: 262424079
+      val2: -264575877
+      val3: 1237923425
+  netID: 099b89d9a2b6a24781ce14317badf4d3
 --- !u!114 &114089745592822908
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -63,18 +82,3 @@ MonoBehaviour:
   teamName1: 
   teamScore0: 0
   teamScore1: 0
---- !u!114 &114796866119240744
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1080775768306528}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  guid: 2ea6c3d8460f0fa47be43af06136c949
-  netID: ad04473f8db5044696c87e10f05c3508
-  registryId: 17

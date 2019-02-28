@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Debug.hlsl" // Require for GetIndexColor auto generated
-#include "BuiltinData.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Builtin/BuiltinData.cs.hlsl"
 
 //-----------------------------------------------------------------------------
 // helper macro

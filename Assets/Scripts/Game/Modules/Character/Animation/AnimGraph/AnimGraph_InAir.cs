@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Animations;
+using UnityEngine.Profiling;
 
 [CreateAssetMenu(fileName = "InAir", menuName = "FPS Sample/Animation/AnimGraph/InAir")]
 public class AnimGraph_InAir : AnimGraphAsset
@@ -73,7 +74,9 @@ public class AnimGraph_InAir : AnimGraphAsset
     
         public void UpdatePresentationState(bool firstUpdate, GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            Profiler.BeginSample("InAir.Update");
+            
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             if (firstUpdate)
             {
                 animState.inAirTime = 0;
@@ -91,11 +94,15 @@ public class AnimGraph_InAir : AnimGraphAsset
             animState.landAnticWeight += nearGround ? deltaWeight : -deltaWeight;
             animState.landAnticWeight = Mathf.Clamp(animState.landAnticWeight, 0, 1);
             m_EntityManager.SetComponentData(m_AnimStateOwner, animState);
+            
+            Profiler.EndSample();
         }
 
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            Profiler.BeginSample("InAir.Apply");
+            
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             m_animInAir.SetTime(animState.inAirTime);
             m_animLandAntic.SetTime(animState.inAirTime);
             
@@ -109,6 +116,8 @@ public class AnimGraph_InAir : AnimGraphAsset
             m_actionAnimationHandler.UpdateAction(animState.charAction, characterActionDuration);
             if(m_aimHandler != null)
                 m_aimHandler.SetAngle(animState.aimPitch);
+            
+            Profiler.EndSample();
         }
     
         AnimGraph_InAir m_settings;

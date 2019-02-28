@@ -33,6 +33,29 @@ public class BundledResourceBuilder
         BuildWindowProgress.Open("Verify Registries");
         TestRegistries();
     }
+    
+
+    [MenuItem("FPS Sample/Registries/Prepare registries")]
+    public static void PrepareRegistriesMenu()
+    {
+        PrepareRegistries();
+    }
+
+    public static void PrepareRegistries()
+    {
+        Debug.Log("Preparing registries...");
+        var guids = AssetDatabase.FindAssets("t:" + typeof(RegistryBase).Name);
+        foreach (var guid in guids)
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            var registry = AssetDatabase.LoadAssetAtPath<RegistryBase>(path);
+            registry.PrepareForBuild();
+            
+            EditorUtility.SetDirty(registry);
+            AssetDatabase.SaveAssets();
+        }
+        Debug.Log("Done");
+    }
 
     public static bool TestRegistries()
     {
@@ -100,8 +123,9 @@ public class BundledResourceBuilder
             return;
         }
 
-        Debug.Log("Building asset registries ..");
+        PrepareRegistries();
 
+        Debug.Log("Building asset registries ..");
 
         var guids = AssetDatabase.FindAssets("t:" + typeof(AssetRegistryRoot).Name);
         foreach (var guid in guids)

@@ -162,7 +162,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ld.type = UnityEngine.Experimental.GlobalIllumination.LightType.Rectangle;
                 ld.falloff = add.applyRangeAttenuation ? FalloffType.InverseSquared : FalloffType.InverseSquaredNoRangeAttenuation;
             }
-            else if (add.lightTypeExtent == LightTypeExtent.Line)
+            else if (add.lightTypeExtent == LightTypeExtent.Tube)
             {
                 ld.InitNoBake(ld.instanceID);
             }

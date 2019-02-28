@@ -13,13 +13,13 @@ public class TeleporterSystemClient : ComponentSystem
 	protected override void OnCreateManager()
 	{
 		base.OnCreateManager();
-		Group = GetComponentGroup(typeof(TeleporterPresentation), typeof(TeleporterClient));
+		Group = GetComponentGroup(typeof(TeleporterPresentationData), typeof(TeleporterClient));
 	}
 
 	protected override void OnUpdate()
 	{
 		var teleporterClientArray = Group.GetComponentArray<TeleporterClient>();
-		var teleporterPresentationArray = Group.GetComponentArray<TeleporterPresentation>();
+		var teleporterPresentationArray = Group.GetComponentDataArray<TeleporterPresentationData>();
 		
 		for(int i = 0, c = teleporterClientArray.Length; i < c; i++)
 		{
@@ -28,9 +28,11 @@ public class TeleporterSystemClient : ComponentSystem
 			
 			if (teleporterClient.effectEvent.Update(m_GameWorld.worldTime, teleporterPresentation.effectTick))
 			{
-				if(teleporterClient.effect != null)
-					SpatialEffectRequest.Create(PostUpdateCommands, teleporterClient.effect, 
+				if (teleporterClient.effect != null)
+				{
+					World.GetExistingManager<HandleSpatialEffectRequests>().Request(teleporterClient.effect, 
 						teleporterClient.effectTransform.position, teleporterClient.effectTransform.rotation);
+				}
 			}
 		}
 	}

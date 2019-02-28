@@ -1,0 +1,15 @@
+.propertyrm #indeterminate
+{
+    background-image: resource("Builtin Skins/LightSkin/Images/TextField.png");
+}
+.propertyrm Toggle.indeterminate {
+    background-image: resource("Builtin Skins/LightSkin/Images/toggle mixed.png");
+}
+
+.propertyrm Toggle.indeterminate:hover:active {
+    background-image: resource("Builtin Skins/LightSkin/Images/toggle mixed act.png");
+}
+
+.propertyrm Toggle.indeterminate:focus {
+    background-image: resource("Builtin Skins/LightSkin/Images/toggle mixed focus.png");
+}

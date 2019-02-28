@@ -70,6 +70,7 @@ namespace NetworkCompression
             double entropyTotalCost = 0.0;
             double entropy2TotalCost = 0.0;
             int numUsedContexts = 0;
+            List<string> optimizedTrees = new List<string>();
             for (int context = 0; context < numContexts; context++)
             {
                 if (uintData[context].Count == 0 && nibbleData[context].Count == 0)
@@ -224,10 +225,17 @@ namespace NetworkCompression
                 optimizedTotalCost += optimizedCost;
                 entropyTotalCost += entropyCost;
                 entropy2TotalCost += entropy2Cost;
-                stringWriter.WriteLine("{0,4}:   {1,8} {2,8:0.00} {3,8:0.00} {4,8:0.00} {5,8:0.00} {6,8:0.00}", context, numValues, gammaCost / 8.0f, currentCost / 8.0f, optimizedCost / 8.0f, entropyCost / 8.0, entropy2Cost / 8.0);
+                var l = new List<byte>(optimizedSymbolLengths);
+                string symLengths = string.Join(":", l);
+                stringWriter.WriteLine("{0,4}:   {1,8} {2,8:0.00} {3,8:0.00} {4,8:0.00} {5,8:0.00} {6,8:0.00}   {7}", context, numValues, gammaCost / 8.0f, currentCost / 8.0f, optimizedCost / 8.0f, entropyCost / 8.0, entropy2Cost / 8.0, symLengths);
+                optimizedTrees.Add(""+string.Format("{0,10:000000}", currentCost-optimizedCost)+" " + symLengths);
 
                 numUsedContexts++;
             }
+
+            optimizedTrees.Sort();
+            foreach(var l in optimizedTrees)
+                GameDebug.Log("  " + l);
             
             stringWriter.WriteLine("Total: {0,8} {1,8:0.00} {2,8:0.00} {3,8:0.00} {4,8:0.00} {5,8:0.00}", totalNumValues, gammaTotalCost / 8.0f, currentTotalCost / 8.0f, optimizedTotalCost / 8.0f, entropyTotalCost / 8.0, entropy2TotalCost / 8.0);
             stringWriter.WriteLine("Num used contexts: {0}", numUsedContexts);

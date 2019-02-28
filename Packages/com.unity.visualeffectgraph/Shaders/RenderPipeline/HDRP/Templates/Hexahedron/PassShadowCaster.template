@@ -1,0 +1,54 @@
+// Shadow pass
+Pass
+{		
+	Tags { "LightMode"=${VFXPassShadow} }
+
+	ZWrite On
+	Blend Off
+	
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		float3 offsets : TEXCOORD0;
+		
+		#if VFX_USE_ALPHA_CURRENT || USE_ALPHA_TEST 
+		// x: alpha
+		// y: alpha threshold
+		nointerpolation float2 builtInInterpolants : TEXCOORD1;
+		#endif
+		
+		nointerpolation uint faceID : TEXCOORD2;
+	};
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#if USE_ALPHA_TEST
+#define VFX_VARYING_ALPHA builtInInterpolants.x
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.y
+#endif
+#define VFX_VARYING_OFFSETS offsets
+#define VFX_VARYING_FACEID faceID
+
+${VFXBegin:VFXVertexAdditionalProcess}${VFXEnd}
+
+// Needed for HDRP
+#define SHADERPASS SHADERPASS_SHADOWS
+#define USE_LEGACY_UNITY_MATRIX_VARIABLES
+	
+	${VFXInclude("Shaders/ParticleHexahedron/Pass.template")}	
+		
+	#pragma fragment frag
+	float frag(ps_input i) : SV_Target0
+	{
+		float alpha = VFXGetFragmentColor(i).a;
+#if HDRP_USE_BASE_COLOR_MAP_ALPHA
+		alpha *= VFXGetTextureColorWithProceduralUV(VFX_SAMPLER(baseColorMap),i,VFXCubeGetUV(i)).a;
+#endif
+		VFXClipFragmentColor(alpha,i);
+		return 0;
+	}
+	ENDHLSL
+}

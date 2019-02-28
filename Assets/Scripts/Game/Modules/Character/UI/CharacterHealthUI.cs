@@ -3,26 +3,16 @@ using UnityEngine.UI;
 
 public class CharacterHealthUI : MonoBehaviour
 {
-    public HealthState health;
-
-    public void UpdateUI()
+    public void UpdateUI(ref HealthStateData healthState)
     {
-        if (m_Health != health.health)
+        if (m_Health != healthState.health)
         {
-            m_Health = health.health;
+            m_Health = healthState.health;
             m_HealthText.text = (Mathf.CeilToInt(m_Health)).ToString();
-        }
-
-        if (m_MaxHealth != health.maxHealth)
-        {
-            m_MaxHealth = health.maxHealth;
-            m_MaxHealthText.text = "/" + ((int)m_MaxHealth).ToString();
         }
     }
 
-    [SerializeField] Text m_HealthText;
-    [SerializeField] Text m_MaxHealthText;
+    [SerializeField] TMPro.TextMeshProUGUI m_HealthText;
 
     float m_Health = -1;
-    float m_MaxHealth = -1;
 }

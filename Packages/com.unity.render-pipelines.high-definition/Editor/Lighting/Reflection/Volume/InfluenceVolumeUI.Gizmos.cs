@@ -20,89 +20,55 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public static void DrawGizmos(InfluenceVolumeUI s, InfluenceVolume d, Matrix4x4 matrix, HandleType editedHandle, HandleType showedHandle)
         {
-            if ((showedHandle & HandleType.Base) != 0)
-                DrawGizmos_BaseHandle(s, d, matrix, (editedHandle & HandleType.Base) != 0, k_GizmoThemeColorBase);
-
-            if ((showedHandle & HandleType.Influence) != 0)
-                DrawGizmos_FadeHandle(
-                    s, d, matrix,
-                    d.boxBlendOffset, d.boxBlendSize,
-                    -d.sphereBlendDistance,
-                    (editedHandle & HandleType.Influence) != 0,
-                    k_GizmoThemeColorInfluence,
-                    false);
-
-            if ((showedHandle & HandleType.InfluenceNormal) != 0)
-                DrawGizmos_FadeHandle(
-                    s, d, matrix,
-                    d.boxBlendNormalOffset, d.boxBlendNormalSize,
-                    -d.sphereBlendNormalDistance,
-                    (editedHandle & HandleType.InfluenceNormal) != 0,
-                    k_GizmoThemeColorInfluenceNormal,
-                    true);
-        }
-
-        static void DrawGizmos_BaseHandle(
-            InfluenceVolumeUI s, InfluenceVolume d, Matrix4x4 matrix,
-            bool isSolid, Color color)
-        {
-            var mat = Gizmos.matrix;
-            var c = Gizmos.color;
-            Gizmos.matrix = matrix;
-            Gizmos.color = color;
-            switch (d.shape)
+            using (new Handles.DrawingScope(matrix))
             {
-                case InfluenceShape.Box:
+                switch (d.shape)
                 {
-                    s.boxBaseHandle.center = d.offset;
-                    s.boxBaseHandle.size = d.boxSize;
-                    s.boxBaseHandle.DrawHull(isSolid);
-                    break;
-                }
-                case InfluenceShape.Sphere:
-                {
-                    if (isSolid)
-                        Gizmos.DrawSphere(d.offset, d.sphereRadius);
-                    else
-                        Gizmos.DrawWireSphere(d.offset, d.sphereRadius);
-                    break;
+                    case InfluenceShape.Box:
+                        if ((showedHandle & HandleType.Base) != 0)
+                        {
+                            s.boxBaseHandle.center = d.offset;
+                            s.boxBaseHandle.size = d.boxSize;
+                            s.boxBaseHandle.DrawHull((editedHandle & HandleType.Base) != 0);
+                        }
+                        if ((showedHandle & HandleType.Influence) != 0)
+                        {
+                            s.boxInfluenceHandle.monoHandle = !s.data.editorAdvancedModeEnabled.boolValue;
+                            s.boxInfluenceHandle.center = d.offset + d.boxBlendOffset;
+                            s.boxInfluenceHandle.size = d.boxSize + d.boxBlendSize;
+                            s.boxInfluenceHandle.DrawHull((editedHandle & HandleType.Influence) != 0);
+                        }
+                        if ((showedHandle & HandleType.InfluenceNormal) != 0)
+                        {
+                            s.boxInfluenceNormalHandle.monoHandle = !s.data.editorAdvancedModeEnabled.boolValue;
+                            s.boxInfluenceNormalHandle.center = d.offset + d.boxBlendNormalOffset;
+                            s.boxInfluenceNormalHandle.size = d.boxSize + d.boxBlendNormalSize;
+                            s.boxInfluenceNormalHandle.DrawHull((editedHandle & HandleType.InfluenceNormal) != 0);
+                        }
+                        break;
+
+                    case InfluenceShape.Sphere:
+                        if ((showedHandle & HandleType.Base) != 0)
+                        {
+                            s.sphereBaseHandle.center = d.offset;
+                            s.sphereBaseHandle.radius = d.sphereRadius;
+                            s.sphereBaseHandle.DrawHull((editedHandle & HandleType.Base) != 0);
+                        }
+                        if ((showedHandle & HandleType.Influence) != 0)
+                        {
+                            s.sphereInfluenceHandle.center = d.offset;
+                            s.sphereInfluenceHandle.radius = d.sphereRadius - d.sphereBlendDistance;
+                            s.sphereInfluenceHandle.DrawHull((editedHandle & HandleType.Influence) != 0);
+                        }
+                        if ((showedHandle & HandleType.InfluenceNormal) != 0)
+                        {
+                            s.sphereInfluenceNormalHandle.center = d.offset;
+                            s.sphereInfluenceNormalHandle.radius = d.sphereRadius - d.sphereBlendNormalDistance;
+                            s.sphereInfluenceNormalHandle.DrawHull((editedHandle & HandleType.InfluenceNormal) != 0);
+                        }
+                        break;
                 }
             }
-            Gizmos.matrix = mat;
-            Gizmos.color = c;
-        }
-
-        static void DrawGizmos_FadeHandle(
-            InfluenceVolumeUI s, InfluenceVolume d, Matrix4x4 matrix,
-            Vector3 boxOffset, Vector3 boxSizeOffset,
-            float sphereOffset,
-            bool isSolid, Color color, bool isNormal)
-        {
-            var mat = Gizmos.matrix;
-            var c = Gizmos.color;
-            Gizmos.matrix = matrix;
-            Gizmos.color = color;
-            switch (d.shape)
-            {
-                case InfluenceShape.Box:
-                {
-                    Gizmo6FacesBox refBox = isNormal ? s.boxInfluenceNormalHandle : s.boxInfluenceHandle;
-                    refBox.center = d.offset + boxOffset;
-                    refBox.size = d.boxSize + boxSizeOffset;
-                    refBox.DrawHull(isSolid);
-                    break;
-                }
-                case InfluenceShape.Sphere:
-                {
-                    if (isSolid)
-                        Gizmos.DrawSphere(d.offset, d.sphereRadius + sphereOffset);
-                    else
-                        Gizmos.DrawWireSphere(d.offset, d.sphereRadius + sphereOffset);
-                    break;
-                }
-            }
-            Gizmos.matrix = mat;
-            Gizmos.color = c;
         }
     }
 }

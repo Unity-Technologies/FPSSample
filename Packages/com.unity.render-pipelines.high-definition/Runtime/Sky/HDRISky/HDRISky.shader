@@ -11,6 +11,7 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonLighting.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
     TEXTURECUBE(_Cubemap);
     SAMPLER(sampler_Cubemap);
@@ -37,10 +38,17 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
 
     float4 Frag(Varyings input) : SV_Target
     {
+#if defined(UNITY_SINGLE_PASS_STEREO)
+        // The computed PixelCoordToViewDir matrix doesn't seem to capture stereo eye offset. 
+        // So for VR, we compute WSPosition using the stereo matrices instead.
+        PositionInputs posInput = GetPositionInput_Stereo(input.positionCS.xy, _ScreenSize.zw, input.positionCS.z, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
+        float3 dir = normalize(posInput.positionWS);
+#else
         // Points towards the camera
         float3 viewDirWS = normalize(mul(float3(input.positionCS.xy, 1.0), (float3x3)_PixelCoordToViewDirWS));
         // Reverse it to point into the scene
         float3 dir = -viewDirWS;
+#endif
 
         // Rotate direction
         float phi = DegToRad(_SkyParam.z);

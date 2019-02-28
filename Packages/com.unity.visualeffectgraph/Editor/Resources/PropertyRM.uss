@@ -1,0 +1,250 @@
+.propertyrm
+{
+    flex-direction: row;
+    align-items:center;
+}
+
+.propertyrm #icon
+{
+    width:13;
+    height:13;
+}
+
+.propertyrm.icon-expandable #icon
+{
+    background-image:resource("Builtin Skins/DarkSkin/Images/IN foldout.png");
+}
+.propertyrm.icon-expandable #icon:hover
+{
+    background-image:resource("Builtin Skins/DarkSkin/Images/IN foldout focus.png");
+}
+.propertyrm.icon-expandable #icon:hover:active
+{
+    background-image:resource("Builtin Skins/DarkSkin/Images/IN foldout act.png");
+}
+
+
+.propertyrm.icon-expandable.icon-expanded #icon
+{
+    background-image:resource("IN foldout on.png");
+}
+.propertyrm.icon-expandable.icon-expanded #icon:hover
+{
+    background-image:resource("IN foldout focus on.png");
+}
+.propertyrm.icon-expandable.icon-expanded #icon:active
+{
+    background-image:resource("IN foldout act on.png");
+}
+
+.propertyrm #spacebutton
+{
+    -flex:1;
+    width:16;
+    height:16;
+    margin-left:4;
+    margin-right:8;
+}
+.propertyrm Button
+{
+    margin-top:1;
+    margin-bottom:1;
+    padding-top:0;
+    padding-bottom:0;
+}
+
+.propertyrm #label
+{
+    text-color: rgb(153,153,153);
+    height:16;
+    margin-left:0;
+    padding-left:1;
+}
+
+.propertyrm VFXMatrix4x4Field.fieldContainer
+{
+    flex:1 0 auto;
+    height:-1;
+}
+
+.spaceCamera
+{
+    background-image:resource("vfx/spacecamera");
+}
+.spaceLocal
+{
+    background-image:resource("vfx/spacelocal");
+}
+.spaceWorld
+{
+    background-image:resource("vfx/spaceworld");
+}
+
+.propertyrm > FloatField
+{
+    margin-bottom:3;
+}
+
+.propertyrm .fieldContainer > *
+{
+    flex:1 1 auto;
+}
+.propertyrm .textfield::disabled
+{
+    text-color:#666;
+}
+
+.propertyrm .label
+{
+    text-color:#888;
+    flex:0 0 auto;
+    padding-left:2;
+    text-alignment:middle-center;
+    margin-left:0;
+    padding-left:4;
+    margin-right:2;
+    padding-right:0;
+}
+
+.propertyrm .label.first
+{
+    padding-left:0;
+}
+
+.propertyrm .fieldContainer, .propertyrm FloatField
+{
+    -align-items: center;
+    flex-direction:row;
+    flex:1 1 0;
+
+    margin-left:0;
+    margin-right:0;
+    margin-top:0;
+    margin-bottom:0;
+    height:16;
+}
+
+BoolPropertyRM > Toggle
+{
+    padding-top:0;
+    padding-bottom:0;
+    padding-left:0;
+    padding-right:0;
+    margin-left:0;
+    margin-right:0;
+    margin-top:0;
+    margin-bottom:0;
+}
+
+.propertyrm  .maincontainer
+{
+    flex:1 0 auto;
+    flex-direction:column;
+    align-items:stretch;
+}
+
+.propertyrm .colordisplay
+{
+    flex:1 0 auto;
+}
+
+ColorPropertyRM
+{
+    flex-direction:row;
+    height:36;
+}
+
+ColorPropertyRM .colorcontainer, Vector3PropertyRM .colorcontainer
+{
+    flex:1 0 auto;
+    border-left-width:1;
+    border-right-width:1;
+    border-top-width:1;
+    border-bottom-width:1;
+    border-top:1;
+    border-bottom:1;
+    border-left:1;
+    border-right:1;
+    border-color:#000;
+    margin-top:2;
+    margin-bottom:2;
+}
+
+ColorPropertyRM > .maincontainer > .fieldContainer
+{
+    flex:0 0 auto;
+}
+
+ColorPropertyRM FloatField
+{
+    flex:1 0 auto;
+}
+
+FloatPropertyRM FloatField
+{
+    align-self:flex-end;
+    flex:1 0 auto;
+}
+
+IntPropertyRM IntegerField
+{
+    align-self:flex-end;
+    margin-left:0;
+    margin-right:0;
+    margin-top:0;
+    margin-bottom:0;
+    flex:1 0 auto;
+}
+
+UintPropertyRM LongField
+{
+    align-self:flex-end;
+    margin-left:0;
+    margin-right:0;
+    margin-top:0;
+    margin-bottom:0;
+    flex:1 0 auto;
+}
+
+CurvePropertyRM CurveField
+{
+    flex:1 0 auto;
+}
+
+CurvePropertyRM
+{
+    flex:1 0 auto;
+    min-width:100;
+}
+
+StringPropertyRM VFXStringField TextField
+{
+    margin-left:0;
+    margin-right:0;
+    margin-top:0;
+    margin-bottom:0;
+}
+
+Matrix4x4PropertyRM.propertyrm > .fieldContainer
+{
+    height:-1;
+}
+
+
+.propertyrm #indeterminate
+{
+    flex:1 1 auto;
+    slice-left: 3;
+    slice-top: 3;
+    slice-right: 3;
+    slice-bottom: 3;
+    margin-top:0;
+    margin-bottom:0;
+    margin-left:0;
+    margin-right:0;
+}
+
+.propertyrm .sliderField #indeterminate
+{
+    flex:0 0 auto;
+}

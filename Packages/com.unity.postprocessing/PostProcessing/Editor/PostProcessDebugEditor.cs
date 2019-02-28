@@ -4,7 +4,7 @@ using UnityEngine.Rendering.PostProcessing;
 namespace UnityEditor.Rendering.PostProcessing
 {
     [CustomEditor(typeof(PostProcessDebug))]
-    public sealed class PostProcessDebugEditor : BaseEditor<PostProcessDebug>
+    sealed class PostProcessDebugEditor : BaseEditor<PostProcessDebug>
     {
         SerializedProperty m_PostProcessLayer;
         SerializedProperty m_LightMeterEnabled;

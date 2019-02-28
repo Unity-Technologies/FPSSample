@@ -201,6 +201,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 foreach (MaterialItem item in materialItems)
                 {
                     // BuiltinData are duplicated for each material
+                    // Giving the material specific types allow to move iterator at a separate range for each material
+                    // Otherwise, all BuiltinData will be at same offset and will broke the enum
                     FillWithProperties(typeof(Builtin.BuiltinData), ref debugViewMaterialStringsList, ref debugViewMaterialValuesList, item.className);
                     FillWithProperties(item.surfaceDataType, ref debugViewMaterialStringsList, ref debugViewMaterialValuesList, item.className);
                 }

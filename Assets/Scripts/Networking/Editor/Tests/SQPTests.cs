@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using UnityEngine;
 using SQP;
 using System.Text;
+using Unity.Networking.Transport;
 
 namespace TransportTests
 {
@@ -15,19 +16,21 @@ namespace TransportTests
     {
         byte[] m_Buffer = new byte[1472];
 
-        ByteInputStream reader;
-        ByteOutputStream writer;
+        DataStreamReader reader;
+        DataStreamWriter writer;
+        DataStreamReader.Context context;
 
         [SetUp]
         public void Setup()
         {
-            reader = new ByteInputStream(m_Buffer);
-            writer = new ByteOutputStream(m_Buffer);
+            reader = new DataStreamReader();
+            writer = new DataStreamWriter(m_Buffer.Length, Unity.Collections.Allocator.Temp);
         }
 
         [TearDown]
         public void Teardown()
         {
+            writer.Dispose();
         }
 
         [Test]
@@ -36,8 +39,10 @@ namespace TransportTests
             var snd = new ChallangeRequest();
             snd.ToStream(ref writer);
 
+            reader = new DataStreamReader(writer, 0, writer.Length);
+            context = default(DataStreamReader.Context);
             var rcv = new ChallangeRequest();
-            rcv.FromStream(ref reader);
+            rcv.FromStream(reader, ref context);
 
             Assert.AreEqual((byte)SQPMessageType.ChallangeRequest, rcv.Header.Type);
         }
@@ -53,7 +58,10 @@ namespace TransportTests
             snd.ToStream(ref writer);
 
             var rcv = new ChallangeResponse();
-            rcv.FromStream(ref reader);
+
+            reader = new DataStreamReader(writer, 0, writer.Length);
+            context = default(DataStreamReader.Context);
+            rcv.FromStream(reader, ref context);
 
             Assert.AreEqual((byte)SQPMessageType.ChallangeResponse, rcv.Header.Type);
             Assert.AreEqual(id, (uint)rcv.Header.ChallangeId);
@@ -73,7 +81,9 @@ namespace TransportTests
             snd.ToStream(ref writer);
 
             var rcv = new QueryRequest();
-            rcv.FromStream(ref reader);
+            reader = new DataStreamReader(writer, 0, writer.Length);
+            context = default(DataStreamReader.Context);
+            rcv.FromStream(reader, ref context);
 
             Assert.AreEqual((byte)SQPMessageType.QueryRequest, rcv.Header.Type);
             Assert.AreEqual(id, (uint)rcv.Header.ChallangeId);
@@ -98,7 +108,9 @@ namespace TransportTests
             snd.ToStream(ref writer);
 
             var rcv = new QueryResponseHeader();
-            rcv.FromStream(ref reader);
+            var reader = new DataStreamReader(writer, 0, writer.Length);
+            context = default(DataStreamReader.Context);
+            rcv.FromStream(reader, ref context);
 
             Assert.AreEqual((byte)SQPMessageType.QueryResponse, rcv.Header.Type);
             Assert.AreEqual(id, (uint)rcv.Header.ChallangeId);
@@ -119,9 +131,12 @@ namespace TransportTests
             writer.WriteString(sendLong, encoding);
             writer.WriteString(sendUTF, encoding);
 
-            var recvShort = reader.ReadString(encoding);
-            var recvLong = reader.ReadString(encoding);
-            var recvUTF = reader.ReadString(encoding);
+            reader = new DataStreamReader(writer, 0, writer.Length);
+            context = default(DataStreamReader.Context);
+
+            var recvShort = reader.ReadString(ref context, encoding);
+            var recvLong = reader.ReadString(ref context, encoding);
+            var recvUTF = reader.ReadString(ref context, encoding);
 
             Assert.AreEqual(sendShort, recvShort);
 
@@ -160,7 +175,9 @@ namespace TransportTests
             snd.ToStream(ref writer);
 
             var rcv = new SQP.ServerInfo();
-            rcv.FromStream(ref reader);
+            reader = new DataStreamReader(writer, 0, writer.Length);
+            context = default(DataStreamReader.Context);
+            rcv.FromStream(reader, ref context);
 
             Assert.AreEqual((byte)SQPMessageType.QueryResponse, rcv.QueryHeader.Header.Type);
             Assert.AreEqual((uint)header.Header.ChallangeId, (uint)rcv.QueryHeader.Header.ChallangeId);

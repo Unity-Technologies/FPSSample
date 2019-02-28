@@ -1,0 +1,120 @@
+#divider {
+    background-color: rgba(35,35,35,0.8);
+    border-color: rgba(35,35,35,0.8);
+}
+
+#collapse-button >#icon 
+{
+
+    visibility: visible;
+}
+   
+
+#divider.horizontal {
+    height:0.01;
+    border-bottom-width: 1;
+}
+
+#divider.horizontal.hidden {
+    height:0;
+    border-bottom-width: 0;
+}
+
+#divider.vertical {
+    width:0.01;
+    border-right-width: 1;
+}
+
+#divider.vertical.hidden {
+    width:0;
+    border-right-width: 0;
+}
+
+.VFXNodeUI.node #node-border > #title
+{
+    justify-content:flex-start;
+}
+
+.VFXNodeUI.node #node-border > #title > #title-label
+{
+    flex:1 0 auto;
+}
+
+
+.VFXNodeUI #contents
+{
+    background-color: rgba(63,63,63,0.8);
+}
+
+.VFXNodeUI.node #contents > #top > #input
+{
+    background-color: rgba(0,0,0,0.0);
+}
+
+
+.VFXNodeUI #settings
+{
+    margin-top:6;
+    margin-bottom:6;
+    margin-right:4;
+    margin-left:16; /* this is meant to compense for data anchors connector, so that settings labels are aligned with input labels. */
+    padding-right:4;
+    overflow:hidden;
+}
+
+.VFXNodeUI.collapsed #settings
+{
+    margin-top:0;
+    margin-bottom:0;
+}
+
+.VFXNodeUI #settings.nosettings
+{
+    margin-top:0;
+    margin-bottom:0;
+}
+
+.VFXNodeUI.collapsed #settings
+{
+    max-height:0;
+    height:0;
+}
+.node.collapsed > #node-border > #title > #collapse-button > #icon {
+    background-image: resource("GraphView/Nodes/NodeChevronLeft.png");
+}
+
+.node.expanded > #node-border > #title > #collapse-button > #icon {
+    background-image : resource("GraphView/Nodes/NodeChevronDown.png");
+}
+
+.VFXNodeUI.node #contents > #top > #input
+{
+    padding-top:6;
+    padding-bottom:6;
+    flex: 1 1 auto;
+}
+
+#line
+{
+    background-color:#4c4c4c;
+}
+
+#settings-divider
+{
+    background-color: rgba(35,35,35,0.8);
+    border-color: rgba(35,35,35,0.8);
+    height:0.01;
+    border-bottom-width: 1;
+}
+
+#settings-divider.hidden
+{
+    height:0;
+    border-bottom-width: 0;
+}
+
+.VFXNodeUI.collapsed #settings-divider
+{
+    height:0;
+    border-bottom-width: 0;
+}

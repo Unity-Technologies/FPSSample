@@ -89,7 +89,7 @@ CBUFFER_END
 #undef DECLARE_TERRAIN_LAYER_PROPS
 
 #ifdef HAVE_MESH_MODIFICATION
-#include "TerrainLitDataMeshModification.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLitDataMeshModification.hlsl"
 #endif
 
 // Declare distortion variables just to make the code compile with the Debug Menu.

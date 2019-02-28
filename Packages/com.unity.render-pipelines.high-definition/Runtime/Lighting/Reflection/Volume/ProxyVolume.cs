@@ -46,10 +46,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         internal void MigrateInfiniteProhjectionInShape()
         {
-#pragma warning disable CS0618 // Type or member is obsolete
+#pragma warning disable 618 // Type or member is obsolete
             if (shape == ProxyShape.Sphere && m_SphereInfiniteProjection
                 || shape == ProxyShape.Box && m_BoxInfiniteProjection)
-#pragma warning restore CS0618 // Type or member is obsolete
+#pragma warning restore 618 // Type or member is obsolete
             {
                 shape = ProxyShape.Infinite;
             }

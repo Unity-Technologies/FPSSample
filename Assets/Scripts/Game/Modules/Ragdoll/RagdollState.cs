@@ -1,20 +1,32 @@
 ﻿using System;
+using Unity.Entities;
 using UnityEngine;
 
-public class RagdollState : MonoBehaviour, INetSerialized
+[Serializable]
+public struct RagdollStateData : IComponentData, IReplicatedComponent
 {
-    [NonSerialized] public bool ragdollActive;
+    [NonSerialized] public int ragdollActive;
     [NonSerialized] public Vector3 impulse;
     
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+    public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
     {
-        writer.WriteBoolean("ragdollEnabled",ragdollActive);
+        return new ReplicatedComponentSerializerFactory<RagdollStateData>();
+    }
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
+    {
+        writer.WriteBoolean("ragdollEnabled",ragdollActive == 1);
         writer.WriteVector3Q("impulse",impulse,1);
     }
 
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
     {
-        ragdollActive = reader.ReadBoolean();
+        ragdollActive = reader.ReadBoolean() ? 1 : 0;
         impulse = reader.ReadVector3Q();
     }
+}
+
+public class RagdollState : ComponentDataWrapper<RagdollStateData>
+{
+    
 }

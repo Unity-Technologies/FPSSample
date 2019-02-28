@@ -11,8 +11,6 @@ public class ItemModule
     {
         m_world = world;
         
-        m_handleSpawnSystems.Add(world.GetECSWorld().CreateManager<HandleItemSpawn>(world));
-        
         // TODO (mogensh) make server version without all this client stuff
         m_systems.Add(world.GetECSWorld().CreateManager<RobotWeaponClientProjectileSpawnHandler>(world));
         m_systems.Add(world.GetECSWorld().CreateManager<TerraformerWeaponClientProjectileSpawnHandler>(world));

@@ -15,47 +15,79 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public override bool ShadersStripper(HDRenderPipelineAsset hdrpAsset, Shader shader, ShaderSnippetData snippet, ShaderCompilerData inputData)
         {
             bool isGBufferPass = snippet.passName == "GBuffer";
-            //bool isForwardPass = snippet.passName == "Forward";
+            bool isForwardPass = snippet.passName == "Forward";
             bool isDepthOnlyPass = snippet.passName == "DepthOnly";
-            bool isTransparentForwardPass = snippet.passName == "TransparentDepthPostpass" || snippet.passName == "TransparentBackface" || snippet.passName == "TransparentDepthPrepass";
+            bool isTransparentPrepass = snippet.passName == "TransparentDepthPrepass";
+            bool isTransparentPostpass = snippet.passName == "TransparentDepthPostpass";
+            bool isTransparentBackface = snippet.passName == "TransparentBackface";
+            bool isDistortionPass = snippet.passName == "DistortionVectors";
+            bool isTransparentForwardPass = isTransparentPostpass || isTransparentBackface || isTransparentPrepass;
 
-            // When using forward only, we never need GBuffer pass (only Forward)
-            if (hdrpAsset.renderPipelineSettings.supportOnlyForward && isGBufferPass)
+            // Using Contains to include the Tessellation variants
+            bool isBuiltInLit = shader.name.Contains("HDRenderPipeline/Lit") || shader.name.Contains("HDRenderPipeline/LayeredLit") || shader.name.Contains("HDRenderPipeline/TerrainLit");
+
+            if (isDistortionPass && !hdrpAsset.renderPipelineSettings.supportDistortion)
                 return true;
 
-            if (inputData.shaderKeywordSet.IsEnabled(m_Transparent))
-            {
-                // If transparent, we never need GBuffer pass.
-                if (isGBufferPass)
-                    return true;
-            }
-            else // Opaque
-            {
-                // If opaque, we never need transparent specific passes (even in forward only mode)
-                if (isTransparentForwardPass)
-                    return true;
+            if (isTransparentBackface && !hdrpAsset.renderPipelineSettings.supportTransparentBackface)
+                return true;
 
-                // TODO: This check is disabled currently as it doesn't work. We have issue with lit VFX from VFX graph not working correctly, mean we are too agressive on
-                // removal. Need to check why.
-                // When we are in deferred (i.e !hdrpAsset.renderPipelineSettings.supportOnlyForward), we only support tile lighting
-                //if (!hdrpAsset.renderPipelineSettings.supportOnlyForward && inputData.shaderKeywordSet.IsEnabled(m_ClusterLighting))
-                //    return true;
+            if (isTransparentPrepass && !hdrpAsset.renderPipelineSettings.supportTransparentDepthPrepass)
+                return true;
 
-                if (isDepthOnlyPass)
+            if (isTransparentPostpass && !hdrpAsset.renderPipelineSettings.supportTransparentDepthPostpass)
+                return true;
+
+            // When using forward only, we never need GBuffer pass (only Forward)
+            if (hdrpAsset.renderPipelineSettings.supportedLitShaderMode == RenderPipelineSettings.SupportedLitShaderMode.ForwardOnly && isGBufferPass)
+                return true;
+
+            if(isBuiltInLit)
+            {
+                if (inputData.shaderKeywordSet.IsEnabled(m_Transparent))
                 {
-                    // When we are full forward, we don't have depth prepass without writeNormalBuffer
-                    if (hdrpAsset.renderPipelineSettings.supportOnlyForward && !inputData.shaderKeywordSet.IsEnabled(m_WriteNormalBuffer))
+
+                    // If transparent, we never need GBuffer pass.
+                    if (isGBufferPass)
+                        return true;
+
+                    // If transparent we don't need the depth only pass
+                    if (isDepthOnlyPass)
                         return true;
                 }
-
-                // TODO: add an option to say we are using only the deferred shader variant (for Lit)
-                //if (0)
+                else // Opaque
                 {
-                    // If opaque and not forward only, then we only need the forward debug pass.
-                    //if (isForwardPass && !inputData.shaderKeywordSet.IsEnabled(m_DebugDisplay))
-                    //    return true;
+                    // If opaque, we never need transparent specific passes (even in forward only mode)
+                    if (isTransparentForwardPass)
+                        return true;
+
+                    if (hdrpAsset.renderPipelineSettings.supportedLitShaderMode == RenderPipelineSettings.SupportedLitShaderMode.DeferredOnly)
+                    {
+                        // When we are in deferred, we only support tile lighting
+                        if (inputData.shaderKeywordSet.IsEnabled(m_ClusterLighting))
+                            return true;
+
+                        // If we use deferred only, MSAA is not supported.
+                        if (inputData.shaderKeywordSet.IsEnabled(m_WriteMSAADepth))
+                            return true;
+
+                        if (isForwardPass && !inputData.shaderKeywordSet.IsEnabled(m_DebugDisplay))
+                            return true;
+
+                        if (inputData.shaderKeywordSet.IsEnabled(m_WriteNormalBuffer))
+                            return true;
+                    }
+
+                    if (isDepthOnlyPass)
+                    {
+                        // When we are full forward, we don't have depth prepass without writeNormalBuffer
+                        if (hdrpAsset.renderPipelineSettings.supportedLitShaderMode == RenderPipelineSettings.SupportedLitShaderMode.ForwardOnly && !inputData.shaderKeywordSet.IsEnabled(m_WriteNormalBuffer))
+                            return true;
+                    }
                 }
             }
+
+
 
             // TODO: Tests for later
             // We need to find a way to strip useless shader features for passes/shader stages that don't need them (example, vertex shaders won't ever need SSS Feature flag)

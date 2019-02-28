@@ -60,24 +60,20 @@ namespace UnityEngine.Experimental.Rendering
         public float   extentZ;
 
         public Vector3 forward { get { return Vector3.Cross(up, right); } }
-
-        public static OrientedBBox Create(Transform t)
+        
+        public OrientedBBox(Matrix4x4 trs)
         {
-            OrientedBBox obb = new OrientedBBox();
+            Vector3 vecX = trs.GetColumn(0);
+            Vector3 vecY = trs.GetColumn(1);
+            Vector3 vecZ = trs.GetColumn(2);
 
-            Vector3 vecX = t.localToWorldMatrix.GetColumn(0);
-            Vector3 vecY = t.localToWorldMatrix.GetColumn(1);
-            Vector3 vecZ = t.localToWorldMatrix.GetColumn(2);
+            center = trs.GetColumn(3);
+            right = vecX * (1.0f / vecX.magnitude);
+            up = vecY * (1.0f / vecY.magnitude);
 
-            obb.center  = t.position;
-            obb.right   = vecX * (1.0f / vecX.magnitude);
-            obb.up      = vecY * (1.0f / vecY.magnitude);
-
-            obb.extentX = 0.5f * vecX.magnitude;
-            obb.extentY = 0.5f * vecY.magnitude;
-            obb.extentZ = 0.5f * vecZ.magnitude;
-
-            return obb;
+            extentX = 0.5f * vecX.magnitude;
+            extentY = 0.5f * vecY.magnitude;
+            extentZ = 0.5f * vecZ.magnitude;
         }
     } // struct OrientedBBox
 
@@ -255,7 +251,11 @@ namespace UnityEngine.Experimental.Rendering
                 return Matrix4x4.Ortho(-w, w, -h, h, camera.nearClipPlane, camera.farClipPlane);
             }
             else
+#if UNITY_2019_1_OR_NEWER
+                return Matrix4x4.Perspective(camera.GetGateFittedFieldOfView(), camera.aspect, camera.nearClipPlane, camera.farClipPlane);
+#else
                 return Matrix4x4.Perspective(camera.fieldOfView, camera.aspect, camera.nearClipPlane, camera.farClipPlane);
+#endif
         }
     } // class GeometryUtils
 }

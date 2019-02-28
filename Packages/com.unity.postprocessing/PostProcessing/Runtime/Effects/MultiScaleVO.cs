@@ -7,7 +7,7 @@ namespace UnityEngine.Rendering.PostProcessing
 
 #if UNITY_2017_1_OR_NEWER
     [Serializable]
-    public sealed class MultiScaleVO : IAmbientOcclusionMethod
+    internal sealed class MultiScaleVO : IAmbientOcclusionMethod
     {
         internal enum MipLevel { Original, L1, L2, L3, L4, L5, L6 }
 

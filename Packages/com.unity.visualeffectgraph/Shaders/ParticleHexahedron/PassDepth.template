@@ -1,0 +1,39 @@
+// Depth pass
+Pass
+{		
+	Tags { "LightMode"=${VFXPassDepth} }
+
+	ZWrite On
+	Blend Off
+	
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		#if USE_ALPHA_TEST || VFX_USE_ALPHA_CURRENT
+		// x: alpha
+		// y: alpha threshold
+		nointerpolation float2 builtInInterpolants : TEXCOORD1;
+		#endif
+	};
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_ALPHA builtInInterpolants.x
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.y
+
+#undef VFX_USE_RIM_LIGHT
+
+	${VFXInclude("Shaders/ParticleHexahedron/Pass.template")}	
+		
+	#pragma fragment frag
+	float4 frag(ps_input i) : SV_Target0
+	{
+		float alpha = VFXGetFragmentColor(i).a;		
+		VFXClipFragmentColor(alpha,i);
+		return (float4)0;
+	}
+	ENDHLSL
+}

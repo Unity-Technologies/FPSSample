@@ -4,6 +4,7 @@
 // Directional Light evaluation helper
 //-----------------------------------------------------------------------------
 
+#ifndef OVERRIDE_EVALUATE_COOKIE_DIRECTIONAL
 float3 EvaluateCookie_Directional(LightLoopContext lightLoopContext, DirectionalLightData light,
                                   float3 lightToSample)
 {
@@ -22,6 +23,7 @@ float3 EvaluateCookie_Directional(LightLoopContext lightLoopContext, Directional
     // We let the sampler handle clamping to border.
     return SampleCookie2D(lightLoopContext, positionNDC, light.cookieIndex, light.tileCookie);
 }
+#endif
 
 // Does not account for precomputed (screen-space or baked) shadows.
 float EvaluateRuntimeSunShadow(LightLoopContext lightLoopContext, PositionInputs posInput,
@@ -55,7 +57,15 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
     float  shadowMask = 1.0;
 
     color       = light.color;
-    attenuation = 1.0; // TODO: implement volumetric attenuation along shadow rays for directional lights
+    attenuation = 1.0;
+
+    // Height fog attenuation.
+    {
+        float cosZenithAngle = L.y;
+        float fragmentHeight = posInput.positionWS.y;
+        attenuation *= TransmittanceHeightFog(_HeightFogBaseExtinction, _HeightFogBaseHeight,
+                                              _HeightFogExponents, cosZenithAngle, fragmentHeight);
+    }
 
     if (light.cookieIndex >= 0)
     {
@@ -74,11 +84,6 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
     if ((light.shadowIndex >= 0) && (light.shadowDimmer > 0))
     {
         shadow = lightLoopContext.shadowValue;
-
-        // Transparents have no contact shadow information
-    #ifndef _SURFACE_TYPE_TRANSPARENT
-        shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowIndex));
-    #endif
 
     #ifdef SHADOWS_SHADOWMASK
         // TODO: Optimize this code! Currently it is a bit like brute force to get the last transistion and fade to shadow mask, but there is
@@ -106,6 +111,11 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
 
         shadow = lerp(shadowMask, shadow, light.shadowDimmer);
     }
+
+    // Transparents have no contact shadow information
+#ifndef _SURFACE_TYPE_TRANSPARENT
+    shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowIndex));
+#endif
 
 #ifdef DEBUG_DISPLAY
     if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
@@ -158,6 +168,7 @@ void GetPunctualLightVectors(float3 positionWS, LightData light, out float3 L, o
     }
 }
 
+#ifndef OVERRIDE_EVALUATE_COOKIE_PUNCTUAL
 float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData light,
                                float3 lightToSample)
 {
@@ -192,6 +203,7 @@ float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData ligh
 
     return cookie;
 }
+#endif
 
 // None of the outputs are premultiplied.
 // distances = {d, d^2, 1/d, d_proj}, where d_proj = dot(lightToSample, light.forward).
@@ -212,9 +224,15 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
     attenuation = PunctualLightAttenuation(distances, light.rangeAttenuationScale, light.rangeAttenuationBias,
                                            light.angleScale, light.angleOffset);
 
-    // TODO: sample the extinction from the density V-buffer.
-    float distVol = (light.lightType == GPULIGHTTYPE_PROJECTOR_BOX) ? distances.w : distances.x;
-    attenuation *= TransmittanceHomogeneousMedium(_GlobalExtinction, distVol);
+    // Height fog attenuation.
+    {
+        float cosZenithAngle = L.y;
+        float distToLight    = (light.lightType == GPULIGHTTYPE_PROJECTOR_BOX) ? distances.w : distances.x;
+        float fragmentHeight = posInput.positionWS.y;
+        attenuation *= TransmittanceHeightFog(_HeightFogBaseExtinction, _HeightFogBaseHeight,
+                                              _HeightFogExponents, cosZenithAngle,
+                                              fragmentHeight, distToLight);
+    }
 
     // Projector lights always have cookies, so we can perform clipping inside the if().
     if (light.cookieIndex >= 0)
@@ -233,12 +251,7 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
 
     if ((light.shadowIndex >= 0) && (light.shadowDimmer > 0))
     {
-        shadow = GetPunctualShadowAttenuation(lightLoopContext.shadowContext, positionWS, N, light.shadowIndex, L, distances.x, light.lightType == GPULIGHTTYPE_POINT, light.lightType != GPULIGHTTYPE_PROJECTOR_BOX);
-
-        // Transparents have no contact shadow information
-    #ifndef _SURFACE_TYPE_TRANSPARENT
-        shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowIndex));
-    #endif
+        shadow = GetPunctualShadowAttenuation(lightLoopContext.shadowContext, posInput.positionSS, positionWS, N, light.shadowIndex, L, distances.x, light.lightType == GPULIGHTTYPE_POINT, light.lightType != GPULIGHTTYPE_PROJECTOR_BOX);
 
 #ifdef SHADOWS_SHADOWMASK
         // Note: Legacy Unity have two shadow mask mode. ShadowMask (ShadowMask contain static objects shadow and ShadowMap contain only dynamic objects shadow, final result is the minimun of both value)
@@ -254,6 +267,11 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
         shadow = lerp(shadowMask, shadow, light.shadowDimmer);
     }
 
+    // Transparents have no contact shadow information
+#ifndef _SURFACE_TYPE_TRANSPARENT
+    shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowIndex));
+#endif
+
 #ifdef DEBUG_DISPLAY
     if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
         debugShadowAttenuation = step(FLT_EPS, attenuation) * shadow;
@@ -262,6 +280,7 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
     attenuation *= shadow;
 }
 
+#ifndef OVERRIDE_EVALUATE_ENV_INTERSECTION
 // Environment map share function
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Reflection/VolumeProjection.hlsl"
 
@@ -308,3 +327,4 @@ void EvaluateLight_EnvIntersection(float3 positionWS, float3 normalWS, EnvLightD
     weight = Smoothstep01(weight);
     weight *= light.weight;
 }
+#endif

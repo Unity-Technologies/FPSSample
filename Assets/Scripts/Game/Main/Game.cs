@@ -213,7 +213,7 @@ public class Game : MonoBehaviour
         return game.m_isHeadless;
     }
 
-    public static SoundSystem SoundSystem
+    public static ISoundSystem SoundSystem
     {
         get { return game.m_SoundSystem; }
     }
@@ -346,6 +346,15 @@ public class Game : MonoBehaviour
 
         ConfigVar.Init();
 
+        // Support -port and -query_port as per Multiplay standard
+        var serverPort = ArgumentForOption(commandLineArgs, "-port");
+        if (serverPort != null)
+            Console.EnqueueCommandNoHistory("server.port " + serverPort);
+
+        var sqpPort = ArgumentForOption(commandLineArgs, "-query_port");
+        if (sqpPort != null)
+            Console.EnqueueCommandNoHistory("server.sqp_port " + sqpPort);
+
         Console.EnqueueCommandNoHistory("exec -s " + k_UserConfigFilename);
 
         // Default is to allow no frame cap, i.e. as fast as possible if vsync is disabled
@@ -372,8 +381,12 @@ public class Game : MonoBehaviour
             Console.EnqueueCommandNoHistory("exec -s " + k_BootConfigFilename);
         }
 
-        var forceClientSystem = commandLineArgs.Contains("-forceclientsystems");
-        if (!m_isHeadless || forceClientSystem)
+
+        if(m_isHeadless)
+        {
+            m_SoundSystem = new SoundSystemNull();
+        }
+        else
         {
             m_SoundSystem = new SoundSystem();
             m_SoundSystem.Init(audioMixer);
@@ -415,7 +428,8 @@ public class Game : MonoBehaviour
         // Game loops
         Console.AddCommand("preview", CmdPreview, "Start preview mode");
         Console.AddCommand("serve", CmdServe, "Start server listening");
-        Console.AddCommand("client", CmdClient, "client: Enter client mode. Looking for servers");
+        Console.AddCommand("client", CmdClient, "client: Enter client mode.");
+        Console.AddCommand("thinclient", CmdThinClient, "client: Enter thin client mode.");
         Console.AddCommand("boot", CmdBoot, "Go back to boot loop");
         Console.AddCommand("connect", CmdConnect, "connect <ip>: Connect to server on ip (default: localhost)");
 
@@ -781,10 +795,19 @@ public class Game : MonoBehaviour
         }
 
         ClientGameLoop clientGameLoop = GetGameLoop<ClientGameLoop>();
-        if(clientGameLoop != null) 
+        ThinClientGameLoop thinClientGameLoop = GetGameLoop<ThinClientGameLoop>();
+        if (clientGameLoop != null)
             clientGameLoop.CmdConnect(args);
+        else if (thinClientGameLoop != null)
+            thinClientGameLoop.CmdConnect(args);
         else
             GameDebug.Log("Cannot connect from current gamemode");
+    }
+
+    void CmdThinClient(string[] args)
+    {
+        RequestGameLoop( typeof(ThinClientGameLoop), args);
+        Console.s_PendingCommandsWaitForFrames = 1;
     }
 
     void CmdQuit(string[] args)
@@ -934,7 +957,7 @@ public class Game : MonoBehaviour
 
     List<IGameLoop> m_gameLoops = new List<IGameLoop>();
     DebugOverlay m_DebugOverlay;
-    SoundSystem m_SoundSystem;
+    ISoundSystem m_SoundSystem;
 
     bool m_isHeadless;
     long m_StopwatchFrequency;

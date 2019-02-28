@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,15 +12,15 @@ public class CharacterDebugWindow : EditorWindow
     private static Character[] availableCharacters;
 
 
-    struct DamageInfo
+    class DamageInfo
     {
-        public Vector3 startPosition;
-        public Quaternion direction;
+        public Vector3 aimPoint = Vector3.up;
+        public Quaternion direction = Quaternion.identity;
         public float impulse;
         public float damage;
     }
 
-    private static DamageInfo damageInfo; 
+    private static DamageInfo damageInfo = new DamageInfo(); 
     
     [MenuItem("FPS Sample/Windows/Character Debug")]
     public static void ShowWindow()
@@ -39,10 +41,37 @@ public class CharacterDebugWindow : EditorWindow
         if (character == null)
             return;
 
-        var damStart = character.transform.position + damageInfo.startPosition;
-        var damVector = damageInfo.direction*Vector3.forward * damageInfo.impulse;    
-        Debug.DrawLine(damStart, damStart + damVector, Color.red);
-        DebugDraw.Sphere(damStart, 0.1f, Color.red);
+        var goe = character.GetComponent<GameObjectEntity>();
+        var presentState = goe.EntityManager.GetComponentData<CharacterInterpolatedData>(goe.Entity);
+
+        {
+            var aimPointWorld = presentState.position + damageInfo.aimPoint;
+            EditorGUI.BeginChangeCheck();
+            var pos = Handles.PositionHandle(aimPointWorld,quaternion.identity);
+            if (EditorGUI.EndChangeCheck())
+            {
+                damageInfo.aimPoint = pos - presentState.position;
+            }
+        }
+
+        {
+            var aimPointWorld = presentState.position + damageInfo.aimPoint;
+            EditorGUI.BeginChangeCheck();
+            var rot = Handles.RotationHandle(damageInfo.direction, aimPointWorld);
+            if (EditorGUI.EndChangeCheck())
+            {
+                damageInfo.direction = rot;
+            }
+        }
+
+        {
+            var aimPointWorld = presentState.position + damageInfo.aimPoint;
+            var damDir = damageInfo.direction * Vector3.forward;
+            var damStart = aimPointWorld - damDir * 2;
+            var damVector = damageInfo.direction*Vector3.forward * 100;    
+            Debug.DrawLine(damStart, damStart + damVector, Color.red);
+            DebugDraw.Sphere(damStart, 0.1f, Color.red);
+        }        
     }
 
     static void ScanForCharacters()
@@ -88,24 +117,41 @@ public class CharacterDebugWindow : EditorWindow
         // Give damage
         damageInfo.damage = EditorGUILayout.FloatField("damage", damageInfo.damage);
         damageInfo.impulse = EditorGUILayout.FloatField("impulse", damageInfo.impulse);
-        damageInfo.startPosition = EditorGUILayout.Vector3Field("start", damageInfo.startPosition);
+        damageInfo.aimPoint = EditorGUILayout.Vector3Field("aimPoint", damageInfo.aimPoint);
         damageInfo.direction.eulerAngles = EditorGUILayout.Vector3Field("dir", damageInfo.direction.eulerAngles);
         if (GUILayout.Button("Give Damage"))
         {
-            var hitCollisionOwner = character.GetComponent<HitCollisionOwner>();
-    
-            var damageEvent = new DamageEvent
-            {
-                instigator = Entity.Null,
-                damage = damageInfo.damage,
-                direction = damageInfo.direction*Vector3.forward,
-                impulse = damageInfo.impulse,
-            };
+            
+            var goe = character.GetComponent<GameObjectEntity>();
+            var presentState = goe.EntityManager.GetComponentData<CharacterInterpolatedData>(goe.Entity);
 
-            hitCollisionOwner.damageEvents.Add(damageEvent);
+            var aimPointWorld = presentState.position + damageInfo.aimPoint;
+            var damDir = damageInfo.direction * Vector3.forward;
+            var damStart = aimPointWorld - damDir * 2;
+            
+            var collisionMask = ~0U;
+            var queryReciever = World.Active.GetExistingManager<RaySphereQueryReciever>();
+            var id = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
+            {
+                origin = damStart,
+                direction = damDir,
+                distance = 1000,
+                ExcludeOwner = Entity.Null,
+                hitCollisionTestTick = 1,
+                radius = 0,
+                mask = collisionMask,
+            });
+        
+            RaySphereQueryReciever.Query query;
+            RaySphereQueryReciever.QueryResult queryResult;
+            queryReciever.GetResult(id, out query, out queryResult);
+
+            if (queryResult.hit == 1)
+            {
+                var damageEventBuffer = goe.EntityManager.GetBuffer<DamageEvent>(queryResult.hitCollisionOwner);
+                DamageEvent.AddEvent(damageEventBuffer, Entity.Null, damageInfo.damage,
+                    damageInfo.direction * Vector3.forward, damageInfo.impulse);
+            }
         }
     }
-    
-    
-    
 }

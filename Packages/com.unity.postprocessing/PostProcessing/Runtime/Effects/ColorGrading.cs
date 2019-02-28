@@ -2,77 +2,199 @@ using System;
 
 namespace UnityEngine.Rendering.PostProcessing
 {
+    /// <summary>
+    /// Color grading modes.
+    /// </summary>
     public enum GradingMode
     {
+        /// <summary>
+        /// This mode is aimed at lower-end platforms but it can be used on any platform. Grading is
+        /// applied to the final rendered frame clamped in a [0,1] range and stored in a standard
+        /// LUT.
+        /// </summary>
         LowDefinitionRange,
+
+        /// <summary>
+        /// This mode is aimed at platforms that support HDR rendering. All the color operations
+        /// will be applied in HDR and stored into a 3D log-encoded LUT to ensure a sufficient range
+        /// coverage and precision (Alexa LogC El1000).
+        /// </summary>
         HighDefinitionRange,
+
+        /// <summary>
+        /// This mode allows you to provide a custom 3D LUT authored in an external software. 
+        /// </summary>
         External
     }
 
+    /// <summary>
+    /// Tonemapping methods.
+    /// </summary>
     public enum Tonemapper
     {
+        /// <summary>
+        /// No tonemapping will be applied.
+        /// </summary>
         None,
 
-        // Neutral tonemapper (based off John Hable's & Jim Hejl's work)
+        /// <summary>
+        /// This method only does range-remapping with minimal impact on color hue & saturation and
+        /// is generally a great starting point for extensive color grading.
+        /// </summary>
         Neutral,
 
-        // ACES Filmic reference tonemapper (custom approximation)
+        /// <summary>
+        /// This method uses a close approximation of the reference ACES tonemapper for a more
+        /// filmic look. Because of that, it is more contrasted than <see cref="Neutral"/>and has an
+        /// effect on actual color hue & saturation. Note that if you enable this tonemapper all the
+        /// grading operations will be done in the ACES color spaces for optimal precision and
+        /// results.
+        /// </summary>
         ACES,
 
-        // Custom artist-friendly curve
+        /// <summary>
+        /// This method offers a fully parametric, artist-friendly tonemapper.
+        /// </summary>
         Custom
     }
 
+    /// <summary>
+    /// A volume parameter holding a <see cref="GradingMode"/> value.
+    /// </summary>
     [Serializable]
-    public sealed class GradingModeParameter : ParameterOverride<GradingMode> {}
+    public sealed class GradingModeParameter : ParameterOverride<GradingMode> { }
 
+    /// <summary>
+    /// A volume parameter holding a <see cref="Tonemapper"/> value.
+    /// </summary>
     [Serializable]
     public sealed class TonemapperParameter : ParameterOverride<Tonemapper> {}
 
+    /// <summary>
+    /// This class holds settings for the Color Grading effect.
+    /// </summary>
     // TODO: Could use some refactoring, too much duplicated code here
     [Serializable]
     [PostProcess(typeof(ColorGradingRenderer), "Unity/Color Grading")]
     public sealed class ColorGrading : PostProcessEffectSettings
     {
-        [DisplayName("Mode"), Tooltip("Select a color grading mode that fits your dynamic range and workflow. Use HDR if your camera is set to render in HDR and your target platform supports it. Use LDR for low-end mobiles or devices that don't support HDR. Use External if you prefer authoring a Log LUT in external softwares.")]
+        /// <summary>
+        /// The grading mode to use.
+        /// </summary>
+        [DisplayName("Mode"), Tooltip("Select a color grading mode that fits your dynamic range and workflow. Use HDR if your camera is set to render in HDR and your target platform supports it. Use LDR for low-end mobiles or devices that don't support HDR. Use External if you prefer authoring a Log LUT in an external software.")]
         public GradingModeParameter gradingMode = new GradingModeParameter { value = GradingMode.HighDefinitionRange };
 
-        [DisplayName("Lookup Texture"), Tooltip("")]
+        /// <summary>
+        /// A custom 3D log-encoded texture.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when working with <see cref="GradingMode.External"/>.
+        /// </remarks>
+        [DisplayName("Lookup Texture"), Tooltip("A custom 3D log-encoded texture.")]
         public TextureParameter externalLut = new TextureParameter { value = null };
 
+        /// <summary>
+        /// The tonemapping algorithm to use at the end of the color grading process.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when working with <see cref="GradingMode.HighDefinitionRange"/>.
+        /// </remarks>
         [DisplayName("Mode"), Tooltip("Select a tonemapping algorithm to use at the end of the color grading process.")]
         public TonemapperParameter tonemapper = new TonemapperParameter { value = Tonemapper.None };
 
+        /// <summary>
+        /// Affects the transition between the toe and the mid section of the curve. A value of 0
+        /// means no toe, a value of 1 means a very hard transition.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when <see cref="Tonemapper.Custom"/> is active.
+        /// </remarks>
         [DisplayName("Toe Strength"), Range(0f, 1f), Tooltip("Affects the transition between the toe and the mid section of the curve. A value of 0 means no toe, a value of 1 means a very hard transition.")]
         public FloatParameter toneCurveToeStrength = new FloatParameter { value = 0f };
 
-        [DisplayName("Toe Length"), Range(0f, 1f), Tooltip("Affects how much of the dynamic range is in the toe. With a small value, the toe will be very short and quickly transition into the linear section, and with a longer value having a longer toe.")]
+        /// <summary>
+        /// Affects how much of the dynamic range is in the toe. With a small value, the toe will be
+        /// very short and quickly transition into the linear section, and with a longer value
+        /// having a longer toe.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when <see cref="Tonemapper.Custom"/> is active.
+        /// </remarks>
+        [DisplayName("Toe Length"), Range(0f, 1f), Tooltip("Affects how much of the dynamic range is in the toe. With a small value, the toe will be very short and quickly transition into the linear section, with a larger value, the toe will be longer.")]
         public FloatParameter toneCurveToeLength = new FloatParameter { value = 0.5f };
 
+        /// <summary>
+        /// Affects the transition between the mid section and the shoulder of the curve. A value of
+        /// 0 means no shoulder, value of 1 means a very hard transition.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when <see cref="Tonemapper.Custom"/> is active.
+        /// </remarks>
         [DisplayName("Shoulder Strength"), Range(0f, 1f), Tooltip("Affects the transition between the mid section and the shoulder of the curve. A value of 0 means no shoulder, a value of 1 means a very hard transition.")]
         public FloatParameter toneCurveShoulderStrength = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Affects how many F-stops (EV) to add to the dynamic range of the curve.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when <see cref="Tonemapper.Custom"/> is active.
+        /// </remarks>
         [DisplayName("Shoulder Length"), Min(0f), Tooltip("Affects how many F-stops (EV) to add to the dynamic range of the curve.")]
         public FloatParameter toneCurveShoulderLength = new FloatParameter { value = 0.5f };
 
+        /// <summary>
+        /// Affects how much overshot to add to the shoulder.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when <see cref="Tonemapper.Custom"/> is active.
+        /// </remarks>
         [DisplayName("Shoulder Angle"), Range(0f, 1f), Tooltip("Affects how much overshoot to add to the shoulder.")]
         public FloatParameter toneCurveShoulderAngle = new FloatParameter { value = 0f };
 
-        [DisplayName("Gamma"), Min(0.001f), Tooltip("")]
+        /// <summary>
+        /// Applies a gamma function to the curve.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when <see cref="Tonemapper.Custom"/> is active.
+        /// </remarks>
+        [DisplayName("Gamma"), Min(0.001f), Tooltip("Applies a gamma function to the curve.")]
         public FloatParameter toneCurveGamma = new FloatParameter { value = 1f };
 
-        [DisplayName("Lookup Texture"), Tooltip("Custom lookup texture (strip format, e.g. 256x16) to apply before the rest of the color grading operators. If none is provided, a neutral one will be generated internally.")]
+        /// <summary>
+        /// A custom lookup texture (strip format, e.g. 256x16) to apply before the rest of the
+        /// color grading operators. If none is provided, a neutral one will be generated
+        /// internally.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when working with <see cref="GradingMode.LowDefinitionRange"/>.
+        /// </remarks>
+        [DisplayName("Lookup Texture"), Tooltip("Custom lookup texture (strip format, for example 256x16) to apply before the rest of the color grading operators. If none is provided, a neutral one will be generated internally.")]
         public TextureParameter ldrLut = new TextureParameter { value = null, defaultState = TextureParameterDefault.Lut2D }; // LDR only
 
+        /// <summary>
+        /// How much of the lookup texture will contribute to the color grading.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when working with <see cref="GradingMode.LowDefinitionRange"/>.
+        /// </remarks>
         [DisplayName("Contribution"), Range(0f, 1f), Tooltip("How much of the lookup texture will contribute to the color grading effect.")]
         public FloatParameter ldrLutContribution = new FloatParameter { value = 1f };
 
+        /// <summary>
+        /// Sets the white balance to a custom color temperature.
+        /// </summary>
         [DisplayName("Temperature"), Range(-100f, 100f), Tooltip("Sets the white balance to a custom color temperature.")]
         public FloatParameter temperature = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Sets the white balance to compensate for a green or magenta tint.
+        /// </summary>
         [DisplayName("Tint"), Range(-100f, 100f), Tooltip("Sets the white balance to compensate for a green or magenta tint.")]
         public FloatParameter tint = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Tints the render by multiplying a color.
+        /// </summary>
 #if UNITY_2018_1_OR_NEWER
         [DisplayName("Color Filter"), ColorUsage(false, true), Tooltip("Tint the render by multiplying a color.")]
 #else
@@ -80,70 +202,181 @@ namespace UnityEngine.Rendering.PostProcessing
 #endif
         public ColorParameter colorFilter = new ColorParameter { value = Color.white };
 
+        /// <summary>
+        /// Shifts the hue of all colors.
+        /// </summary>
         [DisplayName("Hue Shift"), Range(-180f, 180f), Tooltip("Shift the hue of all colors.")]
         public FloatParameter hueShift = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Pushes the intensity of all colors.
+        /// </summary>
         [DisplayName("Saturation"), Range(-100f, 100f), Tooltip("Pushes the intensity of all colors.")]
         public FloatParameter saturation = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Makes the image brighter or darker.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when working with <see cref="GradingMode.LowDefinitionRange"/>.
+        /// </remarks>
         [DisplayName("Brightness"), Range(-100f, 100f), Tooltip("Makes the image brighter or darker.")]
         public FloatParameter brightness = new FloatParameter { value = 0f }; // LDR only
 
-        [DisplayName("Post-exposure (EV)"), Tooltip("Adjusts the overall exposure of the scene in EV units. This is applied after HDR effect and right before tonemapping so it won't affect previous effects in the chain.")]
+        /// <summary>
+        /// Adjusts the overall exposure of the scene in EV units. This is applied after HDR effect
+        /// and right before tonemapping so it won’t affect previous effects in the chain.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when working with <see cref="GradingMode.HighDefinitionRange"/>.
+        /// </remarks>
+        [DisplayName("Post-exposure (EV)"), Tooltip("Adjusts the overall exposure of the scene in EV units. This is applied after the HDR effect and right before tonemapping so it won't affect previous effects in the chain.")]
         public FloatParameter postExposure = new FloatParameter { value = 0f }; // HDR only
 
+        /// <summary>
+        /// Expands or shrinks the overall range of tonal values.
+        /// </summary>
         [DisplayName("Contrast"), Range(-100f, 100f), Tooltip("Expands or shrinks the overall range of tonal values.")]
         public FloatParameter contrast = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Modifies the influence of the red channel within the overall mix.
+        /// </summary>
         [DisplayName("Red"), Range(-200f, 200f), Tooltip("Modify influence of the red channel in the overall mix.")]
         public FloatParameter mixerRedOutRedIn = new FloatParameter { value = 100f };
 
+        /// <summary>
+        /// Modifies the influence of the green channel within the overall mix.
+        /// </summary>
         [DisplayName("Green"), Range(-200f, 200f), Tooltip("Modify influence of the green channel in the overall mix.")]
         public FloatParameter mixerRedOutGreenIn = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Modifies the influence of the blue channel within the overall mix.
+        /// </summary>
         [DisplayName("Blue"), Range(-200f, 200f), Tooltip("Modify influence of the blue channel in the overall mix.")]
         public FloatParameter mixerRedOutBlueIn = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Modifies the influence of the red channel within the overall mix.
+        /// </summary>
         [DisplayName("Red"), Range(-200f, 200f), Tooltip("Modify influence of the red channel in the overall mix.")]
         public FloatParameter mixerGreenOutRedIn = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Modifies the influence of the green channel within the overall mix.
+        /// </summary>
         [DisplayName("Green"), Range(-200f, 200f), Tooltip("Modify influence of the green channel in the overall mix.")]
         public FloatParameter mixerGreenOutGreenIn = new FloatParameter { value = 100f };
 
+        /// <summary>
+        /// Modifies the influence of the blue channel within the overall mix.
+        /// </summary>
         [DisplayName("Blue"), Range(-200f, 200f), Tooltip("Modify influence of the blue channel in the overall mix.")]
         public FloatParameter mixerGreenOutBlueIn = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Modifies the influence of the red channel within the overall mix.
+        /// </summary>
         [DisplayName("Red"), Range(-200f, 200f), Tooltip("Modify influence of the red channel in the overall mix.")]
         public FloatParameter mixerBlueOutRedIn = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Modifies the influence of the green channel within the overall mix.
+        /// </summary>
         [DisplayName("Green"), Range(-200f, 200f), Tooltip("Modify influence of the green channel in the overall mix.")]
         public FloatParameter mixerBlueOutGreenIn = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Modifies the influence of the blue channel within the overall mix.
+        /// </summary>
         [DisplayName("Blue"), Range(-200f, 200f), Tooltip("Modify influence of the blue channel in the overall mix.")]
         public FloatParameter mixerBlueOutBlueIn = new FloatParameter { value = 100f };
 
+        /// <summary>
+        /// Controls the darkest portions of the render.
+        /// </summary>
+        /// <remarks>
+        /// The neutral value is <c>(1, 1, 1, 0)</c>.
+        /// </remarks>
         [DisplayName("Lift"), Tooltip("Controls the darkest portions of the render."), Trackball(TrackballAttribute.Mode.Lift)]
         public Vector4Parameter lift = new Vector4Parameter { value = new Vector4(1f, 1f, 1f, 0f) };
 
-        [DisplayName("Gamma"), Tooltip("Power function that controls midrange tones."), Trackball(TrackballAttribute.Mode.Gamma)]
+        /// <summary>
+        /// A power function that controls mid-range tones.
+        /// </summary>
+        /// <remarks>
+        /// The neutral value is <c>(1, 1, 1, 0)</c>.
+        /// </remarks>
+        [DisplayName("Gamma"), Tooltip("Power function that controls mid-range tones."), Trackball(TrackballAttribute.Mode.Gamma)]
         public Vector4Parameter gamma = new Vector4Parameter { value = new Vector4(1f, 1f, 1f, 0f) };
 
+        /// <summary>
+        /// Controls the lightest portions of the render.
+        /// </summary>
+        /// <remarks>
+        /// The neutral value is <c>(1, 1, 1, 0)</c>.
+        /// </remarks>
         [DisplayName("Gain"), Tooltip("Controls the lightest portions of the render."), Trackball(TrackballAttribute.Mode.Gain)]
         public Vector4Parameter gain = new Vector4Parameter { value = new Vector4(1f, 1f, 1f, 0f) };
 
         // sample-game begin: added globalGamma
         public static float globalGamma = 1.0f;
-        // sample-game end:
+        // sample-game end:
 
+        /// <summary>
+        /// Remaps the luminosity values.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when working with <see cref="GradingMode.LowDefinitionRange"/>.
+        /// </remarks>
         public SplineParameter masterCurve   = new SplineParameter { value = new Spline(new AnimationCurve(new Keyframe(0f, 0f, 1f, 1f), new Keyframe(1f, 1f, 1f, 1f)), 0f, false, new Vector2(0f, 1f)) };
+
+        /// <summary>
+        /// Remaps the red channel.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when working with <see cref="GradingMode.LowDefinitionRange"/>.
+        /// </remarks>
         public SplineParameter redCurve      = new SplineParameter { value = new Spline(new AnimationCurve(new Keyframe(0f, 0f, 1f, 1f), new Keyframe(1f, 1f, 1f, 1f)), 0f, false, new Vector2(0f, 1f)) };
+
+        /// <summary>
+        /// Remaps the green channel/
+        /// </summary>
+        /// <remarks>
+        /// This is only used when working with <see cref="GradingMode.LowDefinitionRange"/>.
+        /// </remarks>
         public SplineParameter greenCurve    = new SplineParameter { value = new Spline(new AnimationCurve(new Keyframe(0f, 0f, 1f, 1f), new Keyframe(1f, 1f, 1f, 1f)), 0f, false, new Vector2(0f, 1f)) };
+
+        /// <summary>
+        /// Remaps the blue channel.
+        /// </summary>
+        /// <remarks>
+        /// This is only used when working with <see cref="GradingMode.LowDefinitionRange"/>.
+        /// </remarks>
         public SplineParameter blueCurve     = new SplineParameter { value = new Spline(new AnimationCurve(new Keyframe(0f, 0f, 1f, 1f), new Keyframe(1f, 1f, 1f, 1f)), 0f, false, new Vector2(0f, 1f)) };
+
+        /// <summary>
+        /// Remaps the hue according to the current hue.
+        /// </summary>
         public SplineParameter hueVsHueCurve = new SplineParameter { value = new Spline(new AnimationCurve(), 0.5f, true, new Vector2(0f, 1f)) };
+
+        /// <summary>
+        /// Remaps the saturation according to the current hue.
+        /// </summary>
         public SplineParameter hueVsSatCurve = new SplineParameter { value = new Spline(new AnimationCurve(), 0.5f, true, new Vector2(0f, 1f)) };
+
+        /// <summary>
+        /// Remaps the saturation according to the current saturation.
+        /// </summary>
         public SplineParameter satVsSatCurve = new SplineParameter { value = new Spline(new AnimationCurve(), 0.5f, false, new Vector2(0f, 1f)) };
+
+        /// <summary>
+        /// Remaps the saturation according to the current luminance.
+        /// </summary>
         public SplineParameter lumVsSatCurve = new SplineParameter { value = new Spline(new AnimationCurve(), 0.5f, false, new Vector2(0f, 1f)) };
 
+        /// <inheritdoc />
         public override bool IsEnabledAndSupported(PostProcessRenderContext context)
         {
             if (gradingMode.value == GradingMode.External)
@@ -156,7 +389,7 @@ namespace UnityEngine.Rendering.PostProcessing
         }
     }
 
-    public sealed class ColorGradingRenderer : PostProcessEffectRenderer<ColorGrading>
+    internal sealed class ColorGradingRenderer : PostProcessEffectRenderer<ColorGrading>
     {
         enum Pass
         {
@@ -436,7 +669,7 @@ namespace UnityEngine.Rendering.PostProcessing
                 context.command.BeginSample("LdrColorGradingLut2D");
 
                 var userLut = settings.ldrLut.value;
-                if (userLut == null)
+                if (userLut == null || userLut.width != userLut.height * userLut.height)
                 {
                     context.command.BlitFullscreenTriangle(BuiltinRenderTextureType.None, m_InternalLdrLut, lutSheet, (int)Pass.LutGenLDRFromScratch);
                 }

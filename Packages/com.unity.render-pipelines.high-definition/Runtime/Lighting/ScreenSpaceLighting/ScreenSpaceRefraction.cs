@@ -3,10 +3,23 @@ using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
+
     [Serializable]
-    public class ScreenSpaceRefraction : ScreenSpaceLighting
+    public class ScreenSpaceRefraction : VolumeComponent
     {
+        public enum RefractionModel
+        {
+            None = 0,
+            Box = 1,
+            Sphere = 2
+        };
+
+        int m_InvScreenFadeDistanceID;
+
+        public ClampedFloatParameter screenFadeDistance = new ClampedFloatParameter(0.1f, 0.001f, 1.0f);
+
         static ScreenSpaceRefraction s_Default = null;
+
         public static ScreenSpaceRefraction @default
         {
             get
@@ -20,27 +33,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        protected override void FetchIDs(
-            out int rayLevelID,
-            out int rayMinLevelID,
-            out int rayMaxLevelID,
-            out int rayMaxIterationsID,
-            out int depthBufferThicknessID,
-            out int invScreenWeightDistanceID,
-            out int rayMaxScreenDistanceID,
-            out int rayBlendScreenDistanceID,
-            out int rayMarchBehindObjectsID
-            )
+        public virtual void PushShaderParameters(CommandBuffer cmd)
         {
-            rayLevelID = HDShaderIDs._SSRefractionRayLevel;
-            rayMinLevelID = HDShaderIDs._SSRefractionRayMinLevel;
-            rayMaxLevelID = HDShaderIDs._SSRefractionRayMaxLevel;
-            rayMaxIterationsID = HDShaderIDs._SSRefractionRayMaxIterations;
-            depthBufferThicknessID = HDShaderIDs._SSRefractionDepthBufferThickness;
-            invScreenWeightDistanceID = HDShaderIDs._SSRefractionInvScreenWeightDistance;
-            rayMaxScreenDistanceID = HDShaderIDs._SSRefractionRayMaxScreenDistance;
-            rayBlendScreenDistanceID = HDShaderIDs._SSRefractionRayBlendScreenDistance;
-            rayMarchBehindObjectsID = HDShaderIDs._SSRefractionRayMarchBehindObjects;
+            cmd.SetGlobalFloat(m_InvScreenFadeDistanceID, 1.0f / screenFadeDistance.value);
         }
+
+        protected void FetchIDs(
+            out int invScreenWeightDistanceID)
+        {
+            invScreenWeightDistanceID = HDShaderIDs._SSRefractionInvScreenWeightDistance;
+        }
+
+        void Awake()
+        {
+            FetchIDs(
+                out m_InvScreenFadeDistanceID
+                );
+        }
+
     }
 }

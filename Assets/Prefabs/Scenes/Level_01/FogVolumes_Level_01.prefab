@@ -43,6 +43,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 1, g: 0.5831265, b: 0.2688679, a: 1}
     meanFreePath: 10
@@ -50,8 +51,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0, y: 1, z: 0.2}
-    negativeFade: {x: 0.5, y: 0.1, z: 0.7}
+    m_PositiveFade: {x: 0, y: 1, z: 0.2}
+    m_NegativeFade: {x: 0.5, y: 0.1, z: 0.7}
+    m_UniformFade: 0
+    size: {x: 13.555227, y: 8.364407, z: 25.313704}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &733809349
@@ -97,6 +101,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 0.23584905, g: 0.6054212, b: 0.9433962, a: 1}
     meanFreePath: 150
@@ -104,8 +109,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0.25, y: 0.25, z: 0.25}
-    negativeFade: {x: 0.27, y: 0, z: 0.25}
+    m_PositiveFade: {x: 0.25, y: 0.25, z: 0.25}
+    m_NegativeFade: {x: 0.27, y: 0, z: 0.25}
+    m_UniformFade: 0
+    size: {x: 1262.3, y: 349.732, z: 400}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &979066790
@@ -151,6 +159,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 1, g: 0.6849943, b: 0.4481132, a: 1}
     meanFreePath: 20
@@ -158,8 +167,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0.2, y: 1, z: 0.1}
-    negativeFade: {x: 1, y: 0.2, z: 0.5}
+    m_PositiveFade: {x: 0.2, y: 1, z: 0.1}
+    m_NegativeFade: {x: 1, y: 0.2, z: 0.5}
+    m_UniformFade: 0
+    size: {x: 20.246359, y: 21.446945, z: 17.656065}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &995662933
@@ -205,6 +217,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 1, g: 0.6849943, b: 0.4481132, a: 1}
     meanFreePath: 15
@@ -212,8 +225,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0.2, y: 1, z: 1}
-    negativeFade: {x: 1, y: 0, z: 0}
+    m_PositiveFade: {x: 0.2, y: 1, z: 1}
+    m_NegativeFade: {x: 1, y: 0, z: 0}
+    m_UniformFade: 0
+    size: {x: 58.24785, y: 17.36467, z: 50.795692}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &1424537443
@@ -259,6 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 0.89019614, g: 0.75294125, b: 0.5921569, a: 1}
     meanFreePath: 20
@@ -266,8 +283,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0.2, y: 0.5, z: 0.2}
-    negativeFade: {x: 0.2, y: 0, z: 0.2}
+    m_PositiveFade: {x: 0.2, y: 0.5, z: 0.2}
+    m_NegativeFade: {x: 0.2, y: 0, z: 0.2}
+    m_UniformFade: 0
+    size: {x: 28.649004, y: 7.6954, z: 68.17683}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &1936966337
@@ -313,6 +333,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 1, g: 0.6065837, b: 0.3066038, a: 1}
     meanFreePath: 15
@@ -320,8 +341,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0, y: 1, z: 0}
-    negativeFade: {x: 0.3, y: 0.3, z: 1}
+    m_PositiveFade: {x: 0, y: 1, z: 0}
+    m_NegativeFade: {x: 0.3, y: 0.3, z: 1}
+    m_UniformFade: 0
+    size: {x: 13.737606, y: 13.737604, z: 13.737606}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &2736400134162416520
@@ -367,6 +391,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 0.3301887, g: 0.27536932, b: 0.16976683, a: 1}
     meanFreePath: 500
@@ -374,8 +399,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0, y: 1, z: 0}
-    negativeFade: {x: 0, y: 0, z: 0}
+    m_PositiveFade: {x: 0, y: 1, z: 0}
+    m_NegativeFade: {x: 0, y: 0, z: 0}
+    m_UniformFade: 0
+    size: {x: 5000, y: 300, z: 5000}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &2955449264649749557
@@ -421,6 +449,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 1, g: 1, b: 1, a: 1}
     meanFreePath: 3000
@@ -428,8 +457,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0, y: 0.5, z: 0}
-    negativeFade: {x: 0, y: 0, z: 0}
+    m_PositiveFade: {x: 0, y: 0.5, z: 0}
+    m_NegativeFade: {x: 0, y: 0, z: 0}
+    m_UniformFade: 0
+    size: {x: 4999.9995, y: 669.4, z: 4999.9995}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &3626718203916110866
@@ -475,6 +507,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 0.7075472, g: 0.5924446, b: 0.37046102, a: 1}
     meanFreePath: 100
@@ -482,8 +515,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0.25, y: 0.25, z: 0.25}
-    negativeFade: {x: 0.25, y: 0, z: 0.25}
+    m_PositiveFade: {x: 0.25, y: 0.25, z: 0.25}
+    m_NegativeFade: {x: 0.25, y: 0, z: 0.25}
+    m_UniformFade: 0
+    size: {x: 400, y: 349.732, z: 400}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &4547567982476556685
@@ -529,6 +565,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 0.7075472, g: 0.5924446, b: 0.37046102, a: 1}
     meanFreePath: 100
@@ -536,8 +573,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0.25, y: 0.25, z: 0.25}
-    negativeFade: {x: 0.25, y: 0, z: 0.25}
+    m_PositiveFade: {x: 0.25, y: 0.25, z: 0.25}
+    m_NegativeFade: {x: 0.25, y: 0, z: 0.25}
+    m_UniformFade: 0
+    size: {x: 400, y: 349.732, z: 400}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &6878648767144801064
@@ -626,6 +666,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 0.7075472, g: 0.5924446, b: 0.37046102, a: 1}
     meanFreePath: 100
@@ -633,8 +674,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0.25, y: 0.25, z: 0.25}
-    negativeFade: {x: 0.25, y: 0, z: 0.25}
+    m_PositiveFade: {x: 0.25, y: 0.25, z: 0.25}
+    m_NegativeFade: {x: 0.25, y: 0, z: 0.25}
+    m_UniformFade: 0
+    size: {x: 400, y: 349.732, z: 400}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &8052870307506579547
@@ -680,6 +724,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 0.89019614, g: 0.75294125, b: 0.5921569, a: 1}
     meanFreePath: 50
@@ -687,8 +732,11 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0.2, y: 1, z: 0.2}
-    negativeFade: {x: 0.2, y: 0, z: 0.2}
+    m_PositiveFade: {x: 0.2, y: 1, z: 0.2}
+    m_NegativeFade: {x: 0.2, y: 0, z: 0.2}
+    m_UniformFade: 0
+    size: {x: 22.202984, y: 17.36467, z: 23.082193}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1
 --- !u!1 &8772064213774458000
@@ -734,6 +782,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fbb15bf92b84f40a1eb030765b5afe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Version: 1
   parameters:
     albedo: {r: 0.89019614, g: 0.75294125, b: 0.5921569, a: 1}
     meanFreePath: 50
@@ -741,7 +790,10 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0.2, y: 1, z: 0.2}
-    negativeFade: {x: 0.2, y: 0, z: 0.2}
+    m_PositiveFade: {x: 0.2, y: 1, z: 0.2}
+    m_NegativeFade: {x: 0.2, y: 0, z: 0.2}
+    m_UniformFade: 0
+    size: {x: 22.20299, y: 17.36467, z: 10.651744}
+    advancedFade: 1
     invertFade: 0
     textureIndex: -1

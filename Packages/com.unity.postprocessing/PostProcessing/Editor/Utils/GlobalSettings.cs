@@ -52,10 +52,9 @@ namespace UnityEditor.Rendering.PostProcessing
         [SettingsProvider]
         static SettingsProvider PreferenceGUI()
         {
-            return new SettingsProvider("Preferences/Post-processing")
+            return new SettingsProvider("Preferences/Post-processing", SettingsScope.User)
             {
-                guiHandler = searchContext => OpenGUI(),
-                scopes = SettingsScopes.User
+                guiHandler = searchContext => OpenGUI()
             };
         }
         #else

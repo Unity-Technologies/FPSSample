@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityEngine.Profiling;
 
 [CreateAssetMenu(fileName = "Simple", menuName = "FPS Sample/Animation/AnimGraph/Simple")]
 public class AnimGraph_Simple : AnimGraphAsset
@@ -63,7 +64,9 @@ public class AnimGraph_Simple : AnimGraphAsset
     
         public void UpdatePresentationState(bool firstUpdate, GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            Profiler.BeginSample("Simple.Update");
+            
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             animState.rotation = animState.aimYaw;
 
             if (firstUpdate)
@@ -71,17 +74,23 @@ public class AnimGraph_Simple : AnimGraphAsset
             else
                 animState.simpleTime += deltaTime;
             m_EntityManager.SetComponentData(m_AnimStateOwner, animState);
+            
+            Profiler.EndSample();
         }
 
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            Profiler.BeginSample("Simple.Apply");
+
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             m_animIdle.SetTime(animState.simpleTime);
             
             var characterActionDuration = time.DurationSinceTick(animState.charActionTick);
             m_actionAnimationHandler.UpdateAction(animState.charAction, characterActionDuration);
             if(m_aimHandler != null)
                 m_aimHandler.SetAngle(animState.aimPitch);
+            
+            Profiler.EndSample();
         }
     
         

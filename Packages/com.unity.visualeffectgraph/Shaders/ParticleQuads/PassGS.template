@@ -1,0 +1,58 @@
+#pragma require geometry
+#pragma vertex vert
+#pragma geometry geom
+
+uint vert(uint id : SV_VertexID) : TEXCOORD0
+{
+	return id;
+}
+
+[maxvertexcount(4)]
+void geom(point uint intStream[1] : TEXCOORD0,inout TriangleStream<VFX_VARYING_PS_INPUTS> outStream)
+{
+	uint index = intStream[0];
+	
+	${VFXLoadAttributesOrCull}
+	${VFXProcessBlocks}
+			
+	if (!alive)
+		return;
+		
+	${VFXLoadSize}
+	
+	const float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);
+	
+	VFX_VARYING_PS_INPUTS o = (VFX_VARYING_PS_INPUTS)0;
+	
+	#ifdef VFX_VARYING_NORMAL
+	float normalFlip = (size3.x * size3.y * size3.z) < 0 ? -1 : 1;
+	o.VFX_VARYING_NORMAL = normalFlip * normalize(TransformDirectionVFXToWorld(normalize(-transpose(elementToVFX)[2].xyz)));
+	#endif
+	#ifdef VFX_VARYING_TANGENT
+	o.VFX_VARYING_TANGENT = normalize(TransformDirectionVFXToWorld(normalize(transpose(elementToVFX)[0].xyz)));
+	#endif
+	
+	[unroll]
+	for (int id = 0; id < 4; ++id)
+	{
+		o.VFX_VARYING_UV.x = float((id & 2) >> 1);
+		o.VFX_VARYING_UV.y = float(id & 1);
+						
+		const float2 vOffsets = o.VFX_VARYING_UV.xy - 0.5f;
+		const float3 vPos = mul(elementToVFX,float4(vOffsets,0.0f,1.0f)).xyz;
+		o.VFX_VARYING_POSCS = TransformPositionVFXToClip(vPos);
+		
+		#ifdef VFX_VARYING_BENTFACTORS
+		${VFXLoadParameter:{bentNormalFactor}}
+		o.VFX_VARYING_BENTFACTORS = vOffsets * bentNormalFactor;
+		#endif
+
+		${VFXVertexCommonProcess}
+		
+		${VFXVertexSetFlipbooksInterpolants}
+		
+		${VFXVertexAdditionalProcess}
+		
+		outStream.Append(o);
+	}
+}

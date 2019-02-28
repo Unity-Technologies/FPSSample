@@ -1,18 +1,27 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System;
+using Unity.Entities;
 
-public class DestructablePropReplicatedState : MonoBehaviour, INetSerialized
+[Serializable]
+public struct DestructablePropReplicatedData : IComponentData, IReplicatedComponent
 {
     public int destroyedTick;      
 
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+    public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
+    {
+        return new ReplicatedComponentSerializerFactory<DestructablePropReplicatedData>();
+    }
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
     {
         writer.WriteInt32("destroyed",destroyedTick);
     }
 
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
     {
         destroyedTick = reader.ReadInt32();
     }
+}
+
+public class DestructablePropReplicatedState : ComponentDataWrapper<DestructablePropReplicatedData>
+{
 }

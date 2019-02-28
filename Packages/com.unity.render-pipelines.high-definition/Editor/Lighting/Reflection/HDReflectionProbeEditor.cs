@@ -59,7 +59,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected override void Draw(HDProbeUI s, SerializedHDProbe serialized, Editor owner)
         {
+#pragma warning disable 612 //Draw
             HDReflectionProbeUI.Inspector.Draw(s, serialized, owner);
+#pragma warning restore 612
         }
 
         static HDReflectionProbeEditor GetEditorFor(ReflectionProbe p)

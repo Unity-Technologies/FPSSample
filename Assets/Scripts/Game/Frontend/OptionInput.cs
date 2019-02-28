@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 public class OptionInput : OptionUI
 {
-    public Text title;
-    public InputField input;
+    public TMPro.TextMeshProUGUI title;
+    public TMPro.TMP_InputField input;
 
     public override void UpdateFromConfigVar()
     {

@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Xml.Schema;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 
-public struct NetworkWriter
+unsafe public struct NetworkWriter
 {
-    public NetworkWriter(byte[] buffer, NetworkSchema schema, bool generateSchema = false)
+    public NetworkWriter(uint* buffer, int bufferSize, NetworkSchema schema, bool generateSchema = false)
     {
-        m_Output = new ByteOutputStream(buffer);
+        m_Output = buffer;
+        m_BufferSize = bufferSize;
+        m_Position = 0;
         m_Schema = schema;
         m_CurrentField = null;
         m_NextFieldIndex = 0;
@@ -18,15 +21,22 @@ public struct NetworkWriter
 
     public int GetLength()
     {
-        return m_Output.GetBytePosition();
+        return m_Position;
     }
 
     void ValidateOrGenerateSchema(string name, NetworkSchema.FieldType type, int bits = 0, bool delta = false, int precision = 0, int arraySize = 0)
     {
-        // TOULF precision is amount of digits (10^-3)
-        GameDebug.Assert(precision < 4);
+        if(m_Position + arraySize >= m_BufferSize)
+        {
+            // This is a really hard error to recover from. So we just try to make sure everything stops...
+            GameDebug.Assert(false, "Out of buffer space in NetworkWriter.");
+        }
+        // Precision is amount of digits (10^-3)
+        GameDebug.Assert(precision < 4, "Precision has to be less than 4 digits. If you need more use unquantizised values");
         if (m_GenerateSchema == true)
         {
+            if (type == NetworkSchema.FieldType.Bool || type == NetworkSchema.FieldType.ByteArray || type == NetworkSchema.FieldType.String)
+                GameDebug.Assert(delta == false, "Delta compression of fields of type bool, bytearray and string not supported");
             // TOULF m_Scheme will contain scheme for ALL of the *entity* (not component)
             m_Schema.AddField(new NetworkSchema.FieldInfo()
             {
@@ -37,7 +47,7 @@ public struct NetworkWriter
                 precision = precision,
                 arraySize = arraySize,
                 fieldMask = m_FieldMask,
-                startContext = m_Schema.fields.Count * NetworkConfig.maxContextsPerField + m_Schema.id * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext
+                startContext = m_Schema.numFields * NetworkConfig.maxContextsPerField + m_Schema.id * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext
             });
         }
         else if (m_Schema != null)
@@ -80,49 +90,49 @@ public struct NetworkWriter
     public void WriteBoolean(string name, bool value)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Bool, 1, false);
-        m_Output.WriteUInt8(value ? (byte)1 : (byte)0);
+        m_Output[m_Position++] = value ? 1u : 0u;
     }
 
     public void WriteByte(string name, byte value)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.UInt, 8, true);
-        m_Output.WriteUInt8(value);
+        m_Output[m_Position++] = value;
     }
 
     public void WriteInt16(string name, short value)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Int, 16, true);
-        m_Output.WriteUInt16((ushort)value);
+        m_Output[m_Position++] = (ushort)value;
     }
 
     public void WriteUInt16(string name, ushort value)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.UInt, 16, true);
-        m_Output.WriteUInt16(value);
+        m_Output[m_Position++] = value;
     }
 
     public void WriteInt32(string name, int value)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Int, 32, true);
-        m_Output.WriteUInt32((uint)value);
+        m_Output[m_Position++] = (uint)value;
     }
 
     public void WriteUInt32(string name, uint value)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.UInt, 32, true);
-        m_Output.WriteUInt32(value);
+        m_Output[m_Position++] = value;
     }
 
     public void WriteFloat(string name, float value)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Float, 32, false);
-        m_Output.WriteUInt32(NetworkUtils.FloatToUInt32(value));
+        m_Output[m_Position++] = NetworkUtils.FloatToUInt32(value);
     }
 
     public void WriteFloatQ(string name, float value, int precision = 3)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Float, 32, true, precision);
-        m_Output.WriteUInt32((uint)Mathf.RoundToInt(value * NetworkConfig.encoderPrecisionScales[precision]));
+        m_Output[m_Position++] = (uint)Mathf.RoundToInt(value * NetworkConfig.encoderPrecisionScales[precision]);
     }
 
     public enum OverrunBehaviour
@@ -148,104 +158,126 @@ public struct NetworkWriter
     public void WriteString(string name, char[] value, int length, int maxLength, OverrunBehaviour overrunBehaviour)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.String, 0, false, 0, maxLength);
-        if (length == 0)
-        {
-            m_Output.WriteByteArray(null, 0, 0, maxLength);
-            return;
-        }
 
         GameDebug.Assert(maxLength <= s_ByteBuffer.Length, "NetworkWriter: Max length has to be less than {0}", s_ByteBuffer.Length);
+        GameDebug.Assert((maxLength & 0x3) == 0, "MaxLength has to be 32bit aligned");
 
-        // Ensure the (utf-8) *encoded* string is not too big. If it is, cut it off,
-        // convert back to unicode and then back again to utf-8. This little dance gives
-        // a valid utf-8 string within the buffer size.
-        var byteCount = NetworkConfig.encoding.GetBytes(value, 0, length, s_ByteBuffer, 0);
-        if (byteCount > maxLength)
+        var byteCount = 0;
+        if (length > 0)
         {
-            if (overrunBehaviour == OverrunBehaviour.AssertMaxLength)
+            // Ensure the (utf-8) *encoded* string is not too big. If it is, cut it off,
+            // convert back to unicode and then back again to utf-8. This little dance gives
+            // a valid utf-8 string within the buffer size.
+            byteCount = NetworkConfig.encoding.GetBytes(value, 0, length, s_ByteBuffer, 0);
+            if (byteCount > maxLength)
             {
-                GameDebug.Assert(false, "NetworkWriter : string {0} too long. (Using {1}/{2} allowed encoded bytes): ", value, byteCount, maxLength);
-            }
-            // truncate
-            var truncWithBadEnd = NetworkConfig.encoding.GetString(s_ByteBuffer, 0, maxLength);
-            var truncOk = truncWithBadEnd.Substring(0, truncWithBadEnd.Length - 1);
-            var newbyteCount = NetworkConfig.encoding.GetBytes(truncOk, 0, truncOk.Length, s_ByteBuffer, 0);
+                if (overrunBehaviour == OverrunBehaviour.AssertMaxLength)
+                {
+                    GameDebug.Assert(false, "NetworkWriter : string {0} too long. (Using {1}/{2} allowed encoded bytes): ", value, byteCount, maxLength);
+                }
+                // truncate
+                var truncWithBadEnd = NetworkConfig.encoding.GetString(s_ByteBuffer, 0, maxLength);
+                var truncOk = truncWithBadEnd.Substring(0, truncWithBadEnd.Length - 1);
+                var newbyteCount = NetworkConfig.encoding.GetBytes(truncOk, 0, truncOk.Length, s_ByteBuffer, 0);
 
-            if (overrunBehaviour == OverrunBehaviour.WarnAndTrunc)
-            {
-                GameDebug.LogWarning(string.Format("NetworkWriter : truncated string with {0} bytes. (result: {1})", byteCount - newbyteCount, truncOk));
+                if (overrunBehaviour == OverrunBehaviour.WarnAndTrunc)
+                {
+                    GameDebug.LogWarning(string.Format("NetworkWriter : truncated string with {0} bytes. (result: {1})", byteCount - newbyteCount, truncOk));
+                }
+                byteCount  = newbyteCount;
+                GameDebug.Assert(byteCount <= maxLength, "String encoding failed");
             }
-            byteCount = newbyteCount;
-            GameDebug.Assert(byteCount <= maxLength);
         }
 
-        m_Output.WriteByteArray(s_ByteBuffer, 0, byteCount, maxLength);
+        m_Output[m_Position++] = (uint)byteCount;
+        byte* dst = (byte*)(m_Output + m_Position);
+        int i = 0;
+        for (; i < byteCount; ++i)
+            *dst++ = s_ByteBuffer[i];
+        for (; i < maxLength; ++i)
+            *dst++ = 0;
+
+        GameDebug.Assert(((uint)dst & 0x3) == 0, "Expected to stay aligned!");
+        m_Position += maxLength / 4;
+    }
+
+    public void WriteBytes(string name, byte[] value, int srcIndex, int count, int maxCount)
+    {
+        GameDebug.Assert((maxCount & 0x3) == 0, "MaxCount has to be 32bit aligned");
+        ValidateOrGenerateSchema(name, NetworkSchema.FieldType.ByteArray, 0, false, 0, maxCount);
+        if (count > ushort.MaxValue)
+            throw new System.ArgumentException("NetworkWriter : Byte buffer too big : " + count);
+        //m_Output.WriteByteArray(value, srcIndex, count, maxCount);
+        m_Output[m_Position++] = (uint)count;
+        byte* dst = (byte*)(m_Output + m_Position);
+        int i = 0;
+        for (; i < count; ++i)
+            *dst++ = value[i];
+        for (; i < maxCount; ++i)
+            *dst++ = 0;
+        m_Position += maxCount / 4;
     }
 
     public void WriteVector2(string name, Vector2 value)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Vector2, 32);
-        m_Output.WriteUInt32(NetworkUtils.FloatToUInt32(value.x));
-        m_Output.WriteUInt32(NetworkUtils.FloatToUInt32(value.y));
+        m_Output[m_Position++] = NetworkUtils.FloatToUInt32(value.x);
+        m_Output[m_Position++] = NetworkUtils.FloatToUInt32(value.y);
     }
 
     public void WriteVector2Q(string name, Vector2 value, int precision = 3)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Vector2, 32, true, precision);
-        m_Output.WriteUInt32((uint)Mathf.RoundToInt(value.x * NetworkConfig.encoderPrecisionScales[precision]));
-        m_Output.WriteUInt32((uint)Mathf.RoundToInt(value.y * NetworkConfig.encoderPrecisionScales[precision]));
+        m_Output[m_Position++] = (uint)Mathf.RoundToInt(value.x * NetworkConfig.encoderPrecisionScales[precision]);
+        m_Output[m_Position++] = (uint)Mathf.RoundToInt(value.y * NetworkConfig.encoderPrecisionScales[precision]);
     }
 
     public void WriteVector3(string name, Vector3 value)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Vector3, 32);
-        m_Output.WriteUInt32(NetworkUtils.FloatToUInt32(value.x));
-        m_Output.WriteUInt32(NetworkUtils.FloatToUInt32(value.y));
-        m_Output.WriteUInt32(NetworkUtils.FloatToUInt32(value.z));
+        m_Output[m_Position++] = NetworkUtils.FloatToUInt32(value.x);
+        m_Output[m_Position++] = NetworkUtils.FloatToUInt32(value.y);
+        m_Output[m_Position++] = NetworkUtils.FloatToUInt32(value.z);
     }
 
     public void WriteVector3Q(string name, Vector3 value, int precision = 3)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Vector3, 32, true, precision);
-        m_Output.WriteUInt32((uint)Mathf.RoundToInt(value.x * NetworkConfig.encoderPrecisionScales[precision]));
-        m_Output.WriteUInt32((uint)Mathf.RoundToInt(value.y * NetworkConfig.encoderPrecisionScales[precision]));
-        m_Output.WriteUInt32((uint)Mathf.RoundToInt(value.z * NetworkConfig.encoderPrecisionScales[precision]));
+        m_Output[m_Position++] = (uint)Mathf.RoundToInt(value.x * NetworkConfig.encoderPrecisionScales[precision]);
+        m_Output[m_Position++] = (uint)Mathf.RoundToInt(value.y * NetworkConfig.encoderPrecisionScales[precision]);
+        m_Output[m_Position++] = (uint)Mathf.RoundToInt(value.z * NetworkConfig.encoderPrecisionScales[precision]);
     }
 
     public void WriteQuaternion(string name, Quaternion value)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Quaternion, 32);
-        m_Output.WriteUInt32(NetworkUtils.FloatToUInt32(value.x));
-        m_Output.WriteUInt32(NetworkUtils.FloatToUInt32(value.y));
-        m_Output.WriteUInt32(NetworkUtils.FloatToUInt32(value.z));
-        m_Output.WriteUInt32(NetworkUtils.FloatToUInt32(value.w));
+        m_Output[m_Position++] = NetworkUtils.FloatToUInt32(value.x);
+        m_Output[m_Position++] = NetworkUtils.FloatToUInt32(value.y);
+        m_Output[m_Position++] = NetworkUtils.FloatToUInt32(value.z);
+        m_Output[m_Position++] = NetworkUtils.FloatToUInt32(value.w);
     }
     public void WriteQuaternionQ(string name, Quaternion value, int precision = 3)
     {
         ValidateOrGenerateSchema(name, NetworkSchema.FieldType.Quaternion, 32, true, precision);
-        m_Output.WriteUInt32((uint)Mathf.RoundToInt(value.x * NetworkConfig.encoderPrecisionScales[precision]));
-        m_Output.WriteUInt32((uint)Mathf.RoundToInt(value.y * NetworkConfig.encoderPrecisionScales[precision]));
-        m_Output.WriteUInt32((uint)Mathf.RoundToInt(value.z * NetworkConfig.encoderPrecisionScales[precision]));
-        m_Output.WriteUInt32((uint)Mathf.RoundToInt(value.w * NetworkConfig.encoderPrecisionScales[precision]));
-    }
-
-    public void WriteBytes(string name, byte[] value, int srcIndex, int count, int maxCount)
-    {
-        ValidateOrGenerateSchema(name, NetworkSchema.FieldType.ByteArray, 0, false, 0, maxCount);
-        if (count > ushort.MaxValue)
-            throw new System.ArgumentException("NetworkWriter : Byte buffer too big : " + count);
-        m_Output.WriteByteArray(value, srcIndex, count, maxCount);
+        m_Output[m_Position++] = (uint)Mathf.RoundToInt(value.x * NetworkConfig.encoderPrecisionScales[precision]);
+        m_Output[m_Position++] = (uint)Mathf.RoundToInt(value.y * NetworkConfig.encoderPrecisionScales[precision]);
+        m_Output[m_Position++] = (uint)Mathf.RoundToInt(value.z * NetworkConfig.encoderPrecisionScales[precision]);
+        m_Output[m_Position++] = (uint)Mathf.RoundToInt(value.w * NetworkConfig.encoderPrecisionScales[precision]);
     }
 
     public void Flush()
     {
+        if(m_GenerateSchema)
+            m_Schema.Finalize();
     }
 
     static byte[] s_ByteBuffer = new byte[1024 * 32];
 
     NetworkSchema m_Schema;
     NetworkSchema.FieldInfo m_CurrentField;
-    ByteOutputStream m_Output;
+    uint* m_Output;
+    int m_BufferSize;
+    int m_Position;
     int m_NextFieldIndex;
     byte m_FieldMask;
     bool m_GenerateSchema;

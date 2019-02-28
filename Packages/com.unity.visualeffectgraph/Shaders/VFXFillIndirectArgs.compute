@@ -1,0 +1,118 @@
+#pragma kernel CSVFXIndirectArgs
+
+#include "HLSLSupport.cginc"
+
+CBUFFER_START(Uniform)
+    uint maxNb;
+    uint offset;
+CBUFFER_END
+
+#define NB_THREADS_PER_GROUP 64
+
+struct InputData //TODO use generic name (indexCount isn't always what it expects to be)
+{
+    uint type;
+    uint indexCount;
+    uint startIndex;
+    uint baseVertex;
+};
+
+ByteAddressBuffer inputGpuBuffer;
+StructuredBuffer<InputData> inputCpuBuffer;
+RWBuffer<uint> outputIndirectArgs;
+RWByteAddressBuffer outputAdditional;
+
+[numthreads(NB_THREADS_PER_GROUP,1,1)]
+void CSVFXIndirectArgs(uint3 id : SV_DispatchThreadID)
+{
+    uint index = id.x + offset;
+    if (index < maxNb)
+    {
+        uint elementCount = inputGpuBuffer.Load(index << 2);
+        InputData data = inputCpuBuffer[index];
+
+        uint firstArg = 0u;
+        uint secondArg = 0u;
+        uint thirdArg = 0u;
+        uint fourthArg = 0u;
+
+        switch(data.type)
+        {
+            case 0: // point
+            {
+                firstArg = elementCount;
+                secondArg = 1;
+                break;
+            }
+
+            case 1: // lines
+            {
+                firstArg = elementCount * 2;
+                secondArg = 1;
+                break;
+            }
+
+            case 2: // quads
+            {
+                if (elementCount > 16384) // Due to 16bits indices (4 vertices per element)
+                {
+                    const uint NB_PARTICLES_PER_INSTANCE = 2048;
+                    firstArg = NB_PARTICLES_PER_INSTANCE * 6;
+                    secondArg = (elementCount + (NB_PARTICLES_PER_INSTANCE - 1)) / NB_PARTICLES_PER_INSTANCE;
+                }
+                else
+                {
+                    firstArg = elementCount * 6;
+                    secondArg = 1;
+                }
+                break;
+            }
+
+            case 3: // hexahedron
+            {
+                if (elementCount > 8192) // Due to 16bits indices (8 vertices per element)
+                {
+                    const uint NB_PARTICLES_PER_INSTANCE = 1024;
+                    firstArg = NB_PARTICLES_PER_INSTANCE * 36;
+                    secondArg = (elementCount + (NB_PARTICLES_PER_INSTANCE - 1)) / NB_PARTICLES_PER_INSTANCE;
+                }
+                else
+                {
+                    firstArg = elementCount * 36;
+                    secondArg = 1;
+                }
+                break;
+            }
+
+            case 4: // meshes
+            {
+                firstArg = data.indexCount;
+                secondArg = elementCount;
+                thirdArg = data.startIndex;
+                fourthArg = data.baseVertex;
+                break;
+            }
+            case 0xffffffff: // dispatch
+            {
+                //Clamp indirect dispatch to the maximum dispatch width of DX11 : 65535 (D3D11_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION)
+                elementCount = min(elementCount, 65535 * NB_THREADS_PER_GROUP);
+                firstArg = (elementCount + NB_THREADS_PER_GROUP - 1) / NB_THREADS_PER_GROUP;
+
+                //Update total element count (spawnIndex)
+                outputAdditional.Store((index * 2 + 0) << 2, elementCount);
+                outputAdditional.Store((index * 2 + 1) << 2, outputAdditional.Load((data.indexCount * 2 + 1) << 2) + elementCount);
+
+                secondArg = thirdArg = 1u;
+                break;
+            }
+        }
+
+        uint indexOutput = index * 5;
+        outputIndirectArgs[indexOutput + 0] = firstArg; //IndexCountPerInstance or ThreadGroupCountX
+        outputIndirectArgs[indexOutput + 1] = secondArg; //InstanceCount or ThreadGroupCountY
+        outputIndirectArgs[indexOutput + 2] = thirdArg; //startIndex or ThreadGroupCountz
+        outputIndirectArgs[indexOutput + 3] = fourthArg;//baseVertex
+        // next uint (StartInstance) set to 0 at initialization
+
+    }
+}

@@ -2,100 +2,72 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
+using Unity.Mathematics;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.Experimental.SceneManagement;
 #endif
 
-// TODO (mogensh) non generic base interface for predicted and interpolated data handlers. Used to find correct 
-// serializers when replicated entity is registered. Someone with more C# generics and reflection knowledge should
-// be able to get rid of these
-public interface IPredictedDataBase
-{}
-public interface IInterpolatedDataBase
-{}
 
 
-// Interface used for components that should always be serialized from server to client
-public interface INetSerialized
+
+
+[Serializable]
+public struct ReplicatedEntityData : IComponentData, IReplicatedComponent
 {
-    void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer);
-    void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick);
-}
+    public WeakAssetReference assetGuid;    // Guid of asset this entity is created from
+    [NonSerialized] public int id;
+    [NonSerialized] public int predictingPlayerId;
 
-// Interface for components that are replicated only to predicting clients
-public interface INetPredicted<T> : IPredictedDataBase
-{
-    void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer);
-    void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick);
-#if UNITY_EDITOR    
-    bool VerifyPrediction(ref T state);
-#endif    
-}
-
-// Interface for components that are replicated to all non-predicting clients
-public interface INetInterpolated<T> : IInterpolatedDataBase
-{
-    void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer);
-    void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick);
-    void Interpolate(ref T first, ref T last, float t);
-}
-
-public interface IEntityReferenceSerializer    
-{
-    void SerializeReference(ref NetworkWriter writer, string name, Entity entity);
-    void DeserializeReference(ref NetworkReader reader, ref Entity entity);
-}
-
-public struct ReplicatedDataEntity : IComponentData, INetSerialized
-{
-    public int typeId;
-    public int id;
-    public int predictingPlayerId;
+    public ReplicatedEntityData(WeakAssetReference guid)
+    {
+        this.assetGuid = guid;
+        id = -1;
+        predictingPlayerId = -1;
+    }
     
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+    public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
+    {
+        return new ReplicatedComponentSerializerFactory<ReplicatedEntityData>();
+    }
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
     {
         writer.WriteInt32("predictingPlayerId",predictingPlayerId);
     }
 
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
     {
         predictingPlayerId = reader.ReadInt32();
     }     
 }
 
 
+
+
 [ExecuteAlways, DisallowMultipleComponent]
 [RequireComponent(typeof(GameObjectEntity))]
-public class ReplicatedEntity : MonoBehaviour, INetSerialized
+public class ReplicatedEntity : ComponentDataWrapper<ReplicatedEntityData>
 {
     public byte[] netID;    // guid of instance. Used for identifying replicated entities from the scene
-    public int registryId = -1;
-
-    [NonSerialized] public int id = -1;     // network id, used to identify the entity for references and towards the network layer
-    [NonSerialized] public int predictingPlayerId = -1; // The player id that is predicting this entity or -1 if none
-    
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
-    {
-        writer.WriteInt32("predictingPlayerId",predictingPlayerId);
-    }
-
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
-    {
-        predictingPlayerId = reader.ReadInt32();
-    }    
-    
-#if UNITY_EDITOR
-
-    public static Dictionary<byte[], ReplicatedEntity> netGuidMap = new Dictionary<byte[], ReplicatedEntity>(new ByteArrayComp());
 
     private void Awake()
     {
-        if (EditorApplication.isPlaying)
-            return;
-        
-        SetUniqueNetID();
+        // Ensure replicatedEntityData is set to default
+        var val = Value;
+        val.id = -1;
+        val.predictingPlayerId = -1;
+        Value = val;
+#if UNITY_EDITOR
+        if (!EditorApplication.isPlaying)
+            SetUniqueNetID();
+#endif        
     }
+
+#if UNITY_EDITOR
+
+    public static Dictionary<byte[], ReplicatedEntity> netGuidMap = new Dictionary<byte[], ReplicatedEntity>(new ByteArrayComp());
 
     private void OnValidate()
     {
@@ -109,14 +81,45 @@ public class ReplicatedEntity : MonoBehaviour, INetSerialized
         }
         else
             SetUniqueNetID();
+
+        UpdateAssetGuid();
     }
 
+    public bool SetAssetGUID(string guidStr)
+    {
+        var guid = new WeakAssetReference(guidStr);
+        var val = Value;
+        var currentGuid = val.assetGuid; 
+        if (!guid.Equals(currentGuid))
+        {
+            val.assetGuid = guid;
+            Value = val;
+            PrefabUtility.SavePrefabAsset(gameObject);
+            return true;
+        }
+
+        return false;
+    }
+    
+    public void UpdateAssetGuid()
+    {
+        // Set type guid
+        var stage = PrefabStageUtility.GetPrefabStage(gameObject);
+        if (stage != null)
+        {
+            var guidStr = AssetDatabase.AssetPathToGUID(stage.prefabAssetPath);
+            if(SetAssetGUID(guidStr))
+                EditorSceneManager.MarkSceneDirty(stage.scene);
+        }
+    }
+    
     private void SetUniqueNetID()
     {
         // Generate new if fresh object
         if (netID == null || netID.Length == 0)
         {
-            netID = System.Guid.NewGuid().ToByteArray();
+            var guid = System.Guid.NewGuid();
+            netID = guid.ToByteArray();
             EditorSceneManager.MarkSceneDirty(gameObject.scene);
         }
 
@@ -127,6 +130,7 @@ public class ReplicatedEntity : MonoBehaviour, INetSerialized
             return;
         }
 
+        
         // Our guid is known and in use by another object??
         var oldReg = netGuidMap[netID];
         if (oldReg != null && oldReg.GetInstanceID() != this.GetInstanceID() && ByteArrayComp.instance.Equals(oldReg.netID, netID))
@@ -146,7 +150,6 @@ public class ReplicatedEntity : MonoBehaviour, INetSerialized
 [DisableAutoCreation]
 public class UpdateReplicatedOwnerFlag : BaseComponentSystem
 {
-    ComponentGroup RepEntityGroup;
     ComponentGroup RepEntityDataGroup;
 
     int m_localPlayerId;
@@ -158,8 +161,7 @@ public class UpdateReplicatedOwnerFlag : BaseComponentSystem
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        RepEntityGroup = GetComponentGroup(typeof(ReplicatedEntity));
-        RepEntityDataGroup = GetComponentGroup(typeof(ReplicatedDataEntity));
+        RepEntityDataGroup = GetComponentGroup(typeof(ReplicatedEntityData));
     }
     
     public void SetLocalPlayerId(int playerId)
@@ -170,19 +172,8 @@ public class UpdateReplicatedOwnerFlag : BaseComponentSystem
     
     protected override void OnUpdate()
     {
-        var entityArray = RepEntityGroup.GetEntityArray(); 
-        var replicatedArray = RepEntityGroup.GetComponentArray<ReplicatedEntity>();
-
-        for (int i = 0; i < entityArray.Length; i++)
-        {
-            var repEntity = replicatedArray[i];
-            var locallyControlled = m_localPlayerId == -1 || repEntity.predictingPlayerId == m_localPlayerId;
-
-            SetFlagAndChildFlags(entityArray[i], locallyControlled);
-        }
-
-        entityArray = RepEntityDataGroup.GetEntityArray();
-        var repEntityDataArray = RepEntityDataGroup.GetComponentDataArray<ReplicatedDataEntity>();
+        var entityArray = RepEntityDataGroup.GetEntityArray();
+        var repEntityDataArray = RepEntityDataGroup.GetComponentDataArray<ReplicatedEntityData>();
         for (int i = 0; i < entityArray.Length; i++)
         {
             var repDataEntity = repEntityDataArray[i];

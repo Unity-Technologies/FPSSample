@@ -76,7 +76,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // When camera name change we need to update the name in DebugWindows.
         // This is the purpose of this class
         bool m_IsDebugRegistered = false;
-        int m_CameraInstanceId = 0;
+        string m_CameraRegisterName;
+
+        public bool IsDebugRegistred()
+        {
+            return m_IsDebugRegistered;
+        }
 
         // When we are a preview, there is no way inside Unity to make a distinction between camera preview and material preview.
         // This property allow to say that we are an editor camera preview when the type is preview.
@@ -157,8 +162,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (m_camera.cameraType != CameraType.Preview && m_camera.cameraType != CameraType.Reflection)
                 {
                     FrameSettings.RegisterDebug(m_camera.name, GetFrameSettings());
+                    DebugDisplaySettings.RegisterCamera(m_camera.name);
                 }
-                m_CameraInstanceId = m_camera.GetInstanceID();
+                m_CameraRegisterName = m_camera.name;
                 m_IsDebugRegistered = true;
             }
         }
@@ -172,7 +178,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 if (m_camera.cameraType != CameraType.Preview && m_camera.cameraType != CameraType.Reflection)
                 {
-                    FrameSettings.UnRegisterDebug(m_camera.name);
+                    FrameSettings.UnRegisterDebug(m_CameraRegisterName);
+                    DebugDisplaySettings.UnRegisterCamera(m_CameraRegisterName);
                 }
                 m_IsDebugRegistered = false;
             }
@@ -201,7 +208,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // We need to detect name change in the editor and update debug windows accordingly
 #if UNITY_EDITOR
-            if (m_camera.GetInstanceID() != m_CameraInstanceId)
+            // Caution: Object.name generate 48B of garbage at each frame here !
+            if (m_camera.name != m_CameraRegisterName)
             {
                 UnRegisterDebug();
                 RegisterDebug();

@@ -7,23 +7,25 @@ using System.Net;
 
 public interface ISnapshotConsumer
 {
+    void ProcessEntityDespawns(int serverTime, List<int> despawns);
     void ProcessEntitySpawn(int serverTime, int id, ushort typeId);
     void ProcessEntityUpdate(int serverTime, int id, ref NetworkReader reader);
-    void ProcessEntityDespawn(int serverTime, int id);
 }
 
 public interface INetworkClientCallbacks : INetworkCallbacks
 {
     void OnMapUpdate(ref NetworkReader data);
-    void ProcessSnapshot(int serverTime);
 }
 
 public class NetworkClient
 {
+    // Hack to allow thin clients to drop snapshots after having read initial bit
+    public static bool m_DropSnapshots = false;
+
     [ConfigVar(Name = "client.debug", DefaultValue = "0", Description = "Enable debug printing of client handshake etc.", Flags = ConfigVar.Flags.None)]
     public static ConfigVar clientDebug;
 
-    [ConfigVar(Name = "client.blockin", DefaultValue = "0", Description = "Cut all incoming network traffic.", Flags = ConfigVar.Flags.None)]
+    [ConfigVar(Name = "client.blockin", DefaultValue = "0", Description = "Cut next N incoming network packges. -1 means forever.", Flags = ConfigVar.Flags.None)]
     public static ConfigVar clientBlockIn;
     [ConfigVar(Name = "client.blockout", DefaultValue = "0", Description = "Cut all outgoing network traffic.", Flags = ConfigVar.Flags.None)]
     public static ConfigVar clientBlockOut;
@@ -41,8 +43,16 @@ public class NetworkClient
     // Sent from client to server when changed
     public class ClientConfig
     {
-        public int serverUpdateRate;
-        public int serverUpdateSendRate;
+        public int serverUpdateRate;            // max bytes/sec
+        public int serverUpdateInterval;        // requested tick / update
+    }
+
+    public struct PackageSectionStats
+    {
+        public string sectionName;
+        public int sectionStart;
+        public int sectionLength;
+        public Color color;
     }
 
     public class Counters : NetworkConnectionCounters
@@ -50,8 +60,24 @@ public class NetworkClient
         public int snapshotsIn;             // Total number of snapshots received
         public int fullSnapshotsIn;         // Number of snapshots without a baseline
         public int commandsOut;             // Number of command messages sent
-        public int[] packageContentStats;   // Breakdown of bits spent in last package
+        public List<PackageSectionStats>[] packageContentStats = new List<PackageSectionStats>[64];   // Breakdown of bits spent in package
         public int packageContentStatsPackageSequence;  // incrementing when packageContentStats is filled
+
+        int lastOffset;
+        public void ClearSectionStats()
+        {
+            var idx = packagesIn % packageContentStats.Length;
+            if (packageContentStats[idx] == null)
+                packageContentStats[idx] = new List<PackageSectionStats>();
+            else
+                packageContentStats[idx].Clear();
+            lastOffset = 0;
+        }
+        public void AddSectionStats(string name, int offset, Color col)
+        {
+            packageContentStats[packagesIn % packageContentStats.Length].Add(new PackageSectionStats { sectionName = name, sectionStart = lastOffset, sectionLength = offset - lastOffset, color = col });
+            lastOffset = offset;
+        }
     }
 
     public Counters counters
@@ -102,7 +128,7 @@ public class NetworkClient
         Profiler.BeginSample("NetworkClient.UpdateClientConfig");
 
         clientConfig.serverUpdateRate = ClientGameLoop.clientUpdateRate.IntValue;
-        clientConfig.serverUpdateSendRate = ClientGameLoop.clientUpdateSendRate.IntValue;
+        clientConfig.serverUpdateInterval = ClientGameLoop.clientUpdateInterval.IntValue;
         if (m_Connection != null)
             m_Connection.ClientConfigChanged();
 
@@ -119,7 +145,7 @@ public class NetworkClient
 
         IPAddress ipAddress;
         int port;
-        if(!NetworkUtils.EndpointParse(endpoint, out ipAddress, out port, NetworkConfig.defaultServerPort))
+        if (!NetworkUtils.EndpointParse(endpoint, out ipAddress, out port, NetworkConfig.defaultServerPort))
         {
             GameDebug.Log("Invalid endpoint: " + endpoint);
             return false;
@@ -176,19 +202,19 @@ public class NetworkClient
         m_Connection.ProcessMapUpdate(processor);
     }
 
-    public void Update(INetworkClientCallbacks loop)
+    public void Update(INetworkClientCallbacks clientNetworkConsumer, ISnapshotConsumer snapshotConsumer)
     {
         Profiler.BeginSample("NetworkClient.Update");
 
         m_Transport.Update();
 
         // Debug tracking of outstanding events
-        if(NetworkConfig.netDebug.IntValue > 1 && m_Connection != null)
+        if (NetworkConfig.netDebug.IntValue > 1 && m_Connection != null)
         {
             var outstandingPackages = m_Connection.outstandingPackages;
             for (var i = 0; i < outstandingPackages.m_Elements.Length; i++)
             {
-                if(outstandingPackages.m_Sequences[i] != -1 && outstandingPackages.m_Elements[i].events.Count > 0)
+                if (outstandingPackages.m_Sequences[i] != -1 && outstandingPackages.m_Elements[i].events.Count > 0)
                     GameDebug.Log("Outstanding Package: " + i + " (idx), " + outstandingPackages.m_Sequences[i] + " (seq), " + outstandingPackages.m_Elements[i].events.Count + " (numevs), " + ((GameNetworkEvents.EventType)outstandingPackages.m_Elements[i].events[0].type.typeId) + " (ev0)");
             }
         }
@@ -205,23 +231,26 @@ public class NetworkClient
                     OnDisconnect(e.connectionId);
                     break;
                 case TransportEvent.Type.Data:
-                    OnData(e.connectionId, e.data, e.dataSize, loop);
+                    OnData(e.connectionId, e.data, e.dataSize, clientNetworkConsumer, snapshotConsumer);
                     break;
             }
         }
 
-        if(m_Connection != null)
-            m_Connection.ProcessMapUpdate(loop);
+        if (m_Connection != null)
+            m_Connection.ProcessMapUpdate(clientNetworkConsumer);
 
         Profiler.EndSample();
     }
 
     public void SendData()
     {
-        Profiler.BeginSample("NetworkClient.SendData");
-
         if (m_Connection == null || m_Connection.connectionState == ConnectionState.Disconnected)
             return;
+
+        if (clientBlockOut.IntValue > 0)
+            return;
+
+        Profiler.BeginSample("NetworkClient.SendData");
 
 #pragma warning disable 0162 // unreachable code
         switch (NetworkConfig.ioStreamType)
@@ -266,9 +295,14 @@ public class NetworkClient
         }
     }
 
-    void OnData(int connectionId, byte[] data, int size, INetworkClientCallbacks loop)
+    void OnData(int connectionId, byte[] data, int size, INetworkClientCallbacks networkClientConsumer, ISnapshotConsumer snapshotConsumer)
     {
+        // Block A number of incoming packets. -1 for all 
         if (clientBlockIn.IntValue > 0)
+        {
+            clientBlockIn.Value = (clientBlockIn.IntValue - 1).ToString();
+        }
+        if (clientBlockIn.IntValue != 0)
             return;
 
         // SHould these be asserts?
@@ -279,12 +313,12 @@ public class NetworkClient
             {
                 case NetworkCompression.IOStreamType.Raw:
                     {
-                        m_Connection.ReadPackage<RawInputStream>(data, size, m_Connection.compressionModel, loop);
+                        m_Connection.ReadPackage<RawInputStream>(data, size, m_Connection.compressionModel, networkClientConsumer, snapshotConsumer);
                         break;
                     }
                 case NetworkCompression.IOStreamType.Huffman:
                     {
-                        m_Connection.ReadPackage<HuffmanInputStream>(data, size, m_Connection.compressionModel, loop);
+                        m_Connection.ReadPackage<HuffmanInputStream>(data, size, m_Connection.compressionModel, networkClientConsumer, snapshotConsumer);
                         break;
                     }
                 default:
@@ -335,7 +369,7 @@ public class NetworkClient
             sendClientConfig = true;
         }
 
-        public void QueueCommand(int time, DataGenerator generator)
+        unsafe public void QueueCommand(int time, DataGenerator generator)
         {
             var generateSchema = (commandSchema == null);
             if (generateSchema)
@@ -344,49 +378,28 @@ public class NetworkClient
             var info = commandsOut.Acquire(++commandSequence);
 
             info.time = time;
-            var writer = new NetworkWriter(info.data, commandSchema, generateSchema);
-            generator(ref writer);
-            writer.Flush();
+            fixed (uint* buf = info.data)
+            {
+                var writer = new NetworkWriter(buf, info.data.Length, commandSchema, generateSchema);
+                generator(ref writer);
+                writer.Flush();
+            }
         }
 
-        public void ProcessMapUpdate(INetworkClientCallbacks loop)
+        unsafe public void ProcessMapUpdate(INetworkClientCallbacks loop)
         {
             if (mapInfo.mapSequence > 0 && !mapInfo.processed)
             {
-                var reader = new NetworkReader(mapInfo.data, mapInfo.schema);
-                loop.OnMapUpdate(ref reader);
-                mapInfo.processed = true;
+                fixed (uint* data = mapInfo.data)
+                {
+                    var reader = new NetworkReader(data, mapInfo.schema);
+                    loop.OnMapUpdate(ref reader);
+                    mapInfo.processed = true;
+                }
             }
         }
 
-        public void ProcessSnapshot(ISnapshotConsumer consumer)
-        {
-            // Should we prune list for stuff that is also in despawns?
-            foreach (var id in spawns)
-            {
-                GameDebug.Assert(entities[id].type != null, "Processing spawn of id {0} but type is null", id);
-                consumer.ProcessEntitySpawn(serverTime, id, entities[id].type.typeId);
-            }
-
-            spawns.Clear();
-
-            foreach (var id in updates)
-            {
-                var info = entities[id];
-                GameDebug.Assert(info.type != null, "Processing update of id {0} but type is null", id);
-                var reader = new NetworkReader(info.lastUpdate, info.type.schema);
-                consumer.ProcessEntityUpdate(serverTime, id, ref reader);
-            }
-
-            updates.Clear();
-
-            foreach (var id in despawns)
-                consumer.ProcessEntityDespawn(serverTime, id);
-
-            despawns.Clear();
-        }
-
-        public void ReadPackage<TInputStream>(byte[] packageData, int packageSize, NetworkCompressionModel compressionModel, INetworkClientCallbacks loop) where TInputStream : struct, NetworkCompression.IInputStream
+        public void ReadPackage<TInputStream>(byte[] packageData, int packageSize, NetworkCompressionModel compressionModel, INetworkClientCallbacks networkClientConsumer, ISnapshotConsumer snapshotConsumer) where TInputStream : struct, NetworkCompression.IInputStream
         {
             counters.bytesIn += packageSize;
 
@@ -396,7 +409,11 @@ public class NetworkClient
             int headerSize;
             var packageSequence = ProcessPackageHeader(packageData, packageSize, out content, out assembledData, out assembledSize, out headerSize);
 
-            // The package was dropped (duplicate or too old) so bail out here
+            // Reset stats
+            counters.ClearSectionStats();
+            counters.AddSectionStats("header", headerSize * 8, Color.white);
+
+            // The package was dropped (duplicate or too old) or if it was a fragment not yet assembled, bail out here
             if (packageSequence == 0)
                 return;
 
@@ -405,9 +422,11 @@ public class NetworkClient
 
             if ((content & NetworkMessage.ClientInfo) != 0)
                 ReadClientInfo(ref input);
+            counters.AddSectionStats("clientInfo", input.GetBitPosition2(), Color.green);
 
             if ((content & NetworkMessage.MapInfo) != 0)
                 ReadMapInfo(ref input);
+            counters.AddSectionStats("mapInfo", input.GetBitPosition2(), new Color(0.65f, 0.16f, 0.16f));
 
             // The package was received out of order but older than the last map reset, 
             // so we ignore the remaining data
@@ -416,8 +435,7 @@ public class NetworkClient
 
             if ((content & NetworkMessage.Snapshot) != 0)
             {
-                ReadSnapshot(packageSequence, ref input);
-                loop.ProcessSnapshot(serverTime);
+                ReadSnapshot(packageSequence, ref input, snapshotConsumer);
 
                 // Make sure the callback actually picked up the snapshot data. It is important that
                 // every snapshot gets processed by the game so that the spawns, despawns and updates lists
@@ -425,8 +443,12 @@ public class NetworkClient
                 GameDebug.Assert(spawns.Count == 0 && despawns.Count == 0 && updates.Count == 0, "Game did not consume snapshots");
             }
 
-            if ((content & NetworkMessage.Events) != 0)
-                ReadEvents(ref input, loop);
+            // We have to skip this if we dropped snapshot as we will then be in the middle of the input stream
+            if ((content & NetworkMessage.Events) != 0 && !m_DropSnapshots)
+                ReadEvents(ref input, networkClientConsumer);
+            counters.AddSectionStats("events", input.GetBitPosition2(), new Color(1.0f, 0.84f, 0.0f));
+
+            counters.AddSectionStats("unknown", assembledSize * 8, Color.black);
 
             counters.packageContentStatsPackageSequence = packageSequence;
         }
@@ -478,16 +500,16 @@ public class NetworkClient
             uint serverProtocol = input.ReadRawBits(8);
 
             int modelSize = (int)input.ReadRawBits(16);
-            if (modelSize < modelData.Length)
+            if (modelSize > modelData.Length)
                 modelData = new byte[modelSize];
             for (int i = 0; i < modelSize; i++)
                 modelData[i] = (byte)input.ReadRawBits(8);
 
+            // Server sends clientinfo our way repeatedly until we have ack'ed it.
+            // We ignore it if we already got it. We have to read the data in order
+            // to skip it as the packet may contain other things after this
             if (connectionState == ConnectionState.Connected)
-            {
-                GameDebug.Log("Ignoring ClientInfo as we are already connected");
                 return;
-            }
 
             uint ourProtocol = NetworkConfig.protocolVersion;
             GameDebug.Log("Client protocol id: " + ourProtocol);
@@ -539,14 +561,15 @@ public class NetworkClient
                 NetworkSchema.SkipFields(mapInfo.schema, ref input);
         }
 
-        byte[] tempSnapshotBuffer = new byte[NetworkConfig.maxEntitySnapshotDataSize];
-        void ReadSnapshot<TInputStream>(int sequence, ref TInputStream input) where TInputStream : NetworkCompression.IInputStream
+        uint [] tempSnapshotBuffer = new uint[NetworkConfig.maxEntitySnapshotDataSize];
+        unsafe void ReadSnapshot<TInputStream>(int sequence, ref TInputStream input, ISnapshotConsumer consumer) where TInputStream : NetworkCompression.IInputStream
         {
             //input.SetStatsType(NetworkCompressionReader.Type.SnapshotSchema);
             counters.snapshotsIn++;
 
             // Snapshot may be delta compressed against one or more baselines
             // Baselines are indicated by sequence number of the package it was in
+            var haveBaseline = input.ReadRawBits(1) == 1;
             var baseSequence = (int)input.ReadPackedIntDelta(sequence - 1, NetworkConfig.baseSequenceContext);
 
             bool enableNetworkPrediction = input.ReadRawBits(1) != 0;
@@ -563,19 +586,19 @@ public class NetworkClient
             if (clientDebug.IntValue > 2)
             {
                 if (enableNetworkPrediction)
-                    GameDebug.Log((baseSequence > 0 ? "Snap [BL]" : "Snap [  ]") + "(" + sequence + ")  " + baseSequence + " - " + baseSequence1 + " - " + baseSequence2);
+                    GameDebug.Log((haveBaseline ? "Snap [BL]" : "Snap [  ]") + "(" + sequence + ")  " + baseSequence + " - " + baseSequence1 + " - " + baseSequence2);
                 else
-                    GameDebug.Log((baseSequence > 0 ? "Snap [BL]" : "Snap [  ]") + "(" + sequence + ")  " + baseSequence);
+                    GameDebug.Log((haveBaseline ? "Snap [BL]" : "Snap [  ]") + "(" + sequence + ")  " + baseSequence);
             }
 
-            if (baseSequence == 0)
+            if (!haveBaseline)
                 counters.fullSnapshotsIn++;
 
-            GameDebug.Assert(baseSequence == 0 ||
+            GameDebug.Assert(!haveBaseline ||
                 (sequence > baseSequence && sequence - baseSequence < NetworkConfig.snapshotDeltaCacheSize), "Attempting snapshot encoding with invalid baseline: {0}:{1}", sequence, baseSequence);
 
             var snapshotInfo = snapshots.Acquire(sequence);
-            snapshotInfo.serverTime = (int)input.ReadPackedIntDelta(baseSequence != 0 ? snapshots[baseSequence].serverTime : 0, NetworkConfig.serverTimeContext);
+            snapshotInfo.serverTime = (int)input.ReadPackedIntDelta(haveBaseline ? snapshots[baseSequence].serverTime : 0, NetworkConfig.serverTimeContext);
 
             var temp = (int)input.ReadRawBits(8);
             serverSimTime = temp * 0.1f;
@@ -590,8 +613,15 @@ public class NetworkClient
             }
             else
             {
-                GameDebug.Log(string.Format("NetworkClient. Dropping out of order snaphot. Server time:{0} snapshot time:{1}",serverTime, snapshotInfo.serverTime));
+                GameDebug.Log(string.Format("NetworkClient. Dropping out of order snaphot. Server time:{0} snapshot time:{1}", serverTime, snapshotInfo.serverTime));
             }
+
+            counters.AddSectionStats("snapShotHeader", input.GetBitPosition2(), new Color(0.5f, 0.5f, 0.5f));
+
+            // Used by thinclient that wants to very cheaply just do minimal handling of
+            // snapshots
+            if (m_DropSnapshots)
+                return;
 
             // Read schemas
             var schemaCount = input.ReadPackedUInt(NetworkConfig.schemaCountContext);
@@ -601,11 +631,14 @@ public class NetworkClient
 
                 var entityType = new EntityTypeInfo() { typeId = typeId };
                 entityType.schema = NetworkSchema.ReadSchema(ref input);
-                entityType.baseline = new byte[NetworkConfig.maxEntitySnapshotDataSize];
+                counters.AddSectionStats("snapShotSchemas", input.GetBitPosition2(), new Color(0.0f, (schemaIndex & 1) == 1 ? 0.5f : 1.0f, 1.0f));
+                entityType.baseline = new uint[NetworkConfig.maxEntitySnapshotDataSize];
                 NetworkSchema.CopyFieldsToBuffer(entityType.schema, ref input, entityType.baseline);
 
                 if (!entityTypes.ContainsKey(typeId))
                     entityTypes.Add(typeId, entityType);
+
+                counters.AddSectionStats("snapShotSchemas", input.GetBitPosition2(), new Color(1.0f, (schemaIndex & 1) == 1 ? 0.5f : 1.0f, 1.0f));
             }
 
             // Remove any despawning entities that belong to older base sequences
@@ -633,14 +666,25 @@ public class NetworkClient
 
                 byte fieldMask = (byte)input.ReadRawBits(8);
 
-                // Check if we already registered the entity since we can receive spawn information
-                // in several snapshots before the client has ack a package containing the spawn
-
                 // TODO (petera) need an max entity id for safety
                 while (id >= entities.Count)
                     entities.Add(new EntityInfo());
 
-                if(entities[id].type == null)
+                // Incoming spawn of different type than what we have for this id, so immediately nuke
+                // the one we have to make room for the incoming
+                if(entities[id].type != null && entities[id].type.typeId != typeId)
+                {
+                    // This should only ever happen in case of no baseline as normally the server will
+                    // not reuse an id before all clients have acknowledged its despawn.
+                    GameDebug.Assert(haveBaseline == false, "Spawning entity but we already have with different type?");
+                    GameDebug.Log("REPLACING old entity: " + id + " because snapshot gave us new type for this id");
+                    despawns.Add(id);
+                    entities[id].Reset(); 
+                }
+
+                // We can receive spawn information in several snapshots before our ack
+                // has reached the server. Only pass on spawn to game layer once
+                if (entities[id].type == null)
                 {
                     var e = entities[id];
                     e.type = entityTypes[typeId];
@@ -651,8 +695,28 @@ public class NetworkClient
                 m_TempSpawnList.Add(id);
             }
 
+            counters.AddSectionStats("snapShotSpawns", input.GetBitPosition2(), new Color(0, 0.58f, 0));
+
             // Read despawns
             var despawnCount = input.ReadPackedUInt(NetworkConfig.despawnCountContext);
+
+            // If we have no baseline, we need to clear all entities that are not being spawned
+            if(!haveBaseline)
+            {
+                GameDebug.Assert(despawnCount == 0, "There should not be any despawns in a non-baseline snapshot");
+                for (int i = 0, c = entities.Count; i<c;  ++i)
+                {
+                    var e = entities[i];
+                    if (e.type == null)
+                        continue;
+                    if (m_TempSpawnList.Contains(i))
+                        continue;
+                    GameDebug.Log("NO BL SO PRUNING Stale entity: " + i);
+                    despawns.Add(i);
+                    e.Reset();
+                }
+            }
+
             for (var despawnIndex = 0; despawnIndex < despawnCount; ++despawnIndex)
             {
                 var id = (int)input.ReadPackedIntDelta(previousId, NetworkConfig.idContext);
@@ -660,7 +724,7 @@ public class NetworkClient
 
                 // we may see despawns many times, only handle if we still have the entity
                 GameDebug.Assert(id < entities.Count, "Getting despawn for id {0} but we only know about entities up to {1}", id, entities.Count);
-                if(entities[id].type == null)
+                if (entities[id].type == null)
                     continue;
 
                 var entity = entities[id];
@@ -681,8 +745,10 @@ public class NetworkClient
                 despawns.Add(id);
             }
 
+            counters.AddSectionStats("snapShotDespawns", input.GetBitPosition2(), new Color(0.49f, 0, 0));
+
             // Predict all active entities
-            for(var id = 0; id < entities.Count; id++)
+            for (var id = 0; id < entities.Count; id++)
             {
                 var info = entities[id];
                 if (info.type == null)
@@ -694,10 +760,10 @@ public class NetworkClient
 
                 int baseline0Time = 0;
 
-                byte[] baseline0 = info.type.baseline;
+                uint[] baseline0 = info.type.baseline;
                 GameDebug.Assert(baseline0 != null, "Unable to find schema baseline for type {0}", info.type.typeId);
 
-                if (baseSequence != 0 && !m_TempSpawnList.Contains(id))
+                if (haveBaseline && !m_TempSpawnList.Contains(id))
                 {
                     baseline0 = info.baselines.FindMax(baseSequence);
                     GameDebug.Assert(baseline0 != null, "Unable to find baseline for seq {0} for id {1}", baseSequence, id);
@@ -710,8 +776,8 @@ public class NetworkClient
                     int baseline1Time = 0;
                     int baseline2Time = 0;
 
-                    byte[] baseline1 = null;
-                    byte[] baseline2 = null;
+                    uint[] baseline1 = null;
+                    uint[] baseline2 = null;
                     if (baseSequence1 != baseSequence)
                     {
                         baseline1 = info.baselines.FindMax(baseSequence1);
@@ -737,14 +803,18 @@ public class NetworkClient
                     for (int i = 0; i < NetworkConfig.maxEntitySnapshotDataSize; i++)
                         info.prediction[i] = 0;
 
-                    NetworkPrediction.PredictSnapshot(info.prediction, info.fieldsChangedPrediction, info.type.schema, num_baselines, (uint)baseline0Time, baseline0, (uint)baseline1Time, baseline1, (uint)baseline2Time, baseline2, (uint)snapshotInfo.serverTime, info.fieldMask);
+                    fixed(uint* prediction = info.prediction, baseline0p = baseline0, baseline1p = baseline1, baseline2p = baseline2)
+                    {
+                        NetworkPrediction.PredictSnapshot(prediction, info.fieldsChangedPrediction, info.type.schema, num_baselines, (uint)baseline0Time, baseline0p, (uint)baseline1Time, baseline1p, (uint)baseline2Time, baseline2p, (uint)snapshotInfo.serverTime, info.fieldMask);
+                    }
                 }
                 else
                 {
                     var f = info.fieldsChangedPrediction;
                     for (var i = 0; i < f.Length; ++i)
                         f[i] = 0;
-                    NetworkUtils.MemCopy(baseline0, 0, info.prediction, 0, info.type.schema.GetByteSize());
+                    for (int i = 0, c = info.type.schema.GetByteSize() / 4; i < c; ++i)
+                        info.prediction[i] = baseline0[i];
                 }
             }
 
@@ -760,7 +830,8 @@ public class NetworkClient
                 uint hash = 0;
                 // Copy prediction to temp buffer as we now overwrite info.prediction with fully unpacked
                 // state by applying incoming delta to prediction.
-                NetworkUtils.MemCopy(info.prediction, 0, tempSnapshotBuffer, 0, info.type.schema.GetByteSize());
+                for (int i = 0, c = info.type.schema.GetByteSize() / 4; i < c; ++i)
+                    tempSnapshotBuffer[i] = info.prediction[i];
 
                 DeltaReader.Read(ref input, info.type.schema, info.prediction, tempSnapshotBuffer, info.fieldsChangedPrediction, info.fieldMask, ref hash);
                 if (enableHashing)
@@ -771,17 +842,22 @@ public class NetworkClient
                     {
                         GameDebug.Log("Hash check fail for entity " + id);
                         if (enableNetworkPrediction)
-                            GameDebug.Assert(false, "Snapshot (" + snapshotInfo.serverTime + ") " + (baseSequence > 0 ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + " - " + baseSequence1 + " - " + baseSequence2 + ". Sche: " + schemaCount + " Spwns: " + spawnCount + " Desp: " + despawnCount + " Upd: " + updateCount);
+                            GameDebug.Assert(false, "Snapshot (" + snapshotInfo.serverTime + ") " + (haveBaseline ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + " - " + baseSequence1 + " - " + baseSequence2 + ". Sche: " + schemaCount + " Spwns: " + spawnCount + " Desp: " + despawnCount + " Upd: " + updateCount);
                         else
-                            GameDebug.Assert(false, "Snapshot (" + snapshotInfo.serverTime + ") " + (baseSequence > 0 ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + ". Sche: " + schemaCount + " Spwns: " + spawnCount + " Desp: " + despawnCount + " Upd: " + updateCount);
+                            GameDebug.Assert(false, "Snapshot (" + snapshotInfo.serverTime + ") " + (haveBaseline ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + ". Sche: " + schemaCount + " Spwns: " + spawnCount + " Desp: " + despawnCount + " Upd: " + updateCount);
                     }
                 }
             }
 
+            if (enableNetworkPrediction)
+                counters.AddSectionStats("snapShotUpdatesPredict", input.GetBitPosition2(), haveBaseline ? new Color(0.09f, 0.38f, 0.93f) : Color.cyan);
+            else
+                counters.AddSectionStats("snapShotUpdatesNoPredict", input.GetBitPosition2(), haveBaseline ? new Color(0.09f, 0.38f, 0.93f) : Color.cyan);
+
             uint snapshotHash = 0; // sum of hash for all (updated or not) entity snapshots
             uint numEnts = 0;
 
-            for(int id = 0; id < entities.Count; id++)
+            for (int id = 0; id < entities.Count; id++)
             {
                 var info = entities[id];
                 if (info.type == null)
@@ -798,13 +874,15 @@ public class NetworkClient
                 if (info.baselines.GetSize() == 0 || NetworkUtils.MemCmp(info.prediction, 0, info.lastUpdate, 0, schemaSize) != 0)
                 {
                     var data = info.baselines.Insert(sequence);
-                    NetworkUtils.MemCopy(info.prediction, 0, data, 0, schemaSize);
+                    for (int i = 0; i < schemaSize / 4; ++i)
+                        data[i] = info.prediction[i];
                     if (sequence > info.lastUpdateSequence)
                     {
                         if (!updates.Contains(id))
                             updates.Add(id);
 
-                        NetworkUtils.MemCopy(info.prediction, 0, info.lastUpdate, 0, schemaSize);
+                        for (int i = 0; i < schemaSize / 4; ++i)
+                            info.lastUpdate[i] = info.prediction[i];
                         info.lastUpdateSequence = sequence;
                     }
                 }
@@ -819,19 +897,22 @@ public class NetworkClient
 
             if (clientDebug.IntValue > 1)
             {
-                if (clientDebug.IntValue > 2 || spawnCount > 0 || despawnCount > 0 || schemaCount > 0 || baseSequence == 0)
+                if (clientDebug.IntValue > 2 || spawnCount > 0 || despawnCount > 0 || schemaCount > 0 || !haveBaseline)
                 {
                     string entityIds = "";
-                    for(var i = 0; i < entities.Count; i++)
-                        entityIds+=entities[i].type == null ? ",-" : ("," + i);
+                    for (var i = 0; i < entities.Count; i++)
+                    {
+                        var e = entities[i];
+                        entityIds += e.type == null ? ",-" : (e.despawnSequence > 0 ? "," + i + "(" + e.despawnSequence + ")" : "," + i);
+                    }
                     string despawnIds = string.Join(",", despawns);
-                    string spawnIds = string.Join(",", spawns);
+                    string spawnIds = string.Join(",", m_TempSpawnList);
                     string updateIds = string.Join(",", updates);
 
                     if (enableNetworkPrediction)
-                        GameDebug.Log((baseSequence > 0 ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + " - " + baseSequence1 + " - " + baseSequence2 + ". Sche: " + schemaCount + " Spwns: " + spawnCount + "(" + spawnIds + ") Desp: " + despawnCount + "(" + despawnIds + ") Upd: " + updateCount + "(" + updateIds + ")  Ents:" + entities.Count + " EntityIds:" + entityIds);
+                        GameDebug.Log(("SEQ:" + snapshotInfo.serverTime + ":" + sequence) + (haveBaseline ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + " - " + baseSequence1 + " - " + baseSequence2 + ". Sche: " + schemaCount + " Spwns: " + spawnCount + "(" + spawnIds + ") Desp: " + despawnCount + "(" + despawnIds + ") Upd: " + updateCount + "(" + updateIds + ")  Ents:" + entities.Count + " EntityIds:" + entityIds);
                     else
-                        GameDebug.Log((baseSequence > 0 ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + ". Sche: " + schemaCount + " Spwns: " + spawnCount + "(" + spawnIds + ") Desp: " + despawnCount + "(" + despawnIds + ") Upd: " + updateCount + "(" + updateIds + ")  Ents:" + entities.Count + " EntityIds:" + entityIds);
+                        GameDebug.Log(("SEQ:" + snapshotInfo.serverTime + ":" + sequence) + (haveBaseline ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + ". Sche: " + schemaCount + " Spwns: " + spawnCount + "(" + spawnIds + ") Desp: " + despawnCount + "(" + despawnIds + ") Upd: " + updateCount + "(" + updateIds + ")  Ents:" + entities.Count + " EntityIds:" + entityIds);
                 }
             }
 
@@ -844,25 +925,56 @@ public class NetworkClient
                     GameDebug.Assert(false);
                 }
             }
+
+            counters.AddSectionStats("snapShotChecksum", input.GetBitPosition2(), new Color(0.2f, 0.2f, 0.2f));
+
+            // Snapshot reading done. Now pass on resulting pawns/despawns to the snapshotconsumer
+            Profiler.BeginSample("ProcessSnapshot");
+
+            consumer.ProcessEntityDespawns(serverTime, despawns);
+            despawns.Clear();
+
+            foreach (var id in spawns)
+            {
+                GameDebug.Assert(entities[id].type != null, "Processing spawn of id {0} but type is null", id);
+                consumer.ProcessEntitySpawn(serverTime, id, entities[id].type.typeId);
+            }
+
+            spawns.Clear();
+
+            foreach (var id in updates)
+            {
+                var info = entities[id];
+                GameDebug.Assert(info.type != null, "Processing update of id {0} but type is null", id);
+                fixed (uint* data = info.lastUpdate)
+                {
+                    var reader = new NetworkReader(data, info.type.schema);
+                    consumer.ProcessEntityUpdate(serverTime, id, ref reader);
+                }
+            }
+
+            updates.Clear();
+
+            Profiler.EndSample();
         }
 
         void WriteClientConfig<TOutputStream>(ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
         {
-            AddMessage(NetworkMessage.ClientConfig);
+            AddMessageContentFlag(NetworkMessage.ClientConfig);
 
             output.WriteRawBits((uint)clientConfig.serverUpdateRate, 32);
-            output.WriteRawBits((uint)clientConfig.serverUpdateSendRate, 16);
+            output.WriteRawBits((uint)clientConfig.serverUpdateInterval, 16);
             sendClientConfig = false;
 
             if (clientDebug.IntValue > 0)
             {
-                GameDebug.Log(string.Format("WriteClientConfig: serverUpdateRate {0}    serverUpdateSendRate {1}", clientConfig.serverUpdateRate, clientConfig.serverUpdateSendRate));
+                GameDebug.Log(string.Format("WriteClientConfig: serverUpdateRate {0}    serverUpdateInterval {1}", clientConfig.serverUpdateRate, clientConfig.serverUpdateInterval));
             }
         }
 
-        void WriteCommands<TOutputStream>(ClientPackageInfo packageInfo, ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
+        unsafe void WriteCommands<TOutputStream>(ClientPackageInfo packageInfo, ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
         {
-            AddMessage(NetworkMessage.Commands);
+            AddMessageContentFlag(NetworkMessage.Commands);
             counters.commandsOut++;
 
             var includeSchema = commandSequenceAck == 0;
@@ -884,7 +996,10 @@ public class NetworkClient
                 output.WriteRawBits(1, 1);
                 output.WritePackedIntDelta(command.time, previous.time, NetworkConfig.commandTimeContext);
                 uint hash = 0;
-                DeltaWriter.Write(ref output, commandSchema, command.data, previous.data, zeroFieldsChanged, 0, ref hash);
+                fixed (uint* data = command.data, baseline = previous.data)
+                {
+                    DeltaWriter.Write(ref output, commandSchema, data, baseline, zeroFieldsChanged, 0, ref hash);
+                }
 
                 previous = command;
                 --sequence;
@@ -918,7 +1033,7 @@ public class NetworkClient
             public ushort mapSequence;              // map identifier to discard duplicate messages
             public int ackSequence;                 // package sequence the map was acked in (discard packages before this)
             public NetworkSchema schema;            // Schema for the map info
-            public byte[] data = new byte[1024];    // Game specific map info payload
+            public uint[] data = new uint[256];     // Game specific map info payload
         }
 
         class SnapshotInfo
@@ -929,14 +1044,14 @@ public class NetworkClient
         class CommandInfo
         {
             public int time = 0;
-            public byte[] data = new byte[512];
+            public uint[] data = new uint[512];
         }
 
         class EntityTypeInfo
         {
             public ushort typeId;
             public NetworkSchema schema;
-            public byte[] baseline;
+            public uint[] baseline;
         }
 
         class EntityInfo
@@ -944,11 +1059,11 @@ public class NetworkClient
             //public int id;
             public EntityTypeInfo type;
             public int lastUpdateSequence;
-            public byte[] lastUpdate = new byte[NetworkConfig.maxEntitySnapshotDataSize];
+            public uint[] lastUpdate = new uint[NetworkConfig.maxEntitySnapshotDataSize];
             public int despawnSequence;
             public byte fieldMask;
-            public byte[] prediction = new byte[NetworkConfig.maxEntitySnapshotDataSize];
-            public byte[] fieldsChangedPrediction = new byte[(NetworkConfig.maxFieldsPerSchema + 7 ) / 8];
+            public uint[] prediction = new uint[NetworkConfig.maxEntitySnapshotDataSize];
+            public byte[] fieldsChangedPrediction = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
 
             public void Reset()
             {
@@ -998,14 +1113,6 @@ public class NetworkClient
 
         CommandInfo defaultCommandInfo = new CommandInfo();
 
-    }
-
-    public void ProcessSnapshot(ISnapshotConsumer consumer)
-    {
-        if (m_Connection == null)
-            return;
-
-        m_Connection.ProcessSnapshot(consumer);
     }
 
     Dictionary<ushort, NetworkEventType> m_EventTypesOut = new Dictionary<ushort, NetworkEventType>();

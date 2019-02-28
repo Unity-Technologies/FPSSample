@@ -12,14 +12,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         static readonly GUIContent proxyVolumeContent = CoreEditorUtils.GetContent("Proxy Volume");
         protected static readonly GUIContent useInfiniteProjectionContent = CoreEditorUtils.GetContent("Same As Influence Volume|If enabled, parallax correction will occure, causing reflections to appear to change based on the object's position within the probe's box, while still using a single probe as the source of the reflection. This works well for reflections on objects that are moving through enclosed spaces such as corridors and rooms. When disabled, the cubemap reflection will be treated as coming from infinitely far away. Note that this feature can be globally disabled from Graphics Settings -> Tier Settings");
-        
-        protected static readonly GUIContent fieldCaptureTypeContent = CoreEditorUtils.GetContent("Type");
-        protected static readonly GUIContent resolutionContent = CoreEditorUtils.GetContent("Resolution");
-        protected static readonly GUIContent shadowDistanceContent = CoreEditorUtils.GetContent("Shadow Distance");
-        protected static readonly GUIContent cullingMaskContent = CoreEditorUtils.GetContent("Culling Mask");
-        protected static readonly GUIContent useOcclusionCullingContent = CoreEditorUtils.GetContent("Use Occlusion Culling");
-        protected static readonly GUIContent nearClipCullingContent = CoreEditorUtils.GetContent("Near Clip");
-        protected static readonly GUIContent farClipCullingContent = CoreEditorUtils.GetContent("Far Clip");
 
         static readonly GUIContent weightContent = CoreEditorUtils.GetContent("Weight|Blend weight applied on this reflection probe. This can be used for fading in or out a reflection probe.");
         static readonly GUIContent multiplierContent = CoreEditorUtils.GetContent("Intensity Multiplier|Allows you to boost or dimmer the reflected cubemap. Values above 1 will make reflections brighter and values under 1 will make reflections darker. Using values different than 1 is not physically correct.");
@@ -31,8 +23,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         const string proxyInfluenceShapeMismatchHelpBoxText = "Proxy volume and influence volume have different shapes, this is not supported.";
 
         const string proxySettingsHeader = "Projection Settings";
-        //influenceVolume have its own header
-        protected const string captureSettingsHeader = "Capture Settings";
         const string additionnalSettingsHeader = "Custom Settings";
 
         static Dictionary<ToolBar, GUIContent> s_Toolbar_Contents = null;

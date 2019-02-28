@@ -1,0 +1,41 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:vfx="UnityEditor.VFX.UI">
+  <vfx:VFXContextBorder name="node-border" pickingMode="Ignore" >
+    <ui:VisualElement name="inside" pickingMode="Ignore" >
+        <ui:VisualElement name="title" pickingMode="Ignore" class="extremity">
+          <ui:Image name="icon" text=""/>
+          <ui:Label name="title-label" text="" />
+          <ui:Image name="header-space" text=""/>
+        </ui:VisualElement>
+        <ui:VisualElement name="user-title" pickingMode="Ignore">
+            <ui:Label name="user-label" text="Coucou" />
+            <ui:TextField name="user-title-textfield" multiline="true"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="contents" pickingMode="Ignore">
+          <ui:VisualElement name="settings"/>
+          <ui:VisualElement name="divider" class="horizontal"/>
+          <ui:VisualElement name="top" pickingMode="Ignore">
+            <ui:VisualElement name="input" pickingMode="Ignore" />
+            <ui:VisualElement name="divider" class="vertical"/>
+            <ui:VisualElement name="output" pickingMode="Ignore" />
+          </ui:VisualElement>
+          <ui:VisualElement name="collapsible-area" pickingMode="Ignore">
+            <ui:VisualElement name="divider" class="horizontal"/>
+            <ui:VisualElement name="extension" pickingMode="Ignore" />
+          </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="block-container" pickingMode="Ignore">
+          <ui:Label name="no-blocks" text="Press space to add blocks" pickingMode="Ignore" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="footer" pickingMode="Ignore"  class="extremity">
+          <ui:Image name="icon" text=""/>
+          <ui:Label name="title-label" text="" />
+        </ui:VisualElement>
+      </ui:VisualElement>
+    </vfx:VFXContextBorder>
+
+  <ui:VisualElement name="selection-border" pickingMode="Ignore" />
+  <ui:VisualElement name="flow-inputs" pickingMode="Ignore" class="flow-container input" />
+  <ui:VisualElement name="flow-outputs" pickingMode="Ignore" class="flow-container output" />
+</UXML>

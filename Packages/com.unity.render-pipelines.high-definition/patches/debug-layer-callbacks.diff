@@ -1,0 +1,41 @@
+Index: com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/HDRenderPipeline.cs
+===================================================================
+--- com.unity.render-pipelines.high-definition.orig/Runtime/RenderPipeline/HDRenderPipeline.cs
++++ com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/HDRenderPipeline.cs
+@@ -12,6 +12,12 @@ namespace UnityEngine.Experimental.Rende
+     {
+         const string k_OldQualityShadowKey = "HDRP:oldQualityShadows";
+ 
++        // SampleGame Change begin
++        public delegate void RenderCallback(HDCamera hdCamera, CommandBuffer cmd);
++        public RenderCallback DebugLayer2DCallback;
++        public RenderCallback DebugLayer3DCallback;
++        // SampleGame Change end
++
+         enum ForwardPass
+         {
+             Opaque,
+@@ -1387,6 +1393,11 @@ namespace UnityEngine.Experimental.Rende
+                         // Render pre refraction objects
+                         RenderForward(m_CullResults, hdCamera, renderContext, cmd, ForwardPass.PreRefraction);
+ 
++                        // SampleGame Change BEGIN
++                        if (DebugLayer3DCallback != null)
++                            DebugLayer3DCallback(hdCamera, cmd);
++                        // SampleGame Change END
++
+                         if (hdCamera.frameSettings.enableRoughRefraction)
+                         {
+                             // First resolution of the color buffer for the color pyramid
+@@ -1489,6 +1500,11 @@ namespace UnityEngine.Experimental.Rende
+                     // Caution: RenderDebug need to take into account that we have flip the screen (so anything capture before the flip will be flipped)
+                     RenderDebug(hdCamera, cmd, m_CullResults);
+ 
++                    // SampleGame Change BEGIN
++                    if (DebugLayer2DCallback != null)
++                        DebugLayer2DCallback(hdCamera, cmd);
++                    // SampleGame Change END
++
+ #if UNITY_EDITOR
+                     // We need to make sure the viewport is correctly set for the editor rendering. It might have been changed by debug overlay rendering just before.
+                     cmd.SetViewport(new Rect(0.0f, 0.0f, hdCamera.actualWidth, hdCamera.actualHeight));

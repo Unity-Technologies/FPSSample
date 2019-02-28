@@ -171,40 +171,8 @@ public class LaunchWindow : EditorWindow
             //if (allowDevBuild && entry.useDevBuild)
             //    RunDevBuild(args);
             //else
-            RunBuild(args + " -title \"" + entry.name + "\"");
+            BuildWindow.RunBuild(args + " -title \"" + entry.name + "\"");
         }
-    }
-
-    static void RunBuild(string args)
-    {
-        var buildTarget = EditorUserBuildSettings.activeBuildTarget;
-        var buildPath = GetBuildPath(buildTarget);
-        var buildExe = GetBuildExe(buildTarget);
-        Debug.Log("Starting " + buildExe + " in " + buildPath);
-        var process = new System.Diagnostics.Process();
-        process.StartInfo.UseShellExecute = false;
-        process.StartInfo.FileName = Application.dataPath + "/../" + buildPath + "/" + buildExe;    // mogensh: for some reason we now need to specify project path
-        process.StartInfo.Arguments = args;
-        process.StartInfo.WorkingDirectory = buildPath;
-        process.Start();
-    }
-
-//    if (allowDevBuild && useDevBuild)
-//    arguments += " +res.runtimebundlepath ../AutoBuild/AssetBundles";
-
-    
-    static void RunDevBuild(string args)
-    {
-        var buildTarget = EditorUserBuildSettings.activeBuildTarget;
-        var buildPath = GetDevBuildPath(buildTarget);
-        var buildExe = GetBuildExe(buildTarget);
-        Debug.Log("Starting " + buildExe + " in " + buildPath);
-        var process = new System.Diagnostics.Process();
-        process.StartInfo.UseShellExecute = false;
-        process.StartInfo.FileName = Application.dataPath + "/../" + buildPath + "/" + buildExe;    // mogensh: for some reason we now need to specify project path
-        process.StartInfo.Arguments = args;
-        process.StartInfo.WorkingDirectory = buildPath;
-        process.Start();
     }
 
     static string GetBuildPath(BuildTarget buildTarget)

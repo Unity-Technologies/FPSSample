@@ -1,0 +1,15 @@
+Index: com.unity.render-pipelines.high-definition/Runtime/Lighting/Shadow/HDShadowSettings.cs
+===================================================================
+--- com.unity.render-pipelines.high-definition.orig/Runtime/Lighting/Shadow/HDShadowSettings.cs
++++ com.unity.render-pipelines.high-definition/Runtime/Lighting/Shadow/HDShadowSettings.cs
+@@ -37,6 +37,10 @@ namespace UnityEngine.Experimental.Rende
+             }
+         }
+ 
++        // sample-game begin: global tweak for shadow distance
++        public static float shadowDistanceMultiplier = 1.0f;
++        // sample-game end
++
+         [Tooltip("Maximum shadow distance for all light types.")]
+         public NoInterpMinFloatParameter        maxShadowDistance = new NoInterpMinFloatParameter(500.0f, 0.0f);
+ 

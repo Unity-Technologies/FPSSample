@@ -1,0 +1,73 @@
+#pragma kernel CSMain
+${VFXGlobalInclude}
+${VFXGlobalDeclaration}
+${VFXPerPassInclude}
+
+RWByteAddressBuffer attributeBuffer;
+
+#if VFX_USE_ALIVE_CURRENT
+RWStructuredBuffer<uint> deadListOut;
+#endif
+
+#if VFX_HAS_INDIRECT_DRAW
+RWStructuredBuffer<uint> indirectBuffer;
+#endif
+
+CBUFFER_START(updateParams)
+    uint nbMax;
+	uint dispatchWidth;
+	uint systemSeed;
+CBUFFER_END
+
+${VFXGeneratedBlockFunction}
+
+[numthreads(NB_THREADS_PER_GROUP,1,1)]
+void CSMain(uint3 groupId          : SV_GroupID,
+            uint3 groupThreadId    : SV_GroupThreadID)
+{
+	uint id = groupThreadId.x + groupId.x * NB_THREADS_PER_GROUP + groupId.y * dispatchWidth * NB_THREADS_PER_GROUP;
+	uint index = id;
+	if (id < nbMax)
+	{
+#if VFX_USE_ALIVE_CURRENT
+		${VFXLoadAttributes:{alive}}
+		if (alive)
+		{
+			${VFXLoadAttributes:{(?!(alive))(\b\w)}}
+			
+#if VFX_USE_OLDPOSITION_CURRENT
+			oldPosition = position;
+#endif
+			
+			${VFXProcessBlocks}
+			if (alive)
+			{
+				${VFXStoreAttributes:{(?!(alive))(\b\w)}}
+#if VFX_HAS_INDIRECT_DRAW
+                uint indirectIndex = indirectBuffer.IncrementCounter();
+				indirectBuffer[indirectIndex] = index;
+#endif
+			}
+			else
+			{
+				${VFXStoreAttributes:{alive|eventCount}}
+				uint deadIndex = deadListOut.IncrementCounter();
+				deadListOut[deadIndex] = index;
+			}
+		}
+#else
+		${VFXLoadAttributes}
+		
+#if VFX_USE_OLDPOSITION_CURRENT
+		oldPosition = position;
+#endif
+		
+		${VFXProcessBlocks}
+		${VFXStoreAttributes}
+#if VFX_HAS_INDIRECT_DRAW
+        uint indirectIndex = indirectBuffer.IncrementCounter();
+		indirectBuffer[indirectIndex] = index;
+#endif
+#endif
+	}
+}

@@ -1,0 +1,83 @@
+// Forward pass
+Pass
+{		
+	Tags { "LightMode"="${VFXHDRPForwardPassName}"}
+			
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	#define UNITY_MATERIAL_LIT
+	#define LIGHTLOOP_TILE_PASS
+	${VFXHDRPForwardDefines}
+	#pragma multi_compile USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST 
+	#pragma multi_compile SHADOW_LOW SHADOW_MEDIUM SHADOW_HIGH
+	#pragma multi_compile _ DEBUG_DISPLAY
+	//#pragma enable_d3d11_debug_symbols
+		
+	${VFXInclude("Shaders/RenderPipeline/HDRP/VFXLitVaryings.template")}		
+		
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		
+		${VFXHDRPLitDeclareVaryings}
+		
+		#if USE_FLIPBOOK_INTERPOLATION
+		float4 uv : TEXCOORD1;
+		#else
+		float2 uv : TEXCOORD1;	
+		#endif
+		#if USE_SOFT_PARTICLE || USE_ALPHA_TEST || USE_FLIPBOOK_INTERPOLATION
+		// x: inverse soft particles fade distance
+		// y: alpha threshold
+		// z: frame blending factor
+		nointerpolation float3 builtInInterpolants : TEXCOORD2;
+		#endif
+		
+		nointerpolation float3 normal : TEXCOORD3;
+		#if USE_NORMAL_MAP || USE_NORMAL_BENDING
+		nointerpolation float3 tangent : TEXCOORD4;
+		#endif
+		#if USE_NORMAL_BENDING
+		float2 bentFactors : TEXCOORD5;
+		#endif
+		float3 posWS : TEXCOORD6;
+	};
+	
+${VFXHDRPLitVaryingsMacros}	
+	
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_INVSOFTPARTICLEFADEDISTANCE builtInInterpolants.x
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.y
+#define VFX_VARYING_FRAMEBLEND builtInInterpolants.z
+#define VFX_VARYING_UV uv
+#define VFX_VARYING_NORMAL normal
+#if USE_NORMAL_MAP || USE_NORMAL_BENDING
+#define VFX_VARYING_TANGENT tangent
+#endif
+#if USE_NORMAL_BENDING
+#define VFX_VARYING_BENTFACTORS bentFactors
+#endif
+#define VFX_VARYING_POSWS posWS
+
+${VFXBegin:VFXVertexAdditionalProcess}
+${VFXHDRPLitFillVaryings}
+${VFXEnd}
+	
+	${VFXInclude("Shaders/ParticleQuads/Pass.template")}
+	#define SHADERPASS SHADERPASS_FORWARD
+	${VFXInclude("Shaders/RenderPipeline/HDRP/VFXLit.template")}
+					
+	#pragma fragment frag
+	void frag(ps_input i, out float4 outColor : SV_Target0
+	#if USE_DOUBLE_SIDED
+	, bool frontFace : SV_IsFrontFace
+	#endif
+	)
+	{
+		${VFXComputeNormalWS}
+		outColor = VFXGetPixelOutputForward(i,normalWS,uvData);
+	}
+	ENDHLSL
+}

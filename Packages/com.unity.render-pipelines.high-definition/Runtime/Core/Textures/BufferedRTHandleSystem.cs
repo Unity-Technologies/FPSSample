@@ -114,14 +114,22 @@ namespace UnityEngine.Experimental.Rendering
         {
             foreach (var item in m_RTHandles)
             {
-                var nextFirst = item.Value[item.Value.Length - 1];
-                for (int i = 0, c = item.Value.Length - 1; i < c; ++i)
-                    item.Value[i + 1] = item.Value[i];
-                item.Value[0] = nextFirst;
+                // Do not index out of bounds...
+                if (item.Value.Length > 1)
+                {
+                    var nextFirst = item.Value[item.Value.Length - 1];
+                    for (int i = 0, c = item.Value.Length - 1; i < c; ++i)
+                        item.Value[i + 1] = item.Value[i];
+                    item.Value[0] = nextFirst;
 
-                // First is autoresize, other are on demand
-                m_RTHandleSystem.SwitchResizeMode(item.Value[0], RTHandleSystem.ResizeMode.Auto);
-                m_RTHandleSystem.SwitchResizeMode(item.Value[1], RTHandleSystem.ResizeMode.OnDemand);
+                    // First is autoresize, other are on demand
+                    m_RTHandleSystem.SwitchResizeMode(item.Value[0], RTHandleSystem.ResizeMode.Auto);
+                    m_RTHandleSystem.SwitchResizeMode(item.Value[1], RTHandleSystem.ResizeMode.OnDemand);
+                }
+                else
+                {
+                    m_RTHandleSystem.SwitchResizeMode(item.Value[0], RTHandleSystem.ResizeMode.Auto);
+                }
             }
         }
 

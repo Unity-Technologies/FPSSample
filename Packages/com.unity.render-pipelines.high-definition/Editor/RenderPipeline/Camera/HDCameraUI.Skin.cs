@@ -21,9 +21,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static readonly GUIContent volumeAnchorOverrideContent = CoreEditorUtils.GetContent("Volume Anchor Override");
         static readonly GUIContent occlusionCullingContent = CoreEditorUtils.GetContent("Occlusion Culling");
 
-        static readonly GUIContent projectionContent = CoreEditorUtils.GetContent("Projection|How the Camera renders perspective.\n\nChoose Perspective to render objects with perspective.\n\nChoose Orthographic to render objects uniformly, with no sense of perspective.");
-        static readonly GUIContent sizeContent = CoreEditorUtils.GetContent("Size");
-        static readonly GUIContent fieldOfViewContent = CoreEditorUtils.GetContent("Field of View|The width of the Camera’s view angle, measured in degrees along the local Y axis.");
+        //static readonly GUIContent projectionContent = CoreEditorUtils.GetContent("Projection|How the Camera renders perspective.\n\nChoose Perspective to render objects with perspective.\n\nChoose Orthographic to render objects uniformly, with no sense of perspective.");
+        //static readonly GUIContent sizeContent = CoreEditorUtils.GetContent("Size");
+        //static readonly GUIContent fieldOfViewContent = CoreEditorUtils.GetContent("Field of View|The width of the Camera’s view angle, measured in degrees along the local Y axis.");
         static readonly GUIContent nearPlaneContent = CoreEditorUtils.GetContent("Near|The closest point relative to the camera that drawing will occur.");
         static readonly GUIContent farPlaneContent = CoreEditorUtils.GetContent("Far|The furthest point relative to the camera that drawing will occur.");
 
@@ -39,8 +39,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static readonly GUIContent targetDisplayContent = CoreEditorUtils.GetContent("Target Display");
 #endif
 
-        static readonly GUIContent enableStereoContent = CoreEditorUtils.GetContent("Enable Stereo");
-        static readonly GUIContent hdrpEnableStereoContent = CoreEditorUtils.GetContent("Enable Stereo (Set by HDRP)");
+
         static readonly GUIContent stereoSeparationContent = CoreEditorUtils.GetContent("Stereo Separation");
         static readonly GUIContent stereoConvergenceContent = CoreEditorUtils.GetContent("Stereo Convergence");
         static readonly GUIContent targetEyeContent = CoreEditorUtils.GetContent("Target Eye");

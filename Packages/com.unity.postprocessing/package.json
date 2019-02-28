@@ -1,9 +1,13 @@
 {
-    "name": "com.unity.postprocessing",
-    "version": "2.0.13-preview",
-    "displayName": "Post-processing",
-    "unity": "2018.1",
-    "description": "Unity post-processing framework (v2)",
-    "dependencies": {
-    }
+    "dependencies": {}, 
+    "description": "The post-processing stack (v2) comes with a collection of effects and image filters you can apply to your cameras to improve the visuals of your games.", 
+    "displayName": "Post Processing", 
+    "name": "com.unity.postprocessing", 
+    "repository": {
+        "revision": "bf46ec0c63f1581ca9e0917a95bac20ce7bc733b", 
+        "type": "git", 
+        "url": "ssh://git@github.com/Unity-Technologies/PostProcessing.git"
+    }, 
+    "unity": "2018.1", 
+    "version": "2.1.2"
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Entities;
 using UnityEngine;
 
 [ServerOnlyComponent]
@@ -16,7 +17,7 @@ public class DamageArea : MonoBehaviour
 
     public struct CharacterInfo
     {
-        public HitCollisionOwner hitCollisionOwner;
+        public Entity hitCollisionOwner;
         public int nextDamageTick;
     }
 

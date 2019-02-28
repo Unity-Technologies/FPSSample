@@ -523,9 +523,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Internal
             nearClipPlane = probe.captureSettings.nearClipPlane;
             farClipPlane = probe.captureSettings.farClipPlane;
             aspect = 1;
+#if UNITY_2019_1_OR_NEWER
+            fov = (probe.captureSettings.overrides & CaptureSettingsOverrides.FieldOfview) > 0
+                ? probe.captureSettings.fieldOfView
+                : Mathf.Max(viewerCamera.GetGateFittedFieldOfView(), viewerCamera.GetGateFittedFieldOfView() * viewerCamera.aspect);
+#else
             fov = (probe.captureSettings.overrides & CaptureSettingsOverrides.FieldOfview) > 0
                 ? probe.captureSettings.fieldOfView
                 : Mathf.Max(viewerCamera.fieldOfView, viewerCamera.fieldOfView * viewerCamera.aspect);
+#endif
             clearFlags = viewerCamera.clearFlags;
             backgroundColor = viewerCamera.backgroundColor;
 

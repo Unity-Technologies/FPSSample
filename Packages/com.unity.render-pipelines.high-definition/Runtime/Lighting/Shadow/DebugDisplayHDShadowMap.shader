@@ -8,8 +8,9 @@ Shader "Hidden/ScriptableRenderPipeline/DebugDisplayHDShadowMap"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
 
-        float4 _TextureScaleBias;
-        float2 _ValidRange;
+        float4  _TextureScaleBias;
+        float2  _ValidRange;
+        float   _RcpGlobalScaleFactor;
         SamplerState ltc_linear_clamp_sampler;
         TEXTURE2D(_AtlasTexture);
 
@@ -33,7 +34,7 @@ Shader "Hidden/ScriptableRenderPipeline/DebugDisplayHDShadowMap"
             {
                 output.texcoord.y = 1.0f - output.texcoord.y;
             }
-            output.texcoord = output.texcoord *_TextureScaleBias.xy + _TextureScaleBias.zw;
+            output.texcoord = output.texcoord * _TextureScaleBias.xy + _TextureScaleBias.zw;
             return output;
         }
     ENDHLSL
@@ -55,7 +56,15 @@ Shader "Hidden/ScriptableRenderPipeline/DebugDisplayHDShadowMap"
 
             float4 FragRegular(Varyings input) : SV_Target
             {
-                return saturate((SAMPLE_TEXTURE2D(_AtlasTexture, ltc_linear_clamp_sampler, input.texcoord).x - _ValidRange.x) * _ValidRange.y).xxxx;
+                float shadowValue = saturate((SAMPLE_TEXTURE2D(_AtlasTexture, ltc_linear_clamp_sampler, input.texcoord).x - _ValidRange.x) * _ValidRange.y);
+                float3 color = shadowValue.xxx;
+                
+                // If the shadow atlas is rescaled, display it with gradiant
+                // (1x scale -> blue, 2x -> yellowish, 4x scale -> red)
+                if (_RcpGlobalScaleFactor < 1)
+                    color *= saturate(1 - abs(3 * (_RcpGlobalScaleFactor - 0.3) - float4(0, 1, 2, 3))).rgb;
+                
+                return float4(color, 1);
             }
 
             ENDHLSL

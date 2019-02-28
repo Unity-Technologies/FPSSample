@@ -23,9 +23,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void PushFogShaderParameters(HDCamera hdCamera, CommandBuffer cmd)
         {
+            if ((fogType.value != FogType.Volumetric) || (!hdCamera.frameSettings.enableVolumetrics))
+            {
+                // If the volumetric fog is not used, we need to make sure that all rendering passes
+                // (not just the atmospheric scattering one) receive neutral parameters.
+                VolumetricFog.PushNeutralShaderParameters(cmd);
+            }
+
             if (!hdCamera.frameSettings.enableAtmosphericScattering)
             {
-                AtmosphericScattering.PushNeutralShaderParameters(hdCamera, cmd);
+                cmd.SetGlobalInt(HDShaderIDs._AtmosphericScatteringType, (int)FogType.None);
                 return;
             }
 
@@ -33,7 +40,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 case FogType.None:
                 {
-                    AtmosphericScattering.PushNeutralShaderParameters(hdCamera, cmd);
+                    cmd.SetGlobalInt(HDShaderIDs._AtmosphericScatteringType, (int)FogType.None);
                     break;
                 }
                 case FogType.Linear:
@@ -50,8 +57,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
                 case FogType.Volumetric:
                 {
-                    var fogSettings = VolumeManager.instance.stack.GetComponent<VolumetricFog>();
-                    fogSettings.PushShaderParameters(hdCamera, cmd);
+                    if (hdCamera.frameSettings.enableVolumetrics)
+                    {
+                        var fogSettings = VolumeManager.instance.stack.GetComponent<VolumetricFog>();
+                        fogSettings.PushShaderParameters(hdCamera, cmd);
+                    }
                     break;
                 }
             }

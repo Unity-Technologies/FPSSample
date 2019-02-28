@@ -1,0 +1,7 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:vfx="UnityEditor.VFX.UI">
+  <vfx:VFXComponentBoardEventUI name="container" pickingMode="Ignore">
+    <!--<ui:Label text="Event" />-->
+    <ui:TextField name="event-name" />
+    <ui:Button name="event-send" text="Send"/>
+  </vfx:VFXComponentBoardEventUI>
+</UXML>

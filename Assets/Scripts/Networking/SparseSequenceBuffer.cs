@@ -5,14 +5,14 @@ public class SparseSequenceBuffer
 {
     public SparseSequenceBuffer(int size, int snapSize)
     {
-        m_Elements = new byte[size][];
+        m_Elements = new uint[size][];
         m_Sequences = new int[size];
 
         for (int i = 0; i < m_Elements.Length; ++i)
-            m_Elements[i] = new byte[snapSize];
+            m_Elements[i] = new uint[snapSize];
     }
 
-    public byte[] Insert(int sequence)
+    public uint[] Insert(int sequence)
     {
         if (m_Count == m_Sequences.Length)
             Remove(m_Sequences[0]);
@@ -67,7 +67,7 @@ public class SparseSequenceBuffer
         return false;
     }
 
-    public byte[] FindMax(int sequence)
+    public uint[] FindMax(int sequence)
     {
         var index = -1;
         for (int i = 0; i < m_Count; ++i)
@@ -80,7 +80,7 @@ public class SparseSequenceBuffer
         return index != -1 ? m_Elements[index] : null;
     }
 
-    public byte[] FindMin(int sequence)
+    public uint[] FindMin(int sequence)
     {
         var index = -1;
         for (int i = m_Count - 1; i >= 0; --i)
@@ -93,7 +93,7 @@ public class SparseSequenceBuffer
         return index != -1 ? m_Elements[index] : null;
     }
 
-    public byte[] TryGetValue(int sequence)
+    public uint[] TryGetValue(int sequence)
     {
         for (int i = 0; i < m_Count; ++i)
         {
@@ -117,6 +117,6 @@ public class SparseSequenceBuffer
     }
 
     int m_Count;
-    byte[][] m_Elements;
+    uint[][] m_Elements;
     int[] m_Sequences;
 }

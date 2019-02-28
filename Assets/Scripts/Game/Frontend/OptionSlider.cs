@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class OptionSlider : OptionUI
 {
-    public Text title;
+    public TMPro.TextMeshProUGUI title;
     public Slider slider;
 
     public override void UpdateFromConfigVar()

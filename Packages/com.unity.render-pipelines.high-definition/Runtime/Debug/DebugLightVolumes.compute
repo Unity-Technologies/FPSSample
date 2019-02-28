@@ -1,0 +1,84 @@
+#pragma kernel LightVolumeGradient
+#pragma kernel LightVolumeColors
+
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition\Runtime\ShaderLibrary\ShaderVariables.hlsl"
+// Tile size of this compute
+#define DEBUG_LIGHT_VOLUME_TILE_SIZE 8
+
+// The pixel radius to switch on the edge color
+#define RADIUS_PIXEL_BORDER 1
+
+// Input Runtime textures
+Texture2D<float> _DebugLightCountBuffer;
+Texture2D<float4> _DebugColorAccumulationBuffer;
+
+// Data used for the calculus
+Texture2D<float4> _ColorGradientTexture;
+int _MaxDebugLightCount;
+
+// output texture
+RWTexture2D<float4> _DebugLightVolumesTexture;
+
+[numthreads(DEBUG_LIGHT_VOLUME_TILE_SIZE, DEBUG_LIGHT_VOLUME_TILE_SIZE, 1)]
+void LightVolumeGradient(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
+{
+	// Fetch the current pixel coordinate
+	uint2 currentPixelCoordinate = groupId * DEBUG_LIGHT_VOLUME_TILE_SIZE + groupThreadId;
+    currentPixelCoordinate.x = currentPixelCoordinate.x + (unity_StereoEyeIndex * _ScreenSize.x);
+
+	// Lightcount at this pixel
+    float lightCount = _DebugLightCountBuffer[currentPixelCoordinate];
+
+    // Tonemap this pixel value
+    bool noLights = lightCount == 0.0f;
+    bool lightOverCount = lightCount > (float)(_MaxDebugLightCount + 0.1f);
+    float lightSampleValue = saturate((lightCount - 1.0f) / (float)(_MaxDebugLightCount - 1.0f));
+
+    // Read the gradient color
+    float4 gradientColor = _ColorGradientTexture.SampleLevel(s_linear_clamp_sampler, float2(lightSampleValue, 0.5f), 0);
+
+    // Return the right color
+    _DebugLightVolumesTexture[currentPixelCoordinate] = noLights ? 0.0f : (lightOverCount ? float4(1.0, 0.0, 0.0, 1.0) : gradientColor);
+}
+
+[numthreads(DEBUG_LIGHT_VOLUME_TILE_SIZE, DEBUG_LIGHT_VOLUME_TILE_SIZE, 1)]
+void LightVolumeColors(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
+{
+	// Fetch the current pixel coordinate
+	uint2 currentPixelCoordinate = groupId * DEBUG_LIGHT_VOLUME_TILE_SIZE + groupThreadId;
+    currentPixelCoordinate.x = currentPixelCoordinate.x + (unity_StereoEyeIndex * _ScreenSize.x);
+
+	// Lightcount at this pixel
+    float lightCount = _DebugLightCountBuffer[currentPixelCoordinate];
+
+    // Look around this pixel to check if this should be displayed as a border
+    float maxLightCount = lightCount;
+    bool isBorder = false;
+    for (int radiusX = -RADIUS_PIXEL_BORDER; radiusX <= RADIUS_PIXEL_BORDER; ++radiusX)
+    {
+    	for (int radiusY = -RADIUS_PIXEL_BORDER; radiusY <= RADIUS_PIXEL_BORDER; ++radiusY)
+    	{
+    		// Compute the target pixel
+    		int2 targetpixel = int2((uint)currentPixelCoordinate.x + radiusX, (uint)currentPixelCoordinate.y + radiusY);
+    		float neighborLightCount = _DebugLightCountBuffer[targetpixel];
+    		maxLightCount = max(maxLightCount, neighborLightCount);
+    		if(neighborLightCount != lightCount)
+    		{
+    			isBorder = true;
+                break;
+    		}
+    	}
+    }
+
+    // Tonemap the light count
+    float tonemappedLightCount = maxLightCount / (1.0f + maxLightCount);
+
+    // Tonemap this pixel color
+    float4 lightColor = _DebugColorAccumulationBuffer[currentPixelCoordinate];
+    float3 toneMappedLightColor = lightColor.xyz / (1.0f + lightColor.xyz);
+
+    // Compose base if we are on the border or not
+    _DebugLightVolumesTexture[currentPixelCoordinate] = isBorder ? float4(tonemappedLightCount * tonemappedLightCount, 0.0f, 0.0f, 1.0f) : float4(toneMappedLightColor, 1.0f);
+}

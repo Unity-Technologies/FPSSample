@@ -5,6 +5,10 @@ using UnityEngine.Assertions;
 namespace UnityEngine.Rendering.PostProcessing
 {
     // Temporary code dump until the texture format refactor goes into trunk...
+
+    /// <summary>
+    /// A set of utilities to deal with texture formats.
+    /// </summary>
     public static class TextureFormatUtilities
     {
         static Dictionary<int, RenderTextureFormat> s_FormatAliasMap;
@@ -53,6 +57,14 @@ namespace UnityEngine.Rendering.PostProcessing
                 { (int)TextureFormat.ETC2_RGB, RenderTextureFormat.ARGB32 },
                 { (int)TextureFormat.ETC2_RGBA1, RenderTextureFormat.ARGB32 },
                 { (int)TextureFormat.ETC2_RGBA8, RenderTextureFormat.ARGB32 },
+            #if UNITY_2019_1_OR_NEWER
+                { (int)TextureFormat.ASTC_4x4, RenderTextureFormat.ARGB32 },
+                { (int)TextureFormat.ASTC_5x5, RenderTextureFormat.ARGB32 },
+                { (int)TextureFormat.ASTC_6x6, RenderTextureFormat.ARGB32 },
+                { (int)TextureFormat.ASTC_8x8, RenderTextureFormat.ARGB32 },
+                { (int)TextureFormat.ASTC_10x10, RenderTextureFormat.ARGB32 },
+                { (int)TextureFormat.ASTC_12x12, RenderTextureFormat.ARGB32 },
+            #else
                 { (int)TextureFormat.ASTC_RGB_4x4, RenderTextureFormat.ARGB32 },
                 { (int)TextureFormat.ASTC_RGB_5x5, RenderTextureFormat.ARGB32 },
                 { (int)TextureFormat.ASTC_RGB_6x6, RenderTextureFormat.ARGB32 },
@@ -65,6 +77,7 @@ namespace UnityEngine.Rendering.PostProcessing
                 { (int)TextureFormat.ASTC_RGBA_8x8, RenderTextureFormat.ARGB32 },
                 { (int)TextureFormat.ASTC_RGBA_10x10, RenderTextureFormat.ARGB32 },
                 { (int)TextureFormat.ASTC_RGBA_12x12, RenderTextureFormat.ARGB32 },
+            #endif
             #if !UNITY_2018_3_OR_NEWER
                 { (int)TextureFormat.ETC_RGB4_3DS, RenderTextureFormat.ARGB32 },
                 { (int)TextureFormat.ETC_RGBA8_3DS, RenderTextureFormat.ARGB32 }
@@ -87,7 +100,7 @@ namespace UnityEngine.Rendering.PostProcessing
                         continue;
 
                     bool supported = SystemInfo.SupportsRenderTextureFormat((RenderTextureFormat)format);
-                    s_SupportedRenderTextureFormats.Add((int)format, supported);
+                    s_SupportedRenderTextureFormats[(int)format] = supported;
                 }
             }
 
@@ -105,7 +118,7 @@ namespace UnityEngine.Rendering.PostProcessing
                         continue;
 
                     bool supported = SystemInfo.SupportsTextureFormat((TextureFormat)format);
-                    s_SupportedTextureFormats.Add((int)format, supported);
+                    s_SupportedTextureFormats[(int)format] = supported;
                 }
             }
         }
@@ -117,6 +130,11 @@ namespace UnityEngine.Rendering.PostProcessing
             return attributes != null && attributes.Length > 0;
         }
 
+        /// <summary>
+        /// Returns a <see cref="RenderTextureFormat"/> compatible with the given texture's format.
+        /// </summary>
+        /// <param name="texture">A texture to get a compatible format from</param>
+        /// <returns>A compatible render texture format</returns>
         public static RenderTextureFormat GetUncompressedRenderTextureFormat(Texture texture)
         {
             Assert.IsNotNull(texture);

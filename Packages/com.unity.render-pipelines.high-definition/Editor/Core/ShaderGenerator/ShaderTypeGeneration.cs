@@ -385,13 +385,21 @@ namespace UnityEditor.Experimental.Rendering
 
             shaderText += "// Generated from " + type.FullName + "\n";
             shaderText += "// PackingRules = " + attr.packingRules.ToString() + "\n";
-            shaderText += "struct " + type.Name + "\n";
-            shaderText += "{\n";
+            if (!attr.omitStructDeclaration)
+            {
+                shaderText += "struct " + type.Name + "\n";
+                shaderText += "{\n";
+            }
+
             foreach (var shaderFieldInfo in m_PackedFields)
             {
                 shaderText += "    " + shaderFieldInfo.ToString() + "\n";
             }
-            shaderText += "};\n";
+
+            if (!attr.omitStructDeclaration)
+            {
+                shaderText += "};\n";
+            }
 
             return shaderText;
         }

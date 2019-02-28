@@ -82,12 +82,15 @@ namespace NetcodeTests
 
             public void OnDisconnect(int clientId) { }
 
-            public void OnEvent(int clientId, NetworkEvent info)
+            unsafe public void OnEvent(int clientId, NetworkEvent info)
             {
                 var received = new MyEvent();
-                var reader = new NetworkReader(info.data, info.type.schema);
-                received.Deserialize(ref reader);
-                received.AssertReplicatedCorrectly(m_Test.lastEventSent, false);
+                fixed(uint* data = info.data)
+                {
+                    var reader = new NetworkReader(data, info.type.schema);
+                    received.Deserialize(ref reader);
+                    received.AssertReplicatedCorrectly(m_Test.lastEventSent, false);
+                }
                 ++m_Test.eventReceived;
             }
 
@@ -109,12 +112,15 @@ namespace NetcodeTests
 
             public void OnDisconnect(int clientId) { }
 
-            public void OnEvent(int clientId, NetworkEvent info)
+            unsafe public void OnEvent(int clientId, NetworkEvent info)
             {
                 var received = new MyEvent();
-                var reader = new NetworkReader(info.data, info.type.schema);
-                received.Deserialize(ref reader);
-                received.AssertReplicatedCorrectly(m_Test.lastEventSent, false);
+                fixed(uint* data = info.data)
+                {
+                    var reader = new NetworkReader(data, info.type.schema);
+                    received.Deserialize(ref reader);
+                    received.AssertReplicatedCorrectly(m_Test.lastEventSent, false);
+                }
                 ++m_Test.eventReceived;
             }
 
@@ -136,15 +142,16 @@ namespace NetcodeTests
         {
             TestTransport.Reset();
 
-            var serverTransport = new TestTransport(0);
-            var clientTransport = new TestTransport(1);
+            var serverTransport = new TestTransport("127.0.0.1", 1);
+            var clientTransport = new TestTransport("127.0.0.1", 2);
+            var snapshotConsumer = new NullSnapshotConsumer();
 
             var serverCallbacks = new ServerCallbacks(this);
             var clientCallbacks = new ClientCallbacks(this);
 
             var server = new NetworkServer(serverTransport);
             var client = new NetworkClient(clientTransport);
-            client.Connect("0");
+            client.Connect("127.0.0.1:1");
 
             server.InitializeMap((ref NetworkWriter data) => { data.WriteString("name", "TestMap"); });
 
@@ -160,7 +167,7 @@ namespace NetcodeTests
 
                 server.SendData();
 
-                client.Update(clientCallbacks);
+                client.Update(clientCallbacks, snapshotConsumer);
 
                 if (eventSent == eventReceived && i < RUNS - 2)
                 {
@@ -182,15 +189,16 @@ namespace NetcodeTests
         {
             TestTransport.Reset();
 
-            var serverTransport = new TestTransport(0);
-            var clientTransport = new TestTransport(1);
+            var serverTransport = new TestTransport("127.0.0.1", 1);
+            var clientTransport = new TestTransport("127.0.0.1", 2);
+            var snapshotConsumer = new NullSnapshotConsumer();
 
             var serverCallbacks = new ServerCallbacks(this);
             var clientCallbacks = new ClientCallbacks(this);
 
             var server = new NetworkServer(serverTransport);
             var client = new NetworkClient(clientTransport);
-            client.Connect("0");
+            client.Connect("127.0.0.1:1");
 
             server.InitializeMap((ref NetworkWriter data) => { data.WriteString("name", "TestMap"); });
 
@@ -215,7 +223,7 @@ namespace NetcodeTests
                 }
                 server.SendData();
 
-                client.Update(clientCallbacks);
+                client.Update(clientCallbacks, snapshotConsumer);
 
                 client.SendData();
             }
@@ -227,7 +235,8 @@ namespace NetcodeTests
         {
             TestTransport.Reset();
 
-            var serverTransport = new TestTransport(0);
+            var snapshotConsumer = new NullSnapshotConsumer();
+            var serverTransport = new TestTransport("127.0.0.1", 1);
             var server = new NetworkServer(serverTransport);
 
             var serverCallbacks = new ServerCallbacks(this);
@@ -238,9 +247,9 @@ namespace NetcodeTests
             var clients = new NetworkClient[NUM_CLIENTS];
             for (int i = 0; i < NUM_CLIENTS; ++i)
             {
-                clientTransports[i] = new TestTransport(i + 1);
+                clientTransports[i] = new TestTransport("127.0.0.1", i + 2);
                 clients[i] = new NetworkClient(clientTransports[i]);
-                clients[i].Connect("0");
+                clients[i].Connect("127.0.0.1:1");
             }
             server.InitializeMap((ref NetworkWriter data) => { data.WriteString("name", "TestMap"); });
 
@@ -266,7 +275,7 @@ namespace NetcodeTests
 
                 foreach(var client in clients)
                 {
-                    client.Update(clientCallbacks);
+                    client.Update(clientCallbacks, snapshotConsumer);
                     client.SendData();
                 }
             }
@@ -278,21 +287,23 @@ namespace NetcodeTests
         {
             TestTransport.Reset();
 
-            var serverTransport = new TestTransport(0);
-            var clientTransport = new TestTransport(1);
+            var serverTransport = new TestTransport("127.0.0.1", 1);
+            var clientTransport = new TestTransport("127.0.0.1", 2);
+            var snapshotConsumer = new NullSnapshotConsumer();
 
             var serverCallbacks = new ServerCallbacks(this);
             var clientCallbacks = new ClientCallbacks(this);
 
             var server = new NetworkServer(serverTransport);
             var client = new NetworkClient(clientTransport);
-            client.Connect("0");
+            server.Update(serverCallbacks);
+            client.Connect("127.0.0.1:1");
 
             server.InitializeMap((ref NetworkWriter data) => { data.WriteString("name", "TestMap"); });
 
             server.Update(serverCallbacks);
             server.SendData();
-            client.Update(clientCallbacks);
+            client.Update(clientCallbacks, snapshotConsumer);
 
             var RUNS = 1000;
             eventSent = 0;
@@ -315,7 +326,7 @@ namespace NetcodeTests
                 if (i % 3 == 0)
                     clientTransport.DropPackages();
 
-                client.Update(clientCallbacks);
+                client.Update(clientCallbacks, snapshotConsumer);
 
                 Assert.IsTrue(eventReceived <= eventSent);
 

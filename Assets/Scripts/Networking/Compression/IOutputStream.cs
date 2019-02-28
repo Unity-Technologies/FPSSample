@@ -4,7 +4,7 @@
     {
         void Initialize(NetworkCompressionModel model, byte[] buffer, int bufferOffset, NetworkCompressionCapture capture);
         void WriteRawBits(uint value, int numbits);
-        void WriteRawBytes(byte[] value, int srcIndex, int count);
+        unsafe void WriteRawBytes(byte* value, int count);
 
         void WritePackedNibble(uint value, int context);
         void WritePackedUInt(uint value, int context);

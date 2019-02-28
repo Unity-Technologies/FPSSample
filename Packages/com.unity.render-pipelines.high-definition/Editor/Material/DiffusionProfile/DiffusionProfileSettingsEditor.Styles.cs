@@ -25,7 +25,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent   profileTransmissionMode = new GUIContent("Transmission Mode", "Configures the simulation of light passing through thin objects. Depends on the thickness value (which is applied in the normal direction).");
             public readonly GUIContent[] transmissionModeOptions = new GUIContent[2]
             {
-                new GUIContent("Regular",      "Choose this mode for moderately thick objects. For performance reasons, transmitted light ignores occlusion (shadows)."),
+                new GUIContent("Thick Object",      "Choose this mode for moderately thick objects. For performance reasons, transmitted light ignores occlusion (shadows)."),
                 new GUIContent("Thin Object",  "Choose this mode for thin objects, such as paper or leaves. Transmitted light reuses the shadowing state of the surface.")
             };
             public readonly GUIContent   profileMinMaxThickness = new GUIContent("Min-Max Thickness (mm)", "Shows the values of the thickness remap below (in millimeters).");

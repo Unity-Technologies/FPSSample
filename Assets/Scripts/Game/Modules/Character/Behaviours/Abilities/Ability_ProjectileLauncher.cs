@@ -21,23 +21,30 @@ public class Ability_ProjectileLauncher : CharBehaviorFactory
     [Serializable]
     public struct Settings : IComponentData
     {
+        public UserCommand.Button activateButton;
+        
         public float activationDuration;        
         public float cooldownDuration;
-        public CharPredictedStateData.Action fireAction;
+        public CharacterPredictedData.Action fireAction;
         public float projectileRange;
-        [NonSerialized] public int projectileRegistryId;
+        public WeakAssetReference projectileAssetGuid;
     }
 
-    public struct PredictedState : INetPredicted<PredictedState>, IComponentData
+    public struct PredictedState : IPredictedComponent<PredictedState>, IComponentData
     {
         public int activeTick;
+
+        public static IPredictedComponentSerializerFactory CreateSerializerFactory()
+        {
+            return new PredictedComponentSerializerFactory<PredictedState>();
+        }
         
-        public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+        public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
         {
             writer.WriteInt32("activeTick", activeTick);
         }
 
-        public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+        public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
         {
             activeTick = reader.ReadInt32();
         }
@@ -49,28 +56,33 @@ public class Ability_ProjectileLauncher : CharBehaviorFactory
 #endif    
     }
     
-    public struct InterpolatedState : INetInterpolated<InterpolatedState>, IComponentData
+    public struct InterpolatedState : IInterpolatedComponent<InterpolatedState>, IComponentData
     {
         public int fireTick;
         
-        public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+        public static IInterpolatedComponentSerializerFactory CreateSerializerFactory()
+        {
+            return new InterpolatedComponentSerializerFactory<InterpolatedState>();
+        }
+        
+        public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
         {
             writer.WriteInt32("fireTick", fireTick);
         }
 
-        public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+        public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
         {
             fireTick = reader.ReadInt32();
         }
 
-        public void Interpolate(ref InterpolatedState first, ref InterpolatedState last, float t)
+        public void Interpolate(ref SerializeContext context, ref InterpolatedState first, ref InterpolatedState last,
+            float t)
         {
             this = first;
         }
     }
     
     public Settings settings;
-    public ProjectileTypeDefinition projectileType;
 
     public override Entity Create(EntityManager entityManager, List<Entity> entities)
     {
@@ -78,7 +90,6 @@ public class Ability_ProjectileLauncher : CharBehaviorFactory
         entities.Add(entity);
 		
         // Ability components
-        settings.projectileRegistryId = projectileType.registryId; 
         entityManager.AddComponentData(entity, settings);
         entityManager.AddComponentData(entity, new LocalState());
         entityManager.AddComponentData(entity, new PredictedState());
@@ -87,6 +98,30 @@ public class Ability_ProjectileLauncher : CharBehaviorFactory
     }
 }
                   
+[DisableAutoCreation]
+class ProjectileLauncher_RequestActive : BaseComponentDataSystem<CharBehaviour,AbilityControl,
+    Ability_ProjectileLauncher.PredictedState,Ability_ProjectileLauncher.Settings>
+{
+    public ProjectileLauncher_RequestActive(GameWorld world) : base(world)
+    {
+        ExtraComponentRequirements = new ComponentType[] { typeof(ServerEntity) } ;
+    }
+
+    protected override void Update(Entity entity, CharBehaviour charAbility, AbilityControl abilityCtrl, 
+        Ability_ProjectileLauncher.PredictedState predictedState, Ability_ProjectileLauncher.Settings settings)
+    {
+        if (abilityCtrl.behaviorState == AbilityControl.State.Active || abilityCtrl.behaviorState == AbilityControl.State.Cooldown)
+            return;
+		
+        var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
+        abilityCtrl.behaviorState = command.buttons.IsSet(settings.activateButton) ?  
+            AbilityControl.State.RequestActive : AbilityControl.State.Idle;
+        EntityManager.SetComponentData(entity, abilityCtrl);			
+    }
+}
+
+
+
 [DisableAutoCreation]
 class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability_ProjectileLauncher.PredictedState,
     Ability_ProjectileLauncher.Settings>
@@ -101,12 +136,12 @@ class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability
         var time = m_world.worldTime;
         switch (abilityCtrl.behaviorState)
         {
-            case AbilityControl.State.Idle:
+            case AbilityControl.State.RequestActive:
                 if (abilityCtrl.active == 1)
                 {
                     var charAbility = EntityManager.GetComponentData<CharBehaviour>(entity);
                     var character = EntityManager.GetComponentObject<Character>(charAbility.character);
-                    var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
+                    var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
                     
                     abilityCtrl.behaviorState = AbilityControl.State.Active;
                     predictedState.activeTick = time.tick;
@@ -123,12 +158,12 @@ class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability
                         
                         var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight;
                         var interpolatedState = EntityManager.GetComponentData<Ability_ProjectileLauncher.InterpolatedState>(entity);
-                        var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character)
+                        var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character)
                             .command;
                         
                         var endPos = eyePos + command.lookDir * state.projectileRange;
                         ProjectileRequest.Create(PostUpdateCommands, time.tick, time.tick - command.renderTick,
-                            state.projectileRegistryId, charAbility.character, character.teamId, eyePos, endPos);
+                            state.projectileAssetGuid, charAbility.character, character.teamId, eyePos, endPos);
 
                         interpolatedState.fireTick = time.tick;
                         EntityManager.SetComponentData(entity, interpolatedState);
@@ -145,12 +180,12 @@ class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability
                 if (phaseDuration > state.activationDuration)
                 {
                     var charAbility = EntityManager.GetComponentData<CharBehaviour>(entity);
-                    var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
+                    var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
 
                     abilityCtrl.behaviorState = AbilityControl.State.Cooldown;
                     
 //                    GameDebug.Log("Ability_ProjectileLauncher SetAction:" + CharPredictedStateData.Action.None + " tick:" + time.tick);
-                    charPredictedState.SetAction(CharPredictedStateData.Action.None, time.tick);
+                    charPredictedState.SetAction(CharacterPredictedData.Action.None, time.tick);
                     
                     EntityManager.SetComponentData(entity, abilityCtrl);
                     EntityManager.SetComponentData(charAbility.character, charPredictedState);

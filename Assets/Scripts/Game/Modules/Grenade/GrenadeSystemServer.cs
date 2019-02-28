@@ -6,18 +6,16 @@ using UnityEngine.Profiling;
 
 public struct GrenadeSpawnRequest : IComponentData
 {
-    public unsafe fixed byte prefabGUID[16];     
+    public WeakAssetReference assetGuid;
     public Vector3 position;
     public Vector3 velocity;
     public Entity owner;
     public int teamId;
     
-    public static unsafe void Create(EntityCommandBuffer commandBuffer, byte* guid, Vector3 position, Vector3 velocity, Entity owner, int teamId)
+    public static void Create(EntityCommandBuffer commandBuffer, WeakAssetReference assetGuid, Vector3 position, Vector3 velocity, Entity owner, int teamId)
     {
         var data = new GrenadeSpawnRequest();
-
-        for(var i=0;i<16;i++)
-            data.prefabGUID[i] = guid[i];
+        data.assetGuid = assetGuid;
         data.position = position;
         data.velocity = velocity;
         data.owner = owner;
@@ -39,22 +37,15 @@ public class HandleGrenadeRequest : BaseComponentDataSystem<GrenadeSpawnRequest>
 
     protected override void Update(Entity entity, GrenadeSpawnRequest request)
     {
-        var byteArray = new byte[16];
-        unsafe
-        {
-            for (var i = 0; i < byteArray.Length; i++)
-                byteArray[i] = request.prefabGUID[i];
-        }
-        var grenadeGuid = new Guid(byteArray);
-        var guidStr = grenadeGuid.ToString().Replace("-", "");
-        var prefab = (GameObject)m_resourceManager.LoadSingleAssetResource(guidStr);
-        var grenade = m_world.Spawn<Grenade>(prefab, Vector3.zero, Quaternion.identity);
-           
-        grenade.startTick = m_world.worldTime.tick;
-        grenade.owner = request.owner;
-        grenade.teamId = request.teamId;
-        grenade.velocity = request.velocity;
-        grenade.position = request.position;
+        var grenadeEntity = m_resourceManager.CreateEntity(request.assetGuid);
+        
+        var internalState = EntityManager.GetComponentData<Grenade.InternalState>(grenadeEntity);       
+        internalState.startTick = m_world.worldTime.tick;
+        internalState.owner = request.owner;
+        internalState.teamId = request.teamId;
+        internalState.velocity = request.velocity;
+        internalState.position = request.position;
+        EntityManager.SetComponentData(grenadeEntity,internalState);
         
         PostUpdateCommands.DestroyEntity(entity);
     }
@@ -72,44 +63,52 @@ public class StartGrenadeMovement : BaseComponentSystem
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        Group = GetComponentGroup(typeof(Grenade));
+        Group = GetComponentGroup(typeof(Grenade.Settings),typeof(Grenade.InternalState));
     }
 
     protected override void OnUpdate()  
     {
         var time = m_world.worldTime;
 
-        // Update movements
-        var grenadeArray = Group.GetComponentArray<Grenade>();
-        for (var i = 0; i < grenadeArray.Length; i++)
+        // Update movements  
+        var entityArray = Group.GetEntityArray();      
+        var settingsArray = Group.GetComponentDataArray<Grenade.Settings>();
+        var internalStateArray = Group.GetComponentDataArray<Grenade.InternalState>();
+        for (var i = 0; i < internalStateArray.Length; i++)
         {
-            var grenade = grenadeArray[i];
+            var internalState = internalStateArray[i];
 
-            if (!grenade.active || grenade.velocity.magnitude < 0.5f)
+            if (internalState.active == 0 || math.length(internalState.velocity) < 0.5f)
                 continue;
-            
-            // Move grenade
-            var startPos = grenade.position;
-            var newVelocity = grenade.velocity - Vector3.up * grenade.gravity * time.tickDuration;
-            var deltaPos = newVelocity * time.tickDuration;
-            grenade.position = startPos + deltaPos;
-            grenade.velocity = newVelocity;
 
-            var collisionMask = ~(1 << grenade.teamId);
+            var entity = entityArray[i]; 
+            var settings = settingsArray[i];
+            
+            // Crate movement query
+            var startPos = internalState.position;
+            var newVelocity = internalState.velocity - new float3(0,1,0) * settings.gravity * time.tickDuration;
+            var deltaPos = newVelocity * time.tickDuration;
+
+            internalState.position = startPos + deltaPos;
+            internalState.velocity = newVelocity;
+            
+            
+            var collisionMask = ~(1U << internalState.teamId);
            
             // Setup new collision query
             var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
-            grenade.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
+            internalState.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
             {
                 hitCollisionTestTick = time.tick,
                 origin = startPos,
                 direction = math.normalize(newVelocity),
-                distance = math.length(deltaPos) + grenade.collisionRadius,
-                sphereCastRadius = grenade.proximityTriggerDist,
-                testAgainsEnvironment = 1,
-                sphereCastMask = collisionMask, 
-                sphereCastExcludeOwner = time.DurationSinceTick(grenade.startTick) < 0.2f ? grenade.owner : Entity.Null,
+                distance = math.length(deltaPos) + settings.collisionRadius,
+                radius = settings.proximityTriggerDist,
+                mask = collisionMask, 
+                ExcludeOwner = time.DurationSinceTick(internalState.startTick) < 0.2f ? internalState.owner : Entity.Null,
             });
+            
+            EntityManager.SetComponentData(entity,internalState);
         }
     }
 }
@@ -117,12 +116,6 @@ public class StartGrenadeMovement : BaseComponentSystem
 [DisableAutoCreation]
 public class FinalizeGrenadeMovement : BaseComponentSystem
 {
-    public struct Grenades
-    {
-        public ComponentArray<Grenade> grenades;
-        public ComponentArray<GrenadePresentation> presentations;
-    }
-
     ComponentGroup Group;   
     
     public FinalizeGrenadeMovement(GameWorld world) : base(world) {}
@@ -130,7 +123,8 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        Group = GetComponentGroup(typeof(Grenade), typeof(GrenadePresentation));
+        Group = GetComponentGroup(typeof(Grenade.Settings),typeof(Grenade.InternalState), 
+            typeof(Grenade.InterpolatedState));
     }
 
     protected override void OnUpdate()
@@ -139,73 +133,85 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
         
         var time = m_world.worldTime;
         var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
-        var grenadeArray = Group.GetComponentArray<Grenade>();
-        var grenadePresentArray = Group.GetComponentArray<GrenadePresentation>();
-        
-        for (var i = 0; i < grenadeArray.Length; i++)
+
+        var grenadeEntityArray = Group.GetEntityArray();
+        var settingsArray = Group.GetComponentDataArray<Grenade.Settings>();
+        var internalStateArray = Group.GetComponentDataArray<Grenade.InternalState>();
+        var interpolatedStateArray = Group.GetComponentDataArray<Grenade.InterpolatedState>();
+
+        for (var i = 0; i < internalStateArray.Length; i++)
         {
-            var grenade = grenadeArray[i];
-            if (!grenade.active)
+            var internalState = internalStateArray[i];
+            var entity = grenadeEntityArray[i];
+            
+            if (internalState.active == 0)
             {
                 // Keep grenades around for a short duration so shortlived grenades gets a chance to get replicated 
                 // and explode effect played
-                if(m_world.worldTime.DurationSinceTick(grenade.explodeTick) > 1.0f)
-                    m_world.RequestDespawn(grenade.gameObject, PostUpdateCommands);
+                
+                if(m_world.worldTime.DurationSinceTick(internalState.explodeTick) > 1.0f)
+                    m_world.RequestDespawn(PostUpdateCommands, entity);
                 
                 continue;
             }
 
-            var presentation = grenadePresentArray[i];
+            var settings = settingsArray[i];
+            var interpolatedState = interpolatedStateArray[i];
             var hitCollisionOwner = Entity.Null;            
-            if (grenade.rayQueryId != -1)
+            if (internalState.rayQueryId != -1)
             {
                 RaySphereQueryReciever.Query query;
-                RaySphereQueryReciever.Result result;
-                queryReciever.GetResult(grenade.rayQueryId, out query, out result);
-                grenade.rayQueryId = -1;
+                RaySphereQueryReciever.QueryResult queryResult;
+                queryReciever.GetResult(internalState.rayQueryId, out query, out queryResult);
+                internalState.rayQueryId = -1;
                     
                 // If grenade hit something that was no hitCollision it is environment and grenade should bounce
-                if (result.hit == 1 && result.hitCollisionOwner == Entity.Null)
+                if (queryResult.hit == 1 && queryResult.hitCollisionOwner == Entity.Null)
                 {
-                    float3 moveDir = grenade.velocity.normalized;
-                    var moveVel = grenade.velocity.magnitude;
+                    var moveDir = math.normalize(internalState.velocity);
+                    var moveVel = math.length(internalState.velocity);
 
-                    grenade.position = result.hitPoint + result.hitNormal * grenade.collisionRadius;
+                    internalState.position = queryResult.hitPoint + queryResult.hitNormal * settings.collisionRadius;
 
-                    moveDir = Vector3.Reflect(moveDir, result.hitNormal);
-                    grenade.velocity = moveDir * moveVel * grenade.bounciness;
+                    moveDir = Vector3.Reflect(moveDir, queryResult.hitNormal);
+                    internalState.velocity = moveDir * moveVel * settings.bounciness;
 
-                    if(grenade.velocity.magnitude > 1.0f)
-                        presentation.state.bouncetick = m_world.worldTime.tick;
+                    if(moveVel > 1.0f)
+                        interpolatedState.bouncetick = m_world.worldTime.tick;
                 }
 
-                if (result.hitCollisionOwner != Entity.Null)
+                if (queryResult.hitCollisionOwner != Entity.Null)
                 {
-                    grenade.position = result.hitPoint;
+                    internalState.position = queryResult.hitPoint;
                 }
 
-                hitCollisionOwner = result.hitCollisionOwner;
+                hitCollisionOwner = queryResult.hitCollisionOwner;
             }
             
             // Should we explode ?
-            var timeout = time.DurationSinceTick(grenade.startTick) > grenade.maxLifetime;
+            var timeout = time.DurationSinceTick(internalState.startTick) > settings.maxLifetime;
             if (timeout || hitCollisionOwner != Entity.Null)
             {
-                grenade.active = false;
-                grenade.explodeTick = time.tick; 
-                presentation.state.exploded = true;
+                internalState.active = 0;
+                internalState.explodeTick = time.tick; 
+                interpolatedState.exploded = 1;
 
-                if (grenade.splashDamage.radius > 0)
+                if (settings.splashDamage.radius > 0)
                 {
-                    var collisionMask = ~(1 << grenade.teamId);
+                    var collisionMask = ~(1 << internalState.teamId);
 
-                    SplashDamageRequest.Create(PostUpdateCommands, time.tick, grenade.owner, grenade.position,
-                        collisionMask, grenade.splashDamage);
+                    SplashDamageRequest.Create(PostUpdateCommands, time.tick, internalState.owner, internalState.position,
+                        collisionMask, settings.splashDamage);
                 }
             }
             
-            // Update presentation
-            presentation.state.position = grenade.position;
+            interpolatedState.position = internalState.position;
+            
+            DebugDraw.Sphere(interpolatedState.position,settings.collisionRadius,Color.red);
+            
+            
+            EntityManager.SetComponentData(entity,internalState);
+            EntityManager.SetComponentData(entity,interpolatedState);
         }
         
         Profiler.EndSample();

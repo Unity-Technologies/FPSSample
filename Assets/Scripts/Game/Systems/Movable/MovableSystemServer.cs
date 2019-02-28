@@ -47,7 +47,7 @@ public class MovableSystemServer
         int x = spawnNum % 10 - 5;
         int z = spawnNum / 10 - 5;
 
-        GameObject prefab = (GameObject)m_BundledResourceManager.LoadSingleAssetResource(Game.game.movableBoxPrototype.guid);
+        GameObject prefab = (GameObject)m_BundledResourceManager.GetSingleAssetResource(Game.game.movableBoxPrototype);
 
         var movable = m_GameWorld.Spawn<Movable>(prefab, new Vector3(40+x*3,30,30+z*3), UnityEngine.Random.rotation);  // level_00: new Vector3(-20+x*3,10,-10+z*3)
         m_Movables.Add(movable);

@@ -68,6 +68,8 @@ public static class RenderSettings
      * */
 
     static int currentResX, currentResY, currentResRate;
+    static int currentQualityIdx;
+
     public static void Update()
     {
         if (rLateSync.ChangeCheck())
@@ -86,12 +88,11 @@ public static class RenderSettings
             CmdResolution(new string[] { rResolution.Value });
         else
         {
-            if (currentResX != Screen.currentResolution.width || currentResY != Screen.height || currentResRate != Screen.currentResolution.refreshRate)
+            if (currentResX != Screen.width || currentResY != Screen.height)
             {
                 currentResX = Screen.width;
                 currentResY = Screen.height;
-                currentResRate = Screen.currentResolution.refreshRate;
-                rResolution.Value = currentResX + "x" + currentResY + "@" + currentResRate;
+                rResolution.Value = currentResX + "x" + currentResY;
             }
         }
 
@@ -116,9 +117,12 @@ public static class RenderSettings
         }
         else
         {
-            var current = QualitySettings.names[QualitySettings.GetQualityLevel()];
-            if (rQuality.Value != current)
-                rQuality.Value = current;
+            var currentIdx = QualitySettings.GetQualityLevel();
+            if(currentQualityIdx != currentIdx)
+            {
+                currentQualityIdx = currentIdx;
+                rQuality.Value = QualitySettings.names[currentIdx];
+            }
         }
 
         if (showQuality.IntValue > 0)

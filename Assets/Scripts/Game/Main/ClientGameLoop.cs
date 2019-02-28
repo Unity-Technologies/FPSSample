@@ -39,21 +39,23 @@ public class ClientGameWorld
         m_ProjectileModule = new ProjectileModuleClient(m_GameWorld, resourceSystem);
         m_HitCollisionModule = new HitCollisionModule(m_GameWorld,1, 1);
         m_PlayerModule = new PlayerModuleClient(m_GameWorld);
-        m_DebugPrimitiveModule = new DebugPrimitiveModule(m_GameWorld, 1.0f, 0);
         m_SpectatorCamModule = new SpectatorCamModuleClient(m_GameWorld);
         m_EffectModule = new EffectModuleClient(m_GameWorld, resourceSystem);
         m_ReplicatedEntityModule = new ReplicatedEntityModuleClient(m_GameWorld, resourceSystem);
         m_ItemModule = new ItemModule(m_GameWorld);
         m_ragdollSystem = new RagdollModule(m_GameWorld);
-       
-        m_GameModeSystem = m_GameWorld.GetECSWorld().CreateManager<GameModeSystemClient>(m_GameWorld, Game.game.clientFrontend.scoreboardPanel.uiBinding, Game.game.clientFrontend.gameScorePanel);
+
+        m_GameModeSystem = m_GameWorld.GetECSWorld().CreateManager<GameModeSystemClient>(m_GameWorld);
 
         m_ClientFrontendUpdate = m_GameWorld.GetECSWorld().CreateManager<ClientFrontendUpdate>(m_GameWorld);
         
         m_DestructiblePropSystemClient = m_GameWorld.GetECSWorld().CreateManager<DestructiblePropSystemClient>(m_GameWorld);
         
-        m_InterpolateGrenadeSystem = m_GameWorld.GetECSWorld().CreateManager<InterpolateGrenadePresentation>(m_GameWorld);
         m_ApplyGrenadePresentation = m_GameWorld.GetECSWorld().CreateManager<ApplyGrenadePresentation>(m_GameWorld);
+        
+        m_UpdatePresentationOwners = m_GameWorld.GetECSWorld().CreateManager<UpdatePresentationOwners>(
+            m_GameWorld, resourceSystem);
+        m_HandlePresentationOwnerDespawn = m_GameWorld.GetECSWorld().CreateManager<HandlePresentationOwnerDesawn>(m_GameWorld);
         
         m_moverUpdate = m_GameWorld.GetECSWorld().CreateManager<MoverUpdate>(m_GameWorld);
         
@@ -78,7 +80,6 @@ public class ClientGameWorld
         m_ProjectileModule.Shutdown();
         m_HitCollisionModule.Shutdown();
         m_PlayerModule.Shutdown();
-        m_DebugPrimitiveModule.Shutdown();
         m_SpectatorCamModule.Shutdown();
         m_EffectModule.Shutdown();
         m_ReplicatedEntityModule.Shutdown();
@@ -87,8 +88,10 @@ public class ClientGameWorld
         m_GameWorld.GetECSWorld().DestroyManager(m_GameModeSystem);
         m_GameWorld.GetECSWorld().DestroyManager(m_DestructiblePropSystemClient);
         
-        m_GameWorld.GetECSWorld().DestroyManager(m_InterpolateGrenadeSystem);
         m_GameWorld.GetECSWorld().DestroyManager(m_ApplyGrenadePresentation);
+        
+        m_GameWorld.GetECSWorld().DestroyManager(m_UpdatePresentationOwners);
+        m_GameWorld.GetECSWorld().DestroyManager(m_HandlePresentationOwnerDespawn);
         
         m_GameWorld.GetECSWorld().DestroyManager(m_moverUpdate);
         
@@ -122,6 +125,7 @@ public class ClientGameWorld
         
         // Handle spawn requests
         m_ProjectileModule.HandleProjectileRequests();   
+        m_UpdatePresentationOwners.Update(); 
 
         // Handle spawning  
         m_CharacterModule.HandleSpawns();
@@ -144,7 +148,6 @@ public class ClientGameWorld
         m_moverUpdate.Update();
         m_CharacterModule.Interpolate();
         m_ReplicatedEntityModule.Interpolate(m_RenderTime);
-        m_InterpolateGrenadeSystem.Update();
 
         // Prediction
         m_GameWorld.worldTime = m_PredictedTime;
@@ -182,10 +185,7 @@ public class ClientGameWorld
 //#endif                
         }
         
-        
-        
         m_ProjectileModule.FinalizePredictedMovement();
-        
 
         m_GameModeSystem.Update();    
                          
@@ -198,9 +198,8 @@ public class ClientGameWorld
        
         m_GameWorld.worldTime = m_RenderTime;
 
-        m_DebugPrimitiveModule.HandleRequests();
-
         // Handle despawns
+        m_HandlePresentationOwnerDespawn.Update(); 
         m_CharacterModule.HandleDepawns(); // TODO (mogensh) this destroys presentations and needs to be done first so its picked up. We need better way of handling destruction ordering
         m_ProjectileModule.HandleProjectileDespawn();
         m_HandleNamePlateOwnerDespawn.Update();
@@ -214,11 +213,9 @@ public class ClientGameWorld
 #if UNITY_EDITOR
 
         if (m_GameWorld.GetEntityManager().Exists(m_localPlayer.controlledEntity) &&
-            m_GameWorld.GetEntityManager().HasComponent<UserCommandComponent>(m_localPlayer.controlledEntity))
+            m_GameWorld.GetEntityManager().HasComponent<UserCommandComponentData>(m_localPlayer.controlledEntity))
         {
-            var userCommand = m_GameWorld.GetEntityManager().GetComponentObject<UserCommandComponent>(m_localPlayer.controlledEntity);
-            
-            
+            var userCommand = m_GameWorld.GetEntityManager().GetComponentData<UserCommandComponentData>(m_localPlayer.controlledEntity);
             m_ReplicatedEntityModule.FinalizedStateHistory(m_PredictedTime.tick-1, m_NetworkClient.serverTime, ref userCommand.command);
         }
 #endif                
@@ -230,28 +227,25 @@ public class ClientGameWorld
         m_GameWorld.worldTime = m_RenderTime;
         m_HitCollisionModule.StoreColliderState();
 
-        
         m_ragdollSystem.LateUpdate();
 
         m_TranslateScaleSystem.Schedule();
         var twistSystemHandle = m_TwistSystem.Schedule();
         m_FanSystem.Schedule(twistSystemHandle);
 
-        
-        
         var teamId = -1;   
         bool showScorePanel = false;
         if (m_localPlayer != null && m_localPlayer.playerState != null && m_localPlayer.playerState.controlledEntity != Entity.Null)
         {
             teamId = m_localPlayer.playerState.teamIndex;
 
-            if (m_GameWorld.GetEntityManager().HasComponent<Character>(m_localPlayer.playerState.controlledEntity))
+            if (m_GameWorld.GetEntityManager().HasComponent<HealthStateData>(m_localPlayer.playerState.controlledEntity))
             {
-                var character = m_GameWorld.GetEntityManager()
-                    .GetComponentObject<Character>(m_localPlayer.playerState.controlledEntity);
+                var healthState = m_GameWorld.GetEntityManager()
+                    .GetComponentData<HealthStateData>(m_localPlayer.playerState.controlledEntity);
             
                 // Only show score board when alive
-                showScorePanel = character.healthState.health <= 0;
+                showScorePanel = healthState.health <= 0;
             }
         }
         // TODO (petera) fix this hack
@@ -278,11 +272,12 @@ public class ClientGameWorld
         
         m_UpdateNamePlates.Update();
         
-        m_ClientFrontendUpdate.Update();
-        Game.game.clientFrontend.SetShowScorePanel(showScorePanel);
+        if(Game.game.clientFrontend != null)
+        {
+            m_ClientFrontendUpdate.Update();
+            Game.game.clientFrontend.SetShowScorePanel(showScorePanel);
+        }
 
-        m_DebugPrimitiveModule.DrawPrimitives();
-        
         m_TranslateScaleSystem.Complete();
         m_FanSystem.Complete();
         
@@ -337,16 +332,10 @@ public class ClientGameWorld
         m_localPlayer = m_PlayerModule.RegisterLocalPlayer(playerId, m_NetworkClient);
         return m_localPlayer;
     }
-
-    public void ProcessSnapshot(int serverTick)
+    
+    public ISnapshotConsumer GetSnapshotConsumer()
     {
-        Profiler.BeginSample("ClientGameWorld.ProcessNetworkData");
-
-        m_ReplicatedEntityModule.HandleEntityDespawns();    // Handle entity depawns from last frame here so they are marked as deleted in gameworld this frame
-
-        m_NetworkClient.ProcessSnapshot(m_ReplicatedEntityModule);
-
-        Profiler.EndSample();
+        return m_ReplicatedEntityModule;
     }
 
     void PredictionRollback()
@@ -358,6 +347,8 @@ public class ClientGameWorld
     {
         m_SpectatorCamModule.Update();
 
+        m_CharacterModule.AbilityRequestUpdate();
+        
         m_CharacterModule.MovementStart();
         m_CharacterModule.MovementResolve();
         
@@ -379,7 +370,8 @@ public class ClientGameWorld
         // Sample input into current command
         //  The time passed in here is used to calculate the amount of rotation from stick position
         //  The command stores final view direction
-        bool userInputEnabled = Game.GetMousePointerLock() && !Game.game.clientFrontend.chatPanel.isOpen;
+        bool chatOpen = Game.game.clientFrontend != null && Game.game.clientFrontend.chatPanel.isOpen;
+        bool userInputEnabled = Game.GetMousePointerLock() && !chatOpen;
         m_PlayerModule.SampleInput(userInputEnabled, Time.deltaTime, m_RenderTime.tick);
 
 
@@ -451,7 +443,8 @@ public class ClientGameWorld
         // If predicted time has entered a new tick the stored commands should be sent to server 
         if (m_PredictedTime.tick > prevTick)
         {
-            for (int tick = prevTick; tick < m_PredictedTime.tick; tick++)
+            var oldestCommandToSend = Mathf.Max(prevTick, m_PredictedTime.tick - NetworkConfig.commandClientBufferSize);
+            for (int tick = oldestCommandToSend; tick < m_PredictedTime.tick; tick++)
             {
                 m_PlayerModule.StoreCommand(tick);
                 m_PlayerModule.SendCommand(tick);
@@ -479,7 +472,6 @@ public class ClientGameWorld
     readonly ProjectileModuleClient m_ProjectileModule;
     readonly HitCollisionModule m_HitCollisionModule;
     readonly PlayerModuleClient m_PlayerModule;
-    readonly DebugPrimitiveModule m_DebugPrimitiveModule;
     readonly SpectatorCamModuleClient m_SpectatorCamModule;
     readonly EffectModuleClient m_EffectModule;
     readonly ReplicatedEntityModuleClient m_ReplicatedEntityModule;
@@ -488,8 +480,10 @@ public class ClientGameWorld
     readonly RagdollModule m_ragdollSystem;
     readonly GameModeSystemClient m_GameModeSystem;
     
-    readonly InterpolateGrenadePresentation m_InterpolateGrenadeSystem;
     readonly ApplyGrenadePresentation m_ApplyGrenadePresentation;
+    
+    readonly HandlePresentationOwnerDesawn m_HandlePresentationOwnerDespawn;
+    readonly UpdatePresentationOwners m_UpdatePresentationOwners;
     
     readonly TwistSystem m_TwistSystem;
     readonly FanSystem m_FanSystem;
@@ -514,8 +508,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     // Client vars
     [ConfigVar(Name ="client.updaterate", DefaultValue = "30000", Description = "Max bytes/sec client wants to receive", Flags = ConfigVar.Flags.ClientInfo)]
     public static ConfigVar clientUpdateRate;
-    [ConfigVar(Name ="client.updatesendrate", DefaultValue = "20", Description = "Snapshot sendrate requested by client", Flags = ConfigVar.Flags.ClientInfo)]
-    public static ConfigVar clientUpdateSendRate;
+    [ConfigVar(Name ="client.updateinterval", DefaultValue = "3", Description = "Snapshot sendrate requested by client", Flags = ConfigVar.Flags.ClientInfo)]
+    public static ConfigVar clientUpdateInterval;
 
     [ConfigVar(Name ="client.playername", DefaultValue = "Noname", Description = "Name of player", Flags = ConfigVar.Flags.ClientInfo | ConfigVar.Flags.Save)]
     public static ConfigVar clientPlayerName;
@@ -595,14 +589,17 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     public void OnConnect(int clientId) { }
     public void OnDisconnect(int clientId) { }
 
-    public void OnEvent(int clientId, NetworkEvent info)
+    unsafe public void OnEvent(int clientId, NetworkEvent info)
     {
         Profiler.BeginSample("-ProcessEvent");
         switch ((GameNetworkEvents.EventType)info.type.typeId)
         {
             case GameNetworkEvents.EventType.Chat:
-                var data = new NetworkReader(info.data, info.type.schema);
-                m_ChatSystem.ReceiveMessage(data.ReadString(256));
+                fixed(uint* data = info.data)
+                {
+                    var reader = new NetworkReader(data, info.type.schema);
+                    m_ChatSystem.ReceiveMessage(reader.ReadString(256));
+                }
                 break;
         }
         Profiler.EndSample();
@@ -620,7 +617,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         Profiler.BeginSample("ClientGameLoop.Update");
 
         Profiler.BeginSample("-NetworkClientUpdate");
-        m_NetworkClient.Update(this);
+        m_NetworkClient.Update(this, m_clientWorld?.GetSnapshotConsumer());
         Profiler.EndSample();
 
         Profiler.BeginSample("-StateMachine update");
@@ -628,7 +625,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         Profiler.EndSample();
 
         // TODO (petera) change if we have a lobby like setup one day
-        if(m_StateMachine.CurrentState() == ClientState.Playing)
+        if(m_StateMachine.CurrentState() == ClientState.Playing && Game.game.clientFrontend != null)
             Game.game.clientFrontend.UpdateChat(m_ChatSystem);
 
         m_NetworkClient.SendData();
@@ -715,7 +712,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
     void EnterLoadingState()
     {
-        Game.game.clientFrontend.ShowMenu(ClientFrontend.MenuShowing.None);
+        if(Game.game.clientFrontend != null)
+            Game.game.clientFrontend.ShowMenu(ClientFrontend.MenuShowing.None);
 
         Console.SetOpen(false);
 
@@ -767,7 +765,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
         m_GameWorld.RegisterSceneEntities();
         
-        m_resourceSystem = new BundledResourceManager("BundledResources/Client");
+        m_resourceSystem = new BundledResourceManager(m_GameWorld,"BundledResources/Client");
 
         m_clientWorld = new ClientGameWorld(m_GameWorld, m_NetworkClient, m_NetworkStatistics, m_resourceSystem);
         m_clientWorld.PredictionEnabled = m_predictionEnabled;
@@ -783,8 +781,6 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     {
         m_resourceSystem.Shutdown();
 
-        Game.game.clientFrontend.Clear();
-
         m_LocalPlayer = null;
         
         m_clientWorld.Shutdown();
@@ -799,7 +795,11 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         m_GameWorld.Shutdown();
         m_GameWorld = new GameWorld("ClientWorld");
 
-        Game.game.clientFrontend.ShowMenu(ClientFrontend.MenuShowing.None);
+        if(Game.game.clientFrontend != null)
+        {
+            Game.game.clientFrontend.Clear();
+            Game.game.clientFrontend.ShowMenu(ClientFrontend.MenuShowing.None);
+        }
 
         Game.game.levelManager.LoadLevel("level_menu");
 
@@ -949,7 +949,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
             return;
         
         var isControllingSpectatorCam = m_GameWorld.GetEntityManager()
-            .HasComponent<SpectatorCam>(m_LocalPlayer.playerState.controlledEntity);
+            .HasComponent<SpectatorCamData>(m_LocalPlayer.playerState.controlledEntity);
         
         // TODO find better way to identity spectatorcam
         m_requestedPlayerSettings.characterType = isControllingSpectatorCam ? 0 : 1000;   
@@ -1038,10 +1038,10 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
             UserCommand command = UserCommand.defaultCommand;
             bool valid = m_LocalPlayer.commandBuffer.TryGetValue(m_clientWorld.PredictedTime.tick + 1, ref command);
             if(valid)
-                DebugOverlay.Write(x, y++, "Next cmd: PrimaryFire:{0}", command.primaryFire ? 1:0);
+                DebugOverlay.Write(x, y++, "Next cmd: PrimaryFire:{0}", command.buttons.IsSet(UserCommand.Button.PrimaryFire));
             valid = m_LocalPlayer.commandBuffer.TryGetValue(m_clientWorld.PredictedTime.tick, ref command);
             if (valid)
-                DebugOverlay.Write(x, y++, "Tick cmd: PrimaryFire:{0}", command.primaryFire ? 1:0);
+                DebugOverlay.Write(x, y++, "Tick cmd: PrimaryFire:{0}", command.buttons.IsSet(UserCommand.Button.PrimaryFire));
         }
     }
 
@@ -1051,11 +1051,6 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         {
             m_requestedPlayerSettings.Serialize(ref writer);
         });
-    }
-
-    public void ProcessSnapshot(int serverTime)
-    {
-        m_clientWorld.ProcessSnapshot(serverTime);
     }
 
     enum ClientState

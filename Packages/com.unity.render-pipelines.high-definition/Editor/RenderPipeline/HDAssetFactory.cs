@@ -22,6 +22,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 newAsset.name = Path.GetFileName(pathName);
                 // Load default renderPipelineResources / Material / Shader
                 newAsset.renderPipelineResources = AssetDatabase.LoadAssetAtPath<RenderPipelineResources>(s_RenderPipelineResourcesPath);
+
+                //as we must init the editor resources with lazy init, it is not required here
+
                 AssetDatabase.CreateAsset(newAsset, pathName);
                 ProjectWindowUtil.ShowCreatedAsset(newAsset);
             }
@@ -60,6 +63,28 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             var icon = EditorGUIUtility.FindTexture("ScriptableObject Icon");
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, ScriptableObject.CreateInstance<DoCreateNewAssetHDRenderPipelineResources>(), "New HDRenderPipelineResources.asset", icon, null);
+        }
+
+        class DoCreateNewAssetHDRenderPipelineEditorResources : ProjectWindowCallback.EndNameEditAction
+        {
+            public override void Action(int instanceId, string pathName, string resourceFile)
+            {
+                var newAsset = CreateInstance<HDRenderPipelineEditorResources>();
+                newAsset.name = Path.GetFileName(pathName);
+
+                newAsset.Init();
+
+                AssetDatabase.CreateAsset(newAsset, pathName);
+                ProjectWindowUtil.ShowCreatedAsset(newAsset);
+            }
+        }
+
+        // Hide: User aren't suppose to have to create it.
+        //[MenuItem("Assets/Create/Rendering/High Definition Render Pipeline Editor Resources", priority = CoreUtils.assetCreateMenuPriority1)]
+        static void CreateRenderPipelineEditorResources()
+        {
+            var icon = EditorGUIUtility.FindTexture("ScriptableObject Icon");
+            ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, ScriptableObject.CreateInstance<DoCreateNewAssetHDRenderPipelineEditorResources>(), "New HDRenderPipelineEditorResources.asset", icon, null);
         }
     }
 }

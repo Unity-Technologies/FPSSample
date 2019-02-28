@@ -2,19 +2,51 @@ using System;
 
 namespace UnityEngine.Rendering.PostProcessing
 {
+    /// <summary>
+    /// This class holds settings for the Histogram monitor.
+    /// </summary>
     [Serializable]
     public sealed class HistogramMonitor : Monitor
     {
+        /// <summary>
+        /// Displayable channels.
+        /// </summary>
         public enum Channel
         {
+            /// <summary>
+            /// The red channel.
+            /// </summary>
             Red,
+
+            /// <summary>
+            /// The green channel.
+            /// </summary>
             Green,
+
+            /// <summary>
+            /// The blue channel.
+            /// </summary>
             Blue,
+
+            /// <summary>
+            /// The master (luminance) channel.
+            /// </summary>
             Master
         }
 
+        /// <summary>
+        /// The width of the rendered histogram.
+        /// </summary>
         public int width = 512;
+
+        /// <summary>
+        /// The height of the rendered histogram.
+        /// </summary>
         public int height = 256;
+
+        /// <summary>
+        /// The channel to render.
+        /// </summary>
         public Channel channel = Channel.Master;
 
         ComputeBuffer m_Data;

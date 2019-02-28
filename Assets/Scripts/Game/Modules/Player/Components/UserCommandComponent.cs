@@ -1,14 +1,14 @@
 ﻿using System;
-using UnityEngine;
+using Unity.Entities;
 
-public class UserCommandComponent: MonoBehaviour, INetSerialized    
+[Serializable]
+public struct UserCommandComponentData: IComponentData, IReplicatedComponent    
 {   
     [NonSerialized] public UserCommand command;
-    [NonSerialized] public UserCommand prevCommand;
     
     [NonSerialized] public int resetCommandTick;
     [NonSerialized] public float resetCommandLookYaw;          
-    [NonSerialized] public float resetCommandLookPitch = 90;
+    [NonSerialized] public float resetCommandLookPitch; // = 90;
     [NonSerialized] public int lastResetCommandTick;
 
     public void ResetCommand(int tick, float lookYaw, float lookPitch)
@@ -18,17 +18,25 @@ public class UserCommandComponent: MonoBehaviour, INetSerialized
         resetCommandLookPitch = lookPitch;
     }
     
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+    public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
+    {
+        return new ReplicatedComponentSerializerFactory<UserCommandComponentData>();
+    }
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
     {
         writer.WriteInt32("resetCamTick", resetCommandTick);
         writer.WriteFloatQ("lookYaw", resetCommandLookYaw, 1);
         writer.WriteFloatQ("lookPitch", resetCommandLookPitch, 1);
     }
 
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
     {
         resetCommandTick = reader.ReadInt32();
         resetCommandLookYaw = reader.ReadFloatQ();
         resetCommandLookPitch = reader.ReadFloatQ();
     }
 }
+
+public class UserCommandComponent : ComponentDataWrapper<UserCommandComponentData>
+{}

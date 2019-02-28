@@ -28,6 +28,8 @@ public class OptionsMenu : MonoBehaviour
     public OptionHeading headingTemplate;
     public OptionSlider sliderTemplate;
 
+    public Button gdrpButton;
+
     public ScrollRect scrollRect;
     public GameObject content;
 
@@ -106,9 +108,16 @@ public class OptionsMenu : MonoBehaviour
 
     void Start()
     {
-        var res = new List<string>();
+        var resHash = new HashSet<string>();
         foreach (var r in Screen.resolutions)
-            res.Add(r.width + "x" + r.height + "@" + r.refreshRate);
+            resHash.Add(r.width + "x" + r.height/* + "@" + r.refreshRate*/);
+        var res = new List<string>(resHash);
+        res.Sort((a,b) =>
+        {
+            var asplit = a.Split('x');
+            var bsplit = b.Split('x');
+            return int.Parse(asplit[0]).CompareTo(int.Parse(bsplit[0])) * 10 + int.Parse(asplit[1]).CompareTo(int.Parse(bsplit[1]));
+        });
 
         AddHeading("Graphics settings");
         AddDropdown(RenderSettings.rQuality, "Overall quality", new List<string>(QualitySettings.names), new List<string>(QualitySettings.names));
@@ -133,6 +142,12 @@ public class OptionsMenu : MonoBehaviour
         Canvas.ForceUpdateCanvases(); // TODO (petera) why is this needed?
 
         scrollRect.verticalNormalizedPosition = 1f;
+
+#if ENABLE_CLOUD_SERVICES_ANALYTICS
+        gdrpButton.gameObject.SetActive(true);
+#else
+        gdrpButton.gameObject.SetActive(false);
+#endif
     }
 
     public void UpdateMenu()
@@ -165,6 +180,7 @@ public class OptionsMenu : MonoBehaviour
 
     private void OnUrlReceived(string url)
     {
+        GameDebug.Log("Opening Privacy url: " + url);
         Application.OpenURL(url);
     }
 #endif

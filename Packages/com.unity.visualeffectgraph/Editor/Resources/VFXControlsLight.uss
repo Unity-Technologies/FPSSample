@@ -1,0 +1,25 @@
+.PopupButton
+{
+    background-image: resource("Builtin Skins/LightSkin/Images/mini popup.png");
+}
+.PopupButton:hover:active
+{
+    background-image: resource("Builtin Skins/LightSkin/Images/mini popup act.png");
+}
+
+.PopupButton:focus
+{
+    background-image: resource("Builtin Skins/LightSkin/Images/mini popup focus.png");
+}
+
+Button.MiniDropDown {
+    background-image: resource("Builtin Skins/LightSkin/Images/mini pulldown.png");
+}
+
+Button.MiniDropDown:hover {
+    background-image: resource("Builtin Skins/LightSkin/Images/mini pulldown focus.png");
+}
+
+Button.MiniDropDown:hover:active {
+    background-image: resource("Builtin Skins/LightSkin/Images/mini pulldown act.png");
+}

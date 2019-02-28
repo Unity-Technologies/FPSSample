@@ -55,10 +55,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Texture metallicMap = TextureCombiner.TextureFromColor(Color.black);
             if ((srcMaterial.shader.name == Standard) || (srcMaterial.shader.name == Standard_Rough))
             {
-                // Convert _Metallic value from Gamma to Linear
-                float metallicValue = Mathf.Pow(srcMaterial.GetFloat("_Metallic"), 2.2f);
-                dstMaterial.SetFloat("_Metallic", metallicValue);
-
                 hasMetallic = srcMaterial.GetTexture("_MetallicGlossMap") != null;
                 if (hasMetallic)
                 {
@@ -68,6 +64,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     metallicMap = TextureCombiner.TextureFromColor(Color.white);
                 }
+
+                // Convert _Metallic value from Gamma to Linear, or set to 1 if a map is used
+                float metallicValue = Mathf.Pow(srcMaterial.GetFloat("_Metallic"), 2.2f);
+                dstMaterial.SetFloat("_Metallic", hasMetallic? 1f : metallicValue);
             }
 
             // Occlusion
@@ -109,6 +109,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (smoothnessMap != null)
                 {
                     hasSmoothness = true;
+                    
+                    dstMaterial.SetFloat("_SmoothnessRemapMax", srcMaterial.GetFloat("_GlossMapScale"));
 
                     if (!TextureCombiner.TextureHasAlpha(smoothnessMap))
                     {
@@ -205,16 +207,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
 
             Color hdrEmission = srcMaterial.GetColor("_EmissionColor");
-            
+
             // Get the _EMISSION keyword of the Standard shader
             if ( !srcMaterial.IsKeywordEnabled("_EMISSION") )
                 hdrEmission = Color.black;
-            
+
             // Emission toggle of Particle Standard Surface
             if( srcMaterial.HasProperty("_EmissionEnabled") )
                 if (srcMaterial.GetFloat("_EmissionEnabled") == 0)
                     hdrEmission = Color.black;
-            
+
             dstMaterial.SetColor("_EmissiveColor", hdrEmission);
 
             HDEditorUtils.ResetMaterialKeywords(dstMaterial);

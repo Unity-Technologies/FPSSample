@@ -1,0 +1,92 @@
+VFXView
+{
+    background-color:#1b1b1b;
+}
+
+.dragdisplay
+{
+    position-type:absolute;
+    position-left:0;
+    position-right: 0;
+    height:4;
+    margin-top:-2;
+    background-color: rgb(210, 152, 0);
+}
+
+.toolbar {
+    background-image: resource("Builtin Skins/DarkSkin/Images/Toolbar.png");
+    slice-top:2;
+    slice-bottom:2;
+    height:17;
+    position-type:absolute;
+    position-top:0;
+    position-left:0;
+    position-right:0;
+    flex-direction:row;
+}
+
+.toolbarItem, .toolbarItem *
+{
+    text-color:#ababab;
+    font-size:11;
+}
+
+Button.toolbarItem
+{
+    background-image: resource("Builtin Skins/DarkSkin/Images/toolbar button.png");
+    slice-left:6;
+    slice-right:6;
+    height:17;
+    margin-left:0;
+    margin-right:0;
+    margin-bottom:0;
+    margin-top:0;
+}
+
+Button.toolbarItem:hover:active
+{
+    background-image: resource("Builtin Skins/DarkSkin/Images/toolbar button act.png");
+}
+
+Toggle.toolbarItem
+{
+    background-image: resource("Builtin Skins/DarkSkin/Images/toolbar button.png");
+    slice-left:6;
+    slice-right:6;
+    height:17;
+    margin-left:0;
+    margin-right:0;
+    margin-bottom:0;
+    margin-top:0;
+    padding-top:0;
+    padding-bottom:0;
+    padding-left:12;
+    padding-right:12;
+}
+
+Toggle.toolbarItem > #Checkmark,Toggle.toolbarItem:checked > #Checkmark,Toggle.toolbarItem:hover:active > #Checkmark,Toggle.toolbarItem:hover:active:checked > #Checkmark
+{
+    background-image:none;
+    width:0;
+}
+
+Toggle.toolbarItem > Label.textElement
+{
+    margin-left:0;
+    text-alignment:middle-center;
+}
+
+Toggle.toolbarItem:hover:active
+{
+    background-image: resource("Builtin Skins/DarkSkin/Images/toolbar button act.png");
+}
+
+Toggle.toolbarItem:checked
+{
+    background-image: resource("Builtin Skins/DarkSkin/Images/toolbar button on.png");
+}
+
+Toggle.toolbarItem:checked:hover:active
+{
+    background-image: resource("Builtin Skins/DarkSkin/Images/toolbar button act on.png");
+}

@@ -3,46 +3,97 @@ using UnityEngine.Assertions;
 
 namespace UnityEngine.Rendering.PostProcessing
 {
+    /// <summary>
+    /// Screen-space Reflections quality presets.
+    /// </summary>
     public enum ScreenSpaceReflectionPreset
     {
         Lower, Low, Medium, High, Higher, Ultra, Overkill, Custom
     }
 
+    /// <summary>
+    /// Screen-space Reflections buffer sizes.
+    /// </summary>
     public enum ScreenSpaceReflectionResolution
     {
+        /// <summary>
+        /// Downsampled buffer. Faster but lower quality.
+        /// </summary>
         Downsampled,
+
+        /// <summary>
+        /// Full-sized buffer. Slower but higher quality.
+        /// </summary>
         FullSize,
+
+        /// <summary>
+        /// Supersampled buffer. Very slow but much higher quality.
+        /// </summary>
         Supersampled
     }
 
+    /// <summary>
+    /// A volume parameter holding a <see cref="ScreenSpaceReflectionPreset"/> value.
+    /// </summary>
     [Serializable]
     public sealed class ScreenSpaceReflectionPresetParameter : ParameterOverride<ScreenSpaceReflectionPreset> { }
 
+    /// <summary>
+    /// A volume parameter holding a <see cref="ScreenSpaceReflectionResolution"/> value.
+    /// </summary>
     [Serializable]
     public sealed class ScreenSpaceReflectionResolutionParameter : ParameterOverride<ScreenSpaceReflectionResolution> { }
 
+    /// <summary>
+    /// This class holds settings for the Screen-space Reflections effect.
+    /// </summary>
     [Serializable]
     [PostProcess(typeof(ScreenSpaceReflectionsRenderer), "Unity/Screen-space reflections")]
     public sealed class ScreenSpaceReflections : PostProcessEffectSettings
     {
-        [Tooltip("Choose a quality preset, or use \"Custom\" to fine tune it. Don't use a preset higher than \"Medium\" if you care about performances on consoles.")]
+        /// <summary>
+        /// The quality preset to use for rendering. Use <see cref="ScreenSpaceReflectionPreset.Custom"/>
+        /// to tweak settings.
+        /// </summary>
+        [Tooltip("Choose a quality preset, or use \"Custom\" to create your own custom preset. Don't use a preset higher than \"Medium\" if you desire good performance on consoles.")]
         public ScreenSpaceReflectionPresetParameter preset = new ScreenSpaceReflectionPresetParameter { value = ScreenSpaceReflectionPreset.Medium };
 
-        [Range(0, 256), Tooltip("Maximum iteration count.")]
+        /// <summary>
+        /// The maximum number of steps in the raymarching pass. Higher values mean more reflections.
+        /// </summary>
+        [Range(0, 256), Tooltip("Maximum number of steps in the raymarching pass. Higher values mean more reflections.")]
         public IntParameter maximumIterationCount = new IntParameter { value = 16 };
 
-        [Tooltip("Changes the size of the SSR buffer. Downsample it to maximize performances or supersample it to get slow but higher quality results.")]
+        /// <summary>
+        /// Changes the size of the internal buffer. Downsample it to maximize performances or
+        /// supersample it to get slow but higher quality results.
+        /// </summary>
+        [Tooltip("Changes the size of the SSR buffer. Downsample it to maximize performances or supersample it for higher quality results with reduced performance.")]
         public ScreenSpaceReflectionResolutionParameter resolution = new ScreenSpaceReflectionResolutionParameter { value = ScreenSpaceReflectionResolution.Downsampled };
 
+        /// <summary>
+        /// The ray thickness. Lower values are more expensive but allow the effect to detect
+        /// smaller details.
+        /// </summary>
         [Range(1f, 64f), Tooltip("Ray thickness. Lower values are more expensive but allow the effect to detect smaller details.")]
         public FloatParameter thickness = new FloatParameter { value = 8f };
 
+        /// <summary>
+        /// The maximum distance to traverse in the scene after which it will stop drawing
+        /// reflections.
+        /// </summary>
         [Tooltip("Maximum distance to traverse after which it will stop drawing reflections.")]
         public FloatParameter maximumMarchDistance = new FloatParameter { value = 100f };
 
+        /// <summary>
+        /// Fades reflections close to the near plane. This is useful to hide common artifacts.
+        /// </summary>
         [Range(0f, 1f), Tooltip("Fades reflections close to the near planes.")]
         public FloatParameter distanceFade = new FloatParameter { value = 0.5f };
 
+        /// <summary>
+        /// Fades reflections close to the screen edges.
+        /// </summary>
         [Range(0f, 1f), Tooltip("Fades reflections close to the screen edges.")]
         public FloatParameter vignette = new FloatParameter { value = 0.5f };
 
@@ -50,6 +101,7 @@ namespace UnityEngine.Rendering.PostProcessing
         public static bool globalEnable = true;
         // sample-game end:
 
+        /// <inheritdoc />
         public override bool IsEnabledAndSupported(PostProcessRenderContext context)
         {
         // sample-game begin: added globalEnable
@@ -66,7 +118,7 @@ namespace UnityEngine.Rendering.PostProcessing
         }
     }
 
-    public sealed class ScreenSpaceReflectionsRenderer : PostProcessEffectRenderer<ScreenSpaceReflections>
+    internal sealed class ScreenSpaceReflectionsRenderer : PostProcessEffectRenderer<ScreenSpaceReflections>
     {
         RenderTexture m_Resolve;
         RenderTexture m_History;
@@ -108,7 +160,10 @@ namespace UnityEngine.Rendering.PostProcessing
             if (rt == null || !rt.IsCreated() || rt.width != width || rt.height != height || rt.format != format)
             {
                 if (rt != null)
+                {
                     rt.Release();
+                    RuntimeUtilities.Destroy(rt);
+                }
 
                 rt = new RenderTexture(width, height, 0, format)
                 {

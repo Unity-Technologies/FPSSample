@@ -15,7 +15,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         SerializedDataParameter m_FogType;
 
         List<GUIContent> m_SkyClassNames = null;
+        List<GUIContent> m_FogNames = null;
         List<int> m_SkyUniqueIDs = null;
+
+        public static readonly string[] fogNames = Enum.GetNames(typeof(FogType));
+        public static readonly int[] fogValues = Enum.GetValues(typeof(FogType)) as int[];
 
         public override void OnEnable()
         {
@@ -26,7 +30,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_FogType = Unpack(o.Find(x => x.fogType));
         }
 
-        void UpdateSkyIntPopupData()
+        void UpdateSkyAndFogIntPopupData()
         {
             if (m_SkyClassNames == null)
             {
@@ -41,15 +45,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 foreach (KeyValuePair<int, Type> kvp in skyTypesDict)
                 {
-                    m_SkyClassNames.Add(new GUIContent(kvp.Value.Name.ToString()));
+                    m_SkyClassNames.Add(new GUIContent(ObjectNames.NicifyVariableName(kvp.Value.Name.ToString())));
                     m_SkyUniqueIDs.Add(kvp.Key);
+                }
+            }
+
+            if (m_FogNames == null)
+            {
+                m_FogNames = new List<GUIContent>();
+
+                foreach (string fogStr in fogNames)
+                {
+                    m_FogNames.Add(new GUIContent(fogStr + " Fog"));
                 }
             }
         }
 
         public override void OnInspectorGUI()
         {
-            UpdateSkyIntPopupData();
+            UpdateSkyAndFogIntPopupData();
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -59,7 +73,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUILayout.IntPopup(m_SkyType.value, m_SkyClassNames.ToArray(), m_SkyUniqueIDs.ToArray(), new GUIContent("Sky Type"));
                 }
             }
-            PropertyField(m_FogType);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                DrawOverrideCheckbox(m_FogType);
+                using (new EditorGUI.DisabledScope(!m_FogType.overrideState.boolValue))
+                {
+                    EditorGUILayout.IntPopup(m_FogType.value, m_FogNames.ToArray(), fogValues, new GUIContent("Fog Type"));
+                }
+            }
         }
     }
 }

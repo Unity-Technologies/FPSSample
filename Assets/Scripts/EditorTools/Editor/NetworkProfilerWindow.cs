@@ -63,12 +63,12 @@ public class NetworkProfiler : EditorWindow
 
         GUILayout.BeginVertical(GUILayout.Width(serverPaneWidth));
         m_ScrollPos0 = GUILayout.BeginScrollView(m_ScrollPos0);
-        GUILayout.Label("serverTickRate: " + networkServer.clientInfo.serverTickRate);
+        GUILayout.Label("serverTickRate: " + networkServer.serverInfo.serverTickRate);
 
         // server stats
         GUILayout.BeginHorizontal();
         GUILayout.Label("Tick: " + networkServer.serverTime);
-        GUILayout.Label("Tick rate: " + networkServer.clientInfo.serverTickRate);
+        GUILayout.Label("Tick rate: " + networkServer.serverInfo.serverTickRate);
         GUILayout.Label("Number of entity types: " + networkServer.GetEntityTypes().Count);
         GUILayout.Label("Number of entities: " + networkServer.NumEntities);
         GUILayout.EndHorizontal();
@@ -106,7 +106,7 @@ public class NetworkProfiler : EditorWindow
             }
 
             int totalSchemaSize = 0;
-            int numFields = schema.fields.Count;
+            int numFields = schema.numFields;
             for (int i = 0; i < numFields; i++)
             {
                 var field = schema.fields[i];

@@ -50,6 +50,8 @@ namespace NetcodeTests
         public int tick;
         public Dictionary<int, TestEntity> entities = new Dictionary<int, TestEntity>();
 
+        public System.Random random = new System.Random(1234);
+
         public TestWorld()
         {
             RegisterEntityType(typeof(TestEntity));
@@ -104,11 +106,6 @@ namespace NetcodeTests
             entities[id].Deserialize(ref reader);
         }
 
-        public void ProcessEntityDespawn(int serverTime, int id)
-        {
-            DespawnEntity(entities[id]);
-        }
-
         // Clientside spawning incoming entities
         public void ProcessEntitySpawn(int serverTime, int entityId, ushort typeId)
         {
@@ -126,7 +123,9 @@ namespace NetcodeTests
         TestEntity SpawnInternal(int entityId, ushort typeId, int predictingClientId)
         {
             var type = s_IdToEntityType[typeId];
-            Debug.Assert(!entities.ContainsKey(entityId));
+            if(entities.ContainsKey(entityId))
+                Debug.Log("Trying to spawn entity with id that is in use");
+            Debug.Assert(!entities.ContainsKey(entityId), "Trying to spawn entity with id that is in use");
 
             TestEntity entity = (TestEntity)Activator.CreateInstance(type);
             entity.id = entityId;
@@ -164,6 +163,15 @@ namespace NetcodeTests
             return "";
         }
 
+        public void ProcessEntityDespawns(int serverTime, List<int> despawns)
+        {
+            foreach(int id in despawns)
+            {
+                DespawnEntity(entities[id]);
+            }
+            PurgeDespawnedEntitites();
+        }
+
         static ushort s_TypeId;
         static Dictionary<ushort, Type> s_IdToEntityType = new Dictionary<ushort, Type>();
         static Dictionary<Type, ushort> s_EntityTypeToId = new Dictionary<Type, ushort>();
@@ -186,7 +194,7 @@ namespace NetcodeTests
         public TestGameServer()
         {
             world = new TestWorld();
-            m_Transport = new TestTransport(0);
+            m_Transport = new TestTransport("127.0.0.1", 1);
             clients = new List<int>();
 
             m_NetworkServer = new NetworkServer(m_Transport);
@@ -262,20 +270,17 @@ namespace NetcodeTests
 
         public TestGameClient(int port)
         {
-            m_Transport = new TestTransport(port);
+            m_Transport = new TestTransport("127.0.0.1", port);
             m_NetworkClient = new NetworkClient(m_Transport);
-            m_NetworkClient.Connect("0");
+            m_NetworkClient.Connect("127.0.0.1:1");
         }
 
         public void Update()
         {
-            m_NetworkClient.Update(this);
+            m_NetworkClient.Update(this, world);
 
             if (world != null)
                 world.UpdateClient();
-
-            if(world != null)
-                world.PurgeDespawnedEntitites();
 
             m_NetworkClient.SendData();
         }
@@ -291,12 +296,8 @@ namespace NetcodeTests
             world = new TestWorld();
         }
 
-        public void ProcessSnapshot(int serverTime)
-        {
-            m_NetworkClient.ProcessSnapshot(world);
-        }
-
-        TestTransport m_Transport;
+        public TestTransport m_Transport;
         NetworkClient m_NetworkClient;
     }
+
 }

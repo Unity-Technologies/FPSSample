@@ -5,7 +5,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Sampling/SampleUVMapping.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
 
-#include "TerrainLitSplatCommon.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLitSplatCommon.hlsl"
 
 TEXTURE2D(_MainTex);
 TEXTURE2D(_MetallicTex);
@@ -33,17 +33,8 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
         float3 normalOS = SAMPLE_TEXTURE2D(_TerrainNormalmapTexture, sampler_MainTex, (input.texCoord0.xy + 0.5f) * _TerrainHeightmapRecipSize.xy).rgb * 2 - 1;
         float3 normalWS = mul((float3x3)GetObjectToWorldMatrix(), normalOS);
         float3 tangentWS = cross(GetObjectToWorldMatrix()._13_23_33, normalWS);
-        float renormFactor = 1.0 / length(normalWS);
 
-        // bitangent on the fly option in xnormal to reduce vertex shader outputs.
-        // this is the mikktspace transformation (must use unnormalized attributes)
-        float3x3 worldToTangent = CreateWorldToTangent(normalWS, tangentWS.xyz, 1);
-
-        // surface gradient based formulation requires a unit length initial normal. We can maintain compliance with mikkts
-        // by uniformly scaling all 3 vectors since normalization of the perturbed normal will cancel it.
-        input.worldToTangent[0] = worldToTangent[0] * renormFactor;
-        input.worldToTangent[1] = worldToTangent[1] * renormFactor;
-        input.worldToTangent[2] = worldToTangent[2] * renormFactor;		// normalizes the interpolated vertex normal
+        input.worldToTangent = BuildWorldToTangent(float4(tangentWS, 1.0), normalWS);
 
         input.texCoord0.xy *= _TerrainHeightmapRecipSize.zw;
     }

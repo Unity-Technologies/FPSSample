@@ -14,8 +14,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         VisualizeShadowMasks,
         IndirectDiffuseOcclusion,
         IndirectSpecularOcclusion,
-        ScreenSpaceReflection,
-        ScreenSpaceRefraction,
     }
 
     [GenerateHLSL]
@@ -37,6 +35,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 || overrideAlbedo
                 || overrideNormal
                 || overrideSpecularColor
+                || overrideEmissiveColor
                 || shadowDebugMode == ShadowMapDebugMode.SingleShadow;
         }
 
@@ -54,6 +53,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float                shadowMinValue = 0.0f;
         public float                shadowMaxValue = 1.0f;
         public float                shadowResolutionScaleFactor = 1.0f;
+        public bool                 clearShadowAtlas = false;
 
         public bool                 overrideSmoothness = false;
         public float                overrideSmoothnessValue = 0.5f;
@@ -62,12 +62,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool                 overrideNormal = false;
         public bool                 overrideSpecularColor = false;
         public Color                overrideSpecularColorValue = new Color(1.0f, 1.0f, 1.0f);
+        public bool                 overrideEmissiveColor = false;
+        public Color                overrideEmissiveColorValue = new Color(1.0f, 1.0f, 1.0f);
 
 
         public bool                 displaySkyReflection = false;
         public float                skyReflectionMipmap = 0.0f;
 
-        public bool                 displayLightVolumes = false;
+        public bool                         displayLightVolumes = false;
+        public LightLoop.LightVolumeDebug   lightVolumeDebugByCategory = LightLoop.LightVolumeDebug.Gradient;
+        public uint                         maxDebugLightCount = 24;
 
         public float                environmentProxyDepthScale = 20;
 

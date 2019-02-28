@@ -1,0 +1,10 @@
+{
+	SubShader
+	{	
+		${VFXInclude("Shaders/VFXParticleHeader.template")}
+		${VFXInclude("Shaders/ParticlePoints/PassDepth.template"),IS_OPAQUE_PARTICLE}
+		${VFXInclude("Shaders/ParticlePoints/PassForward.template")}
+		${VFXInclude("Shaders/ParticlePoints/PassMotionVectors.template"),USE_MOTION_VECTORS_PASS}
+		${VFXInclude("Shaders/ParticlePoints/PassShadowCaster.template"),USE_CAST_SHADOWS_PASS}
+	}
+}

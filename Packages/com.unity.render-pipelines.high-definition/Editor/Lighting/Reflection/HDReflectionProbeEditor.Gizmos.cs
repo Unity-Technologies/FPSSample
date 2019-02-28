@@ -12,35 +12,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static Mesh sphere;
         static Material material;
 
-        [DrawGizmo(GizmoType.Active)]
-        static void RenderGizmo(ReflectionProbe reflectionProbe, GizmoType gizmoType)
-        {
-            var e = GetEditorFor(reflectionProbe);
-            if (e == null || !e.sceneViewEditing)
-                return;
-
-            var reflectionData = reflectionProbe.GetComponent<HDAdditionalReflectionData>();
-            var mat = Matrix4x4.TRS(reflectionProbe.transform.position, reflectionProbe.transform.rotation, Vector3.one);
-
-            switch (EditMode.editMode)
-            {
-                // Influence editing
-                case EditMode.SceneViewEditMode.ReflectionProbeBox:
-                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.influenceVolume, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.Base, InfluenceVolumeUI.HandleType.All);
-                    break;
-                // Influence fade editing
-                case EditMode.SceneViewEditMode.GridBox:
-                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.influenceVolume, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.Influence, InfluenceVolumeUI.HandleType.All);
-                    break;
-                // Influence normal fade editing
-                case EditMode.SceneViewEditMode.Collider:
-                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.influenceVolume, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.InfluenceNormal, InfluenceVolumeUI.HandleType.All);
-                    break;
-                default:
-                    InfluenceVolumeUI.DrawGizmos(e.m_UIState.influenceVolume, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.None, InfluenceVolumeUI.HandleType.Base);
-                    break;
-            }
-        }
 
         [DrawGizmo(GizmoType.Selected)]
         static void DrawSelectedGizmo(ReflectionProbe reflectionProbe, GizmoType gizmoType)
@@ -49,19 +20,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (e == null)
                 return;
 
-            var reflectionData = reflectionProbe.GetComponent<HDAdditionalReflectionData>();
             if (reflectionProbe == e.target)
             {
                 //will draw every preview, thus no need to do it multiple times
                 Gizmos_CapturePoint(e);
             }
-            var mat = Matrix4x4.TRS(reflectionProbe.transform.position, reflectionProbe.transform.rotation, Vector3.one); 
-            InfluenceVolumeUI.DrawGizmos(e.m_UIState.influenceVolume, reflectionData.influenceVolume, mat, InfluenceVolumeUI.HandleType.None, InfluenceVolumeUI.HandleType.Base);
 
             if (!e.sceneViewEditing)
                 return;
-
-
 
             DrawVerticalRay(reflectionProbe.transform);
         }
