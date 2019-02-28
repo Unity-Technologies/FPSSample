@@ -1,0 +1,100 @@
+// Forward pass
+Pass
+{		
+	Tags { "LightMode"="GBuffer" }
+	
+	Stencil
+	{
+		WriteMask 7
+		Ref  2
+		Comp Always
+		Pass Replace
+	}	
+		
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	#pragma multi_compile _ LIGHT_LAYERS
+	#pragma multi_compile _ DEBUG_DISPLAY
+	
+	#define UNITY_MATERIAL_LIT
+	
+	${VFXInclude("Shaders/RenderPipeline/HDRP/VFXLitVaryings.template")}	
+	
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		
+		${VFXHDRPLitDeclareVaryings}
+
+		#if USE_SOFT_PARTICLE || USE_ALPHA_TEST
+		// x: inverse soft particles fade distance
+		// y: alpha threshold
+		nointerpolation float2 builtInInterpolants : TEXCOORD1;
+		#endif
+		
+		float3 offsets : TEXCOORD3;
+		nointerpolation float3 rotX : TEXCOORD4;
+		nointerpolation float3 rotY : TEXCOORD5;		
+		
+		#if HDRP_NEEDS_UVS
+		nointerpolation uint faceID : TEXCOORD6;
+		#endif
+	};
+	
+	struct ps_output
+	{
+		float4 color : SV_Target0;
+	};
+	
+${VFXHDRPLitVaryingsMacros}	
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_INVSOFTPARTICLEFADEDISTANCE builtInInterpolants.x
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.y
+#define VFX_VARYING_OFFSETS offsets
+#define VFX_VARYING_ROTX rotX
+#define VFX_VARYING_ROTY rotY
+#if HDRP_NEEDS_UVS
+#define VFX_VARYING_FACEID faceID
+#endif
+				
+${VFXBegin:VFXVertexAdditionalProcess}
+${VFXHDRPLitFillVaryings}
+${VFXEnd}
+
+	${VFXInclude("Shaders/ParticleHexahedron/Pass.template")}	
+	#define SHADERPASS SHADERPASS_GBUFFER	
+	${VFXInclude("Shaders/RenderPipeline/HDRP/VFXLit.template")}	
+		
+	#pragma fragment frag
+	void frag(ps_input i, OUTPUT_GBUFFER(outGBuffer)
+#if USE_DOUBLE_SIDED
+	, bool frontFace : SV_IsFrontFace
+#endif
+	)
+	{
+#if !USE_DOUBLE_SIDED	
+		const bool frontFace = true;
+#endif
+		const float faceMul = frontFace ? 1.0f : -1.0f;
+
+		float3 normalWS;
+		const VFXUVData uvData = GetUVData(i,VFXCubeGetUV(i));
+		
+		#if USE_NORMAL_MAP
+		float3 n = SampleNormalMap(VFX_SAMPLER(normalMap),uvData);
+		normalWS = VFXCubeTransformNormalTS(i,n,frontFace);
+		normalWS = lerp(VFXCubeGetLocalNormal(i) * faceMul,normalWS,i.materialProperties.z);
+		#else
+		normalWS = VFXCubeGetLocalNormal(i) * faceMul;
+		#endif
+		normalWS = VFXCubeTransformNormalWS(i,normalWS);
+		normalWS = normalize(normalWS);
+
+		VFXComputePixelOutputToGBuffer(i,normalWS,uvData,outGBuffer);
+
+	}
+	ENDHLSL
+}

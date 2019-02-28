@@ -1,89 +1,93 @@
-﻿using Unity.Entities;
+﻿using System.Collections.Generic;
+using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
+[AlwaysUpdateSystem]
 [DisableAutoCreation]
 public class HandleSpatialEffectRequests : BaseComponentSystem 
 {
-
-	ComponentGroup Group;
-
-	public HandleSpatialEffectRequests(GameWorld world, GameObject systemRoot, BundledResourceManager resourceSystem) : base(world)
+	struct SpatialEffectRequest 
 	{
-		var effectBundle = resourceSystem.GetResourceRegistry<SpatialEffectRegistry>();
-		GameDebug.Assert(effectBundle != null,"No HitscanEffectRegistry defined in registry");
+		public SpatialEffectTypeDefinition effectDef;
+		public float3 position;
+		public quaternion rotation;
+	}
 
-		m_Pools = new Pool[effectBundle.entries.Count];
-		for(var i=0;i<effectBundle.entries.Count;i++)
+	
+	List<SpatialEffectRequest> m_requests = new List<SpatialEffectRequest>(32);
+	
+	public HandleSpatialEffectRequests(GameWorld world) : base(world)
+	{}
+
+
+	public void Request(SpatialEffectTypeDefinition effectDef, float3 position, quaternion rotation)
+	{
+		m_requests.Add(new SpatialEffectRequest
 		{
-			var entry = effectBundle.entries[i];
-
-			if (entry.prefab.guid == "")
-				continue;
-			
-			var resource = resourceSystem.LoadSingleAssetResource(entry.prefab.guid);
-			GameDebug.Assert(resource != null);
-
-			var prefab = resource as GameObject;
-			GameDebug.Assert(prefab != null);
-			
-			var pool = new Pool();
-			pool.instances = new SpatialEffectInstance[entry.poolSize];
-			for (var j = 0; j < pool.instances.Length; j++)
-			{
-				var go = GameObject.Instantiate(prefab);
-            
-				if(systemRoot != null)
-					go.transform.SetParent(systemRoot.transform, false);
-
-				pool.instances[j] = go.GetComponent<SpatialEffectInstance>();
-				GameDebug.Assert(pool.instances[j],"Effect prefab does not have SpatialEffectInstance component");
-			}
-
-			m_Pools[i] = pool;
-		}
+			effectDef = effectDef,
+			position = position,
+			rotation = rotation,
+		});
 	}
-
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		Group = GetComponentGroup(typeof(SpatialEffectRequest));
-	}
-
-	protected override void OnDestroyManager()
-	{
-		if (m_Pools != null)
-		{
-			for (var i = 0; i < m_Pools.Length; i++)
-			{
-				var pool = m_Pools[i];
-				for(var j=0;j<pool.instances.Length;j++)
-					GameObject.Destroy(pool.instances[j]);
-			}
-		}		
-	}
-
+	
 	protected override void OnUpdate()
 	{
-		var requestArray = Group.GetComponentDataArray<SpatialEffectRequest>();
-		var entityArray = Group.GetEntityArray();
-		
-		for (var i = 0; i < requestArray.Length; i++)
+		for (int nRequest=0;nRequest<m_requests.Count;nRequest++)
 		{
-			var request = requestArray[i];
-			var pool = m_Pools[request.effectTypeRegistryId];
-			var index = pool.nextInstanceId % pool.instances.Length;
-			pool.instances[index].StartEffect(request.position,request.rotation);
-			pool.nextInstanceId++;
+			var request = m_requests[nRequest];
 			
-			PostUpdateCommands.DestroyEntity(entityArray[i]);
+			if(request.effectDef.effect != null)
+			{
+				var normal = math.mul(request.rotation,new float3(0,0,1));
+
+				var vfxSystem = World.GetExistingManager<VFXSystem>();
+				vfxSystem.SpawnPointEffect(request.effectDef.effect, request.position, normal);
+			}
+
+			if (request.effectDef.sound != null)
+				Game.SoundSystem.Play(request.effectDef.sound, request.position);
+
+			if (request.effectDef.shockwave.enabled)
+			{
+				var layer = LayerMask.NameToLayer("Debris");
+				var mask = 1 << layer;
+				var explosionCenter = request.position + (float3)UnityEngine.Random.insideUnitSphere * 0.2f;
+				var colliders = Physics.OverlapSphere(request.position,request.effectDef.shockwave.radius,mask);
+				for (var i = 0; i < colliders.Length; i++)
+				{
+					var rigidBody = colliders[i].gameObject.GetComponent<Rigidbody>();
+					if (rigidBody != null)
+					{
+						rigidBody.AddExplosionForce(request.effectDef.shockwave.force,explosionCenter,
+							request.effectDef.shockwave.radius, request.effectDef.shockwave.upwardsModifier, 
+							request.effectDef.shockwave.mode);
+					}
+				}
+			}
+
+
+			/*
+			var hdpipe = RenderPipelineManager.currentPipeline as UnityEngine.Experimental.Rendering.HDPipeline.HDRenderPipeline;
+			if (hdpipe != null)
+			{
+			    var matholder = GetComponent<DecalHolder>();
+			    if (matholder != null)
+			    {
+			        var ds = UnityEngine.Experimental.Rendering.HDPipeline.DecalSystem.instance;
+			        var go = new GameObject();
+			        go.transform.rotation = effectEvent.rotation;
+			        go.transform.position = effectEvent.position;
+			        go.transform.Translate(-0.5f, 0, 0, Space.Self);
+			        go.transform.up = go.transform.right;
+			        var d = go.AddComponent<UnityEngine.Experimental.Rendering.HDPipeline.DecalProjectorComponent>();
+			        d.m_Material = matholder.mat;
+			        ds.AddDecal(d);
+			    }
+			}
+			*/
 		}
+	
+		m_requests.Clear();
 	}
-
-	class Pool
-	{
-		public SpatialEffectInstance[] instances;
-		public int nextInstanceId;
-	}
-
-	Pool[] m_Pools;
 }

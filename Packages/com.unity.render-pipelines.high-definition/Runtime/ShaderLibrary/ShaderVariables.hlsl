@@ -25,6 +25,7 @@
     #define unity_WorldToCamera unity_StereoWorldToCamera[unity_StereoEyeIndex]
     #define unity_CameraToWorld unity_StereoCameraToWorld[unity_StereoEyeIndex]
     #define _WorldSpaceCameraPos _WorldSpaceCameraPosStereo[unity_StereoEyeIndex].xyz
+    #define _PrevCamPosRWS _PrevCamPosRWSStereo[unity_StereoEyeIndex].xyz
 #endif
 
 #define UNITY_LIGHTMODEL_AMBIENT (glstate_lightmodel_ambient * 2)
@@ -81,8 +82,8 @@ CBUFFER_START(UnityPerDraw)
     // z = Texel size on U texture coordinate
     float4 unity_ProbeVolumeParams;
     float4x4 unity_ProbeVolumeWorldToObject;
-    float3 unity_ProbeVolumeSizeInv;
-    float3 unity_ProbeVolumeMin;
+    float4 unity_ProbeVolumeSizeInv; // Note: This variable is float4 and not float3 (compare to builtin unity) to be compatible with SRP batcher
+    float4 unity_ProbeVolumeMin; // Note: This variable is float4 and not float3 (compare to builtin unity) to be compatible with SRP batcher
 
     // This contain occlusion factor from 0 to 1 for dynamic objects (no SH here)
     float4 unity_ProbesOcclusion;
@@ -150,6 +151,7 @@ SAMPLER(s_linear_clamp_sampler);
 SAMPLER(s_linear_repeat_sampler);
 SAMPLER(s_trilinear_clamp_sampler);
 SAMPLER(s_trilinear_repeat_sampler);
+SAMPLER_CMP(s_linear_clamp_compare_sampler);
 
 // ----------------------------------------------------------------------------
 
@@ -213,10 +215,11 @@ CBUFFER_START(UnityGlobal)
 
     // TODO: put commonly used vars together (below), and then sort them by the frequency of use (descending).
     // Note: a matrix is 4 * 4 * 4 = 64 bytes (1x cache line), so no need to sort those.
-#if defined(USING_STEREO_MATRICES)
-    float3 _Align16;
-#else
+#ifndef USING_STEREO_MATRICES
     float3 _WorldSpaceCameraPos;
+    float  _Pad0;
+    float3 _PrevCamPosRWS;
+    float  _Pad1;
 #endif
     float4 _ScreenSize;                 // { w, h, 1 / w, 1 / h }
     float4 _ScreenToTargetScale;        // { w / RTHandle.maxWidth, h / RTHandle.maxHeight } : xy = currFrame, zw = prevFrame
@@ -253,8 +256,9 @@ CBUFFER_START(UnityGlobal)
 
     float4 _FrustumPlanes[6];           // { (a, b, c) = N, d = -dot(N, P) } [L, R, T, B, N, F]
 
-    // TAA Frame Index ranges from 0 to 7. This gives you two rotations per cycle.
-    float4 _TaaFrameRotation;           // { sin(taaFrame * PI/2), cos(taaFrame * PI/2), 0, 0 }
+    // TAA Frame Index ranges from 0 to 7.
+    // First two channels of this gives you two rotations per cycle. 
+    float4 _TaaFrameInfo;           // { sin(taaFrame * PI/2), cos(taaFrame * PI/2), taaFrame, taaEnabled ? 1 : 0 }
     // t = animateMaterials ? Time.realtimeSinceStartup : 0.
     float4 _Time;                       // { t/20, t, t*2, t*3 }
     float4 _LastTime;                   // { t/20, t, t*2, t*3 }
@@ -265,20 +269,27 @@ CBUFFER_START(UnityGlobal)
 
     // Volumetric lighting.
     float4 _AmbientProbeCoeffs[7];      // 3 bands of SH, packed, rescaled and convolved with the phase function
-    float  _GlobalAnisotropy;
-    float3 _GlobalScattering;
-    float  _GlobalExtinction;
+
+    float3 _HeightFogBaseScattering;
+    float  _HeightFogBaseExtinction;
+
+    float2 _HeightFogExponents;         // { 1/H, H }
+    float  _HeightFogBaseHeight;
+    float  _GlobalFogAnisotropy;
+
     float4 _VBufferResolution;          // { w, h, 1/w, 1/h }
-    float4 _VBufferSliceCount;          // { count, 1/count, 0, 0 }
+    uint   _VBufferSliceCount;
+    float  _VBufferRcpSliceCount;
+    float  _Pad2;
+    float  _Pad3;
     float4 _VBufferUvScaleAndLimit;     // Necessary us to work with sub-allocation (resource aliasing) in the RTHandle system
-    float4 _VBufferDepthEncodingParams; // See the call site for description
-    float4 _VBufferDepthDecodingParams; // See the call site for description
+    float4 _VBufferDistanceEncodingParams; // See the call site for description
+    float4 _VBufferDistanceDecodingParams; // See the call site for description
 
     // TODO: these are only used for reprojection.
     // Once reprojection is performed in a separate pass, we should probably
     // move these to a dedicated CBuffer to avoid polluting the global one.
     float4 _VBufferPrevResolution;
-    float4 _VBufferPrevSliceCount;
     float4 _VBufferPrevUvScaleAndLimit;
     float4 _VBufferPrevDepthEncodingParams;
     float4 _VBufferPrevDepthDecodingParams;
@@ -291,6 +302,8 @@ CBUFFER_START(UnityGlobal)
 
     #define DEFAULT_LIGHT_LAYERS 0xFF
     uint _EnableLightLayers;
+
+    uint _EnableSSRefraction;
 
 CBUFFER_END
 
@@ -305,7 +318,8 @@ float4x4 _InvViewMatrixStereo[2];
 float4x4 _InvProjMatrixStereo[2];
 float4x4 _InvViewProjMatrixStereo[2];
 float4x4 _PrevViewProjMatrixStereo[2];
-float4   _WorldSpaceCameraPosStereo[2];
+float3   _WorldSpaceCameraPosStereo[2];
+float3  _PrevCamPosRWSStereo[2];
 #if SHADER_STAGE_COMPUTE
 // Currently the Unity engine doesn't automatically update stereo indices, offsets, and matrices for compute shaders.
 // Instead, we manually update _ComputeEyeIndex in SRP code. 
@@ -347,7 +361,6 @@ float4x4 OptimizeProjectionMatrix(float4x4 M)
 float4x4 ApplyCameraTranslationToMatrix(float4x4 modelMatrix)
 {
     // To handle camera relative rendering we substract the camera position in the model matrix
-    // User must not use UNITY_MATRIX_M directly, unless they understand what they do
 #if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
     modelMatrix._m03_m13_m23 -= _WorldSpaceCameraPos;
 #endif
@@ -368,12 +381,13 @@ float4x4 ApplyCameraTranslationToInverseMatrix(float4x4 inverseModelMatrix)
 // Define Model Matrix Macro
 // Note: In order to be able to define our macro to forbid usage of unity_ObjectToWorld/unity_WorldToObject
 // We need to declare inline function. Using uniform directly mean they are expand with the macro
-float4x4 GetUnityObjectToWorld() { return unity_ObjectToWorld; }
-float4x4 GetUnityWorldToObject() { return unity_WorldToObject; }
+float4x4 GetRawUnityObjectToWorld() { return unity_ObjectToWorld; }
+float4x4 GetRawUnityWorldToObject() { return unity_WorldToObject; }
 
-#define UNITY_MATRIX_M     ApplyCameraTranslationToMatrix(GetUnityObjectToWorld())
-#define UNITY_MATRIX_I_M   ApplyCameraTranslationToInverseMatrix(GetUnityWorldToObject())
+#define UNITY_MATRIX_M     ApplyCameraTranslationToMatrix(GetRawUnityObjectToWorld())
+#define UNITY_MATRIX_I_M   ApplyCameraTranslationToInverseMatrix(GetRawUnityWorldToObject())
 
+// To get instanding working, we must use UNITY_MATRIX_M / UNITY_MATRIX_I_M as UnityInstancing.hlsl redefine them
 #define unity_ObjectToWorld Use_Macro_UNITY_MATRIX_M_instead_of_unity_ObjectToWorld
 #define unity_WorldToObject Use_Macro_UNITY_MATRIX_I_M_instead_of_unity_WorldToObject
 

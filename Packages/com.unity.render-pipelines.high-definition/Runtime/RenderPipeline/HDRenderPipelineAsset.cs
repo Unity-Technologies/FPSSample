@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -24,11 +25,33 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         [SerializeField]
         RenderPipelineResources m_RenderPipelineResources;
+
         public RenderPipelineResources renderPipelineResources
         {
             get { return m_RenderPipelineResources; }
             set { m_RenderPipelineResources = value; }
         }
+
+#if UNITY_EDITOR
+        HDRenderPipelineEditorResources m_RenderPipelineEditorResources;
+
+
+        public HDRenderPipelineEditorResources renderPipelineEditorResources
+        {
+            get
+            {
+                //there is no clean way to load editor resources without having it serialized
+                // - impossible to load them at deserialization
+                // - constructor only called at asset creation
+                // - cannot rely on OnEnable
+                //thus fallback with lazy init for them
+                if (m_RenderPipelineEditorResources == null || m_RenderPipelineEditorResources.Equals(null))
+                    m_RenderPipelineEditorResources = UnityEditor.AssetDatabase.LoadAssetAtPath<HDRenderPipelineEditorResources>(HDUtils.GetHDRenderPipelinePath() + "Editor/RenderPipelineResources/HDRenderPipelineEditorResources.asset");
+                return m_RenderPipelineEditorResources;
+            }
+            set { m_RenderPipelineEditorResources = value; }
+        }
+#endif
 
         // To be able to turn on/off FrameSettings properties at runtime for debugging purpose without affecting the original one
         // we create a runtime copy (m_ActiveFrameSettings that is used, and any parametrization is done on serialized frameSettings)
@@ -42,7 +65,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         FrameSettings m_BakedOrCustomReflectionFrameSettings = new FrameSettings();
 
         [SerializeField]
-        FrameSettings m_RealtimeReflectionFrameSettings = new FrameSettings();
+        FrameSettings m_RealtimeReflectionFrameSettings = new FrameSettings()
+        {
+            //deactivating some feature by for default realtime probe framesettings
+            enableRoughRefraction = false,
+            enableDistortion = false,
+            enablePostprocess = false,
+            enableContactShadows = false,
+            enableShadowMask = false,
+            enableSSAO = false,
+            enableAtmosphericScattering = false
+        };
         
         bool m_frameSettingsIsDirty = true;
         public bool frameSettingsIsDirty
@@ -122,9 +155,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool allowShaderVariantStripping = true;
         public bool enableSRPBatcher = false;
+        public bool enableVariantStrippingLog = false;
 
         [SerializeField]
         public DiffusionProfileSettings diffusionProfileSettings;
+
 
         // HDRP use GetRenderingLayerMaskNames to create its light linking system
         // Mean here we define our name for light linking.
@@ -168,39 +203,38 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_RenderPipelineResources.shaders.defaultPS;
         }
 
+#if UNITY_EDITOR
         public override Material GetDefaultMaterial()
         {
-            return m_RenderPipelineResources.materials.defaultDiffuseMat;
+            return renderPipelineEditorResources == null ? null : renderPipelineEditorResources.materials.defaultDiffuseMat;
         }
 
-        #if UNITY_EDITOR
         // call to GetAutodeskInteractiveShaderXXX are only from within editor
         public override Shader GetAutodeskInteractiveShader()
         {
-            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractive.ShaderGraph");
+            return renderPipelineEditorResources == null ? null : renderPipelineEditorResources.shaderGraphs.autodeskInteractive;
         }
 
         public override Shader GetAutodeskInteractiveTransparentShader()
         {
-            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractiveTransparent.ShaderGraph");
+            return renderPipelineEditorResources == null ? null : renderPipelineEditorResources.shaderGraphs.autodeskInteractiveTransparent;
         }
 
         public override Shader GetAutodeskInteractiveMaskedShader()
         {
-            return UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(HDUtils.GetHDRenderPipelinePath() + "Runtime/RenderPipelineResources/ShaderGraph/AutodeskInteractiveMasked.ShaderGraph");
+            return renderPipelineEditorResources == null ? null : renderPipelineEditorResources.shaderGraphs.autodeskInteractiveMasked;
         }
-        #endif
 
         // Note: This function is HD specific
         public Material GetDefaultDecalMaterial()
         {
-            return m_RenderPipelineResources.materials.defaultDecalMat;
+            return renderPipelineEditorResources == null ? null : renderPipelineEditorResources.materials.defaultDecalMat;
         }
 
         // Note: This function is HD specific
         public Material GetDefaultMirrorMaterial()
         {
-            return m_RenderPipelineResources.materials.defaultMirrorMat;
+            return renderPipelineEditorResources == null ? null : renderPipelineEditorResources.materials.defaultMirrorMat;
         }
 
         public override Material GetDefaultParticleMaterial()
@@ -215,7 +249,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public override Material GetDefaultTerrainMaterial()
         {
-            return m_RenderPipelineResources.materials.defaultTerrainMat;
+            return renderPipelineEditorResources == null ? null : renderPipelineEditorResources.materials.defaultTerrainMat;
         }
 
         public override Material GetDefaultUIMaterial()
@@ -237,6 +271,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             return null;
         }
+#endif
 
         void ISerializationCallbackReceiver.OnBeforeSerialize()
         {
@@ -255,5 +290,53 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_Version = currentVersion;
             }
         }
+
+#if UNITY_EDITOR
+        // Array structure that allow us to manipulate the set of defines that the HD render pipeline needs
+        List<string> defineArray = new List<string>();
+
+        bool UpdateDefineList(bool flagValue, string defineMacroValue)
+        {
+            bool macroExists = defineArray.Contains(defineMacroValue);
+            if (flagValue)
+            {
+                if (!macroExists)
+                {
+                    defineArray.Add(defineMacroValue);
+                    return true;
+                }
+            }
+            else
+            {
+                if (macroExists)
+                {
+                    defineArray.Remove(defineMacroValue);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // This function allows us to raise or remove some preprocessing defines based on the render pipeline settings
+        public void EvaluateSettings()
+        {
+#if REALTIME_RAYTRACING_SUPPORT
+            // Grab the current set of defines and split them
+            string currentDefineList = UnityEditor.PlayerSettings.GetScriptingDefineSymbolsForGroup(UnityEditor.BuildTargetGroup.Standalone);
+            defineArray.Clear();
+            defineArray.AddRange(currentDefineList.Split(';'));
+
+            // Update all the individual defines
+            bool needUpdate = false;
+            needUpdate |= UpdateDefineList(renderPipelineSettings.supportRayTracing, "ENABLE_RAYTRACING");
+
+            // Only set if it changed
+            if(needUpdate)
+            {
+                UnityEditor.PlayerSettings.SetScriptingDefineSymbolsForGroup(UnityEditor.BuildTargetGroup.Standalone, string.Join(";", defineArray.ToArray()));
+            }
+#endif
+        }
+#endif
     }
 }

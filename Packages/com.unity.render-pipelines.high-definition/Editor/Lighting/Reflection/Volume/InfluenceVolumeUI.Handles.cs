@@ -87,7 +87,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static void DrawBoxHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, Gizmo6FacesBox box)
+        static void DrawBoxHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, HierarchicalBox box)
         {
             box.center = d.offset.vector3Value;
             box.size = d.boxSize.vector3Value;
@@ -99,16 +99,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 Undo.RecordObject(sourceAsset, "Modified Base Volume AABB");
 
                 d.offset.vector3Value = box.center;
-                var size = box.size;
                 
                 Vector3 blendPositive = d.boxBlendDistancePositive.vector3Value;
                 Vector3 blendNegative = d.boxBlendDistanceNegative.vector3Value;
                 Vector3 blendNormalPositive = d.boxBlendNormalDistancePositive.vector3Value;
                 Vector3 blendNormalNegative = d.boxBlendNormalDistanceNegative.vector3Value;
-                for (int i = 0; i < 3; ++i)
-                {
-                    size[i] = Mathf.Max(0f, size[i]);
-                }
+                Vector3 size = box.size;
                 d.boxSize.vector3Value = size;
                 Vector3 halfSize = size * .5f;
                 for (int i = 0; i < 3; ++i)
@@ -154,36 +150,34 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static void DrawBoxFadeHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, Gizmo6FacesBox box, SerializedProperty positive, SerializedProperty negative)
+        static void DrawBoxFadeHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, HierarchicalBox box, SerializedProperty positive, SerializedProperty negative)
         {
             box.center = d.offset.vector3Value - (positive.vector3Value - negative.vector3Value) * 0.5f;
             box.size = d.boxSize.vector3Value - positive.vector3Value - negative.vector3Value;
-            box.allHandleControledByOne = !d.editorAdvancedModeEnabled.boolValue;
+            box.monoHandle = !d.editorAdvancedModeEnabled.boolValue;
+
+            //set up parent box too for clamping
+            s.boxBaseHandle.center = d.offset.vector3Value;
+            s.boxBaseHandle.size = d.boxSize.vector3Value;
 
             EditorGUI.BeginChangeCheck();
             box.DrawHandle();
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RecordObject(sourceAsset, "Modified Influence Volume");
-
-                var influenceCenter = d.offset.vector3Value;
+                
                 var halfInfluenceSize = d.boxSize.vector3Value * .5f;
+                var blendDistancePositive = d.offset.vector3Value - box.center - box.size * .5f + halfInfluenceSize;
+                var blendDistanceNegative = box.center - d.offset.vector3Value - box.size * .5f + halfInfluenceSize;
 
-                var centerDiff = box.center - influenceCenter;
-                var halfSizeDiff = halfInfluenceSize - box.size * .5f;
-                var positiveNew = halfSizeDiff - centerDiff;
-                var negativeNew = halfSizeDiff + centerDiff;
-                var blendDistancePositive = Vector3.Max(Vector3.zero, Vector3.Min(positiveNew, halfInfluenceSize));
-                var blendDistanceNegative = Vector3.Max(Vector3.zero, Vector3.Min(negativeNew, halfInfluenceSize));
-
-                positive.vector3Value = blendDistancePositive;
-                negative.vector3Value = blendDistanceNegative;
+                positive.vector3Value = Vector3.Min(blendDistancePositive, halfInfluenceSize);
+                negative.vector3Value = Vector3.Min(blendDistanceNegative, halfInfluenceSize);
 
                 d.Apply();
             }
         }
 
-        static void DrawSphereHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset,  SphereBoundsHandle sphere)
+        static void DrawSphereHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, HierarchicalSphere sphere)
         {
             sphere.center = d.offset.vector3Value;
             sphere.radius = d.sphereRadius.floatValue;
@@ -202,10 +196,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static void DrawSphereFadeHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, SphereBoundsHandle sphere, SerializedProperty radius)
+        static void DrawSphereFadeHandle(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, Object sourceAsset, HierarchicalSphere sphere, SerializedProperty blend)
         {
+            //init parent sphere for clamping
+            s.sphereBaseHandle.center = d.offset.vector3Value;
+            s.sphereBaseHandle.radius = d.sphereRadius.floatValue;
             sphere.center = d.offset.vector3Value;
-            sphere.radius = radius.floatValue;
+            sphere.radius = d.sphereRadius.floatValue - blend.floatValue;
 
             EditorGUI.BeginChangeCheck();
             sphere.DrawHandle();
@@ -213,7 +210,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 Undo.RecordObject(sourceAsset, "Modified Influence volume");
 
-                radius.floatValue = Mathf.Clamp(d.sphereRadius.floatValue - sphere.radius, 0, d.sphereRadius.floatValue);
+                blend.floatValue = Mathf.Clamp(d.sphereRadius.floatValue - sphere.radius, 0, d.sphereRadius.floatValue);
                 d.Apply();
             }
         }

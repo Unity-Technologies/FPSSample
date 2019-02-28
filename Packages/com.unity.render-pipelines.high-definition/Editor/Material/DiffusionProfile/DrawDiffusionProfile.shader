@@ -17,8 +17,6 @@ Shader "Hidden/HDRenderPipeline/DrawDiffusionProfile"
             #pragma vertex Vert
             #pragma fragment Frag
 
-            #pragma multi_compile SSS_MODEL_BASIC SSS_MODEL_DISNEY
-
             //-------------------------------------------------------------------------------------
             // Include
             //-------------------------------------------------------------------------------------

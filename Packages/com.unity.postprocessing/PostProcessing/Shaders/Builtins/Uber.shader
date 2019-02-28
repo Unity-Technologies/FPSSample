@@ -7,11 +7,16 @@ Shader "Hidden/PostProcessing/Uber"
         #pragma multi_compile __ DISTORT
         #pragma multi_compile __ CHROMATIC_ABERRATION CHROMATIC_ABERRATION_LOW
         #pragma multi_compile __ BLOOM BLOOM_LOW
-        #pragma multi_compile __ COLOR_GRADING_LDR_2D COLOR_GRADING_HDR_2D COLOR_GRADING_HDR_3D
         #pragma multi_compile __ VIGNETTE
         #pragma multi_compile __ GRAIN
         #pragma multi_compile __ FINALPASS
-
+        // the following keywords are handled in API specific SubShaders below
+        // #pragma multi_compile __ COLOR_GRADING_LDR_2D COLOR_GRADING_HDR_2D COLOR_GRADING_HDR_3D
+        // #pragma multi_compile __ STEREO_INSTANCING_ENABLED STEREO_DOUBLEWIDE_TARGET
+        
+        #pragma vertex VertUVTransform
+        #pragma fragment FragUber
+    
         #include "../StdLib.hlsl"
         #include "../Colors.hlsl"
         #include "../Sampling.hlsl"
@@ -270,12 +275,41 @@ Shader "Hidden/PostProcessing/Uber"
         Pass
         {
             HLSLPROGRAM
+                #pragma exclude_renderers gles vulkan
 
-                #pragma vertex VertUVTransform
-                #pragma fragment FragUber
-
+                #pragma multi_compile __ COLOR_GRADING_LDR_2D COLOR_GRADING_HDR_2D COLOR_GRADING_HDR_3D
+                #pragma multi_compile __ STEREO_INSTANCING_ENABLED STEREO_DOUBLEWIDE_TARGET
             ENDHLSL
         }
+    }
 
+    SubShader
+    {
+        Cull Off ZWrite Off ZTest Always
+
+        Pass
+        {
+            HLSLPROGRAM
+                #pragma only_renderers vulkan
+
+                #pragma multi_compile __ COLOR_GRADING_LDR_2D COLOR_GRADING_HDR_2D COLOR_GRADING_HDR_3D
+                #pragma multi_compile __ STEREO_DOUBLEWIDE_TARGET // disabled for Vulkan because of shader compiler issues in older Unity versions: STEREO_INSTANCING_ENABLED
+            ENDHLSL
+        }
+    }
+    
+    SubShader
+    {
+        Cull Off ZWrite Off ZTest Always
+
+        Pass
+        {
+            HLSLPROGRAM
+                #pragma only_renderers gles
+
+                #pragma multi_compile __ COLOR_GRADING_LDR_2D COLOR_GRADING_HDR_2D // not supported by OpenGL ES 2.0: COLOR_GRADING_HDR_3D
+                #pragma multi_compile __ STEREO_DOUBLEWIDE_TARGET // not supported by OpenGL ES 2.0: STEREO_INSTANCING_ENABLED
+            ENDHLSL
+        }
     }
 }

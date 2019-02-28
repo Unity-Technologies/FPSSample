@@ -45,7 +45,7 @@ public struct BankingJob : IAnimationJob
 
     public Settings settings;
     public float bankAmount;
-    public PresentationState animState;
+    public CharacterInterpolatedData animState;
 
     public bool Setup(Animator animator, EditorSettings editorSettings, float deltaTime, 
         NativeArray<MuscleHandle> headMuscles, NativeArray<MuscleHandle> spineMuscles)
@@ -75,7 +75,7 @@ public struct BankingJob : IAnimationJob
     {
     }
 
-    public void Update(PresentationState animState, Settings settings, AnimationScriptPlayable playable)
+    public void Update(CharacterInterpolatedData animState, Settings settings, AnimationScriptPlayable playable)
     {
         var job = playable.GetJobData<BankingJob>();
         job.animState = animState;

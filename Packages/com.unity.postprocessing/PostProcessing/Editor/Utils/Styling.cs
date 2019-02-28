@@ -3,29 +3,68 @@ using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEditor.Rendering.PostProcessing
 {
+    /// <summary>
+    /// Common styles used for Post-processing editor controls.
+    /// </summary>
     public static class Styling
     {
+        /// <summary>
+        /// Style for the override checkbox.
+        /// </summary>
         public static readonly GUIStyle smallTickbox;
+
+        /// <summary>
+        /// Style for the labels in the toolbar of each effect.
+        /// </summary>
         public static readonly GUIStyle miniLabelButton;
-        
+
         static readonly Color splitterDark;
         static readonly Color splitterLight;
+
+        /// <summary>
+        /// Color of UI splitters.
+        /// </summary>
         public static Color splitter { get { return EditorGUIUtility.isProSkin ? splitterDark : splitterLight; } }
 
         static readonly Texture2D paneOptionsIconDark;
         static readonly Texture2D paneOptionsIconLight;
+
+        /// <summary>
+        /// Option icon used in effect headers.
+        /// </summary>
         public static Texture2D paneOptionsIcon { get { return EditorGUIUtility.isProSkin ? paneOptionsIconDark : paneOptionsIconLight; } }
 
+        /// <summary>
+        /// Style for effect header labels.
+        /// </summary>
         public static readonly GUIStyle headerLabel;
 
         static readonly Color headerBackgroundDark;
         static readonly Color headerBackgroundLight;
+
+        /// <summary>
+        /// Color of effect header backgrounds.
+        /// </summary>
         public static Color headerBackground { get { return EditorGUIUtility.isProSkin ? headerBackgroundDark : headerBackgroundLight; } }
 
+        /// <summary>
+        /// Style for the trackball labels.
+        /// </summary>
         public static readonly GUIStyle wheelLabel;
+
+        /// <summary>
+        /// Style for the trackball cursors.
+        /// </summary>
         public static readonly GUIStyle wheelThumb;
+
+        /// <summary>
+        /// Size of the trackball cursors.
+        /// </summary>
         public static readonly Vector2 wheelThumbSize;
 
+        /// <summary>
+        /// Style for the curve editor position info.
+        /// </summary>
         public static readonly GUIStyle preLabel;
 
         static Styling()

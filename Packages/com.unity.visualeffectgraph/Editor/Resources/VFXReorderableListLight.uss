@@ -1,0 +1,14 @@
+.ReorderableList > #Toolbar > #Add > #icon
+{
+    background-image: resource("VFX/StolenToolbarPlus.png");
+}
+
+.ReorderableList > #Toolbar > #Remove > #icon
+{
+    background-image: resource("VFX/StolenToolbarMinus.png");
+}
+
+#DraggingHandle #icon
+{
+    background-image: resource("Builtin Skins/LightSkin/Images/WindowBottomResize.png");
+}

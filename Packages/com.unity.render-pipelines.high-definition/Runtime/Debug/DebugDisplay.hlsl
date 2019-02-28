@@ -17,16 +17,20 @@ int _DebugMipMapMode; // Match enum DebugMipMapMode
 int _DebugMipMapModeTerrainTexture; // Match enum DebugMipMapModeTerrainTexture
 int _ColorPickerMode; // Match enum ColorPickerDebugMode
 int _DebugStep;
+int _DebugDepthPyramidMip;
 float4 _DebugLightingAlbedo; // x == bool override, yzw = albedo for diffuse
 float4 _DebugLightingSmoothness; // x == bool override, y == override value
 float4 _DebugLightingNormal; // x == bool override
 float4 _DebugLightingSpecularColor; // x == bool override, yzw = specular color
+float4 _DebugLightingEmissiveColor; // x == bool override, yzw = emissive color
 float4 _MousePixelCoord;  // xy unorm, zw norm
 float4 _MouseClickPixelCoord;  // xy unorm, zw norm
 float _DebugExposure;
 CBUFFER_END
 
 float debugShadowAttenuation = 0;
+
+StructuredBuffer<int2>  _DebugDepthPyramidOffsets;
 
 // When displaying lux meter we compress the light in order to be able to display value higher than 65504
 // The sun is between 100 000 and 150 000, so we use 4 to be able to cover such a range (4 * 65504)

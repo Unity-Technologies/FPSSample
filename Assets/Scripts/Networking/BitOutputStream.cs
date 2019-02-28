@@ -84,41 +84,6 @@ public struct BitOutputStream
         m_CurrentByteIdx += count;
     }
 
-    public void WriteByteArray(byte[] data, int srcIndex, int count)
-    {
-        WriteUIntPacked((uint)count);
-        if (count > 0)
-            WriteBytes(data, srcIndex, count);
-    }
-
-    public void CopyByteArray(ref BitInputStream input)
-    {
-        var count = (int)input.ReadUIntPacked();
-        WriteUIntPacked((uint)count);
-        if (count > 0)
-        {
-            Align();
-            input.Align();
-            input.ReadBytes(m_Buffer, m_CurrentByteIdx, count);
-            m_CurrentByteIdx += count;
-        }
-    }
-    public void CopyByteArray(ref ByteInputStream input, int maxCount)
-    {
-        var count = (int)input.ReadUInt16();
-        WriteUIntPacked((uint)count);
-        if (count > 0)
-        {
-            Align();
-            input.ReadBytes(m_Buffer, m_CurrentByteIdx, count, maxCount);
-            m_CurrentByteIdx += count;
-        }
-        else
-        {
-            input.SkipBytes(maxCount);
-        }
-    }
-
     public int Align()
     {
         if (m_CurrentBitIdx > 0)

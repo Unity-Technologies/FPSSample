@@ -144,10 +144,6 @@ float _Drag;
 float _ShiverDrag;
 float _ShiverDirectionality;
 
-// sample-game begin: fps reproject mode
-float _FpsModeFov;
-// sample-game end
-
 // Specular AA
 float _EnableGeometricSpecularAA;
 float _SpecularAAScreenSpaceVariance;

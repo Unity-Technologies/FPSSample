@@ -244,6 +244,7 @@ ModelImporter:
     11400000: //RootNode
     11400002: //RootNode
     11400004: //RootNode
+    2186277476908879412: ImportLogs
   externalObjects: {}
   materials:
     importMaterials: 0
@@ -257,7 +258,10 @@ ModelImporter:
     optimizeGameObjects: 0
     motionNodeName: Skeleton/Root_Motion
     rigImportErrors: 
-    rigImportWarnings: 
+    rigImportWarnings: "Copied Avatar Rig Configuration mis-match. Bone length in
+      copied configuration does not match position in animation file:\n\t'Left_LowerLeg'
+      : position error = 1.287233 mm\n\t'Left_Foot' : position error = 1.241585 mm\n\t'Right_LowerLeg'
+      : position error = 1.287209 mm\n\t'Right_Foot' : position error = 1.241562 mm\n"
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 

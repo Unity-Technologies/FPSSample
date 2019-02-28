@@ -1,0 +1,10 @@
+{
+	SubShader
+	{	
+		Cull Off
+		
+		${VFXInclude("Shaders/VFXParticleHeader.template")}
+		${VFXInclude("Shaders/ParticleQuads/PassForward.template")}
+		${VFXInclude("Shaders/ParticleQuads/PassShadowCaster.template"),USE_CAST_SHADOWS_PASS}
+	}
+}

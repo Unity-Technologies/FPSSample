@@ -118,11 +118,12 @@ public class GameModeAssault : IGameMode
 
                         if (p.controlledEntity != Entity.Null)
                         {
-                            var character = m_World.GetEntityManager()
-                                .GetComponentObject<Character>(p.controlledEntity);
-                            var health = character.healthState;
-                            health.health = 0.0f;
-                            health.deathTick = -1;
+                            var healthState = m_World.GetEntityManager()
+                                .GetComponentData<HealthStateData>(p.controlledEntity);
+                            healthState.health = 0.0f;
+                            healthState.deathTick = -1;
+                            m_World.GetEntityManager()
+                                .SetComponentData(p.controlledEntity,healthState);
                         }
                     }
                     m_Phase = Phase.PostGame;
@@ -189,13 +190,13 @@ public class GameModeAssault : IGameMode
             if (player.controlledEntity == Entity.Null)
                 continue;
 
-            var character = m_World.GetEntityManager().GetComponentObject<Character>(player.controlledEntity);
+            var healthState = m_World.GetEntityManager().GetComponentData<HealthStateData>(player.controlledEntity);
 
             // Skip dead
-            if (character.healthState.health <= 0)
+            if (healthState.health <= 0)
                 continue;
 
-            var charPredictedState = m_World.GetEntityManager().GetComponentData<CharPredictedStateData>(player.controlledEntity);
+            var charPredictedState = m_World.GetEntityManager().GetComponentData<CharacterPredictedData>(player.controlledEntity);
             var position = charPredictedState.position;
 
             bool insideActive = InsideCylinder(position, capturePosition, m_ActiveCapturePoint.height, m_ActiveCapturePoint.radius);

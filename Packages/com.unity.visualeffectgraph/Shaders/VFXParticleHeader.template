@@ -1,0 +1,34 @@
+${VFXShaderTags}
+
+${VFXInclude("Shaders/VFXParticleCommon.template")}
+${VFXOutputRenderState}	
+	
+HLSLINCLUDE
+#if !defined(VFX_WORLD_SPACE) && !defined(VFX_LOCAL_SPACE)
+#define VFX_LOCAL_SPACE 1
+#endif
+
+${VFXGlobalInclude}
+${VFXGlobalDeclaration}
+
+#define VFX_NEEDS_COLOR_INTERPOLATOR (VFX_USE_COLOR_CURRENT || VFX_USE_ALPHA_CURRENT)
+#define IS_TRANSPARENT_PARTICLE (!IS_OPAQUE_PARTICLE)
+
+${VFXGlobalDefines}
+
+ByteAddressBuffer attributeBuffer;	
+
+#if VFX_HAS_INDIRECT_DRAW
+StructuredBuffer<uint> indirectBuffer;	
+#endif	
+
+#if USE_DEAD_LIST_COUNT
+ByteAddressBuffer deadListCount;
+#endif
+
+CBUFFER_START(outputParams)
+	float nbMax;
+	float systemSeed;
+CBUFFER_END
+
+ENDHLSL

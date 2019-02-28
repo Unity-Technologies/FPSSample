@@ -303,7 +303,9 @@ ModelImporter:
     optimizeGameObjects: 0
     motionNodeName: Skeleton/Root_Motion
     rigImportErrors: 
-    rigImportWarnings: "Copied Avatar Rig Configuration mis-match. Bone length in copied configuration does not match position in animation file:\n\t'Left_LowerLeg' : position error = 7.272282 mm\n\t'Left_Foot' : position error = 8.393428 mm\n"
+    rigImportWarnings: "Copied Avatar Rig Configuration mis-match. Bone length in
+      copied configuration does not match position in animation file:\n\t'Left_LowerLeg'
+      : position error = 7.272282 mm\n\t'Left_Foot' : position error = 8.393428 mm\n"
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -330,7 +332,7 @@ ModelImporter:
       loop: 0
       hasAdditiveReferencePose: 0
       loopTime: 1
-      loopBlend: 1
+      loopBlend: 0
       loopBlendOrientation: 1
       loopBlendPositionY: 1
       loopBlendPositionXZ: 1
@@ -340,7 +342,41 @@ ModelImporter:
       heightFromFeet: 0
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
-      curves: []
+      curves:
+      - name: PhaseCurve
+        curve:
+          serializedVersion: 2
+          curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 0.49662775
+            value: 0.5251404
+            inSlope: 3.229616
+            outSlope: 3.229616
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0.33333334
+            outWeight: 0.02763923
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          preInfinity: 3
+          postInfinity: 3
+          rotationOrder: 4
       events:
       - time: 0.32784808
         functionName: OnCharEvent
@@ -1719,7 +1755,8 @@ ModelImporter:
     hasTranslationDoF: 1
     hasExtraRoot: 0
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: b7538c5d24affed48893bd3a90e153fb, type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: b7538c5d24affed48893bd3a90e153fb,
+    type: 3}
   animationType: 3
   humanoidOversampling: 2
   additionalBone: 0

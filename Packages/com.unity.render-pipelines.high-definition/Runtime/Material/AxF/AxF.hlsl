@@ -1536,7 +1536,7 @@ DirectLighting  EvaluateBSDF_Area(LightLoopContext lightLoopContext,
     BSDFData bsdfData, BuiltinData builtinData)
 {
 
-    if (lightData.lightType == GPULIGHTTYPE_LINE)
+    if (lightData.lightType == GPULIGHTTYPE_TUBE)
     {
         return EvaluateBSDF_Line(lightLoopContext, viewWS, posInput, preLightData, lightData, bsdfData, builtinData);
     }
@@ -1550,11 +1550,10 @@ DirectLighting  EvaluateBSDF_Area(LightLoopContext lightLoopContext,
 // EvaluateBSDF_SSLighting for screen space lighting
 // ----------------------------------------------------------------------------
 
-
 IndirectLighting EvaluateBSDF_ScreenSpaceReflection(PositionInputs posInput,
-    PreLightData   preLightData,
-    BSDFData       bsdfData,
-    inout float    reflectionHierarchyWeight)
+                                                    PreLightData   preLightData,
+                                                    BSDFData       bsdfData,
+                                                    inout float    reflectionHierarchyWeight)
 {
     IndirectLighting lighting;
     ZERO_INITIALIZE(IndirectLighting, lighting);
@@ -1564,12 +1563,11 @@ IndirectLighting EvaluateBSDF_ScreenSpaceReflection(PositionInputs posInput,
     return lighting;
 }
 
-IndirectLighting    EvaluateBSDF_SSLighting(LightLoopContext lightLoopContext,
-    float3 viewWS_Clearcoat, PositionInputs posInput,
-    PreLightData preLightData, BSDFData bsdfData,
-    EnvLightData _envLightData,
-    int _GPUImageBasedLightingType,
-    inout float hierarchyWeight)
+IndirectLighting    EvaluateBSDF_ScreenspaceRefraction( LightLoopContext lightLoopContext,
+                                                        float3 viewWS_Clearcoat, PositionInputs posInput,
+                                                        PreLightData preLightData, BSDFData bsdfData,
+                                                        EnvLightData _envLightData,
+                                                        inout float hierarchyWeight)
 {
 
     IndirectLighting lighting;
@@ -1625,8 +1623,8 @@ IndirectLighting EvaluateBSDF_Env(  LightLoopContext lightLoopContext,
 
     // TODO: We need to match the PerceptualRoughnessToMipmapLevel formula for planar, so we don't do this test (which is specific to our current lightloop)
     // Specific case for Texture2Ds, their convolution is a gaussian one and not a GGX one - So we use another roughness mip mapping.
-#if !defined(SHADER_API_METAL)
     float   IBLMipLevel;
+#if !defined(SHADER_API_METAL)
     if (IsEnvIndexTexture2D(lightData.envIndex))
     {
         // Empirical remapping

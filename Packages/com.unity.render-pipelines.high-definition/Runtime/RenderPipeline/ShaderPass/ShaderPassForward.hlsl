@@ -2,7 +2,7 @@
 #error SHADERPASS_is_not_correctly_define
 #endif
 
-#include "VertMesh.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/VertMesh.hlsl"
 
 PackedVaryingsType Vert(AttributesMesh inputMesh)
 {
@@ -20,7 +20,7 @@ PackedVaryingsToPS VertTesselation(VaryingsToDS input)
     return PackVaryingsToPS(output);
 }
 
-#include "TessellationShare.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/TessellationShare.hlsl"
 
 #endif // TESSELLATION_ON
 
@@ -39,8 +39,13 @@ void Frag(PackedVaryingsToPS packedInput,
 {
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
 
+    uint2 tileIndex = uint2(input.positionSS.xy) / GetTileSize();
+#if defined(UNITY_SINGLE_PASS_STEREO)
+    tileIndex.x -= unity_StereoEyeIndex * _NumTileClusteredX;
+#endif
+
     // input.positionSS is SV_Position
-    PositionInputs posInput = GetPositionInput_Stereo(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS.xyz, uint2(input.positionSS.xy) / GetTileSize(), unity_StereoEyeIndex);
+    PositionInputs posInput = GetPositionInput_Stereo(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS.xyz, tileIndex, unity_StereoEyeIndex);
 
 #ifdef VARYINGS_NEED_POSITION_WS
     float3 V = GetWorldSpaceNormalizeViewDir(input.positionRWS);
@@ -115,7 +120,7 @@ void Frag(PackedVaryingsToPS packedInput,
         ENCODE_INTO_SSSBUFFER(surfaceData, posInput.positionSS, outSSSBuffer);
 #else
         outColor = ApplyBlendMode(diffuseLighting, specularLighting, builtinData.opacity);
-        outColor = EvaluateAtmosphericScattering(posInput, outColor);
+        outColor = EvaluateAtmosphericScattering(posInput, V, outColor);
 #endif
     }
 

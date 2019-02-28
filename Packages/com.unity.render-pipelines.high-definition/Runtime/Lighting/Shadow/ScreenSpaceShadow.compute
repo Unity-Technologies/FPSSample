@@ -11,7 +11,6 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/NormalBuffer.hlsl"
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
@@ -36,21 +35,11 @@ CBUFFER_END
 #define _ContactShadowFadeEnd               _ContactShadowParamsParameters.z
 #define _ContactShadowFadeOneOverRange      _ContactShadowParamsParameters.w
 #define _ContactShadowOpacity               _ContactShadowParamsParameters2.x
-#define _EnableTimeDependentNoise           _ContactShadowParamsParameters2.y
-#define _RenderTargetHeight                 _ContactShadowParamsParameters2.z
+#define _RenderTargetHeight                 _ContactShadowParamsParameters2.y
 
 #define DEFERRED_SHADOW_TILE_SIZE 16
 
 
-//From  Next Generation Post Processing in Call of Duty: Advanced Warfare [Jimenez 2014]
-// http://advances.realtimerendering.com/s2014/index.html
-float InterleavedGradientNoise(float2 uv, uint frameCount)
-{
-    const float3 magic = float3(0.06711056f, 0.00583715f, 52.9829189f);
-    float2 frameMagicScale = _EnableTimeDependentNoise * float2(2.083f, 4.867f);
-    uv += frameCount * frameMagicScale;
-    return frac(magic.z * frac(dot(uv, magic.xy)));
-}
 
 float SampleDepth(float2 UV, bool HalfRes)
 {
@@ -72,8 +61,9 @@ float ScreenSpaceShadowRayCast(float3 positionWS, float3 rayDirWS, float rayLeng
     // Dither pattern is shifted by 0.5 because we want to jitter the ray starting position backward and forward (so we need values between -0.5 and 0.5)
     float ditherBias = 0.5f;
     // With a mod of 8 and taa we'd get no visible flickering, but the stitching pattern is more noticeable. With %16 we do get a bit of visible flickering, but a smoother gradient.
-    // If TAA is off, the noise pattern does not vary over time. 
-    float dither = InterleavedGradientNoise(positionSS, _FrameCount % 16u) - ditherBias;
+    // If TAA is off, the noise pattern does not vary over time.
+    uint taaEnabled = _TaaFrameInfo.w;
+    float dither = InterleavedGradientNoise(positionSS, (_FrameCount % 16u) * taaEnabled) - ditherBias;
 
     float3 rayStartWS = positionWS;
     float3 rayEndWS = rayStartWS + rayDirWS * rayLength;
@@ -83,7 +73,7 @@ float ScreenSpaceShadowRayCast(float3 positionWS, float3 rayDirWS, float rayLeng
 
     // Here we compute a ray perpendicular to view space. This is the ray we use to compute the threshold for rejecting samples.
     // This is done this way so that the threshold is less dependent of ray slope.
-    float4 rayOrthoViewSpace = rayStartCS + GetViewToHClipMatrix()[2];
+    float4 rayOrthoViewSpace = rayStartCS + float4(GetViewToHClipMatrix()[0][2], GetViewToHClipMatrix()[1][2], GetViewToHClipMatrix()[2][2], GetViewToHClipMatrix()[3][2]) * rayLength;
     rayOrthoViewSpace = rayOrthoViewSpace / rayOrthoViewSpace.w;
 
     rayStartCS.xyz = rayStartCS.xyz / rayStartCS.w;
@@ -93,7 +83,7 @@ float ScreenSpaceShadowRayCast(float3 positionWS, float3 rayDirWS, float rayLeng
     float3 rayDirCS = rayEndCS.xyz - rayStartCS.xyz;
 
     float step = 1.0f / _SampleCount;
-    float compareThreshold = abs(rayOrthoViewSpace.z - rayStartCS.z) * max(0.05f, step);
+    float compareThreshold = abs(rayOrthoViewSpace.z - rayStartCS.z) * max(0.07f, step);
 
     float occluded = 0.0f;
 

@@ -12,6 +12,7 @@
 
 #pragma kernel ClearAtomic
 
+// #pragma enable_d3d11_debug_symbols
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/ShaderBase.hlsl"
@@ -53,7 +54,7 @@ CBUFFER_END
 
 // ClusteredUtils.hlsl is dependent on the constants declared in UnityLightListClustered :/
 // g_fClustBase, g_fNearPlane, g_fFarPlane, g_iLog2NumClusters
-#include "ClusteredUtils.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/ClusteredUtils.hlsl"
 
 #ifdef MSAA_ENABLED
 Texture2DMS<float> g_depth_tex : register( t0 );
@@ -300,7 +301,7 @@ void LIGHTLISTGEN(uint threadID : SV_GroupIndex, uint3 u3GroupID : SV_GroupID)
 
     // build coarse list using AABB
 #ifdef USE_TWO_PASS_TILED_LIGHTING
-    const uint log2BigTileToClustTileRatio = firstbithigh(64) - log2TileSize;
+    const uint log2BigTileToClustTileRatio = firstbithigh(TILE_SIZE_BIG_TILE) - log2TileSize;
 
     int NrBigTilesX = (nrTilesX + ((1<<log2BigTileToClustTileRatio)-1)) >> log2BigTileToClustTileRatio;
     int NrBigTilesY = (nrTilesY + ((1<<log2BigTileToClustTileRatio)-1)) >> log2BigTileToClustTileRatio;

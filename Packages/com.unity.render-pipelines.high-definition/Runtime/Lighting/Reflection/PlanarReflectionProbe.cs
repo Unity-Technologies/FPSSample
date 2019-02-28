@@ -1,4 +1,3 @@
-using UnityEngine.Serialization;
 using UnityEngine.Rendering;
 using UnityEngine.Assertions;
 using System;
@@ -6,22 +5,8 @@ using System;
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     [ExecuteAlways]
-    public class PlanarReflectionProbe : HDProbe, ISerializationCallbackReceiver
+    public partial class PlanarReflectionProbe : HDProbe
     {
-        enum Version
-        {
-            First,
-            Second,
-            MigrateOffsetSphere,
-            MigrateCaptureSettings,
-            // Add new version here and they will automatically be the Current one
-            Max,
-            Current = Max - 1
-        }
-
-        [SerializeField, FormerlySerializedAs("version")]
-        uint m_Version;
-
         public enum CapturePositionMode
         {
             Static,
@@ -36,17 +21,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Vector3 m_CaptureMirrorPlaneLocalPosition;
         [SerializeField]
         Vector3 m_CaptureMirrorPlaneLocalNormal = Vector3.up;
-
-#pragma warning disable 649 //never assigned
-        [SerializeField, Obsolete("keeped only for data migration")]
-        bool m_OverrideFieldOfView;
-        [SerializeField, Obsolete("keeped only for data migration")]
-        float m_FieldOfViewOverride = CaptureSettings.@default.fieldOfView;
-        [SerializeField, Obsolete("keeped only for data migration")]
-        float m_CaptureNearPlane = CaptureSettings.@default.nearClipPlane;
-        [SerializeField, Obsolete("keeped only for data migration")]
-        float m_CaptureFarPlane = CaptureSettings.@default.farClipPlane;
-#pragma warning restore 649 //never assigned
 
         public BoundingSphere boundingSphere { get { return influenceVolume.GetBoundingSphereAt(transform); } }
         public Bounds bounds { get { return influenceVolume.GetBoundsAt(transform); } }
@@ -99,6 +73,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ReflectionSystem.RequestRealtimeRender(this);
         }
 
+        internal override void Awake()
+        {
+            base.Awake();
+            k_Migration.Migrate(this);
+        }
+
         void OnEnable()
         {
             ReflectionSystem.RegisterProbe(this);
@@ -115,41 +95,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (isActiveAndEnabled)
                 ReflectionSystem.RegisterProbe(this);
-        }
-
-        public void OnBeforeSerialize()
-        {
-        }
-
-        public void OnAfterDeserialize()
-        {
-            Assert.IsNotNull(influenceVolume, "influenceVolume must have an instance at this point. See HDProbe.Awake()");
-            if (m_Version != (uint)Version.Current)
-            {
-                // Add here data migration code
-                if(m_Version < (uint)Version.MigrateOffsetSphere)
-                {
-                    influenceVolume.MigrateOffsetSphere();
-                    //not used for planar, keep it clean
-                    influenceVolume.boxBlendNormalDistanceNegative = Vector3.zero;
-                    influenceVolume.boxBlendNormalDistancePositive = Vector3.zero;
-                    m_Version = (uint)Version.MigrateOffsetSphere;
-                }
-                if(m_Version < (uint)Version.MigrateCaptureSettings)
-                {
-#pragma warning disable CS0618 // Type or member is obsolete
-                    if (m_OverrideFieldOfView)
-                    {
-                        captureSettings.overrides |= CaptureSettingsOverrides.FieldOfview;
-                    }
-                    captureSettings.fieldOfView = m_FieldOfViewOverride;
-                    captureSettings.nearClipPlane = m_CaptureNearPlane;
-                    captureSettings.farClipPlane = m_CaptureFarPlane;
-#pragma warning restore CS0618 // Type or member is obsolete
-                    m_Version = (uint)Version.MigrateCaptureSettings;
-                }
-            }
-
         }
     }
 }

@@ -5,13 +5,13 @@ using UnityEngine;
 public struct DeltaReader
 {
     static byte[] fieldsNotPredicted = new byte[(NetworkConfig.maxFieldsPerSchema + 7 ) / 8];
-    public static int Read<TInputStream>(ref TInputStream input, NetworkSchema schema, byte[] outputData, byte[] baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint hash) where TInputStream : NetworkCompression.IInputStream
+    unsafe public static int Read<TInputStream>(ref TInputStream input, NetworkSchema schema, uint[] outputData, uint[] baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint hash) where TInputStream : NetworkCompression.IInputStream
     {
         GameDebug.Assert(baselineData != null);
-        var outputStream = new ByteOutputStream(outputData);
-        var baselineStream = new ByteInputStream(baselineData);
 
-        int numFields = schema.fields.Count;
+        var index = 0;
+
+        int numFields = schema.numFields;
 
         int skipContext = schema.id * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
 
@@ -24,10 +24,11 @@ public struct DeltaReader
        
         for (int i = 0; i < numFields; ++i)
         {
-            GameDebug.Assert(schema.fields[i].byteOffset == baselineStream.GetBytePosition());
-            int fieldStartContext = schema.fields[i].startContext;
-
             var field = schema.fields[i];
+
+            GameDebug.Assert(field.byteOffset == index * 4);
+            int fieldStartContext = field.startContext;
+
 
             byte fieldByteOffset = (byte)((uint)i >> 3);
             byte fieldBitOffset = (byte)((uint)i & 0x7);
@@ -41,14 +42,15 @@ public struct DeltaReader
             {
                 case NetworkSchema.FieldType.Bool:
                     {
-                        uint value = baselineStream.ReadUInt8();
+                        uint value = baselineData[index];
                         if(!skip)
                             value = input.ReadRawBits(1);
 
                         if (!masked)
                             hash = NetworkUtils.SimpleHashStreaming(hash, value);
-                        
-                        outputStream.WriteUInt8((byte)value);
+
+                        outputData[index] = value;
+                        index++;
                         break;
                     }
 
@@ -56,7 +58,7 @@ public struct DeltaReader
                 case NetworkSchema.FieldType.Int:
                 case NetworkSchema.FieldType.Float:
                     {
-                        uint baseline = (uint)baselineStream.ReadBits(field.bits);
+                        uint baseline = (uint)baselineData[index];
 
                         uint value = baseline;
                         if (!skip)
@@ -74,14 +76,15 @@ public struct DeltaReader
                         if (!masked)
                             hash = NetworkUtils.SimpleHashStreaming(hash, value);
 
-                        outputStream.WriteBits(value, field.bits);  //RUTODO: fix this
+                        outputData[index] = value;
+                        index++;
                         break;
                     }
 
                 case NetworkSchema.FieldType.Vector2:
                     {
-                        uint bx = baselineStream.ReadUInt32();
-                        uint by = baselineStream.ReadUInt32();
+                        uint bx = baselineData[index];
+                        uint by = baselineData[index + 1];
 
                         uint vx = bx;
                         uint vy = by;
@@ -105,17 +108,18 @@ public struct DeltaReader
                             hash = NetworkUtils.SimpleHashStreaming(hash, vy);
                         }
 
-                        outputStream.WriteUInt32(vx);
-                        outputStream.WriteUInt32(vy);
+                        outputData[index] = vx;
+                        outputData[index + 1] = vy;
+                        index += 2;
 
                         break;
                     }
 
                 case NetworkSchema.FieldType.Vector3:
                     {
-                        uint bx = baselineStream.ReadUInt32();
-                        uint by = baselineStream.ReadUInt32();
-                        uint bz = baselineStream.ReadUInt32();
+                        uint bx = baselineData[index];
+                        uint by = baselineData[index+1];
+                        uint bz = baselineData[index+2];
                         
                         uint vx = bx;
                         uint vy = by;
@@ -144,18 +148,19 @@ public struct DeltaReader
                             hash = NetworkUtils.SimpleHashStreaming(hash, vz);
                         }
 
-                        outputStream.WriteUInt32(vx);
-                        outputStream.WriteUInt32(vy);
-                        outputStream.WriteUInt32(vz);
+                        outputData[index] = vx;
+                        outputData[index+1] = vy;
+                        outputData[index+2] = vz;
+                        index += 3;
                         break;
                     }
 
                 case NetworkSchema.FieldType.Quaternion:
                     {
-                        uint bx = baselineStream.ReadUInt32();
-                        uint by = baselineStream.ReadUInt32();
-                        uint bz = baselineStream.ReadUInt32();
-                        uint bw = baselineStream.ReadUInt32();
+                        uint bx = baselineData[index];
+                        uint by = baselineData[index+1];
+                        uint bz = baselineData[index+2];
+                        uint bw = baselineData[index+3];
                         
                         uint vx = bx;
                         uint vy = by;
@@ -189,10 +194,11 @@ public struct DeltaReader
                             hash = NetworkUtils.SimpleHashStreaming(hash, vw);
                         }
 
-                        outputStream.WriteUInt32(vx);
-                        outputStream.WriteUInt32(vy);
-                        outputStream.WriteUInt32(vz);
-                        outputStream.WriteUInt32(vw);
+                        outputData[index] = vx;
+                        outputData[index+1] = vy;
+                        outputData[index+2] = vz;
+                        outputData[index+3] = vw;
+                        index += 4;
                         break;
                     }
 
@@ -202,12 +208,25 @@ public struct DeltaReader
                         // TODO : Do a better job with deltaing strings and buffers
                         if (!skip)
                         {
-                            baselineStream.SkipByteArray(field.arraySize);
-                            outputStream.CopyByteArray<TInputStream>(ref input, field.arraySize, fieldStartContext);
+                            uint count = input.ReadPackedUInt(fieldStartContext);
+                            outputData[index] = count;
+                            index++;
+                            fixed(uint* buf = outputData)
+                            {
+                                byte* dst = (byte*)(buf + index);
+                                int idx = 0;
+                                for (; idx < count; ++idx)
+                                    *dst++ = (byte)input.ReadRawBits(8);
+                                for (; idx < field.arraySize / 4; ++idx)
+                                    *dst++ = 0;
+                            }
+                            index += field.arraySize / 4;
                         }
                         else
-                        { 
-                            outputStream.CopyByteArray(ref baselineStream, field.arraySize);
+                        {
+                            for (int idx = 0, c = field.arraySize / 4; idx < c; ++idx)
+                                outputData[index + idx] = baselineData[index + idx];
+                            index += field.arraySize / 4 + 1;
                         }
 
                         if (!masked)
@@ -218,7 +237,6 @@ public struct DeltaReader
                     break;
             }
         }
-        outputStream.Flush();
-        return outputStream.GetBytePosition();
+        return index * 4;
     }
 }

@@ -49,7 +49,7 @@ public struct AimDragJob : IAnimationJob
     float m_CurrentPitch;
     
     public Settings settings;
-    public PresentationState animState;
+    public CharacterInterpolatedData animState;
 
     public bool Setup(Animator animator, EditorSettings editorSettings, float deltaTime, NativeQueue<Quaternion> dragHistory)
     {
@@ -66,7 +66,7 @@ public struct AimDragJob : IAnimationJob
         return true;
     }
     
-    public void Update(Vector3 target, Settings settings, PresentationState animationState, AnimationScriptPlayable playable)
+    public void Update(Vector3 target, Settings settings, CharacterInterpolatedData animationState, AnimationScriptPlayable playable)
     {
         var job = playable.GetJobData<AimDragJob>();
         job.settings = settings;

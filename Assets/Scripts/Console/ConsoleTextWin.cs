@@ -153,10 +153,16 @@ public class ConsoleTextWin : IConsoleUI
         System.Console.CursorLeft = 0;
         System.Console.CursorTop = System.Console.BufferHeight - 1;
         System.Console.BackgroundColor = System.ConsoleColor.Blue;
-        System.Console.Write(m_CurrentLine + new string(' ', System.Console.BufferWidth - m_CurrentLine.Length - 1));
-        System.Console.CursorLeft = m_CurrentLine.Length;
+        System.Console.Write(m_Prompt + m_CurrentLine + new string(' ', System.Console.BufferWidth - m_CurrentLine.Length - m_Prompt.Length - 1));
+        System.Console.CursorLeft = m_CurrentLine.Length + m_Prompt.Length;
     }
 
+    public void SetPrompt(string prompt)
+    {
+        m_Prompt = prompt;
+    }
+
+    string m_Prompt = "";
     bool m_RestoreFocus;
     string m_ConsoleTitle;
     float m_ResetWindowTime;

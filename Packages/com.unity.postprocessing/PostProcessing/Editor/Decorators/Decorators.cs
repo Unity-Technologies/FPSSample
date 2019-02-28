@@ -4,7 +4,7 @@ using UnityEngine;
 namespace UnityEditor.Rendering.PostProcessing
 {
     [Decorator(typeof(RangeAttribute))]
-    public sealed class RangeDecorator : AttributeDecorator
+    internal sealed class RangeDecorator : AttributeDecorator
     {
         public override bool OnGUI(SerializedProperty property, SerializedProperty overrideState, GUIContent title, Attribute attribute)
         {
@@ -27,7 +27,7 @@ namespace UnityEditor.Rendering.PostProcessing
     }
 
     [Decorator(typeof(UnityEngine.Rendering.PostProcessing.MinAttribute))]
-    public sealed class MinDecorator : AttributeDecorator
+    internal sealed class MinDecorator : AttributeDecorator
     {
         public override bool OnGUI(SerializedProperty property, SerializedProperty overrideState, GUIContent title, Attribute attribute)
         {
@@ -52,7 +52,7 @@ namespace UnityEditor.Rendering.PostProcessing
     }
 
     [Decorator(typeof(UnityEngine.Rendering.PostProcessing.MaxAttribute))]
-    public sealed class MaxDecorator : AttributeDecorator
+    internal sealed class MaxDecorator : AttributeDecorator
     {
         public override bool OnGUI(SerializedProperty property, SerializedProperty overrideState, GUIContent title, Attribute attribute)
         {
@@ -77,7 +77,7 @@ namespace UnityEditor.Rendering.PostProcessing
     }
 
     [Decorator(typeof(UnityEngine.Rendering.PostProcessing.MinMaxAttribute))]
-    public sealed class MinMaxDecorator : AttributeDecorator
+    internal sealed class MinMaxDecorator : AttributeDecorator
     {
         public override bool OnGUI(SerializedProperty property, SerializedProperty overrideState, GUIContent title, Attribute attribute)
         {
@@ -110,7 +110,7 @@ namespace UnityEditor.Rendering.PostProcessing
     }
 
     [Decorator(typeof(ColorUsageAttribute))]
-    public sealed class ColorUsageDecorator : AttributeDecorator
+    internal sealed class ColorUsageDecorator : AttributeDecorator
     {
         public override bool OnGUI(SerializedProperty property, SerializedProperty overrideState, GUIContent title, Attribute attribute)
         {

@@ -2,40 +2,80 @@ using System;
 
 namespace UnityEngine.Rendering.PostProcessing
 {
+    /// <summary>
+    /// Eye adaptation modes.
+    /// </summary>
     public enum EyeAdaptation
     {
+        /// <summary>
+        /// Progressive (smooth) eye adaptation.
+        /// </summary>
         Progressive,
+
+        /// <summary>
+        /// Fixed (instant) eye adaptation.
+        /// </summary>
         Fixed
     }
 
+    /// <summary>
+    /// A volume parameter holding a <see cref="EyeAdaptation"/> value.
+    /// </summary>
     [Serializable]
     public sealed class EyeAdaptationParameter : ParameterOverride<EyeAdaptation> {}
 
+    /// <summary>
+    /// This class holds settings for the Auto Exposure effect.
+    /// </summary>
     [Serializable]
     [PostProcess(typeof(AutoExposureRenderer), "Unity/Auto Exposure")]
     public sealed class AutoExposure : PostProcessEffectSettings
     {
-        [MinMax(1f, 99f), DisplayName("Filtering (%)"), Tooltip("Filters the bright & dark part of the histogram when computing the average luminance to avoid very dark pixels & very bright pixels from contributing to the auto exposure. Unit is in percent.")]
+        /// <summary>
+        /// These values are the lower and upper percentages of the histogram that will be used to
+        /// find a stable average luminance. Values outside of this range will be discarded and wont
+        /// contribute to the average luminance.
+        /// </summary>
+        [MinMax(1f, 99f), DisplayName("Filtering (%)"), Tooltip("Filters the bright and dark parts of the histogram when computing the average luminance. This is to avoid very dark pixels and very bright pixels from contributing to the auto exposure. Unit is in percent.")]
         public Vector2Parameter filtering = new Vector2Parameter { value = new Vector2(50f, 95f) };
 
-        [Range(LogHistogram.rangeMin, LogHistogram.rangeMax), DisplayName("Minimum (EV)"), Tooltip("Minimum average luminance to consider for auto exposure (in EV).")]
+        /// <summary>
+        /// Minimum average luminance to consider for auto exposure (in EV).
+        /// </summary>
+        [Range(LogHistogram.rangeMin, LogHistogram.rangeMax), DisplayName("Minimum (EV)"), Tooltip("Minimum average luminance to consider for auto exposure. Unit is EV.")]
         public FloatParameter minLuminance = new FloatParameter { value = 0f };
 
-        [Range(LogHistogram.rangeMin, LogHistogram.rangeMax), DisplayName("Maximum (EV)"), Tooltip("Maximum average luminance to consider for auto exposure (in EV).")]
+        /// <summary>
+        /// Maximum average luminance to consider for auto exposure (in EV).
+        /// </summary>
+        [Range(LogHistogram.rangeMin, LogHistogram.rangeMax), DisplayName("Maximum (EV)"), Tooltip("Maximum average luminance to consider for auto exposure. Unit is EV.")]
         public FloatParameter maxLuminance = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// Middle-grey value. Use this to compensate the global exposure of the scene.
+        /// </summary>
         [Min(0f), DisplayName("Exposure Compensation"), Tooltip("Use this to scale the global exposure of the scene.")]
         public FloatParameter keyValue = new FloatParameter { value = 1f };
 
+        /// <summary>
+        /// The type of eye adaptation to use.
+        /// </summary>
         [DisplayName("Type"), Tooltip("Use \"Progressive\" if you want auto exposure to be animated. Use \"Fixed\" otherwise.")]
         public EyeAdaptationParameter eyeAdaptation = new EyeAdaptationParameter { value = EyeAdaptation.Progressive };
 
+        /// <summary>
+        /// The adaptation speed from a dark to a light environment.
+        /// </summary>
         [Min(0f), Tooltip("Adaptation speed from a dark to a light environment.")]
         public FloatParameter speedUp = new FloatParameter { value = 2f };
 
+        /// <summary>
+        /// The adaptation speed from a light to a dark environment.
+        /// </summary>
         [Min(0f), Tooltip("Adaptation speed from a light to a dark environment.")]
         public FloatParameter speedDown = new FloatParameter { value = 1f };
-
+        
+        /// <inheritdoc />
         public override bool IsEnabledAndSupported(PostProcessRenderContext context)
         {
             return enabled.value
@@ -47,7 +87,7 @@ namespace UnityEngine.Rendering.PostProcessing
         }
     }
 
-    public sealed class AutoExposureRenderer : PostProcessEffectRenderer<AutoExposure>
+    internal sealed class AutoExposureRenderer : PostProcessEffectRenderer<AutoExposure>
     {
         const int k_NumEyes = 2;
         const int k_NumAutoExposureTextures = 2;

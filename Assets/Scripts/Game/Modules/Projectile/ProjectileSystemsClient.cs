@@ -75,13 +75,21 @@ public class HandleClientProjectileRequests : BaseComponentSystem
         }
 
         // Handle requests
+        var projectileRegistry = m_resourceSystem.GetResourceRegistry<ProjectileRegistry>();
         foreach (var request in requestBuffer)
         {
+            var registryIndex = projectileRegistry.FindIndex(request.projectileAssetGuid);
+            if (registryIndex == -1)
+            {
+                GameDebug.LogError("Cant find asset guid in registry");
+                continue;
+            }
+
             // Create projectile and initialize
-            var projectileEntity = m_settings.projectileFactory.Create(EntityManager, -1);
+            var projectileEntity = m_settings.projectileFactory.Create(EntityManager, m_resourceSystem, m_world);
             var projectileData = EntityManager.GetComponentData<ProjectileData>(projectileEntity);
-            projectileData.SetupFromRequest(request);
-            var projectileRegistry = m_resourceSystem.GetResourceRegistry<ProjectileRegistry>();
+            
+            projectileData.SetupFromRequest(request, registryIndex);
             projectileData.Initialize( projectileRegistry);
             EntityManager.SetComponentData(projectileEntity, projectileData);
             EntityManager.AddComponentData(projectileEntity, new PredictedProjectile(request.startTick));
@@ -152,7 +160,7 @@ class ProjectilesSystemsClient
 
             if (clientProjectile.impactEffect != null)
             {
-                SpatialEffectRequest.Create(commandBuffer, clientProjectile.impactEffect, 
+                world.GetECSWorld().GetExistingManager<HandleSpatialEffectRequests>().Request(clientProjectile.impactEffect, 
                     projectileData.impactPos, Quaternion.LookRotation(projectileData.impactNormal));
             }
 
@@ -277,8 +285,8 @@ public class HandleProjectileSpawn : BaseComponentSystem
                     var predictedProjetile = predictedProjectileArray[i];
                     
                     // Attempt to find matching 
-                    if (predictedProjetile.projectileTypeRegistryId !=
-                        inProjectileData.projectileTypeRegistryId)
+                    if (predictedProjetile.projectileTypeRegistryIndex !=
+                        inProjectileData.projectileTypeRegistryIndex)
                         continue;
                     if (predictedProjetile.projectileOwner != inProjectileData.projectileOwner)
                         continue;
@@ -457,9 +465,9 @@ public class ClientProjectileFactory
             var pool = new Pool();
             
             var entry = projectileRegistry.entries[i];
-            pool.prefab = (GameObject)m_resourceSystem.LoadSingleAssetResource(entry.clientProjectilePrefab.guid);
+            pool.prefab = (GameObject)m_resourceSystem.GetSingleAssetResource(entry.definition.clientProjectilePrefab);
             pool.poolIndex = i;            
-            Allocate(pool, entry.clientProjectileBufferSize);
+            Allocate(pool, entry.definition.clientProjectileBufferSize);
             pools[i] = pool;
         }
     }
@@ -513,7 +521,7 @@ public class ClientProjectileFactory
         var projectileData = m_entityManager.GetComponentData<ProjectileData>(projectileEntity);
 
         // Create client projectile
-        var pool = pools[projectileData.projectileTypeRegistryId];
+        var pool = pools[projectileData.projectileTypeRegistryIndex];
         var instanceIndex = Reserve(pool);
         var gameObjectEntity = pool.instances[instanceIndex];
         gameObjectEntity.gameObject.SetActive(true);

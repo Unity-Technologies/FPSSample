@@ -10,12 +10,12 @@ using UnityEngine.Profiling;
 
 
 [DisableAutoCreation]
-public class CharacterLateUpdate : BaseComponentSystem<CharPresentation>
+public class CharacterLateUpdate : BaseComponentSystem<CharacterPresentationSetup>
 {
     public CharacterLateUpdate(GameWorld gameWorld) : base(gameWorld)
     {}
     
-    protected override void Update(Entity entity, CharPresentation charPresentation)
+    protected override void Update(Entity entity, CharacterPresentationSetup charPresentation)
     {
         // Update visibility
         if (EntityManager.HasComponent<CharacterEvents>(entity))
@@ -29,7 +29,7 @@ public class CharacterLateUpdate : BaseComponentSystem<CharPresentation>
         {
             var namePlateOwner = EntityManager.GetComponentObject<NamePlateOwner>(entity);
             var character = EntityManager.GetComponentObject<Character>(charPresentation.character);
-            var healthState = EntityManager.GetComponentObject<HealthState>(charPresentation.character);
+            var healthState = EntityManager.GetComponentData<HealthStateData>(charPresentation.character);
             namePlateOwner.text = character.characterName;
             namePlateOwner.team = character.teamId;
             namePlateOwner.health = healthState.health;
@@ -46,7 +46,7 @@ public class CharacterLateUpdate : BaseComponentSystem<CharPresentation>
 #if UNITY_EDITOR    // TODO (mogensh) move this test code ... somewhere
         if (charPresentation.weaponBoneDebug != null)
         {
-            var animState = EntityManager.GetComponentData<PresentationState>(entity);
+            var animState = EntityManager.GetComponentData<CharacterInterpolatedData>(entity);
             var lookDir = Quaternion.Euler(new Vector3(-animState.aimPitch , animState.aimYaw, 0)) * Vector3.down;
             var weaponPos = charPresentation.weaponBoneDebug.position;
             var weaponRot = charPresentation.weaponBoneDebug.rotation;
@@ -75,11 +75,10 @@ class CharacterModuleClient : CharacterModuleShared
         // Handle despawn
         CharacterBehaviours.CreateHandleDespawnSystems(m_world, m_HandleDespawnSystems);
         
-        // Movement
+        // Behaviors
+        CharacterBehaviours.CreateAbilityRequestSystems(m_world, m_AbilityRequestUpdateSystems);
         CharacterBehaviours.CreateMovementStartSystems(m_world,m_MovementStartSystems);
         CharacterBehaviours.CreateMovementResolveSystems(m_world,m_MovementResolveSystems);
-        
-        // Abilities
         CharacterBehaviours.CreateAbilityStartSystems(m_world,m_AbilityStartSystems);
         CharacterBehaviours.CreateAbilityResolveSystems(m_world,m_AbilityResolveSystems);
 
@@ -101,16 +100,9 @@ class CharacterModuleClient : CharacterModuleShared
         var charRegistry = resourceSystem.GetResourceRegistry<CharacterTypeRegistry>();
         for (var i = 0; i < charRegistry.entries.Count; i++)
         {
-            resourceSystem.LoadSingleAssetResource(charRegistry.entries[i].prefab1P.guid);
-            resourceSystem.LoadSingleAssetResource(charRegistry.entries[i].prefabClient.guid);
+            resourceSystem.GetSingleAssetResource(charRegistry.entries[i].prefab1P);
+            resourceSystem.GetSingleAssetResource(charRegistry.entries[i].prefabClient);
         }
-        var itemRegistry = resourceSystem.GetResourceRegistry<ItemRegistry>();
-        for (var i = 0; i < itemRegistry.entries.Count; i++)
-        {
-            resourceSystem.LoadSingleAssetResource(itemRegistry.entries[i].prefab1P.guid);
-            resourceSystem.LoadSingleAssetResource(itemRegistry.entries[i].prefabClient.guid);
-        }
-
 
         Console.AddCommand("thirdperson", CmdToggleThirdperson, "Toggle third person mode", this.GetHashCode());
     }

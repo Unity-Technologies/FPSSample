@@ -36,10 +36,10 @@ public class UpdateSpectatorCamControl : BaseComponentSystem
         {
             var controlledEntity = localPlayerArray[i].controlledEntity;
             
-            if (controlledEntity == Entity.Null || !EntityManager.HasComponent<SpectatorCam>(controlledEntity))
+            if (controlledEntity == Entity.Null || !EntityManager.HasComponent<SpectatorCamData>(controlledEntity))
                 continue;
 
-            var spectatorCam = EntityManager.GetComponentObject<SpectatorCam>(controlledEntity);
+            var spectatorCam = EntityManager.GetComponentData<SpectatorCamData>(controlledEntity);
             var cameraSettings = cameraSettingsArray[i];
             cameraSettings.isEnabled = true;
             cameraSettings.position = spectatorCam.position;

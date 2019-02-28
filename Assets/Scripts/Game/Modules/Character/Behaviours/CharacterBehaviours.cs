@@ -14,6 +14,23 @@ public class CharacterBehaviours
         systems.Add(world.GetECSWorld().CreateManager<HandleCharacterDespawn>(world));  // TODO (mogens) HandleCharacterDespawn dewpans char presentation and needs to be called before other HandleDespawn. How do we ensure this ?   
         systems.Add(world.GetECSWorld().CreateManager<HandleAnimStateCtrlDespawn>(world));
     }
+
+    public static void CreateAbilityRequestSystems(GameWorld world, SystemCollection systems)
+    {
+        systems.Add(world.GetECSWorld().CreateManager<Movement_RequestActive>(world));
+        systems.Add(world.GetECSWorld().CreateManager<RocketJump_RequestActive>(world));
+        systems.Add(world.GetECSWorld().CreateManager<Dead_RequestActive>(world));
+        systems.Add(world.GetECSWorld().CreateManager<AutoRifle_RequestActive>(world));
+        systems.Add(world.GetECSWorld().CreateManager<Chaingun_RequestActive>(world));
+        systems.Add(world.GetECSWorld().CreateManager<GrenadeLauncher_RequestActive>(world));
+        systems.Add(world.GetECSWorld().CreateManager<ProjectileLauncher_RequestActive>(world));
+        systems.Add(world.GetECSWorld().CreateManager<Sprint_RequestActive>(world));
+        systems.Add(world.GetECSWorld().CreateManager<Melee_RequestActive>(world));
+        systems.Add(world.GetECSWorld().CreateManager<Emote_RequestActive>(world));
+        
+        // Update main abilities
+        systems.Add(world.GetECSWorld().CreateManager<DefaultBehaviourController_Update>(world));
+    }
     
     public static void CreateMovementStartSystems(GameWorld world, SystemCollection systems)
     {
@@ -29,13 +46,8 @@ public class CharacterBehaviours
 
     public static void CreateAbilityStartSystems(GameWorld world, SystemCollection systems)
     {
-        systems.Add(world.GetECSWorld().CreateManager<AutoRifle_RequestActive>(world));
-        systems.Add(world.GetECSWorld().CreateManager<Chaingun_RequestActive>(world));
         
-        // Update main abilities
-        systems.Add(world.GetECSWorld().CreateManager<DefaultBehaviourController_Update>(world));
-        
-        // Update active abilities
+        systems.Add(world.GetECSWorld().CreateManager<RocketJump_Update>(world));
         systems.Add(world.GetECSWorld().CreateManager<Sprint_Update>(world));
         systems.Add(world.GetECSWorld().CreateManager<AutoRifle_Update>(world));
         systems.Add(world.GetECSWorld().CreateManager<ProjectileLauncher_Update>(world));

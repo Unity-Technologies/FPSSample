@@ -17,17 +17,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         int                     m_ProbeSize;
         int                     m_CacheSize;
-        IBLFilterGGX            m_IBLFilterGGX;
+        IBLFilterBSDF[]         m_IBLFilterBSDF;
         TextureCacheCubemap     m_TextureCache;
         RenderTexture           m_TempRenderTexture;
-        RenderTexture           m_ConvolutionTargetTexture;
+        RenderTexture[]         m_ConvolutionTargetTextureArray;
         ProbeFilteringState[]   m_ProbeBakingState;
         Material                m_ConvertTextureMaterial;
         Material                m_CubeToPano;
         MaterialPropertyBlock   m_ConvertTextureMPB;
         bool                    m_PerformBC6HCompression;
 
-        public ReflectionProbeCache(HDRenderPipelineAsset hdAsset, IBLFilterGGX iblFilter, int cacheSize, int probeSize, TextureFormat probeFormat, bool isMipmaped)
+        public ReflectionProbeCache(HDRenderPipelineAsset hdAsset, IBLFilterBSDF[] iblFilterBSDFArray, int cacheSize, int probeSize, TextureFormat probeFormat, bool isMipmaped)
         {
             m_ConvertTextureMaterial = CoreUtils.CreateEngineMaterial(hdAsset.renderPipelineResources.shaders.blitCubeTextureFacePS);
             m_ConvertTextureMPB = new MaterialPropertyBlock();
@@ -40,9 +40,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_ProbeSize = probeSize;
             m_CacheSize = cacheSize;
-            m_TextureCache = new TextureCacheCubemap("ReflectionProbe");
+            m_TextureCache = new TextureCacheCubemap("ReflectionProbe", iblFilterBSDFArray.Length);
             m_TextureCache.AllocTextureArray(cacheSize, probeSize, probeFormat, isMipmaped, m_CubeToPano);
-            m_IBLFilterGGX = iblFilter;
+            m_IBLFilterBSDF = iblFilterBSDFArray;
 
             m_PerformBC6HCompression = probeFormat == TextureFormat.BC6H;
 
@@ -62,13 +62,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_TempRenderTexture.name = CoreUtils.GetRenderTargetAutoName(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf, "ReflectionProbeTemp", mips: true);
                 m_TempRenderTexture.Create();
 
-                m_ConvolutionTargetTexture = new RenderTexture(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf);
-                m_ConvolutionTargetTexture.hideFlags = HideFlags.HideAndDontSave;
-                m_ConvolutionTargetTexture.dimension = TextureDimension.Cube;
-                m_ConvolutionTargetTexture.useMipMap = true;
-                m_ConvolutionTargetTexture.autoGenerateMips = false;
-                m_ConvolutionTargetTexture.name = CoreUtils.GetRenderTargetAutoName(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf, "ReflectionProbeConvolution", mips: true);
-                m_ConvolutionTargetTexture.Create();
+                m_ConvolutionTargetTextureArray = new RenderTexture[m_IBLFilterBSDF.Length];
+                for (int bsdfIdx = 0; bsdfIdx < m_IBLFilterBSDF.Length; ++bsdfIdx)
+                {
+                    m_ConvolutionTargetTextureArray[bsdfIdx] = new RenderTexture(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf);
+                    m_ConvolutionTargetTextureArray[bsdfIdx].hideFlags = HideFlags.HideAndDontSave;
+                    m_ConvolutionTargetTextureArray[bsdfIdx].dimension = TextureDimension.Cube;
+                    m_ConvolutionTargetTextureArray[bsdfIdx].useMipMap = true;
+                    m_ConvolutionTargetTextureArray[bsdfIdx].autoGenerateMips = false;
+                    m_ConvolutionTargetTextureArray[bsdfIdx].name = CoreUtils.GetRenderTargetAutoName(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf, "ReflectionProbeConvolution_" + bsdfIdx.ToString(), mips: true);
+                    m_ConvolutionTargetTextureArray[bsdfIdx].Create();
+                }
 
                 InitializeProbeBakingStates();
             }
@@ -85,8 +89,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             m_TextureCache.Release();
             CoreUtils.Destroy(m_TempRenderTexture);
-            CoreUtils.Destroy(m_ConvolutionTargetTexture);
-
+            for (int bsdfIdx = 0; bsdfIdx < m_IBLFilterBSDF.Length; ++bsdfIdx)
+            {
+                CoreUtils.Destroy(m_ConvolutionTargetTextureArray[bsdfIdx]);
+            }
             m_ProbeBakingState = null;
 
             CoreUtils.Destroy(m_ConvertTextureMaterial);
@@ -113,7 +119,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        Texture ConvolveProbeTexture(CommandBuffer cmd, Texture texture)
+        Texture[] ConvolveProbeTexture(CommandBuffer cmd, Texture texture)
         {
             // Probes can be either Cubemaps (for baked probes) or RenderTextures (for realtime probes)
             Cubemap cubeTexture = texture as Cubemap;
@@ -177,9 +183,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.GenerateMips(convolutionSourceTexture);
             }
 
-            m_IBLFilterGGX.FilterCubemap(cmd, convolutionSourceTexture, m_ConvolutionTargetTexture);
+            for(int bsdfIdx = 0; bsdfIdx < m_IBLFilterBSDF.Length; ++bsdfIdx)
+            {
+                m_IBLFilterBSDF[bsdfIdx].FilterCubemap(cmd, convolutionSourceTexture, m_ConvolutionTargetTextureArray[bsdfIdx]);
+            }
 
-            return m_ConvolutionTargetTexture;
+            return m_ConvolutionTargetTextureArray;
         }
 
         public int FetchSlice(CommandBuffer cmd, Texture texture)
@@ -195,14 +204,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // For now baking is done directly but will be time sliced in the future. Just preparing the code here.
                         m_ProbeBakingState[sliceIndex] = ProbeFilteringState.Convolving;
 
-                        Texture result = ConvolveProbeTexture(cmd, texture);
+                        Texture[] result = ConvolveProbeTexture(cmd, texture);
                         if (result == null)
                             return -1;
 
                         if (m_PerformBC6HCompression)
                         {
                             cmd.BC6HEncodeFastCubemap(
-                                result, m_ProbeSize, m_TextureCache.GetTexCache(),
+                                result[0], m_ProbeSize, m_TextureCache.GetTexCache(),
                                 0, int.MaxValue, sliceIndex);
                             m_TextureCache.SetSliceHash(sliceIndex, m_TextureCache.GetTextureHash(texture));
                         }
@@ -224,14 +233,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_TextureCache.GetTexCache();
         }
 
-        internal static long GetApproxCacheSizeInByte(int nbElement, int resolution)
+        internal static long GetApproxCacheSizeInByte(int nbElement, int resolution, int sliceSize)
         {
-            return TextureCacheCubemap.GetApproxCacheSizeInByte(nbElement, resolution);
+            return TextureCacheCubemap.GetApproxCacheSizeInByte(nbElement, resolution, sliceSize);
         }
 
-        internal static int GetMaxCacheSizeForWeightInByte(int weight, int resolution)
+        internal static int GetMaxCacheSizeForWeightInByte(int weight, int resolution, int sliceSize)
         {
-            return TextureCacheCubemap.GetMaxCacheSizeForWeightInByte(weight, resolution);
+            return TextureCacheCubemap.GetMaxCacheSizeForWeightInByte(weight, resolution, sliceSize);
+        }
+        
+        public int GetEnvSliceSize()
+        {
+            return m_IBLFilterBSDF.Length;
         }
     }
 }

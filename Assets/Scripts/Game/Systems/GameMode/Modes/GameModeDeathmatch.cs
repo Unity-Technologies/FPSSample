@@ -85,18 +85,18 @@ public class GameModeDeathmatch : IGameMode
                         var playerState = players[i];
                         if (playerState.controlledEntity != Entity.Null)
                         {
-                            var character = m_world.GetEntityManager()
-                                .GetComponentObject<Character>(playerState.controlledEntity);
-                            var health = character.healthState;
-                            health.health = 0.0f;
-                            health.deathTick = -1;
+                            var healthState = m_world.GetEntityManager()
+                                .GetComponentData<HealthStateData>(playerState.controlledEntity);
+                            healthState.health = 0.0f;
+                            healthState.deathTick = -1;
+                            m_world.GetEntityManager()
+                                .SetComponentData(playerState.controlledEntity, healthState);
                         }
                         playerState.displayGameResult = true;
                         if (winTeam == -1)
                             playerState.gameResult = "TIE";
                         else
                             playerState.gameResult = (playerState.teamIndex == winTeam) ? "VICTORY" : "DEFEAT";
-                        playerState.displayCountDown = false;
                         playerState.displayScoreBoard = false;
                         playerState.displayGoal = false;
                     }
@@ -130,7 +130,7 @@ public class GameModeDeathmatch : IGameMode
             var player = players[i];
             if (player.controlledEntity == Entity.Null)
                 continue;
-            var charPredictedState = m_world.GetEntityManager().GetComponentData<CharPredictedStateData>(player.controlledEntity);
+            var charPredictedState = m_world.GetEntityManager().GetComponentData<CharacterPredictedData>(player.controlledEntity);
             var position = charPredictedState.position;
             player.enableCharacterSwitch = false;
             foreach(var b in m_GameModeSystemServer.teamBases)

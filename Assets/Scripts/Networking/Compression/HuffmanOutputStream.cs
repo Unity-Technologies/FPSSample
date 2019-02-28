@@ -26,15 +26,16 @@ namespace NetworkCompression
             FlushBits();
         }
 
-        public void WriteRawBytes(byte[] value, int srcIndex, int count)
+        unsafe public void WriteRawBytes(byte* value, int count)
         {
             for (int i = 0; i < count; i++)
-                WriteRawBits(value[srcIndex + i], 8);  //TODO: only flush every n bytes
+                WriteRawBits(value[i], 8);  //TODO: only flush every n bytes
         }
 
         public void WritePackedNibble(uint value, int context)
         {
-            Debug.Assert(value < 16);
+            if(value >= 16)
+                Debug.Assert(false, "Nibble bigger than 15");
             if (m_Capture != null)
                 m_Capture.AddNibble(context, value);
 
@@ -48,7 +49,10 @@ namespace NetworkCompression
             if (m_Capture != null)
                 m_Capture.AddUInt(context, value);
 
-            int bucket = NetworkCompressionUtils.CalculateBucket(value);
+            //int bucket = NetworkCompressionUtils.CalculateBucket(value); // Manually inlined
+            int bucket = 0;
+            while (bucket + 1 < NetworkCompressionConstants.k_NumBuckets && value >= NetworkCompressionConstants.k_BucketOffsets[bucket + 1])
+                bucket++;
             uint offset = NetworkCompressionConstants.k_BucketOffsets[bucket];
             int bits = NetworkCompressionConstants.k_BucketSizes[bucket];
             ushort encodeEntry = m_Model.encodeTable[context, bucket];
@@ -93,8 +97,10 @@ namespace NetworkCompression
 
         void WriteRawBitsInternal(uint value, int numbits)
         {
+#if UNITY_EDITOR
             Debug.Assert(numbits >= 0 && numbits <= 32);
             Debug.Assert(value < (1UL << numbits));
+#endif
 
             m_BitBuffer |= ((ulong)value << m_CurrentBitIndex);
             m_CurrentBitIndex += numbits;

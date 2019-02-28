@@ -1,0 +1,86 @@
+Pass
+{		
+	Tags { "LightMode"="DepthOnly" }
+
+	ZWrite On
+	Blend Off
+	
+	HLSLPROGRAM
+	#pragma target 4.5
+	#define UNITY_MATERIAL_LIT
+	#pragma multi_compile _ WRITE_NORMAL_BUFFER
+	
+	struct ps_input
+	{		
+		float4 pos : SV_POSITION;
+		float2 uv : TEXCOORD0;	
+		#if USE_ALPHA_TEST || USE_FLIPBOOK_INTERPOLATION || VFX_USE_ALPHA_CURRENT
+		// x: alpha threshold
+		// y: frame blending factor
+		// z: alpha
+		// w: smoothness
+		nointerpolation float4 builtInInterpolants : TEXCOORD1;
+		#endif
+		#ifdef WRITE_NORMAL_BUFFER
+		float4 normal : TEXCOORD2; // normal scale is stored in w
+		#if HDRP_USE_NORMAL_MAP
+		float4 tangent : TEXCOORD3;
+		#endif
+		#endif
+	};
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_ALPHA builtInInterpolants.z
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.x
+#define VFX_VARYING_FRAMEBLEND builtInInterpolants.y
+#define VFX_VARYING_UV uv
+
+#ifdef WRITE_NORMAL_BUFFER
+#define VFX_VARYING_NORMAL normal.xyz
+#define VFX_VARYING_SMOOTHNESS builtInInterpolants.w
+#if HDRP_USE_NORMAL_MAP
+#define VFX_VARYING_TANGENT tangent
+#define VFX_VARYING_NORMALSCALE normal.w
+#endif
+#endif
+		
+${VFXBegin:VFXVertexAdditionalProcess}
+${VFXHDRPLitFillVaryings}
+${VFXEnd}
+		
+	${VFXInclude("Shaders/ParticleMeshes/Pass.template")}	
+	#define SHADERPASS SHADERPASS_DEPTH_ONLY
+	${VFXInclude("Shaders/RenderPipeline/HDRP/VFXLit.template")}
+			
+	#pragma fragment frag
+	void frag(ps_input i
+#ifdef WRITE_NORMAL_BUFFER
+	, out float4 outNormalBuffer : SV_Target0
+#if USE_DOUBLE_SIDED
+	, bool frontFace : SV_IsFrontFace
+#endif
+#else
+	, out float4 outColor : SV_Target
+#endif
+	)
+	{		
+#ifdef WRITE_NORMAL_BUFFER
+		${VFXComputeNormalWS}
+		VFXComputePixelOutputToNormalBuffer(i,normalWS,uvData,outNormalBuffer);
+#else
+		float alpha = VFXGetFragmentColor(i).a;
+#if HDRP_USE_BASE_COLOR_MAP_ALPHA
+		alpha *= VFXGetTextureColor(VFX_SAMPLER(baseColorMap),i).a;
+#endif	
+		VFXClipFragmentColor(alpha,i);
+#ifdef SCENESELECTIONPASS
+		// We use depth prepass for scene selection in the editor, this code allow to output the outline correctly
+		outColor = float4(_ObjectId, _PassValue, 1.0, 1.0);
+#else
+		outColor = (float4)0;
+#endif
+#endif
+	}
+	ENDHLSL
+}

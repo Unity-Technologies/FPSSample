@@ -51,31 +51,72 @@ namespace UnityEngine.Rendering.PostProcessing
     // modification on both Classic and Scriptable Render Pipelines.
     //
 
+    /// <summary>
+    /// A post-process volume component holding a post-process profile.
+    /// </summary>
+    /// <seealso cref="RuntimeUtilities.DestroyVolume"/>
+#if UNITY_2018_3_OR_NEWER
+    [ExecuteAlways]
+#else
     [ExecuteInEditMode]
+#endif
     [AddComponentMenu("Rendering/Post-process Volume", 1001)]
     public sealed class PostProcessVolume : MonoBehaviour
     {
-        // Modifying sharedProfile will change the behavior of all volumes using this profile, and
-        // change profile settings that are stored in the project too
+        /// <summary>
+        /// The shared profile of this volume.
+        /// Modifying <c>sharedProfile</c> will change all volumes using this profile, and change
+        /// profile settings that are stored in the project too.
+        /// </summary>
+        /// <remarks>
+        /// It is not recommended to modify profiles returned by <c>sharedProfile</c>. If you want
+        /// to modify the profile of a volume use <see cref="profile"/> instead.
+        /// </remarks>
+        /// <seealso cref="profile"/>
         public PostProcessProfile sharedProfile;
 
-        [Tooltip("A global volume is applied to the whole scene.")]
+        /// <summary>
+        /// Should this volume be applied to the whole scene?
+        /// </summary>
+        [Tooltip("Check this box to mark this volume as global. This volume's Profile will be applied to the whole Scene.")]
         public bool isGlobal = false;
         
-        [Min(0f), Tooltip("Outer distance to start blending from. A value of 0 means no blending and the volume overrides will be applied immediatly upon entry.")]
+        /// <summary>
+        /// The outer distance to start blending from. A value of 0 means no blending and the volume
+        /// overrides will be applied immediatly upon entry.
+        /// </summary>
+        [Min(0f), Tooltip("The distance (from the attached Collider) to start blending from. A value of 0 means there will be no blending and the Volume overrides will be applied immediatly upon entry to the attached Collider.")]
         public float blendDistance = 0f;
 
-        [Range(0f, 1f), Tooltip("Total weight of this volume in the scene. 0 means it won't do anything, 1 means full effect.")]
+        /// <summary>
+        /// The total weight of this volume in the scene. 0 means it won't do anything, 1 means full
+        /// effect.
+        /// </summary>
+        [Range(0f, 1f), Tooltip("The total weight of this Volume in the Scene. A value of 0 signifies that it will have no effect, 1 signifies full effect.")]
         public float weight = 1f;
         
-        [Tooltip("Volume priority in the stack. Higher number means higher priority. Negative values are supported.")]
+        /// <summary>
+        /// The volume priority in the stack. Higher number means higher priority. Negative values
+        /// are supported.
+        /// </summary>
+        [Tooltip("The volume priority in the stack. A higher value means higher priority. Negative values are supported.")]
         public float priority = 0f;
 
-        // This property automatically instantiates the profile and make it unique to this volume
-        // so you can safely edit it via scripting at runtime without changing the original asset
-        // in the project.
-        // Note that if you pass in your own profile, it is your responsability to destroy it once
-        // it's not in use anymore.
+        /// <summary>
+        /// Returns the first instantiated <see cref="PostProcessProfile"/> assigned to the volume.
+        /// Modifying <paramref name="profile"/> will change the profile for this volume only. If
+        /// the profile is used by any other volume, this will clone the shared profile and start
+        /// using it from now on.
+        /// </summary>
+        /// <remarks>
+        /// This property automatically instantiates the profile and make it unique to this volume
+        /// so you can safely edit it via scripting at runtime without changing the original asset
+        /// in the project.
+        /// Note that if you pass in your own profile, it is your responsibility to destroy it once
+        /// it's not in use anymore.
+        /// </remarks>
+        /// <seealso cref="sharedProfile"/>
+        /// <seealso cref="RuntimeUtilities.DestroyProfile"/>
         public PostProcessProfile profile
         {
             get
@@ -112,6 +153,12 @@ namespace UnityEngine.Rendering.PostProcessing
             }
         }
 
+        /// <summary>
+        /// Checks if the volume has an intantiated profile or is using a shared profile.
+        /// </summary>
+        /// <returns><c>true</c> if the profile has been intantiated</returns>
+        /// <seealso cref="profile"/>
+        /// <seealso cref="sharedProfile"/>
         public bool HasInstantiatedProfile()
         {
             return m_InternalProfile != null;
@@ -176,7 +223,7 @@ namespace UnityEngine.Rendering.PostProcessing
             }
 #endif
 
-            var scale = transform.localScale;
+            var scale = transform.lossyScale;
             var invScale = new Vector3(1f / scale.x, 1f / scale.y, 1f / scale.z);
             Gizmos.matrix = Matrix4x4.TRS(transform.position, transform.rotation, scale);
 

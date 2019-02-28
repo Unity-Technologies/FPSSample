@@ -1,18 +1,8 @@
 #ifdef SHADER_VARIABLES_INCLUDE_CB
-    int     _AtmosphericScatteringType;
-    // Common
-    float   _FogColorMode;
-    float4  _FogColorDensity; // color in rgb, density in alpha
-    float4  _MipFogParameters;
-    // Linear fog
-    float4  _LinearFogParameters;
-    // Exp fog
-    float4  _ExpFogParameters;
-
-    float   _SkyTextureMipCount;
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/AtmosphericScattering/ShaderVariablesAtmosphericScattering.cs.hlsl"
 #else
     TEXTURE3D(_VBufferLighting);
-    TEXTURECUBE(_SkyTexture);
+    TEXTURECUBE_ARRAY(_SkyTexture);
 
     #define _MipFogNear                     _MipFogParameters.x
     #define _MipFogFar                      _MipFogParameters.y

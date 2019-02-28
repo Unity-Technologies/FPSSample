@@ -1,10 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!4 &210251591082899461 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 400004, guid: bb550986922784e4c9ee82eabb0178da, type: 3}
-  m_PrefabInstance: {fileID: 210251591082762881}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1855825938789023214
 GameObject:
   m_ObjectHideFlags: 0
@@ -143,9 +138,10 @@ MonoBehaviour:
   punctualIntensity: 2500
   areaIntensity: 200
   enableSpotReflector: 0
+  luxAtDistance: 1
   m_InnerSpotPercent: 0
   lightDimmer: 1
-  volumetricDimmer: 1
+  m_VolumetricDimmer: 1
   lightUnit: 0
   sunDiskSize: 1
   sunHaloSize: 0.1
@@ -162,6 +158,7 @@ MonoBehaviour:
   maxSmoothness: 1
   applyRangeAttenuation: 1
   useOldInspector: 0
+  useVolumetric: 1
   featuresFoldout: 1
   showAdditionalSettings: 1
   displayLightIntensity: 2500
@@ -171,6 +168,7 @@ MonoBehaviour:
   shadowSoftness: 0.5
   blockerSampleCount: 24
   filterSampleCount: 32
+  minFilterSize: 0.00001
 --- !u!1 &1856514326194942610
 GameObject:
   m_ObjectHideFlags: 0
@@ -309,9 +307,10 @@ MonoBehaviour:
   punctualIntensity: 2000
   areaIntensity: 200
   enableSpotReflector: 0
+  luxAtDistance: 1
   m_InnerSpotPercent: 0
   lightDimmer: 1
-  volumetricDimmer: 1
+  m_VolumetricDimmer: 1
   lightUnit: 0
   sunDiskSize: 1
   sunHaloSize: 0.1
@@ -328,6 +327,7 @@ MonoBehaviour:
   maxSmoothness: 1
   applyRangeAttenuation: 1
   useOldInspector: 0
+  useVolumetric: 1
   featuresFoldout: 1
   showAdditionalSettings: 1
   displayLightIntensity: 2000
@@ -337,6 +337,7 @@ MonoBehaviour:
   shadowSoftness: 0.5
   blockerSampleCount: 24
   filterSampleCount: 32
+  minFilterSize: 0.00001
 --- !u!1 &1856515548123341590
 GameObject:
   m_ObjectHideFlags: 0
@@ -347,8 +348,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1858205572148681700}
   - component: {fileID: 1756253963494542354}
-  - component: {fileID: 1752240852866193980}
   - component: {fileID: 1752255041272518458}
+  - component: {fileID: 1752240852866193980}
   - component: {fileID: 1752437918261479338}
   - component: {fileID: 1751909015876705254}
   - component: {fileID: 1756343152582683808}
@@ -390,18 +391,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bf10cdea1344482e91a4f2b58506b77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1752240852866193980
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1856515548123341590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3958d4905c0d4b94587a89934df8e787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1752255041272518458
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -414,9 +403,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  guid: 0cc7e0a60e50a9c47b845e53412c3f4b
-  netID: 31d61326f0ae99429dfa573f90d29029
-  registryId: 22
+  m_SerializedData:
+    assetGuid:
+      val0: 214425766
+      val1: -1446769072
+      val2: 1398703227
+      val3: 1262431297
+  netID: d6e0db5a1394b84e8a86b8192bd2a39c
+--- !u!114 &1752240852866193980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1856515548123341590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3958d4905c0d4b94587a89934df8e787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &1752437918261479338
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -508,6 +513,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1858205572148681700}
     m_Modifications:
+    - target: {fileID: 100004, guid: bb550986922784e4c9ee82eabb0178da, type: 3}
+      propertyPath: m_Name
+      value: Portal_A
+      objectReference: {fileID: 0}
     - target: {fileID: 400004, guid: bb550986922784e4c9ee82eabb0178da, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -552,14 +561,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 100004, guid: bb550986922784e4c9ee82eabb0178da, type: 3}
-      propertyPath: m_Name
-      value: Portal_A
-      objectReference: {fileID: 0}
-    - target: {fileID: 2300002, guid: bb550986922784e4c9ee82eabb0178da, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: 9e684838fc9557e49b8184306957bc65, type: 2}
     - target: {fileID: 2300000, guid: bb550986922784e4c9ee82eabb0178da, type: 3}
       propertyPath: m_Materials.Array.data[1]
       value: 
@@ -568,5 +569,15 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 133314aef1daf524b80cf3670a17ea34, type: 2}
+    - target: {fileID: 2300002, guid: bb550986922784e4c9ee82eabb0178da, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 9e684838fc9557e49b8184306957bc65, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bb550986922784e4c9ee82eabb0178da, type: 3}
+--- !u!4 &210251591082899461 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400004, guid: bb550986922784e4c9ee82eabb0178da,
+    type: 3}
+  m_PrefabInstance: {fileID: 210251591082762881}
+  m_PrefabAsset: {fileID: 0}

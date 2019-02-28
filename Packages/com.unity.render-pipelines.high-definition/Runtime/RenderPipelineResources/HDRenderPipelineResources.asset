@@ -12,60 +12,90 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b6f86e1523e69a4282e92d393be89a4, type: 3}
   m_Name: HDRenderPipelineResources
   m_EditorClassIdentifier: 
-  m_Version: 4
   shaders:
     defaultPS: {fileID: 4800000, guid: 6e4ae4064600d784cac1e41a9e6f2e59, type: 3}
-    debugDisplayLatlongPS: {fileID: 4800000, guid: c1d1d149a043a5349ba367da6c2051ba, type: 3}
-    debugViewMaterialGBufferPS: {fileID: 4800000, guid: 439949ea1bfa91b4ba0d04269fcde33d, type: 3}
+    debugDisplayLatlongPS: {fileID: 4800000, guid: c1d1d149a043a5349ba367da6c2051ba,
+      type: 3}
+    debugViewMaterialGBufferPS: {fileID: 4800000, guid: 439949ea1bfa91b4ba0d04269fcde33d,
+      type: 3}
     debugViewTilesPS: {fileID: 4800000, guid: c7c2bd17b06ceb4468e14081aaf1b96f, type: 3}
     debugFullScreenPS: {fileID: 4800000, guid: e874aca2df8300a488258738c31f85cf, type: 3}
-    debugColorPickerPS: {fileID: 4800000, guid: 8137b807709e178498f22ed710864bb0, type: 3}
-    debugLightVolumePS: {fileID: 4800000, guid: f62fc49f20e79e64ba43db3cfd447d80, type: 3}
+    debugColorPickerPS: {fileID: 4800000, guid: 8137b807709e178498f22ed710864bb0,
+      type: 3}
+    debugLightVolumePS: {fileID: 4800000, guid: 8e706c0e71fcec34a8f5c9713e5e2943,
+      type: 3}
+    debugLightVolumeCS: {fileID: 7200000, guid: f5d5d21faef5cf445ac2c5d8ff9c4184,
+      type: 3}
     deferredPS: {fileID: 4800000, guid: 00dd221e34a6ab349a1196b0f2fab693, type: 3}
     colorPyramidCS: {fileID: 7200000, guid: 4e3267a1135742441a14298d8dcac04a, type: 3}
     depthPyramidCS: {fileID: 7200000, guid: 64a553bb564274041906f78ffba955e4, type: 3}
     copyChannelCS: {fileID: 7200000, guid: a4d45eda75e8e474dbe24a31f741f3b4, type: 3}
     applyDistortionCS: {fileID: 7200000, guid: 2fa6c0e3fe6dc3145a4156f21913fe5c, type: 3}
-    screenSpaceReflectionsCS: {fileID: 7200000, guid: d1de9ac7d9016204da289affe9677942, type: 3}
-    clearDispatchIndirectCS: {fileID: 7200000, guid: fc1f553acb80a6446a32d33e403d0656, type: 3}
-    buildDispatchIndirectCS: {fileID: 7200000, guid: 4eb1b418be7044c40bb5200496c50f14, type: 3}
+    screenSpaceReflectionsCS: {fileID: 7200000, guid: d1de9ac7d9016204da289affe9677942,
+      type: 3}
+    clearDispatchIndirectCS: {fileID: 7200000, guid: fc1f553acb80a6446a32d33e403d0656,
+      type: 3}
+    buildDispatchIndirectCS: {fileID: 7200000, guid: 4eb1b418be7044c40bb5200496c50f14,
+      type: 3}
     buildScreenAABBCS: {fileID: 7200000, guid: 728dce960f8a9c44bbc3abb3b851d8f6, type: 3}
-    buildPerTileLightListCS: {fileID: 7200000, guid: 65af3444cbf4b3747a4dead7ee00cfee, type: 3}
-    buildPerBigTileLightListCS: {fileID: 7200000, guid: 5ee1f9d6e09abe045b2f5e0b784b9072, type: 3}
-    buildPerVoxelLightListCS: {fileID: 7200000, guid: 0bb1b7e0ddcd5c44baf3ddc7456eb196, type: 3}
-    buildMaterialFlagsCS: {fileID: 7200000, guid: fb3eda953cd6e634e877fb777be2cd08, type: 3}
+    buildPerTileLightListCS: {fileID: 7200000, guid: 65af3444cbf4b3747a4dead7ee00cfee,
+      type: 3}
+    buildPerBigTileLightListCS: {fileID: 7200000, guid: 5ee1f9d6e09abe045b2f5e0b784b9072,
+      type: 3}
+    buildPerVoxelLightListCS: {fileID: 7200000, guid: 0bb1b7e0ddcd5c44baf3ddc7456eb196,
+      type: 3}
+    buildMaterialFlagsCS: {fileID: 7200000, guid: fb3eda953cd6e634e877fb777be2cd08,
+      type: 3}
     deferredCS: {fileID: 7200000, guid: 0b64f79746d2daf4198eaf6eab9af259, type: 3}
-    screenSpaceShadowCS: {fileID: 7200000, guid: 3e6900e06dc185a4380af4dacb4db0a4, type: 3}
-    volumeVoxelizationCS: {fileID: 7200000, guid: c20b371db720da244b73830ec74a343a, type: 3}
-    volumetricLightingCS: {fileID: 7200000, guid: b4901a10df2d1e24282725e9fbc77c97, type: 3}
-    subsurfaceScatteringCS: {fileID: 7200000, guid: b06a7993621def248addd55d0fe931b1, type: 3}
+    screenSpaceShadowCS: {fileID: 7200000, guid: 3e6900e06dc185a4380af4dacb4db0a4,
+      type: 3}
+    volumeVoxelizationCS: {fileID: 7200000, guid: c20b371db720da244b73830ec74a343a,
+      type: 3}
+    volumetricLightingCS: {fileID: 7200000, guid: b4901a10df2d1e24282725e9fbc77c97,
+      type: 3}
+    subsurfaceScatteringCS: {fileID: 7200000, guid: b06a7993621def248addd55d0fe931b1,
+      type: 3}
     combineLightingPS: {fileID: 4800000, guid: 2e37131331fbdca449b1a2bc47a639ca, type: 3}
-    cameraMotionVectorsPS: {fileID: 4800000, guid: 035941b63024d1943af48811c1db20d9, type: 3}
-    copyStencilBufferPS: {fileID: 4800000, guid: 3d1574f1cdfa0ce4995f9bc79ed7f8ec, type: 3}
+    cameraMotionVectorsPS: {fileID: 4800000, guid: 035941b63024d1943af48811c1db20d9,
+      type: 3}
+    copyStencilBufferPS: {fileID: 4800000, guid: 3d1574f1cdfa0ce4995f9bc79ed7f8ec,
+      type: 3}
     copyDepthBufferPS: {fileID: 4800000, guid: 42dfcc8fe803ece4096c58630689982f, type: 3}
     blitPS: {fileID: 4800000, guid: 370f7a9cc4e362d488af024d371091e8, type: 3}
     blitCubemapPS: {fileID: 4800000, guid: d05913e251bed7a4992c921c62e1b647, type: 3}
-    buildProbabilityTablesCS: {fileID: 7200000, guid: b9f26cf340afe9145a699753531b2a4c, type: 3}
-    computeGgxIblSampleDataCS: {fileID: 7200000, guid: 764a24bb47ef5ba4781d9ae82ca07445, type: 3}
+    buildProbabilityTablesCS: {fileID: 7200000, guid: b9f26cf340afe9145a699753531b2a4c,
+      type: 3}
+    computeGgxIblSampleDataCS: {fileID: 7200000, guid: 764a24bb47ef5ba4781d9ae82ca07445,
+      type: 3}
     GGXConvolvePS: {fileID: 4800000, guid: 123ed592ad5c2494b8aed301fd609e7b, type: 3}
-    opaqueAtmosphericScatteringPS: {fileID: 4800000, guid: 32f724728cf19904291226f239ec16f0, type: 3}
+    charlieConvolvePS: {fileID: 4800000, guid: 5685fd17e71045e4ca9fefca38a7c177, type: 3}
+    opaqueAtmosphericScatteringPS: {fileID: 4800000, guid: 32f724728cf19904291226f239ec16f0,
+      type: 3}
     hdriSkyPS: {fileID: 4800000, guid: 9bd32a6ece529fd4f9408b8d7e00c10d, type: 3}
-    integrateHdriSkyPS: {fileID: 4800000, guid: 48db2705cf2856d4e893eb30a6892d1b, type: 3}
+    integrateHdriSkyPS: {fileID: 4800000, guid: 48db2705cf2856d4e893eb30a6892d1b,
+      type: 3}
     proceduralSkyPS: {fileID: 4800000, guid: ec63f47fd265df243a7b1d40f9ef7fe7, type: 3}
     skyboxCubemapPS: {fileID: 103, guid: 0000000000000000f000000000000000, type: 0}
     gradientSkyPS: {fileID: 4800000, guid: 2b5d4f1b26f03dc4a873b093e0c4adb1, type: 3}
-    preIntegratedFGD_GGXDisneyDiffusePS: {fileID: 4800000, guid: 123f13d52852ef547b2962de4bd9eaad, type: 3}
-    preIntegratedFGD_CharlieFabricLambertPS: {fileID: 4800000, guid: 3b3bf235775cf8b4baae7f3306787ab0, type: 3}
-    preIntegratedFGD_WardPS: {fileID: 4800000, guid: d279c46a545b0af4f9f0c4fa82cd489e, type: 3}
-    preIntegratedFGD_CookTorrancePS: {fileID: 4800000, guid: a6402c19b020b4a4fb7073aaa2e26aba, type: 3}
+    preIntegratedFGD_GGXDisneyDiffusePS: {fileID: 4800000, guid: 123f13d52852ef547b2962de4bd9eaad,
+      type: 3}
+    preIntegratedFGD_CharlieFabricLambertPS: {fileID: 4800000, guid: 3b3bf235775cf8b4baae7f3306787ab0,
+      type: 3}
+    preIntegratedFGD_WardPS: {fileID: 4800000, guid: d279c46a545b0af4f9f0c4fa82cd489e,
+      type: 3}
+    preIntegratedFGD_CookTorrancePS: {fileID: 4800000, guid: a6402c19b020b4a4fb7073aaa2e26aba,
+      type: 3}
     encodeBC6HCS: {fileID: 7200000, guid: aa922d239de60304f964e24488559eeb, type: 3}
     cubeToPanoPS: {fileID: 4800000, guid: 595434cc3b6405246b6cd3086d0b6f7d, type: 3}
-    blitCubeTextureFacePS: {fileID: 4800000, guid: d850d0a2481878d4bbf17e5126b04163, type: 3}
+    blitCubeTextureFacePS: {fileID: 4800000, guid: d850d0a2481878d4bbf17e5126b04163,
+      type: 3}
     shadowClearPS: {fileID: 4800000, guid: e3cab24f27741f44d8af1e94d006267c, type: 3}
-    shadowBlurMomentsCS: {fileID: 7200000, guid: fb36979473602464fa32deacb9630c08, type: 3}
-    debugShadowMapPS: {fileID: 4800000, guid: 93d40cc9a6e13994f86f576a624efa18, type: 3}
-    debugHDShadowMapPS: {fileID: 4800000, guid: 93d40cc9a6e13994f86f576a624efa18, type: 3}
-    decalNormalBufferPS: {fileID: 4800000, guid: fd532bf1795188c4daaa66ea798b8b0a, type: 3}
+    shadowBlurMomentsCS: {fileID: 7200000, guid: fb36979473602464fa32deacb9630c08,
+      type: 3}
+    debugHDShadowMapPS: {fileID: 4800000, guid: 93d40cc9a6e13994f86f576a624efa18,
+      type: 3}
+    decalNormalBufferPS: {fileID: 4800000, guid: fd532bf1795188c4daaa66ea798b8b0a,
+      type: 3}
     depthValuesPS: {fileID: 4800000, guid: 6e6a4a3dbb788234594aa74f2d6aeb6f, type: 3}
     aoResolvePS: {fileID: 4800000, guid: 0fcef9ef067b4cd44a62bd6ac0166384, type: 3}
     colorResolvePS: {fileID: 4800000, guid: dd7047092f3c82b40b3a07868f9c4de2, type: 3}
@@ -76,3 +106,5 @@ MonoBehaviour:
     defaultTerrainMat: {fileID: 2100000, guid: 22ff8771d87ef27429e670136399094b, type: 2}
   textures:
     debugFontTex: {fileID: 2800000, guid: a3ad2df0e49aaa341a3b3a80f93b3f66, type: 3}
+    colorGradient: {fileID: 2800000, guid: 4ea52e665573c1644bf05dd9b11fd2a4, type: 3}
+  m_Version: 4

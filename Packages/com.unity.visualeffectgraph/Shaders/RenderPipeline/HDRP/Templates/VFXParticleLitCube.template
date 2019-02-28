@@ -1,0 +1,11 @@
+{
+	SubShader
+	{	
+		Cull Back
+		
+		${VFXInclude("Shaders/VFXParticleHeader.template")}
+		${VFXInclude("Shaders/ParticleHexahedron/PassDepth.template"),IS_OPAQUE_PARTICLE}
+		${VFXInclude("Shaders/RenderPipeline/HDRP/Templates/Hexahedron/PassGBuffer.template")}
+		${VFXInclude("Shaders/RenderPipeline/HDRP/Templates/Hexahedron/PassShadowCaster.template"),USE_CAST_SHADOWS_PASS}
+	}
+}

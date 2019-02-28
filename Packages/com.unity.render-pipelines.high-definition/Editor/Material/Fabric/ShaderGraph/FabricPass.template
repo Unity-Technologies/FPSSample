@@ -1,0 +1,314 @@
+Pass
+{
+    // based on FabricPass.template
+    Name "$splice(PassName)"
+    Tags { "LightMode" = "$splice(LightMode)" }
+
+    //-------------------------------------------------------------------------------------
+    // Render Modes (Blend, Cull, ZTest, Stencil, etc)
+    //-------------------------------------------------------------------------------------
+    $splice(Blending)
+    $splice(Culling)
+    $splice(ZTest)
+    $splice(ZWrite)
+    $splice(ZClip)
+    $splice(Stencil)
+    $splice(ColorMask)
+    //-------------------------------------------------------------------------------------
+    // End Render Modes
+    //-------------------------------------------------------------------------------------
+
+    HLSLPROGRAM
+
+    #pragma target 4.5
+    #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+    //#pragma enable_d3d11_debug_symbols
+
+    #pragma multi_compile_instancing
+    #pragma instancing_options renderinglayer
+
+    #pragma multi_compile _ LOD_FADE_CROSSFADE
+
+    //-------------------------------------------------------------------------------------
+    // Variant Definitions (active field translations to HDRP defines)
+    //-------------------------------------------------------------------------------------
+    $Material.CottonWool:               #define _MATERIAL_FEATURE_COTTON_WOOL 1
+    $Material.Transmission:             #define _MATERIAL_FEATURE_TRANSMISSION 1
+    $Material.SubsurfaceScattering:     #define _MATERIAL_FEATURE_SUBSURFACE_SCATTERING 1
+    $SurfaceType.Transparent:           #define _SURFACE_TYPE_TRANSPARENT 1
+    $BlendMode.Alpha:                   #define _BLENDMODE_ALPHA 1
+    $BlendMode.Add:                     #define _BLENDMODE_ADD 1
+    $BlendMode.Premultiply:             #define _BLENDMODE_PRE_MULTIPLY 1
+    $BlendMode.PreserveSpecular:        #define _BLENDMODE_PRESERVE_SPECULAR_LIGHTING 1
+    $AlphaFog:                          #define _ENABLE_FOG_ON_TRANSPARENT 1
+    $Occlusion:                         #define _OCCLUSION 1
+    $SpecularOcclusionFromAO:           #define _SPECULAR_OCCLUSION_FROM_AO 1
+    $SpecularOcclusionFromAOBentNormal: #define _SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL 1
+    $SpecularOcclusionCustom:           #define _SPECULAR_OCCLUSION_CUSTOM 1
+    $Specular.EnergyConserving:         #define _ENERGY_CONSERVING_SPECULAR 1
+    $Specular.AA:                       #define _ENABLE_GEOMETRIC_SPECULAR_AA 1
+    $DisableDecals:                     #define _DISABLE_DECALS 1
+    $DisableSSR:                        #define _DISABLE_SSR 1
+    //-------------------------------------------------------------------------------------
+    // End Variant Definitions
+    //-------------------------------------------------------------------------------------
+
+    #pragma vertex Vert
+    #pragma fragment Frag
+
+    // This will be enabled in an upcoming change. 
+    // #define SURFACE_GRADIENT
+
+    // If we use subsurface scattering, enable output split lighting (for forward pass)
+    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
+    #define OUTPUT_SPLIT_LIGHTING
+    #endif
+
+    #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+    #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Wind.hlsl"
+
+    #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/NormalSurfaceGradient.hlsl"
+
+    // define FragInputs structure
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
+
+    //-------------------------------------------------------------------------------------
+    // Defines
+    //-------------------------------------------------------------------------------------
+    $splice(Defines)
+
+    // this translates the new dependency tracker into the old preprocessor definitions for the existing HDRP shader code
+    $AttributesMesh.normalOS:               #define ATTRIBUTES_NEED_NORMAL
+    $AttributesMesh.tangentOS:              #define ATTRIBUTES_NEED_TANGENT
+    $AttributesMesh.uv0:                    #define ATTRIBUTES_NEED_TEXCOORD0
+    $AttributesMesh.uv1:                    #define ATTRIBUTES_NEED_TEXCOORD1
+    $AttributesMesh.uv2:                    #define ATTRIBUTES_NEED_TEXCOORD2
+    $AttributesMesh.uv3:                    #define ATTRIBUTES_NEED_TEXCOORD3
+    $AttributesMesh.color:                  #define ATTRIBUTES_NEED_COLOR
+    $VaryingsMeshToPS.positionRWS:          #define VARYINGS_NEED_POSITION_WS
+    $VaryingsMeshToPS.normalWS:             #define VARYINGS_NEED_TANGENT_TO_WORLD
+    $VaryingsMeshToPS.texCoord0:            #define VARYINGS_NEED_TEXCOORD0
+    $VaryingsMeshToPS.texCoord1:            #define VARYINGS_NEED_TEXCOORD1
+    $VaryingsMeshToPS.texCoord2:            #define VARYINGS_NEED_TEXCOORD2
+    $VaryingsMeshToPS.texCoord3:            #define VARYINGS_NEED_TEXCOORD3
+    $VaryingsMeshToPS.color:                #define VARYINGS_NEED_COLOR
+    $VaryingsMeshToPS.cullFace:             #define VARYINGS_NEED_CULLFACE
+    $features.modifyMesh:                   #define HAVE_MESH_MODIFICATION
+
+    //-------------------------------------------------------------------------------------
+    // End Defines
+    //-------------------------------------------------------------------------------------
+
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+#ifdef DEBUG_DISPLAY
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
+#endif
+
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
+
+#if (SHADERPASS == SHADERPASS_FORWARD)
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
+
+    #define HAS_LIGHTLOOP
+
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoopDef.hlsl"
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Fabric/Fabric.hlsl"
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.hlsl"
+#else
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Fabric/Fabric.hlsl"
+#endif
+
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/BuiltinUtilities.hlsl"
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
+
+    //Used by SceneSelectionPass
+    int _ObjectId;
+    int _PassValue;
+
+    //-------------------------------------------------------------------------------------
+    // Interpolator Packing And Struct Declarations
+    //-------------------------------------------------------------------------------------
+    $buildType(AttributesMesh)
+    $buildType(VaryingsMeshToPS)
+    $buildType(VaryingsMeshToDS)
+    //-------------------------------------------------------------------------------------
+    // End Interpolator Packing And Struct Declarations
+    //-------------------------------------------------------------------------------------
+
+    //-------------------------------------------------------------------------------------
+    // Graph generated code
+    //-------------------------------------------------------------------------------------
+    $splice(Graph)
+    //-------------------------------------------------------------------------------------
+    // End graph generated code
+    //-------------------------------------------------------------------------------------
+
+$features.modifyMesh:   $include("VertexAnimation.template.hlsl")
+
+$include("SharedCode.template.hlsl")
+
+    void ApplyDecalToSurfaceData(DecalSurfaceData decalSurfaceData, inout SurfaceData surfaceData)
+    {
+        // using alpha compositing https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch23.html
+        if (decalSurfaceData.HTileMask & DBUFFERHTILEBIT_DIFFUSE)
+        {
+            surfaceData.baseColor.xyz = surfaceData.baseColor.xyz * decalSurfaceData.baseColor.w + decalSurfaceData.baseColor.xyz;
+        }
+
+        if (decalSurfaceData.HTileMask & DBUFFERHTILEBIT_NORMAL)
+        {
+            surfaceData.normalWS.xyz = normalize(surfaceData.normalWS.xyz * decalSurfaceData.normalWS.w + decalSurfaceData.normalWS.xyz);
+        }
+
+        if (decalSurfaceData.HTileMask & DBUFFERHTILEBIT_MASK)
+        {
+    #ifdef DECALS_4RT // only smoothness in 3RT mode
+            // Don't apply any metallic modification
+            surfaceData.ambientOcclusion = surfaceData.ambientOcclusion * decalSurfaceData.MAOSBlend.y + decalSurfaceData.mask.y;
+    #endif
+
+            surfaceData.perceptualSmoothness = surfaceData.perceptualSmoothness * decalSurfaceData.mask.w + decalSurfaceData.mask.z;
+        }
+    }
+
+    void BuildSurfaceData(FragInputs fragInputs, inout SurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
+    {
+        // setup defaults -- these are used if the graph doesn't output a value
+        ZERO_INITIALIZE(SurfaceData, surfaceData);
+
+        // copy across graph values, if defined
+        $SurfaceDescription.Albedo:                     surfaceData.baseColor =                 surfaceDescription.Albedo;
+        $SurfaceDescription.SpecularOcclusion:          surfaceData.specularOcclusion =         surfaceDescription.SpecularOcclusion;
+        $SurfaceDescription.Smoothness:                 surfaceData.perceptualSmoothness =      surfaceDescription.Smoothness;
+        $SurfaceDescription.Occlusion:                  surfaceData.ambientOcclusion =          surfaceDescription.Occlusion;
+        $SurfaceDescription.Specular:                   surfaceData.specularColor =             surfaceDescription.Specular;
+        $SurfaceDescription.DiffusionProfile:           surfaceData.diffusionProfile =          surfaceDescription.DiffusionProfile;
+        $SurfaceDescription.SubsurfaceMask:             surfaceData.subsurfaceMask =            surfaceDescription.SubsurfaceMask;
+        $SurfaceDescription.Thickness:                  surfaceData.thickness =                 surfaceDescription.Thickness;
+        $SurfaceDescription.Anisotropy:                 surfaceData.anisotropy =                surfaceDescription.Anisotropy;
+        
+        // These static material feature allow compile time optimization
+        surfaceData.materialFeatures = 0;
+
+        // Transform the preprocess macro into a material feature (note that silk flag is deduced from the abscence of this one)
+#ifdef _MATERIAL_FEATURE_COTTON_WOOL
+        surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_FABRIC_COTTON_WOOL;
+#endif
+
+#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+        surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_FABRIC_SUBSURFACE_SCATTERING;
+#endif
+
+#ifdef _MATERIAL_FEATURE_TRANSMISSION
+        surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_FABRIC_TRANSMISSION;
+#endif
+
+
+#if defined (_ENERGY_CONSERVING_SPECULAR)
+        // Require to have setup baseColor
+        // Reproduce the energy conservation done in legacy Unity. Not ideal but better for compatibility and users can unchek it
+        surfaceData.baseColor *= (1.0 - Max3(surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b));
+#endif
+
+        // tangent-space normal
+        float3 normalTS = float3(0.0f, 0.0f, 1.0f);
+        $SurfaceDescription.Normal: normalTS = surfaceDescription.Normal;
+
+        // compute world space normal
+        GetNormalWS(fragInputs, normalTS, surfaceData.normalWS);
+
+        bentNormalWS = surfaceData.normalWS;
+        $BentNormal: GetNormalWS(fragInputs, surfaceDescription.BentNormal, bentNormalWS);
+
+        surfaceData.geomNormalWS = fragInputs.worldToTangent[2];
+
+        surfaceData.tangentWS = normalize(fragInputs.worldToTangent[0].xyz);    // The tangent is not normalize in worldToTangent for mikkt. TODO: Check if it expected that we normalize with Morten. Tag: SURFACE_GRADIENT
+        $Tangent: surfaceData.tangentWS = TransformTangentToWorld(surfaceDescription.Tangent, fragInputs.worldToTangent);
+        surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
+
+        // By default we use the ambient occlusion with Tri-ace trick (apply outside) for specular occlusion.
+        // If user provide bent normal then we process a better term
+        surfaceData.specularOcclusion = 1.0;
+
+#if defined(_SPECULAR_OCCLUSION_CUSTOM)
+        // Just use the value passed through via the slot (not active otherwise)
+#elif defined(_SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL)
+        // If we have bent normal and ambient occlusion, process a specular occlusion
+        surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
+#elif defined(_AMBIENT_OCCLUSION) && defined(_SPECULAR_OCCLUSION_FROM_AO)
+        surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
+#else
+        surfaceData.specularOcclusion = 1.0;
+#endif
+
+#if HAVE_DECALS
+        if (_EnableDecals)
+        {
+            DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, surfaceDescription.Alpha);
+            ApplyDecalToSurfaceData(decalSurfaceData, surfaceData);
+        }
+#endif
+
+#ifdef DEBUG_DISPLAY
+        if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+        {
+            // TODO: need to update mip info
+        }
+
+        // We need to call ApplyDebugToSurfaceData after filling the surfarcedata and before filling builtinData
+        // as it can modify attribute use for static lighting
+        ApplyDebugToSurfaceData(fragInputs.worldToTangent, surfaceData);
+#endif
+    }
+
+    void GetSurfaceAndBuiltinData(FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
+    {
+#ifdef LOD_FADE_CROSSFADE // enable dithering LOD transition if user select CrossFade transition in LOD group
+        uint3 fadeMaskSeed = asuint((int3)(V * _ScreenSize.xyx)); // Quantize V to _ScreenSize values
+        LODDitheringTransition(fadeMaskSeed, unity_LODFade.x);
+#endif
+
+        // This applies the double sided tangent space correction
+        // Must match /Runtime/Material/MaterialUtilities.hlsl:ApplyDoubleSidedFlipOrMirror()
+        $DoubleSided:            if (!fragInputs.isFrontFace)
+        $DoubleSided:            {
+        $DoubleSided.Flip:           fragInputs.worldToTangent[1] = -fragInputs.worldToTangent[1];     // bitangent
+        $DoubleSided.Flip:           fragInputs.worldToTangent[2] = -fragInputs.worldToTangent[2];     // normal
+        $DoubleSided.Mirror:         fragInputs.worldToTangent[2] = -fragInputs.worldToTangent[2];     // normal
+        $DoubleSided:            }
+
+        SurfaceDescriptionInputs surfaceDescriptionInputs = FragInputsToSurfaceDescriptionInputs(fragInputs, V);
+        SurfaceDescription surfaceDescription = SurfaceDescriptionFunction(surfaceDescriptionInputs);
+
+        // Perform alpha test very early to save performance (a killed pixel will not sample textures)
+        // TODO: split graph evaluation to grab just alpha dependencies first? tricky..
+        $AlphaTest:         DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold);
+
+        float3 bentNormalWS;
+        BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
+
+        // Builtin Data
+        // For back lighting we use the oposite vertex normal 
+        InitBuiltinData(surfaceDescription.Alpha, bentNormalWS, -fragInputs.worldToTangent[2], fragInputs.positionRWS, fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
+
+        $SurfaceDescription.Emission: builtinData.emissiveColor = surfaceDescription.Emission;
+
+        // TODO: Handle depth offset
+        //builtinData.depthOffset = 0.0;
+
+        PostInitBuiltinData(V, posInput, surfaceData, builtinData);
+    }
+
+    //-------------------------------------------------------------------------------------
+    // Pass Includes
+    //-------------------------------------------------------------------------------------
+$splice(Includes)
+    //-------------------------------------------------------------------------------------
+    // End Pass Includes
+    //-------------------------------------------------------------------------------------
+
+    ENDHLSL
+}

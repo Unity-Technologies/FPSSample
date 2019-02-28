@@ -1,0 +1,69 @@
+#if !(defined(VFX_VARYING_PS_INPUTS) && defined(VFX_VARYING_POSCS))
+#error VFX_VARYING_PS_INPUTS and VFX_VARYING_POSCS must be defined.
+#endif
+
+${VFXPerPassInclude}
+${VFXGeneratedBlockFunction}
+
+#pragma vertex vert
+
+VFX_VARYING_PS_INPUTS vert(uint id : SV_VertexID, uint instanceID : SV_InstanceID)
+{
+	uint index = (id >> 2) + instanceID * 2048;
+	VFX_VARYING_PS_INPUTS o = (VFX_VARYING_PS_INPUTS)0;
+	
+	${VFXLoadAttributesOrCull}
+	${VFXProcessBlocks}
+			
+	if (!alive)
+		return o;
+
+	#if TARGET_FROM_ATTRIBUTES
+	${VFXLoadSize}
+	float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);
+
+	position = mul(elementToVFX,float4(0,0,0,1)).xyz;
+	
+	${VFXLoadParameter:{targetOffset}}
+	targetPosition = mul(elementToVFX,float4(targetOffset,1)).xyz;
+	#endif
+		
+	float4 pos0 = TransformPositionVFXToClip(position);
+	float4 pos1 = TransformPositionVFXToClip(targetPosition);
+	
+	float2 ndcPos0 = pos0.xy / pos0.w;
+	float2 ndcPos1 = pos1.xy / pos1.w;
+	
+	float2 dir = ndcPos0 - ndcPos1;
+	float2 normal = normalize(dir.yx * float2(-1,-UNITY_MATRIX_P[1][1] / UNITY_MATRIX_P[0][0]));
+	
+#if IS_OPAQUE_PARTICLE
+	const float thicknessMul = 1.0f; // pixel perfect
+#else
+	const float thicknessMul = 2.0f; // for AA
+#endif
+	float minThickness = thicknessMul / sqrt(dot(normal * normal,_ScreenParams.xy * _ScreenParams.xy)); // min thickness based on normal orientation and aspect ratio
+	float minThickness0 = minThickness * pos0.w;
+	float minThickness1 = minThickness * pos1.w;
+	
+	const float thickness = 0.0f; // tmp
+	float4 dPos0 = float4(normal * max(abs(minThickness0),thickness), 0.0f, 0.0f);
+	float4 dPos1 = float4(normal * max(abs(minThickness1),thickness), 0.0f, 0.0f);
+	float4 vPosArray[4] = { pos0 + dPos0, pos0 - dPos0, pos1 + dPos1, pos1 - dPos1};
+	
+	#ifdef VFX_VARYING_PIXELOFFSET
+	o.VFX_VARYING_PIXELOFFSET = (id & 1) ? -1.0f : 1.0f;
+	#endif
+	
+	// If ever used we need the position in vfx space (we dont take into account the pixel offset)
+	float3 vPos = ((id >> 1) & 1) ? position : targetPosition;
+	
+	o.VFX_VARYING_POSCS = vPosArray[id & 3];;
+	
+	${VFXVertexCommonProcess}
+	${VFXVertexAdditionalProcess}
+
+	return o;
+}
+
+${VFXFragmentCommonFunctions}

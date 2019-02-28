@@ -30,56 +30,56 @@ RWTexture2D<float> conditionalDensities;  // [TEXTURE_WIDTH x TEXTURE_HEIGHT]
 
 // Performs a block-level parallel scan.
 // Ref: GPU Gems 3, Chapter 39: "Parallel Prefix Sum (Scan) with CUDA".
-#define PARALLEL_SCAN(i, n, temp, sum)                          \
-{                                                               \
-    uint offset;                                                \
-                                                                \
-    /* Execute the up-sweep phase. */                           \
-    for (offset = 1; offset <= n / 2; offset *= 2)              \
-    {                                                           \
-        GroupMemoryBarrierWithGroupSync();                      \
-                                                                \
-        /*** a1 = (2 * i + 1) * offset - 1 */                   \
-        uint a1 = Mad24(Mad24(2, i, 1), offset, -1);            \
-        uint a2 = a1 + offset;                                  \
-                                                                \
-        if (a2 < n)                                             \
-        {                                                       \
-            temp[SHARED_MEM(a2)] += temp[SHARED_MEM(a1)];       \
-        }                                                       \
-    }                                                           \
-                                                                \
-    GroupMemoryBarrierWithGroupSync();                          \
-                                                                \
-    /* Prevent NaNs arising from the division of 0 by 0. */     \
-    sum = max(temp[SHARED_MEM(n - 1)], FLT_EPS);                \
-                                                                \
-    GroupMemoryBarrierWithGroupSync();                          \
-                                                                \
-    /* The exclusive scan requires the last element to be 0. */ \
-    if (i == 0)                                                 \
-    {                                                           \
-        temp[SHARED_MEM(n - 1)] = 0.0;                          \
-    }                                                           \
-                                                                \
-    /* Execute the down-sweep phase. */                         \
-    for (offset = n / 2; offset > 0; offset /= 2)               \
-    {                                                           \
-        GroupMemoryBarrierWithGroupSync();                      \
-                                                                \
-        /*** a1 = (2 * i + 1) * offset - 1 */                   \
-        uint a1 = Mad24(Mad24(2, i, 1), offset, -1);            \
-        uint a2 = a1 + offset;                                  \
-                                                                \
-        if (a2 < n)                                             \
-        {                                                       \
-            float t1 = temp[SHARED_MEM(a1)];                    \
-            temp[SHARED_MEM(a1)]  = temp[SHARED_MEM(a2)];       \
-            temp[SHARED_MEM(a2)] += t1;                         \
-        }                                                       \
-    }                                                           \
-                                                                \
-    GroupMemoryBarrierWithGroupSync();                          \
+#define PARALLEL_SCAN(i, n, temp, sum)                                          \
+{                                                                               \
+    uint offset;                                                                \
+                                                                                \
+    /* Execute the up-sweep phase. */                                           \
+    for (offset = 1; offset <= n / 2; offset *= 2)                              \
+    {                                                                           \
+        GroupMemoryBarrierWithGroupSync();                                      \
+                                                                                \
+        /*** a1 = (2 * i + 1) * offset - 1 */                                   \
+        uint a1 = Mad24(Mad24(2u, i, 1u), offset, -1);                          \
+        uint a2 = a1 + offset;                                                  \
+                                                                                \
+        if (a2 < n)                                                             \
+        {                                                                       \
+            temp[SHARED_MEM(a2)] += temp[SHARED_MEM(a1)];                       \
+        }                                                                       \
+    }                                                                           \
+                                                                                \
+    GroupMemoryBarrierWithGroupSync();                                          \
+                                                                                \
+    /* Prevent NaNs arising from the division of 0 by 0. */                     \
+    sum = max(temp[SHARED_MEM(n - 1)], FLT_EPS);                                \
+                                                                                \
+    GroupMemoryBarrierWithGroupSync();                                          \
+                                                                                \
+    /* The exclusive scan requires the last element to be 0. */                 \
+    if (i == 0)                                                                 \
+    {                                                                           \
+        temp[SHARED_MEM(n - 1)] = 0.0;                                          \
+    }                                                                           \
+                                                                                \
+    /* Execute the down-sweep phase. */                                         \
+    for (offset = n / 2; offset > 0; offset /= 2)                               \
+    {                                                                           \
+        GroupMemoryBarrierWithGroupSync();                                      \
+                                                                                \
+        /*** a1 = (2 * i + 1) * offset - 1 */                                   \
+        uint a1 = Mad24(Mad24(2u, i, 1u), offset, -1);                          \
+        uint a2 = a1 + offset;                                                  \
+                                                                                \
+        if (a2 < n)                                                             \
+        {                                                                       \
+            float t1 = temp[SHARED_MEM(a1)];                                    \
+            temp[SHARED_MEM(a1)]  = temp[SHARED_MEM(a2)];                       \
+            temp[SHARED_MEM(a2)] += t1;                                         \
+        }                                                                       \
+    }                                                                           \
+                                                                                \
+    GroupMemoryBarrierWithGroupSync();                                          \
 }
 
 #pragma kernel ComputeConditionalDensities

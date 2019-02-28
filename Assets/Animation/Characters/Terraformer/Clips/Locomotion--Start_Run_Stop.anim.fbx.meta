@@ -922,7 +922,7 @@ ModelImporter:
     - serializedVersion: 16
       name: Stop
       takeName: Idle_Run_Idle
-      firstFrame: 26
+      firstFrame: 31
       lastFrame: 42
       wrapMode: 0
       orientationOffsetY: 0
@@ -2306,7 +2306,8 @@ ModelImporter:
     hasTranslationDoF: 1
     hasExtraRoot: 0
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: b7538c5d24affed48893bd3a90e153fb, type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: b7538c5d24affed48893bd3a90e153fb,
+    type: 3}
   animationType: 3
   humanoidOversampling: 2
   additionalBone: 0

@@ -1,23 +1,24 @@
-﻿using UnityEngine;
+﻿using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
 
 
 public struct DeltaWriter
 {
     static byte[] fieldsNotPredicted = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
-    static public unsafe void Write<TOutputStream>(ref TOutputStream output, NetworkSchema schema, byte[] inputData, byte[] baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint entity_hash) where TOutputStream : NetworkCompression.IOutputStream
+    unsafe static public void Write<TOutputStream>(ref TOutputStream output, NetworkSchema schema, uint* inputData, uint* baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint entity_hash) where TOutputStream : NetworkCompression.IOutputStream
     {
         GameDebug.Assert(baselineData != null);
-        var inputStream = new ByteInputStream(inputData);
-        var baselineStream = new ByteInputStream(baselineData);
 
-        int numFields = schema.fields.Count;
+        int numFields = schema.numFields;
         GameDebug.Assert(fieldsChangedPrediction.Length >= numFields / 8, "Not enough bits in fieldsChangedPrediction for all fields");
 
         for (int i = 0, l = fieldsNotPredicted.Length; i < l; ++i)
             fieldsNotPredicted[i] = 0;
 
+        int index = 0;
+
         // calculate bitmask of fields that need to be encoded
-        for (int fieldIndex = 0; fieldIndex < schema.fields.Count; ++fieldIndex)
+        for (int fieldIndex = 0; fieldIndex < numFields; ++fieldIndex)
         {
             var field = schema.fields[fieldIndex];
 
@@ -31,8 +32,9 @@ public struct DeltaWriter
             {
                 case NetworkSchema.FieldType.Bool:
                     {
-                        uint value = inputStream.ReadBits(1);
-                        uint baseline = baselineStream.ReadUInt8();
+                        uint value = inputData[index];
+                        uint baseline = baselineData[index];
+                        index++;
 
                         if(!masked)
                         {
@@ -48,8 +50,9 @@ public struct DeltaWriter
 
                 case NetworkSchema.FieldType.Int:
                     {
-                        uint value = inputStream.ReadBits(field.bits);
-                        uint baseline = (uint)baselineStream.ReadBits(field.bits);
+                        uint value = inputData[index];
+                        uint baseline = baselineData[index];
+                        index++;
 
                         if (!masked)
                         {
@@ -63,8 +66,9 @@ public struct DeltaWriter
                     }
                 case NetworkSchema.FieldType.UInt:
                     {
-                        uint value = inputStream.ReadBits(field.bits);
-                        uint baseline = (uint)baselineStream.ReadBits(field.bits);
+                        uint value = inputData[index];
+                        uint baseline = baselineData[index];
+                        index++;
 
                         if (!masked)
                         {
@@ -78,8 +82,9 @@ public struct DeltaWriter
                     }
                 case NetworkSchema.FieldType.Float:
                     {
-                        uint value = inputStream.ReadBits(field.bits);
-                        uint baseline = (uint)baselineStream.ReadBits(field.bits);
+                        uint value = inputData[index];
+                        uint baseline = baselineData[index];
+                        index++;
 
                         if (!masked)
                         {
@@ -94,11 +99,13 @@ public struct DeltaWriter
 
                 case NetworkSchema.FieldType.Vector2:
                     {
-                        uint vx = inputStream.ReadBits(field.bits);
-                        uint vy = inputStream.ReadBits(field.bits);
+                        uint vx = inputData[index];
+                        uint bx = baselineData[index];
+                        index++;
 
-                        uint bx = baselineStream.ReadUInt32();
-                        uint by = baselineStream.ReadUInt32();
+                        uint vy = inputData[index];
+                        uint by = baselineData[index];
+                        index++;
 
                         if (!masked)
                         {
@@ -114,13 +121,17 @@ public struct DeltaWriter
 
                 case NetworkSchema.FieldType.Vector3:
                     {
-                        uint vx = inputStream.ReadBits(field.bits);
-                        uint vy = inputStream.ReadBits(field.bits);
-                        uint vz = inputStream.ReadBits(field.bits);
+                        uint vx = inputData[index];
+                        uint bx = baselineData[index];
+                        index++;
 
-                        uint bx = baselineStream.ReadUInt32();
-                        uint by = baselineStream.ReadUInt32();
-                        uint bz = baselineStream.ReadUInt32();
+                        uint vy = inputData[index];
+                        uint by = baselineData[index];
+                        index++;
+
+                        uint vz = inputData[index];
+                        uint bz = baselineData[index];
+                        index++;
 
                         if (!masked)
                         {
@@ -138,15 +149,23 @@ public struct DeltaWriter
 
                 case NetworkSchema.FieldType.Quaternion:
                     {
-                        uint vx = inputStream.ReadBits(field.bits);
-                        uint vy = inputStream.ReadBits(field.bits);
-                        uint vz = inputStream.ReadBits(field.bits);
-                        uint vw = inputStream.ReadBits(field.bits);
+                        uint vx = inputData[index];
+                        uint bx = baselineData[index];
+                        index++;
 
-                        uint bx = baselineStream.ReadUInt32();
-                        uint by = baselineStream.ReadUInt32();
-                        uint bz = baselineStream.ReadUInt32();
-                        uint bw = baselineStream.ReadUInt32();
+                        uint vy = inputData[index];
+                        uint by = baselineData[index];
+                        index++;
+
+                        uint vz = inputData[index];
+                        uint bz = baselineData[index];
+                        index++;
+
+                        uint vw = inputData[index];
+                        uint bw = baselineData[index];
+                        index++;
+
+
 
                         if (!masked)
                         {
@@ -166,32 +185,30 @@ public struct DeltaWriter
                 case NetworkSchema.FieldType.String:
                 case NetworkSchema.FieldType.ByteArray:
                     {
-                        // TODO : Do a better job of string and buffer diffs?
-                        byte[] valueBuffer;
-                        int valueOffset;
-                        int valueLength;
-                        inputStream.GetByteArray(out valueBuffer, out valueOffset, out valueLength, field.arraySize);
-
-                        byte[] baselineBuffer = null;
-                        int baselineOffset = 0;
-                        int baselineLength = 0;
-                        baselineStream.GetByteArray(out baselineBuffer, out baselineOffset, out baselineLength, field.arraySize);
-
                         if (!masked)
                         {
                             entity_hash += 0; // TODO client side has no easy way to hash strings. enable this when possible: NetworkUtils.SimpleHash(valueBuffer, valueLength);
-                            if (valueLength != baselineLength || NetworkUtils.MemCmp(valueBuffer, valueOffset, baselineBuffer, baselineOffset, valueLength) != 0)
+                            bool same = true;
+                            for(int i = 0; i < field.arraySize; i++)
+                            {
+                                if(inputData[index+i] != baselineData[index+i])
+                                {
+                                    same = false;
+                                    break;
+                                }
+                            }
+                            if (!same)
                             {
                                 fieldsNotPredicted[fieldByteOffset] |= (byte)(1 << fieldBitOffset);
                             }
                         }
+                        index += field.arraySize/4 + 1;
                     }
                     break;
             }
         }
-    
-        inputStream.Reset();
-        baselineStream.Reset();
+
+        index = 0;
 
         int skipContext = schema.id * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
 
@@ -220,8 +237,8 @@ public struct DeltaWriter
             {
                 case NetworkSchema.FieldType.Bool:
                     {
-                        uint value = inputStream.ReadBits(1);
-                        /*uint unused_baseline = */baselineStream.ReadUInt8();
+                        uint value = inputData[index];
+                        index++;
 
                         if(notPredicted)
                         {
@@ -233,8 +250,9 @@ public struct DeltaWriter
 
                 case NetworkSchema.FieldType.Int:
                     {
-                        uint value = inputStream.ReadBits(field.bits);
-                        uint baseline = (uint)baselineStream.ReadBits(field.bits);
+                        uint value = inputData[index];
+                        uint baseline = baselineData[index];
+                        index++;
 
                         if(notPredicted)
                         {
@@ -253,8 +271,9 @@ public struct DeltaWriter
                     }
                 case NetworkSchema.FieldType.UInt:
                     {
-                        uint value = inputStream.ReadBits(field.bits);
-                        uint baseline = (uint)baselineStream.ReadBits(field.bits);
+                        uint value = inputData[index];
+                        uint baseline = baselineData[index];
+                        index++;
 
                         if(notPredicted)
                         {
@@ -273,8 +292,9 @@ public struct DeltaWriter
                     }
                 case NetworkSchema.FieldType.Float:
                     {
-                        uint value = inputStream.ReadBits(field.bits);
-                        uint baseline = (uint)baselineStream.ReadBits(field.bits);
+                        uint value = inputData[index];
+                        uint baseline = baselineData[index];
+                        index++;
 
                         if(notPredicted)
                         {
@@ -294,11 +314,13 @@ public struct DeltaWriter
 
                 case NetworkSchema.FieldType.Vector2:
                     {
-                        uint vx = inputStream.ReadBits(field.bits);
-                        uint vy = inputStream.ReadBits(field.bits);
+                        uint vx = inputData[index];
+                        uint bx = baselineData[index];
+                        index++;
 
-                        uint bx = baselineStream.ReadUInt32();
-                        uint by = baselineStream.ReadUInt32();
+                        uint vy = inputData[index];
+                        uint by = baselineData[index];
+                        index++;
 
                         if(notPredicted)
                         {
@@ -320,13 +342,17 @@ public struct DeltaWriter
 
                 case NetworkSchema.FieldType.Vector3:
                     {
-                        uint vx = inputStream.ReadBits(field.bits);
-                        uint vy = inputStream.ReadBits(field.bits);
-                        uint vz = inputStream.ReadBits(field.bits);
+                        uint vx = inputData[index];
+                        uint bx = baselineData[index];
+                        index++;
 
-                        uint bx = baselineStream.ReadUInt32();
-                        uint by = baselineStream.ReadUInt32();
-                        uint bz = baselineStream.ReadUInt32();
+                        uint vy = inputData[index];
+                        uint by = baselineData[index];
+                        index++;
+
+                        uint vz = inputData[index];
+                        uint bz = baselineData[index];
+                        index++;
 
                         if(notPredicted)
                         {
@@ -352,15 +378,21 @@ public struct DeltaWriter
                 case NetworkSchema.FieldType.Quaternion:
                     {
                         // TODO : Figure out what to do with quaternions
-                        uint vx = inputStream.ReadBits(field.bits);
-                        uint vy = inputStream.ReadBits(field.bits);
-                        uint vz = inputStream.ReadBits(field.bits);
-                        uint vw = inputStream.ReadBits(field.bits);
+                        uint vx = inputData[index];
+                        uint bx = baselineData[index];
+                        index++;
 
-                        uint bx = baselineStream.ReadUInt32();
-                        uint by = baselineStream.ReadUInt32();
-                        uint bz = baselineStream.ReadUInt32();
-                        uint bw = baselineStream.ReadUInt32();
+                        uint vy = inputData[index];
+                        uint by = baselineData[index];
+                        index++;
+
+                        uint vz = inputData[index];
+                        uint bz = baselineData[index];
+                        index++;
+
+                        uint vw = inputData[index];
+                        uint bw = baselineData[index];
+                        index++;
 
                         if(notPredicted)
                         {
@@ -388,31 +420,25 @@ public struct DeltaWriter
                 case NetworkSchema.FieldType.String:
                 case NetworkSchema.FieldType.ByteArray:
                     {
-                        // TODO : Do a better job of string and buffer diffs?
-                        byte[] valueBuffer;
-                        int valueOffset;
-                        int valueLength;
-                        inputStream.GetByteArray(out valueBuffer, out valueOffset, out valueLength, field.arraySize);
-
-                        byte[] baselineBuffer = null;
-                        int baselineOffset = 0;
-                        int baselineLength = 0;
-                        baselineStream.GetByteArray(out baselineBuffer, out baselineOffset, out baselineLength, field.arraySize);
+                        uint valueLength = inputData[index];
+                        index++;
 
                         if(notPredicted)
                         {
-                            output.WritePackedUInt((uint)valueLength, fieldStartContext);
-                            output.WriteRawBytes(valueBuffer, valueOffset, valueLength);
+                            output.WritePackedUInt(valueLength, fieldStartContext);
+                            byte* bytes = (byte*)(inputData + index);
+                            output.WriteRawBytes(bytes, (int)valueLength);
 
                             if(field.fieldType == NetworkSchema.FieldType.String)
                             {
-                                NetworkSchema.AddStatsToFieldString(field, valueBuffer, valueOffset, valueLength, output.GetBitPosition2() - startBitPosition);
+                                NetworkSchema.AddStatsToFieldString(field, bytes, (int)valueLength, output.GetBitPosition2() - startBitPosition);
                             }
                             else
                             {
-                                NetworkSchema.AddStatsToFieldByteArray(field, valueBuffer, valueOffset, valueLength, output.GetBitPosition2() - startBitPosition);
+                                NetworkSchema.AddStatsToFieldByteArray(field, bytes, (int)valueLength, output.GetBitPosition2() - startBitPosition);
                             }
                         }
+                        index += field.arraySize / 4;
                     }
                     break;
             }

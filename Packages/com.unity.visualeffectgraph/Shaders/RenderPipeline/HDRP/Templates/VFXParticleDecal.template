@@ -1,0 +1,9 @@
+{
+	SubShader
+	{	
+		Cull Back
+		
+		${VFXInclude("Shaders/VFXParticleHeader.template")}
+		${VFXInclude("Shaders/ParticleDecals/PassForward.template")}
+	}
+}

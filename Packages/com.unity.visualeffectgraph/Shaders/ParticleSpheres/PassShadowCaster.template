@@ -1,0 +1,47 @@
+// Shadow pass
+Pass
+{		
+	Tags { "LightMode"=${VFXPassShadow} }
+
+	ZWrite On
+	Blend Off
+	
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		float2 uv : TEXCOORD0;
+		float3 posWS : TEXCOORD1;
+		float4 sphereInfo : TEXCOORD2;
+	};
+	
+	struct ps_output
+	{
+		float depth : SV_DepthLessEqual;
+	};
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_UV uv
+#define VFX_VARYING_POSWS posWS	
+#define VFX_VARYING_SPHERECENTER sphereInfo.xyz
+#define VFX_VARYING_SPHERERADIUS sphereInfo.w
+
+// Needed for HDRP
+#define SHADERPASS SHADERPASS_SHADOWS
+#define USE_LEGACY_UNITY_MATRIX_VARIABLES
+		
+	${VFXInclude("Shaders/ParticleSpheres/Pass.template")}	
+		
+	#pragma fragment frag
+	ps_output frag(ps_input i)
+	{
+		ps_output o = (ps_output)0;
+		float3 dummy;
+		VFXClipSphereAndGetDepthOffsetAndNormal(o.depth,dummy,i);
+		return o;
+	}
+	ENDHLSL
+}

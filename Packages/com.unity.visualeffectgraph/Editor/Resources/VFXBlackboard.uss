@@ -1,0 +1,107 @@
+.blackboard *
+{
+    font-size:11;
+}
+
+#vfx-properties
+{
+    margin-bottom:7;
+}
+
+ #vfx-properties .propertyrm
+{
+    flex:0 0 auto;
+}
+
+
+VFXBlackboardRow.hovered #pill #selection-border
+{
+    background-color:rgba(68,192,255,0.4);
+    border-color: #44C0FF;
+    border-left-width:2;
+    border-top-width:2;
+    border-right-width:2;
+    border-bottom-width:2;
+    position-left:1;
+    position-right:1;
+    position-top:1;
+    position-bottom:1;
+}
+
+
+.blackboard > #dragIndicator {
+    background-color: #44C0FF;
+    min-height: 4;
+    position-left:0;
+    position-right:0;
+}
+
+
+VFXBlackboardCategory #name-field
+{
+    position-type:absolute;
+    position-left:0;
+    position-right:0;
+    position-top:0;
+    position-bottom:0;
+}
+
+#expandButton {
+    align-self: center;
+    background-image: none;
+    border-left: 0;
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 0;
+    margin-left: 0;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    padding-left: 0;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+}
+
+#expandButton > #buttonImage {
+    image : resource("GraphView/Nodes/NodeChevronRight.png");
+    width: 12;
+    height: 12;
+}
+
+VFXBlackboardCategory.expanded #expandButton > #buttonImage {
+    image : resource("GraphView/Nodes/NodeChevronDown.png");
+}
+
+VFXBlackboardCategory > .mainContainer > #rowsContainer
+{
+    height:0;
+}
+
+VFXBlackboardCategory.expanded  > .mainContainer > #rowsContainer
+{
+    height:-1;
+}
+
+VFXBlackboardCategory > .mainContainer > #sectionHeader
+{
+    padding-left:4;
+}VFXBlackboardCategory > .mainContainer > #rowsContainer
+{
+    padding-left:8;
+}
+
+#expandButton:hover > #buttonImage {
+    background-color: #212121;
+    border-radius: 1;
+}
+
+#divider {
+    background-color: rgba(60,60,60,0.8);
+    border-color: rgba(60,60,60,0.8);
+}
+
+#divider.horizontal {
+    height:0.01;
+    border-bottom-width: 1;
+}

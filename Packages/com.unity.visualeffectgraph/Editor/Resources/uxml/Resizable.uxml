@@ -1,0 +1,17 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements">
+    <ui:VisualElement name="left" pickingMode="Ignore" >
+        <ui:VisualElement name="top-left-resize"/>
+        <ui:VisualElement name="left-resize"/>
+        <ui:VisualElement name="bottom-left-resize"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="middle" pickingMode="Ignore" >
+        <ui:VisualElement name="top-resize"/>
+        <ui:VisualElement name="middle-center" pickingMode="Ignore" />
+        <ui:VisualElement name="bottom-resize"/>
+    </ui:VisualElement>
+    <ui:VisualElement name="right"  pickingMode="Ignore" >
+        <ui:VisualElement name="top-right-resize"/>
+        <ui:VisualElement name="right-resize"/>
+        <ui:VisualElement name="bottom-right-resize"/>
+    </ui:VisualElement>
+</UXML>

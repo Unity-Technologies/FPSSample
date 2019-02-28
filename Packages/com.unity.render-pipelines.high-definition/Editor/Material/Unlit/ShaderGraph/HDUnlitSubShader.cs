@@ -10,56 +10,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     public class HDUnlitSubShader : IUnlitSubShader
     {
-        Pass m_PassDepthOnly = new Pass()
-        {
-            Name = "Depth prepass",
-            LightMode = "DepthForwardOnly",
-            TemplateName = "HDUnlitPassForward.template",
-            MaterialName = "Unlit",
-            ShaderPassName = "SHADERPASS_DEPTH_ONLY",
-            ZWriteOverride = "ZWrite On",
-            Includes = new List<string>()
-            {
-                "#include \"Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl\"",
-            },
-            PixelShaderSlots = new List<int>()
-            {
-                UnlitMasterNode.AlphaSlotId,
-                UnlitMasterNode.AlphaThresholdSlotId
-            },
-            VertexShaderSlots = new List<int>()
-            {
-                PBRMasterNode.PositionSlotId
-            }
-        };
-
-        Pass m_PassForward = new Pass()
-        {
-            Name = "Forward Unlit",
-            LightMode = "ForwardOnly",
-            TemplateName = "HDUnlitPassForward.template",
-            MaterialName = "Unlit",
-            ShaderPassName = "SHADERPASS_FORWARD_UNLIT",
-            ExtraDefines = new List<string>()
-            {
-                "#pragma multi_compile _ DEBUG_DISPLAY"
-            },
-            Includes = new List<string>()
-            {
-                "#include \"Runtime/RenderPipeline/ShaderPass/ShaderPassForwardUnlit.hlsl\"",
-            },
-            PixelShaderSlots = new List<int>()
-            {
-                UnlitMasterNode.ColorSlotId,
-                UnlitMasterNode.AlphaSlotId,
-                UnlitMasterNode.AlphaThresholdSlotId
-            },
-            VertexShaderSlots = new List<int>()
-            {
-                PBRMasterNode.PositionSlotId
-            }
-        };
-
         Pass m_PassMETA = new Pass()
         {
             Name = "META",
@@ -70,7 +20,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CullOverride = "Cull Off",
             Includes = new List<string>()
             {
-                "#include \"Runtime/RenderPipeline/ShaderPass/ShaderPassLightTransport.hlsl\"",
+                "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassLightTransport.hlsl\"",
             },
             RequiredFields = new List<string>()
             {
@@ -89,7 +39,136 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             },
             VertexShaderSlots = new List<int>()
             {
-                //PBRMasterNode.PositionSlotId
+                //UnlitMasterNode.PositionSlotId
+            },
+            UseInPreview = false
+        };
+
+        Pass m_PassShadowCaster = new Pass()
+        {
+            Name = "ShadowCaster",
+            LightMode = "ShadowCaster",
+            TemplateName = "HDUnlitPassForward.template",
+            MaterialName = "Unlit",
+            ShaderPassName = "SHADERPASS_SHADOWS",
+            ColorMaskOverride = "ColorMask 0",
+            ExtraDefines = new List<string>()
+            {
+                "#define USE_LEGACY_UNITY_MATRIX_VARIABLES",
+            },
+            Includes = new List<string>()
+            {
+                "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl\"",
+            },
+            RequiredFields = new List<string>()
+            {
+            },
+            PixelShaderSlots = new List<int>()
+            {
+                UnlitMasterNode.AlphaSlotId,
+                UnlitMasterNode.AlphaThresholdSlotId
+            },
+            VertexShaderSlots = new List<int>()
+            {
+                UnlitMasterNode.PositionSlotId
+            },
+            UseInPreview = false
+        };
+
+        Pass m_SceneSelectionPass = new Pass()
+        {
+            Name = "SceneSelectionPass",
+            LightMode = "SceneSelectionPass",
+            TemplateName = "HDUnlitPassForward.template",
+            MaterialName = "Unlit",
+            ShaderPassName = "SHADERPASS_DEPTH_ONLY",
+            ColorMaskOverride = "ColorMask 0",
+            ExtraDefines = new List<string>()
+            {
+                "#define SCENESELECTIONPASS",
+            },
+            Includes = new List<string>()
+            {
+                "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl\"",
+            },
+            PixelShaderSlots = new List<int>()
+            {
+                UnlitMasterNode.AlphaSlotId,
+                UnlitMasterNode.AlphaThresholdSlotId
+            },
+            VertexShaderSlots = new List<int>()
+            {
+                UnlitMasterNode.PositionSlotId
+            },
+            UseInPreview = true
+        };
+
+        Pass m_PassDepthForwardOnly = new Pass()
+        {
+            Name = "DepthOnly",
+            LightMode = "DepthForwardOnly",
+            TemplateName = "HDUnlitPassForward.template",
+            MaterialName = "Unlit",
+            ShaderPassName = "SHADERPASS_DEPTH_ONLY",
+            ZWriteOverride = "ZWrite On",
+            Includes = new List<string>()
+            {
+                "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl\"",
+            },
+            PixelShaderSlots = new List<int>()
+            {
+                UnlitMasterNode.AlphaSlotId,
+                UnlitMasterNode.AlphaThresholdSlotId
+            },
+            VertexShaderSlots = new List<int>()
+            {
+                UnlitMasterNode.PositionSlotId
+            },
+            UseInPreview = false
+        };
+
+        Pass m_PassMotionVectors = new Pass()
+        {
+            Name = "Motion Vectors",
+            LightMode = "MotionVectors",
+            TemplateName = "HDUnlitPassForward.template",
+            MaterialName = "Unlit",
+            ShaderPassName = "SHADERPASS_VELOCITY",
+            ExtraDefines = new List<string>()
+            {
+                "#pragma multi_compile _ WRITE_MSAA_DEPTH"
+            },
+            Includes = new List<string>()
+            {
+                "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassVelocity.hlsl\"",
+            },
+            PixelShaderSlots = new List<int>()
+            {
+                UnlitMasterNode.AlphaSlotId,
+                UnlitMasterNode.AlphaThresholdSlotId
+            },
+            VertexShaderSlots = new List<int>()
+            {
+                UnlitMasterNode.PositionSlotId
+            },
+            UseInPreview = false,
+
+            OnGeneratePassImpl = (IMasterNode node, ref Pass pass) =>
+            {
+                int stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectVelocity;
+                int stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectVelocity;
+
+                pass.StencilOverride = new List<string>()
+                {
+                    "// If velocity pass (motion vectors) is enabled we tag the stencil so it don't perform CameraMotionVelocity",
+                    "Stencil",
+                    "{",
+                    string.Format("   WriteMask {0}", stencilWriteMaskMV),
+                    string.Format("   Ref  {0}", stencilRefMV),
+                    "   Comp Always",
+                    "   Pass Replace",
+                    "}"
+                };
             }
         };
 
@@ -100,23 +179,79 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             TemplateName = "HDUnlitPassForward.template",
             MaterialName = "Unlit",
             ShaderPassName = "SHADERPASS_DISTORTION",
-            BlendOverride = "Blend One One, One One",   // [_DistortionSrcBlend] [_DistortionDstBlend], [_DistortionBlurSrcBlend] [_DistortionBlurDstBlend]
-            BlendOpOverride = "BlendOp Add, Add",       // Add, [_DistortionBlurBlendOp]
-            ZTestOverride = "ZTest LEqual",             // [_ZTestModeDistortion]
             ZWriteOverride = "ZWrite Off",
             Includes = new List<string>()
             {
-                "#include \"Runtime/RenderPipeline/ShaderPass/ShaderPassDistortion.hlsl\"",
+                "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDistortion.hlsl\"",
             },
             PixelShaderSlots = new List<int>()
             {
-                PBRMasterNode.AlphaSlotId,
-                PBRMasterNode.AlphaThresholdSlotId
+                UnlitMasterNode.AlphaSlotId,
+                UnlitMasterNode.AlphaThresholdSlotId,
+                UnlitMasterNode.DistortionSlotId,
+                UnlitMasterNode.DistortionBlurSlotId
             },
             VertexShaderSlots = new List<int>()
             {
-                PBRMasterNode.PositionSlotId
+                UnlitMasterNode.PositionSlotId
             },
+            UseInPreview = true,
+
+            OnGeneratePassImpl = (IMasterNode node, ref Pass pass) =>
+            {
+                // TODO: Support distortion on unlit shader
+                /*
+                var masterNode = node as UnlitMasterNode;
+                if (masterNode.distortionDepthTest.isOn)
+                {
+                    pass.ZTestOverride = "ZTest LEqual";
+                }
+                else
+                {
+                    pass.ZTestOverride = "ZTest Always";
+                }
+                if (masterNode.distortionMode == DistortionMode.Add)
+                {
+                    pass.BlendOverride = "Blend One One, One One";
+                    pass.BlendOpOverride = "BlendOp Add, Add";
+                }
+                else // if (masterNode.distortionMode == DistortionMode.Multiply)
+                {
+                    pass.BlendOverride = "Blend DstColor Zero, DstAlpha Zero";
+                    pass.BlendOpOverride = "BlendOp Add, Add";
+                }
+                */
+            }
+        };
+
+        Pass m_PassForwardOnly = new Pass()
+        {
+            Name = "Forward Unlit",
+            LightMode = "ForwardOnly",
+            TemplateName = "HDUnlitPassForward.template",
+            MaterialName = "Unlit",
+            ShaderPassName = "SHADERPASS_FORWARD_UNLIT",
+            ExtraDefines = new List<string>()
+            {
+                "#pragma multi_compile _ DEBUG_DISPLAY",
+                "#pragma multi_compile _ LIGHTMAP_ON",
+                "#pragma multi_compile _ DIRLIGHTMAP_COMBINED",
+                "#pragma multi_compile _ DYNAMICLIGHTMAP_ON",
+            },
+            Includes = new List<string>()
+            {
+                "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassForwardUnlit.hlsl\"",
+            },
+            PixelShaderSlots = new List<int>()
+            {
+                UnlitMasterNode.ColorSlotId,
+                UnlitMasterNode.AlphaSlotId,
+                UnlitMasterNode.AlphaThresholdSlotId
+            },
+            VertexShaderSlots = new List<int>()
+            {
+                UnlitMasterNode.PositionSlotId
+            }
         };
 
         private static HashSet<string> GetActiveFieldsFromMasterNode(INode iMasterNode, Pass pass)
@@ -129,19 +264,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 return activeFields;
             }
 
-            if (masterNode.twoSided.isOn)
-            {
-                activeFields.Add("DoubleSided");
-                if (pass.ShaderPassName != "SHADERPASS_VELOCITY")   // HACK to get around lack of a good interpolator dependency system
-                {                                                   // we need to be able to build interpolators using multiple input structs
-                                                                    // also: should only require isFrontFace if Normals are required...
-                    activeFields.Add("DoubleSided.Mirror");         // TODO: change this depending on what kind of normal flip you want..
-                    activeFields.Add("FragInputs.isFrontFace");     // will need this for determining normal flip mode
-                }
-            }
-
-            if (masterNode.IsSlotConnected(PBRMasterNode.AlphaThresholdSlotId) ||
-                masterNode.GetInputSlots<Vector1MaterialSlot>().First(x => x.id == PBRMasterNode.AlphaThresholdSlotId).value > 0.0f)
+            if (masterNode.IsSlotConnected(UnlitMasterNode.AlphaThresholdSlotId) ||
+                masterNode.GetInputSlots<Vector1MaterialSlot>().First(x => x.id == UnlitMasterNode.AlphaThresholdSlotId).value > 0.0f)
             {
                 activeFields.Add("AlphaTest");
             }
@@ -162,7 +286,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     activeFields.Add("BlendMode.Add");
                 }
-//                else if (masterNode.alphaMode == PBRMasterNode.AlphaMode.PremultiplyAlpha)            // TODO
+//                else if (masterNode.alphaMode == UnlitMasterNode.AlphaMode.PremultiplyAlpha)            // TODO
 //                {
 //                    defines.AddShaderChunk("#define _BLENDMODE_PRE_MULTIPLY 1", true);
 //                }
@@ -186,7 +310,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             HashSet<string> activeFields = GetActiveFieldsFromMasterNode(masterNode, pass);
 
             // use standard shader pass generation
-            bool vertexActive = masterNode.IsSlotConnected(PBRMasterNode.PositionSlotId);
+            bool vertexActive = masterNode.IsSlotConnected(UnlitMasterNode.PositionSlotId);
             return HDSubShaderUtilities.GenerateShaderPass(masterNode, pass, mode, materialOptions, activeFields, result, sourceAssetDependencyPaths, vertexActive);
         }
 
@@ -218,13 +342,22 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 SurfaceMaterialOptions materialOptions = HDSubShaderUtilities.BuildMaterialOptions(masterNode.surfaceType, masterNode.alphaMode, masterNode.twoSided.isOn, false);
 
                 // generate the necessary shader passes
-//                bool opaque = (masterNode.surfaceType == SurfaceType.Opaque);
-//                bool transparent = (masterNode.surfaceType != SurfaceType.Opaque);
-                bool distortionActive = false;
+                bool opaque = (masterNode.surfaceType == SurfaceType.Opaque);
+                bool distortionActive = false; // TODO: enable distortion on unlit node
 
-                GenerateShaderPassUnlit(masterNode, m_PassDepthOnly, mode, materialOptions, subShader, sourceAssetDependencyPaths);
-                GenerateShaderPassUnlit(masterNode, m_PassForward, mode, materialOptions, subShader, sourceAssetDependencyPaths);
+                GenerateShaderPassUnlit(masterNode, m_PassShadowCaster, mode, materialOptions, subShader, sourceAssetDependencyPaths);
                 GenerateShaderPassUnlit(masterNode, m_PassMETA, mode, materialOptions, subShader, sourceAssetDependencyPaths);
+                GenerateShaderPassUnlit(masterNode, m_SceneSelectionPass, mode, materialOptions, subShader, sourceAssetDependencyPaths);
+
+                if (opaque)
+                {
+                    GenerateShaderPassUnlit(masterNode, m_PassDepthForwardOnly, mode, materialOptions, subShader, sourceAssetDependencyPaths);
+                }
+
+                GenerateShaderPassUnlit(masterNode, m_PassMotionVectors, mode, materialOptions, subShader, sourceAssetDependencyPaths);
+
+                GenerateShaderPassUnlit(masterNode, m_PassForwardOnly, mode, materialOptions, subShader, sourceAssetDependencyPaths);                
+                
                 if (distortionActive)
                 {
                     GenerateShaderPassUnlit(masterNode, m_PassDistortion, mode, materialOptions, subShader, sourceAssetDependencyPaths);

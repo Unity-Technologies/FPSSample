@@ -1,0 +1,10 @@
+{
+	SubShader
+	{	
+		Cull Back
+		
+		${VFXInclude("Shaders/VFXParticleHeader.template")}
+		${VFXInclude("Shaders/ParticleHexahedron/PassBasicForward.template")}
+		${VFXInclude("Shaders/ParticleHexahedron/PassShadowCaster.template"),USE_CAST_SHADOWS_PASS}
+	}
+}

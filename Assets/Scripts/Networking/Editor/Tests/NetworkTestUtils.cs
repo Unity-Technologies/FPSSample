@@ -87,6 +87,7 @@ namespace NetcodeTests
                         break;
                 }
             }
+            schema.Finalize();
             return schema;
         }
 
@@ -94,8 +95,9 @@ namespace NetcodeTests
         {
             var random = new System.Random(seed);
             var values = new List<object>();
-            foreach (var field in schema.fields)
+            for(var i = 0; i < schema.numFields; ++i)
             {
+                var field = schema.fields[i];
                 switch (field.fieldType)
                 {
                     case NetworkSchema.FieldType.Bool:
@@ -152,9 +154,13 @@ namespace NetcodeTests
             return values;
         }
 
-        public static void WriteValues(List<object> values, byte[] buffer, NetworkSchema schema)
+        unsafe public static void WriteValues(List<object> values, uint[] buffer, NetworkSchema schema)
         {
-            NetworkWriter writer = new NetworkWriter(buffer, schema);
+
+            fixed(uint* buf = buffer)
+            {
+
+            NetworkWriter writer = new NetworkWriter(buf, buffer.Length, schema);
             for (int j = 0; j < values.Count; ++j)
             {
                 var value = values[j];
@@ -209,12 +215,16 @@ namespace NetcodeTests
             }
 
             writer.Flush();
+            }
         }
 
-        public static void ReadAndAssertValues(List<object> values, byte[] buffer, NetworkSchema schema)
+        unsafe public static void ReadAndAssertValues(List<object> values, uint[] buffer, NetworkSchema schema)
         {
-            NetworkReader reader = new NetworkReader(buffer, schema);
-            for (int j = 0; j < schema.fields.Count; ++j)
+            fixed(uint* buf = buffer)
+            {
+
+            NetworkReader reader = new NetworkReader(buf, schema);
+            for (int j = 0; j < schema.numFields; ++j)
             {
                 var value = values[j];
                 var field = schema.fields[j];
@@ -233,7 +243,7 @@ namespace NetcodeTests
                 else if (value is float)
                 {
                     var expected = (float)value;
-                    if (schema.fields[j].delta)
+                    if (field.delta)
                     {
                         var actual = reader.ReadFloatQ();
                         Assert.IsTrue(Math.Abs(actual - expected) < Math.Pow(10, -field.precision));
@@ -247,7 +257,7 @@ namespace NetcodeTests
                 else if (value is Vector2)
                 {
                     var expected = (Vector2)value;
-                    if (schema.fields[j].delta)
+                    if (field.delta)
                     {
                         var actual = reader.ReadVector2Q();
                         Assert.IsTrue(Math.Abs(actual.x - expected.x) < Math.Pow(10, -field.precision));
@@ -263,7 +273,7 @@ namespace NetcodeTests
                 else if (value is Vector3)
                 {
                     var expected = (Vector3)value;
-                    if (schema.fields[j].delta)
+                    if (field.delta)
                     {
                         var actual = reader.ReadVector3Q();
                         Assert.IsTrue(Math.Abs(actual.x - expected.x) < Math.Pow(10, -field.precision));
@@ -317,13 +327,14 @@ namespace NetcodeTests
                     for (int b = 0; b < 10; ++b)
                         Assert.AreEqual(expected[b], actual[b]);
                 }
-                else if (value == null && schema.fields[j].fieldType == NetworkSchema.FieldType.String)
+                else if (value == null && field.fieldType == NetworkSchema.FieldType.String)
                 {
                     var actual = reader.ReadString(1024);
                     Assert.AreEqual("", actual);
                 }
                 else
                     Assert.Fail();
+            }
             }
         }
 

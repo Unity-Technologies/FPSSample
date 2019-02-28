@@ -73,7 +73,11 @@ Shader "Hidden/HDRenderPipeline/preIntegratedFGD_CharlieFabricLambert"
                     }
                 }
 
+                // Normalize the accumulated value
                 acc /= sampleCount;
+
+                // The specular term is not bound in the [0, 1] space to avoid that we put it to LDR here and back to HDR when reading
+                acc.y  = acc.y / (1 + acc.y);
 
                 return acc;
             }

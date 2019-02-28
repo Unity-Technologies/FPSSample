@@ -4,7 +4,7 @@ using UnityEngine.Rendering.PostProcessing;
 namespace UnityEditor.Rendering.PostProcessing
 {
     [PostProcessEditor(typeof(Vignette))]
-    public sealed class VignetteEditor : PostProcessEffectEditor<Vignette>
+    internal sealed class VignetteEditor : PostProcessEffectEditor<Vignette>
     {
         SerializedParameterOverride m_Mode;
         SerializedParameterOverride m_Color;

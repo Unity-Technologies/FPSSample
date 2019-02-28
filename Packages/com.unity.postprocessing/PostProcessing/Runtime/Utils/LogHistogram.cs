@@ -1,6 +1,6 @@
 namespace UnityEngine.Rendering.PostProcessing
 {   
-    public sealed class LogHistogram
+    internal sealed class LogHistogram
     {
         public const int rangeMin = -9; // ev
         public const int rangeMax =  9; // ev

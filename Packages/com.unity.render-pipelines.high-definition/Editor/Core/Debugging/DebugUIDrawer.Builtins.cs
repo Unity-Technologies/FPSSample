@@ -131,8 +131,12 @@ namespace UnityEditor.Experimental.Rendering
             var w = Cast<DebugUI.EnumField>(widget);
             var s = Cast<DebugStateInt>(state);
 
-            EditorGUI.BeginChangeCheck();
+            if (w.indexes == null)
+                w.InitIndexes();
 
+            EditorGUI.BeginChangeCheck();
+            
+            int index = -1;
             int value = w.GetValue();
             if (w.enumNames == null || w.enumValues == null)
             {
@@ -142,17 +146,22 @@ namespace UnityEditor.Experimental.Rendering
             {
                 var rect = PrepareControlRect();
 
-                int index = Array.IndexOf(w.enumValues, w.GetValue());
+                index = w.currentIndex;
 
                 // Fallback just in case, we may be handling sub/sectionned enums here
                 if (index < 0)
-                    value = w.enumValues[0];
+                    index = 0;
 
-                value = EditorGUI.IntPopup(rect, CoreEditorUtils.GetContent(w.displayName), value, w.enumNames, w.enumValues);
+                index = EditorGUI.IntPopup(rect, CoreEditorUtils.GetContent(w.displayName), index, w.enumNames, w.indexes);
+                value = w.enumValues[index];
             }
 
             if (EditorGUI.EndChangeCheck())
+            {
                 Apply(w, s, value);
+                if (index > -1)
+                    w.currentIndex = index;
+            }
 
             return true;
         }

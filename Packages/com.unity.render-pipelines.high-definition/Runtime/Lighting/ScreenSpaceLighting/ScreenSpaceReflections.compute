@@ -13,6 +13,7 @@
 #define SSR_TRACE_BEHIND_OBJECTS
 #define SSR_TRACE_TOWARDS_EYE
 #define SSR_TRACE_EPS            0.00024414 // 2^-12, should be good up to 4K
+#define SSR_USE_STENCIL // enable to take into account the disable reflection flags
 
 //--------------------------------------------------------------------------------------------------
 // Included headers
@@ -20,6 +21,8 @@
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/ScreenSpaceLighting/ScreenSpaceLighting.hlsl"
+
 
 #ifdef DEBUG_DISPLAY
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Debug.hlsl"
@@ -37,13 +40,9 @@
 #endif
 
 #ifdef SSR_TRACE
-    // TEXTURE2D(        _NormalBufferTexture); // Declared in NormalBuffer.hlsl.
-    // TEXTURE2D(        _DepthPyramidTexture);  // Declared in ShaderVariablesScreenSpaceLighting.hlsl
+    TEXTURE2D(           _StencilTexture);
     RW_TEXTURE2D(float2, _SsrHitPointTexture);
 #else
-    // TEXTURE2D(        _NormalBufferTexture); // Declared in NormalBuffer.hlsl.
-    // TEXTURE2D(        _ColorPyramidTexture);  // Declared in ShaderVariablesScreenSpaceLighting.hlsl
-       TEXTURE2D(        _VelocityTexture);
        TEXTURE2D(        _SsrHitPointTexture);
     RW_TEXTURE2D(float4, _SsrLightingTextureRW); // ShaderVariablesScreenSpaceLighting.hlsl already pulls in a non-RW _SsrLightingTexture
 #endif
@@ -51,14 +50,20 @@
     StructuredBuffer<int2>  _SsrDepthPyramidMipLevelOffsets;
 
 CBUFFER_START(UnityScreenSpaceReflections)
+    int   _SsrStencilExclusionValue;
     int   _SsrIterLimit;
     float _SsrThicknessScale;
     float _SsrThicknessBias;
+
     float _SsrRoughnessFadeEnd;
     float _SsrRoughnessFadeRcpLength;
     float _SsrRoughnessFadeEndTimesRcpLength;
     float _SsrEdgeFadeRcpLength;
-    int   _SsrDepthPyramidMaxMip;
+
+    float4 _ColorPyramidUvScaleAndLimitPrevFrame;
+
+    int    _SsrDepthPyramidMaxMip;
+    int    _SsrReflectsSky;         // bool...
 CBUFFER_END
 
 //--------------------------------------------------------------------------------------------------
@@ -77,13 +82,24 @@ void WriteDebugInfo(uint2 positionSS, float4 value)
 [numthreads(8, 8, 1)]
 void ScreenSpaceReflectionsTracing(uint2 positionSS : SV_DispatchThreadID)
 {
+#ifdef SSR_USE_STENCIL
+    uint stencilVal = UnpackByte(LOAD_TEXTURE2D(_StencilTexture, positionSS).r);
+    bool doesntReceiveSSR = (stencilVal & _SsrStencilExclusionValue) != 0;
+    // Skip SSR for unlit/sky materials as well (check with stencilVal == 0). 
+    doesntReceiveSSR = doesntReceiveSSR || (stencilVal == 0);
+    if (doesntReceiveSSR)
+    {
+        WriteDebugInfo(positionSS, -1);
+        return;
+    }
+#endif
+
     float2 positionNDC = positionSS * _ScreenSize.zw + (0.5 * _ScreenSize.zw); // Should we precompute the half-texel bias? We seem to use it a lot.
     float  deviceDepth = LOAD_TEXTURE2D(_DepthPyramidTexture, positionSS).r;
+           deviceDepth = (deviceDepth - _SsrThicknessBias) / _SsrThicknessScale; // Apply a small bias. TODO: precompute
     float3 positionWS  = ComputeWorldSpacePosition(positionNDC, deviceDepth, UNITY_MATRIX_I_VP); // Jittered
     float3 V           = GetWorldSpaceNormalizeViewDir(positionWS);
 
-    // TODO: mark stencil during the G-Buffer pass with pixels which should receive SSR .
-    // Reading the stencil is faster than reading the depth and the G-Buffer.
     bool killRay = deviceDepth == UNITY_RAW_FAR_CLIP_VALUE;
 
     // Load normal and roughness.
@@ -118,6 +134,7 @@ void ScreenSpaceReflectionsTracing(uint2 positionSS : SV_DispatchThreadID)
     // Note that we don't need to store or read the roughness value
     // if we mark stencil during the G-Buffer pass with pixels which should receive SSR,
     // and sample the color pyramid during the lighting pass.
+    killRay = killRay || (reflPosSS.z <= 0);
     killRay = killRay || (dot(N, V) <= 0);
     killRay = killRay || (roughness > _SsrRoughnessFadeEnd);
 #ifndef SSR_TRACE_TOWARDS_EYE
@@ -139,8 +156,9 @@ void ScreenSpaceReflectionsTracing(uint2 positionSS : SV_DispatchThreadID)
         float3 bounds;
         bounds.x = (rcpRayDir.x >= 0) ? _ScreenSize.x - halfTexel : halfTexel;
         bounds.y = (rcpRayDir.y >= 0) ? _ScreenSize.y - halfTexel : halfTexel;
-        // Since we do not want to intersect the skybox, it is more efficient to not trace too far.
-        bounds.z = (rcpRayDir.z >= 0) ? 1 : 0.00000012; // 2^-23
+        // If we do not want to intersect the skybox, it is more efficient to not trace too far.
+        float maxDepth = (_SsrReflectsSky != 0) ? -0.00000024 : 0.00000024; // 2^-22
+        bounds.z = (rcpRayDir.z >= 0) ? 1 : maxDepth;
 
         float3 dist = bounds * rcpRayDir - (rayOrigin * rcpRayDir);
         tMax = Min3(dist.x, dist.y, dist.z);
@@ -240,7 +258,7 @@ void ScreenSpaceReflectionsTracing(uint2 positionSS : SV_DispatchThreadID)
     }
 
     // Treat intersections with the sky as misses.
-    miss = miss || (rayPos.z == 0);
+    miss = miss || ((_SsrReflectsSky == 0) && (rayPos.z == 0));
     hit  = hit && !miss;
 
     if (hit)
@@ -257,13 +275,6 @@ void ScreenSpaceReflectionsTracing(uint2 positionSS : SV_DispatchThreadID)
 }
 
 #else // SSR_REPROJECT
-
-float EdgeFade(float2 coordNDC, float fadeRcpLength)
-{
-    float2 coordCS = coordNDC * 2 - 1;
-    float2 t = Remap10(abs(coordCS), fadeRcpLength, fadeRcpLength);
-    return Smoothstep01(t.x) * Smoothstep01(t.y);
-}
 
 float RoughnessFade(float roughness, float fadeRcpLength, float fadeEndTimesRcpLength)
 {
@@ -285,10 +296,13 @@ void ScreenSpaceReflectionsReprojection(uint2 positionSS : SV_DispatchThreadID)
 
     // TODO: it's important to account for occlusion/disocclusion to avoid artifacts in motion.
     // This would require keeping the depth buffer from the previous frame.
-    float2 velocityNDC  = SAMPLE_TEXTURE2D_LOD(_VelocityTexture, s_linear_clamp_sampler, hitPositionNDC * _ScreenToTargetScale.zw, 0).xy;
+    float2 velocityNDC  = SAMPLE_TEXTURE2D_LOD(_CameraMotionVectorsTexture, s_linear_clamp_sampler, hitPositionNDC * _ScreenToTargetScale.zw, 0).xy;
     float2 prevFrameNDC = hitPositionNDC - velocityNDC;
+    float2 prevFrameUV  = prevFrameNDC * _ColorPyramidUvScaleAndLimitPrevFrame.xy;
 
-    if (max(abs(prevFrameNDC.x - 0.5), abs(prevFrameNDC.y - 0.5)) > 0.5)
+    // TODO: optimize with max().
+    if ((prevFrameUV.x < 0) || (prevFrameUV.x > _ColorPyramidUvScaleAndLimitPrevFrame.z) ||
+        (prevFrameUV.y < 0) || (prevFrameUV.y > _ColorPyramidUvScaleAndLimitPrevFrame.w))
     {
         // Off-screen.
         return;
@@ -301,8 +315,10 @@ void ScreenSpaceReflectionsReprojection(uint2 positionSS : SV_DispatchThreadID)
 
     // TODO: filtering is quite awful. Needs to be non-Gaussian, bilateral and anisotropic.
     float  mipLevel = lerp(0, _SsrDepthPyramidMaxMip, roughness);
-    float3 color    = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, prevFrameNDC * _ScreenToTargetScale.zw, mipLevel).rgb;
-    float  opacity  = EdgeFade(prevFrameNDC, _SsrEdgeFadeRcpLength)
+
+    // Note that the color pyramid uses it's own viewport scale, since it lives on the camera.
+    float3 color    = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, prevFrameUV, mipLevel).rgb;
+    float  opacity  = EdgeOfScreenFade(prevFrameNDC, _SsrEdgeFadeRcpLength)
                     * RoughnessFade(roughness, _SsrRoughnessFadeRcpLength, _SsrRoughnessFadeEndTimesRcpLength);
 
     // Use premultiplied alpha.

@@ -43,7 +43,7 @@ public class AnimGraph_AnimatorController : AnimGraphAsset
 
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             m_characterAnimatorController.Update(ref animState);
         }
 

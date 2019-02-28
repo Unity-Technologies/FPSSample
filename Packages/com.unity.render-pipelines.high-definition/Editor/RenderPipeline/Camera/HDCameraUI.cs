@@ -48,7 +48,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var renderingPath = (HDAdditionalCameraData.RenderingPath)m_SerializedHdCamera.renderingPath.intValue;
             canOverrideRenderLoopSettings = renderingPath == HDAdditionalCameraData.RenderingPath.Custom;
 
-            isSectionExpandedOrthoOptions.target = !m_SerializedHdCamera.orthographic.hasMultipleDifferentValues && m_SerializedHdCamera.orthographic.boolValue;
+            isSectionExpandedOrthoOptions.target = !m_SerializedHdCamera.baseCameraSettings.orthographic.hasMultipleDifferentValues && m_SerializedHdCamera.baseCameraSettings.orthographic.boolValue;
             isSectionAvailableXRSettings.target = PlayerSettings.virtualRealitySupported;
             // SRP settings are available only if the rendering path is not the Default one (configured by the SRP asset)
             isSectionAvailableRenderLoopSettings.target = canOverrideRenderLoopSettings;

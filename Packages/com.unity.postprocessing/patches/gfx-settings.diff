@@ -1,0 +1,145 @@
+Index: com.unity.postprocessing/PostProcessing/Runtime/Effects/AmbientOcclusion.cs
+===================================================================
+--- com.unity.postprocessing.orig/PostProcessing/Runtime/Effects/AmbientOcclusion.cs
++++ com.unity.postprocessing/PostProcessing/Runtime/Effects/AmbientOcclusion.cs
+@@ -152,14 +152,21 @@ namespace UnityEngine.Rendering.PostProc
+         [Tooltip("The number of sample points. This affects both quality and performance. For \"Lowest\", \"Low\", and \"Medium\", passes are downsampled. For \"High\" and \"Ultra\", they are not and therefore you should only \"High\" and \"Ultra\" on high-end hardware.")]
+         public AmbientOcclusionQualityParameter quality = new AmbientOcclusionQualityParameter { value = AmbientOcclusionQuality.Medium };
+ 
++        // sample-game begin: added globalEnable
++        public static bool globalEnable = true;
++        // sample-game end
++
+         // SRPs can call this method without a context set (see HDRP).
+         // We need a better way to handle this than checking for a null context, context should
+         // never be null.
+         /// <inheritdoc />
+         public override bool IsEnabledAndSupported(PostProcessRenderContext context)
+         {
++        // sample-game begin: added globalEnable
+             bool state = enabled.value
++                && globalEnable
+                 && intensity.value > 0f;
++        // sample-game end
+ 
+             if (mode.value == AmbientOcclusionMode.ScalableAmbientObscurance)
+             {
+Index: com.unity.postprocessing/PostProcessing/Runtime/Effects/Bloom.cs
+===================================================================
+--- com.unity.postprocessing.orig/PostProcessing/Runtime/Effects/Bloom.cs
++++ com.unity.postprocessing/PostProcessing/Runtime/Effects/Bloom.cs
+@@ -85,11 +85,18 @@ namespace UnityEngine.Rendering.PostProc
+         [Min(0f), Tooltip("The intensity of the lens dirtiness."), DisplayName("Intensity")]
+         public FloatParameter dirtIntensity = new FloatParameter { value = 0f };
+ 
++        // sample-game begin: added globalEnable
++        public static bool globalEnable = true;
++        // sample-game end:
++
+         /// <inheritdoc />
+         public override bool IsEnabledAndSupported(PostProcessRenderContext context)
+         {
++        // sample-game begin: added globalEnable
+             return enabled.value
++                && globalEnable
+                 && intensity.value > 0f;
++        // sample-game end:
+         }
+     }
+ 
+Index: com.unity.postprocessing/PostProcessing/Runtime/Effects/Grain.cs
+===================================================================
+--- com.unity.postprocessing.orig/PostProcessing/Runtime/Effects/Grain.cs
++++ com.unity.postprocessing/PostProcessing/Runtime/Effects/Grain.cs
+@@ -32,12 +32,19 @@ namespace UnityEngine.Rendering.PostProc
+         /// </summary>
+         [Range(0f, 1f), DisplayName("Luminance Contribution"), Tooltip("Controls the noise response curve based on scene luminance. Lower values mean less noise in dark areas.")]
+         public FloatParameter lumContrib = new FloatParameter { value = 0.8f };
++
++        // sample-game begin: added globalEnable
++        public static bool globalEnable = true;
++        // sample-game end:
+         
+         /// <inheritdoc />
+         public override bool IsEnabledAndSupported(PostProcessRenderContext context)
+         {
++        // sample-game begin: added globalEnable
+             return enabled.value
++                && globalEnable
+                 && intensity.value > 0f;
++        // sample-game end:
+         }
+     }
+ 
+Index: com.unity.postprocessing/PostProcessing/Runtime/Effects/MotionBlur.cs
+===================================================================
+--- com.unity.postprocessing.orig/PostProcessing/Runtime/Effects/MotionBlur.cs
++++ com.unity.postprocessing/PostProcessing/Runtime/Effects/MotionBlur.cs
+@@ -22,11 +22,18 @@ namespace UnityEngine.Rendering.PostProc
+         [Range(4, 32), Tooltip("The amount of sample points. This affects quality and performance.")]
+         public IntParameter sampleCount = new IntParameter { value = 10 };
+ 
++        // sample-game begin: added globalEnable
++        public static bool globalEnable = true;
++        // sample-game end:
++
+         /// <inheritdoc />
+         public override bool IsEnabledAndSupported(PostProcessRenderContext context)
+         {
++        // sample-game begin: added globalEnable
+             return enabled.value
+                 && shutterAngle.value > 0f
++                && globalEnable
++        // sample-game end:
+             #if UNITY_EDITOR
+                 // Don't render motion blur preview when the editor is not playing as it can in some
+                 // cases results in ugly artifacts (i.e. when resizing the game view).
+Index: com.unity.postprocessing/PostProcessing/Runtime/Effects/ScreenSpaceReflections.cs
+===================================================================
+--- com.unity.postprocessing.orig/PostProcessing/Runtime/Effects/ScreenSpaceReflections.cs
++++ com.unity.postprocessing/PostProcessing/Runtime/Effects/ScreenSpaceReflections.cs
+@@ -97,10 +97,17 @@ namespace UnityEngine.Rendering.PostProc
+         [Range(0f, 1f), Tooltip("Fades reflections close to the screen edges.")]
+         public FloatParameter vignette = new FloatParameter { value = 0.5f };
+ 
++        // sample-game begin: added globalEnable
++        public static bool globalEnable = true;
++        // sample-game end:
++
+         /// <inheritdoc />
+         public override bool IsEnabledAndSupported(PostProcessRenderContext context)
+         {
++        // sample-game begin: added globalEnable
+             return enabled
++                && globalEnable
++        // sample-game end:
+                 && context.camera.actualRenderingPath == RenderingPath.DeferredShading
+                 && SystemInfo.supportsMotionVectors
+                 && SystemInfo.supportsComputeShaders
+Index: com.unity.postprocessing/PostProcessing/Runtime/Effects/ColorGrading.cs
+===================================================================
+--- com.unity.postprocessing.orig/PostProcessing/Runtime/Effects/ColorGrading.cs
++++ com.unity.postprocessing/PostProcessing/Runtime/Effects/ColorGrading.cs
+@@ -320,6 +320,10 @@ namespace UnityEngine.Rendering.PostProc
+         [DisplayName("Gain"), Tooltip("Controls the lightest portions of the render."), Trackball(TrackballAttribute.Mode.Gain)]
+         public Vector4Parameter gain = new Vector4Parameter { value = new Vector4(1f, 1f, 1f, 0f) };
+ 
++        // sample-game begin: added globalGamma
++        public static float globalGamma = 1.0f;
++        // sample-game end:
++
+         /// <summary>
+         /// Remaps the luminosity values.
+         /// </summary>
+@@ -493,6 +497,11 @@ namespace UnityEngine.Rendering.PostProc
+                 var lift = ColorUtilities.ColorToLift(settings.lift.value * 0.2f);
+                 var gain = ColorUtilities.ColorToGain(settings.gain.value * 0.8f);
+                 var invgamma = ColorUtilities.ColorToInverseGamma(settings.gamma.value * 0.8f);
++
++                // sample-game begin: apply globalGamma
++                invgamma.Scale(Vector3.one * ColorGrading.globalGamma);
++                // sample-game end
++
+                 cmd.SetComputeVectorParam(compute, "_Lift", new Vector4(lift.x, lift.y, lift.z, 0f));
+                 cmd.SetComputeVectorParam(compute, "_InvGamma", new Vector4(invgamma.x, invgamma.y, invgamma.z, 0f));
+                 cmd.SetComputeVectorParam(compute, "_Gain", new Vector4(gain.x, gain.y, gain.z, 0f));

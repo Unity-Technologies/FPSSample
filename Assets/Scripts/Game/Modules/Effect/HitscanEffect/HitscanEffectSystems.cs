@@ -2,87 +2,45 @@
 using Unity.Entities;
 using UnityEngine;
 
+[AlwaysUpdateSystem]
 [DisableAutoCreation]
 public class HandleHitscanEffectRequests : BaseComponentSystem 
 {
-	ComponentGroup RequestGroup;
+	struct HitscanEffectReques 
+	{
+		public HitscanEffectTypeDefinition effectDef;
+		public Vector3 startPos;
+		public Vector3 endPos;
+	}
 	
-	public HandleHitscanEffectRequests(GameWorld world, GameObject systemRoot, BundledResourceManager resourceSystem) : base(world)
+	List<HitscanEffectReques> m_requests = new List<HitscanEffectReques>(32);
+	
+	public void Request(HitscanEffectTypeDefinition effectDef, Vector3 startPos, Vector3 endPos)
 	{
-		var effectBundle = resourceSystem.GetResourceRegistry<HitscanEffectRegistry>();
-		GameDebug.Assert(effectBundle != null,"No HitscanEffectRegistry defined in registry");
-
-		m_Pools = new Pool[effectBundle.entries.Count];
-		for(var i=0;i<effectBundle.entries.Count;i++)
+		m_requests.Add(new HitscanEffectReques
 		{
-			var entry = effectBundle.entries[i]; 
-			var resource = resourceSystem.LoadSingleAssetResource(entry.prefab.guid);
-			GameDebug.Assert(resource != null);
-
-			var prefab = resource as GameObject;
-			GameDebug.Assert(prefab != null);
-			
-			var pool = new Pool();
-			pool.instances = new HitscanEffect[entry.poolSize];
-			for (var j = 0; j < pool.instances.Length; j++)
-			{
-				var go = GameObject.Instantiate(prefab);
-            
-				if(systemRoot != null)
-					go.transform.SetParent(systemRoot.transform, false);
-
-				pool.instances[j] = go.GetComponent<HitscanEffect>();
-				GameDebug.Assert(pool.instances[j],"Effect prefab does not have HitscanEffect component");
-			}
-
-			m_Pools[i] = pool;
-		}
+			effectDef = effectDef,
+			startPos = startPos,
+			endPos = endPos,
+		});
 	}
-
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		RequestGroup = GetComponentGroup(typeof(HitscanEffectRequest));
-	}
-
-	protected override void OnDestroyManager()
-	{
-		if (m_Pools != null)
-		{
-			for (var i = 0; i < m_Pools.Length; i++)
-			{
-				var pool = m_Pools[i];
-				for(var j=0;j<pool.instances.Length;j++)
-					GameObject.Destroy(pool.instances[j]);
-			}
-		}		
-	}
+	
+	public HandleHitscanEffectRequests(GameWorld world) : base(world)
+	{}
 
 	protected override void OnUpdate()
 	{
-		var entityArray = RequestGroup.GetEntityArray();
-		var requestArray = RequestGroup.GetComponentDataArray<HitscanEffectRequest>();
-
-		
-		for (var i = 0; i < requestArray.Length; i++)
+		for (int nRequest = 0; nRequest < m_requests.Count; nRequest++)
 		{
-			var request = requestArray[i];
-
-			var pool = m_Pools[request.effectTypeRegistryId];
+			var request = m_requests[nRequest];
 			
-			var index = pool.nextInstanceId % pool.instances.Length;
-			pool.instances[index].StartEffect(request.startPos, request.endPos);
-			pool.nextInstanceId++;
-			
-			PostUpdateCommands.DestroyEntity(entityArray[i]);
+			if(request.effectDef.effect != null)
+			{
+				var vfxSystem = World.GetExistingManager<VFXSystem>();
+				
+				vfxSystem.SpawnLineEffect(request.effectDef.effect, request.startPos, request.endPos);
+			}
 		}
+		m_requests.Clear();
 	}
-
-	class Pool
-	{
-		public HitscanEffect[] instances;
-		public int nextInstanceId;
-	}
-
-	Pool[] m_Pools;
 }

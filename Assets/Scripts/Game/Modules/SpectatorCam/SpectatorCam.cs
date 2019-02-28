@@ -1,24 +1,39 @@
 ﻿using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
-public class SpectatorCam : MonoBehaviour, INetSerialized
+public struct SpectatorCamData : IComponentData, IReplicatedComponent
 {
-    public Vector3 position;
-    public Quaternion rotation;
+    public float3 position;
+    public quaternion rotation;
+    
+    public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
+    {
+        return new ReplicatedComponentSerializerFactory<SpectatorCamData>();
+    }
 
-
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
     {
         writer.WriteVector3Q("pos",position,1);
         writer.WriteQuaternionQ("rot",rotation,1);
     }
 
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
     {
         position = reader.ReadVector3Q();
         rotation = reader.ReadQuaternionQ();
     }
 }
+
+
+
+public class SpectatorCam : ComponentDataWrapper<SpectatorCamData>
+{
+    
+}
+
+
+
 
 public struct SpectatorCamSpawnRequest : IComponentData
 {
@@ -50,13 +65,14 @@ public class UpdateSpectatorCam : BaseComponentSystem
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        Group = GetComponentGroup(typeof(UserCommandComponent), typeof(SpectatorCam));
+        Group = GetComponentGroup(typeof(UserCommandComponentData), typeof(SpectatorCamData));
     }
 
     protected override void OnUpdate()
     {
-        var spectatorCamArray = Group.GetComponentArray<SpectatorCam>();
-        var userCommandArray = Group.GetComponentArray<UserCommandComponent>();
+        var spectatorCamEntityArray = Group.GetEntityArray();
+        var spectatorCamArray = Group.GetComponentDataArray<SpectatorCamData>();
+        var userCommandArray = Group.GetComponentDataArray<UserCommandComponentData>();
         for (var i = 0; i < spectatorCamArray.Length; i++)
         {
             var command = userCommandArray[i].command;
@@ -64,11 +80,13 @@ public class UpdateSpectatorCam : BaseComponentSystem
 
             spectatorCam.rotation = Quaternion.Euler(new Vector3(90 - command.lookPitch, command.lookYaw, 0));
 
-            var forward = spectatorCam.rotation * Vector3.forward;
-            var right = spectatorCam.rotation * Vector3.right;
+            var forward = math.mul(spectatorCam.rotation,Vector3.forward);
+            var right = math.mul(spectatorCam.rotation,Vector3.right);
             var maxVel = 3 * m_world.worldTime.tickInterval;
             var moveDir = forward * Mathf.Cos(command.moveYaw*Mathf.Deg2Rad)  + right * Mathf.Sin(command.moveYaw*Mathf.Deg2Rad);
             spectatorCam.position += moveDir * maxVel * command.moveMagnitude;
+
+            EntityManager.SetComponentData(spectatorCamEntityArray[i], spectatorCam);
         }            
     }
 }
@@ -115,19 +133,25 @@ public class HandleSpectatorCamRequests : BaseComponentSystem
             
             
             
-            var resource = m_ResourceManager.LoadSingleAssetResource(m_Settings.spectatorCamPrefab.guid);
+            var resource = m_ResourceManager.GetSingleAssetResource(m_Settings.spectatorCamPrefab);
 
             GameDebug.Assert(resource != null);
 
 
             var prefab = (GameObject)resource;
             GameDebug.Log("Spawning spectatorcam");
-            var spectatorCam = m_world.Spawn<SpectatorCam>(prefab);
-            spectatorCam.name = prefab.name;
+            
+            
+            var goe = m_world.Spawn<GameObjectEntity>(prefab);
+            goe.name = prefab.name;
+            var entity = goe.Entity;
+
+            var spectatorCam = EntityManager.GetComponentData<SpectatorCamData>(entity);
             spectatorCam.position = request.position;
             spectatorCam.rotation = request.rotation;
+            EntityManager.SetComponentData(entity,spectatorCam);
             
-            playerState.controlledEntity = spectatorCam.gameObject.GetComponent<GameObjectEntity>().Entity; 
+            playerState.controlledEntity = entity; 
         }
     }
 

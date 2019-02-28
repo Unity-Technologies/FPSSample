@@ -8,8 +8,8 @@ public class AutomaticRifleUI : AbilityUI
 {
     public override void UpdateAbilityUI(EntityManager entityManager, ref GameTime time)
     {
-        var character = entityManager.GetComponentObject<Character>(abilityOwner);
-        var ability = character.FindAbilityWithComponent(entityManager,typeof(Ability_AutoRifle.PredictedState));
+        var charRepAll = entityManager.GetComponentData<CharacterReplicatedData>(abilityOwner);
+        var ability = charRepAll.FindAbilityWithComponent(entityManager,typeof(Ability_AutoRifle.PredictedState));
         GameDebug.Assert(ability != Entity.Null,"AbilityController does not own a Ability_AutoRifle ability");
         
         var state = entityManager.GetComponentData<Ability_AutoRifle.PredictedState>(ability);
@@ -24,12 +24,12 @@ public class AutomaticRifleUI : AbilityUI
         if (m_ClipSize != settings.clipSize)
         {
             m_ClipSize = settings.clipSize;
-            m_ClipSizeText.text = "/" + m_ClipSize.ToString();
+            m_ClipSizeText.text = "/ " + m_ClipSize.ToString();
         }
     }
 
-    [SerializeField] Text m_AmmoInClipText;
-    [SerializeField] Text m_ClipSizeText;
+    [SerializeField] TMPro.TextMeshProUGUI m_AmmoInClipText;
+    [SerializeField] TMPro.TextMeshProUGUI m_ClipSizeText;
     
     int m_AmmoInClip = -1;
     int m_ClipSize = -1;

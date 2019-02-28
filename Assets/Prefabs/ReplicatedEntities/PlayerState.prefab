@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4563865316716336}
   - component: {fileID: 114466073447029104}
-  - component: {fileID: 114477760938602462}
   - component: {fileID: 114599586741864288}
+  - component: {fileID: 114477760938602462}
   - component: {fileID: 114633368909359266}
   m_Layer: 0
   m_Name: PlayerState
@@ -46,6 +46,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bf10cdea1344482e91a4f2b58506b77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &114599586741864288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1179550806452256}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SerializedData:
+    assetGuid:
+      val0: 1955034687
+      val1: 819255991
+      val2: -1073517237
+      val3: -460089000
+  netID: 44890c4aa7703d4893c31bfea22acfad
 --- !u!114 &114477760938602462
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -79,21 +98,6 @@ MonoBehaviour:
   actionString: 
   goalCompletion: 0
   enableCharacterSwitch: 0
---- !u!114 &114599586741864288
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1179550806452256}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  guid: 7487763fdab730d44b6d03c0589993e4
-  netID: dbf886d0d4b91747bcb096a4995f175c
-  registryId: 19
 --- !u!114 &114633368909359266
 MonoBehaviour:
   m_ObjectHideFlags: 0

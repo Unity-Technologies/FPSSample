@@ -41,10 +41,11 @@ public class PlayerCharacterControlSystem : ComponentSystem
             character.teamId = player.teamIndex;
             
             // Update hit collision
-            if (EntityManager.HasComponent<HitCollisionOwner>(controlledEntity))
+            if (EntityManager.HasComponent<HitCollisionOwnerData>(controlledEntity))
             {
-                var hitCollisionOwner = EntityManager.GetComponentObject<HitCollisionOwner>(controlledEntity);
-                hitCollisionOwner.colliderFlags = 1 << character.teamId;
+                var hitCollisionOwner = EntityManager.GetComponentData<HitCollisionOwnerData>(controlledEntity);
+                hitCollisionOwner.colliderFlags = 1U << character.teamId;
+                EntityManager.SetComponentData(controlledEntity,hitCollisionOwner);
             }
 
             character.characterName = player.playerName;

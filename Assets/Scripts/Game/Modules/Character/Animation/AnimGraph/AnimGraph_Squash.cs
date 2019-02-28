@@ -3,6 +3,7 @@ using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityEngine.Profiling;
 using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "Squash", menuName = "FPS Sample/Animation/AnimGraph/Squash")]
@@ -48,7 +49,7 @@ public class AnimGraph_Squash : AnimGraphAsset
             m_Owner = owner;
             m_AnimStateOwner = animStateOwner;
             
-            GameDebug.Assert(entityManager.HasComponent<CharPredictedStateData>(m_AnimStateOwner),"Owner has no CharPredictedState component");
+            GameDebug.Assert(entityManager.HasComponent<CharacterPredictedData>(m_AnimStateOwner),"Owner has no CharPredictedState component");
 
             m_mixer = AnimationLayerMixerPlayable.Create(graph,2);
             m_mixer.SetInputWeight(0, 1.0f);
@@ -79,14 +80,16 @@ public class AnimGraph_Squash : AnimGraphAsset
 
         public void UpdateGraphLogic(GameTime time, float deltaTime)
         {            
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
-            var predictedState = m_EntityManager.GetComponentData<CharPredictedStateData>(m_AnimStateOwner);
+            Profiler.BeginSample("Squash.Update");
+            
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
+            var predictedState = m_EntityManager.GetComponentData<CharacterPredictedData>(m_AnimStateOwner);
             var timeToSquash = TimeToSquash(animState);
             
             if (m_prevLocoState != animState.charLocoState)
             {
                 // Double jump
-                if (animState.charLocoState == CharPredictedStateData.LocoState.DoubleJump)
+                if (animState.charLocoState == CharacterPredictedData.LocoState.DoubleJump)
                 {
                     animState.squashTime = 0;
                     animState.squashWeight = m_Settings.doubleJump.weight;
@@ -94,7 +97,7 @@ public class AnimGraph_Squash : AnimGraphAsset
                 }
                     
                 // Landing
-                else if (m_prevLocoState == CharPredictedStateData.LocoState.InAir)
+                else if (m_prevLocoState == CharacterPredictedData.LocoState.InAir)
                 {
                     animState.squashTime = 0;
     
@@ -108,14 +111,14 @@ public class AnimGraph_Squash : AnimGraphAsset
                 }                
                 
                 // Stopping
-                else if (timeToSquash && animState.charLocoState == CharPredictedStateData.LocoState.Stand)
+                else if (timeToSquash && animState.charLocoState == CharacterPredictedData.LocoState.Stand)
                 {
                     animState.squashTime = 0;
                     animState.squashWeight = m_Settings.stop.weight;
                     m_playSpeed = m_Settings.stop.playSpeed;
                 }     
                 // Start Moving
-                else if (timeToSquash && animState.charLocoState == CharPredictedStateData.LocoState.GroundMove)
+                else if (timeToSquash && animState.charLocoState == CharacterPredictedData.LocoState.GroundMove)
                 {
                     animState.squashTime = 0;
                     animState.squashWeight = m_Settings.start.weight;
@@ -124,7 +127,7 @@ public class AnimGraph_Squash : AnimGraphAsset
             }
             
             // Direction change
-            else if (animState.charLocoState == CharPredictedStateData.LocoState.GroundMove && 
+            else if (animState.charLocoState == CharacterPredictedData.LocoState.GroundMove && 
                 Mathf.Abs(Mathf.DeltaAngle(animState.moveAngleLocal, m_prevMoveAngle)) > m_Settings.dirChangeMinAngle)
             {                
                 if (timeToSquash && time.DurationSinceTick(m_lastDirChangeTick)> m_Settings.dirChangeTimePenalty)
@@ -147,6 +150,8 @@ public class AnimGraph_Squash : AnimGraphAsset
             m_prevLocoState = animState.charLocoState;
             m_prevMoveAngle = animState.moveAngleLocal;
             m_EntityManager.SetComponentData(m_AnimStateOwner, animState);
+            
+            Profiler.EndSample();
         }
         
         public void ResetNetwork(float timeOffset)
@@ -155,12 +160,16 @@ public class AnimGraph_Squash : AnimGraphAsset
     
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            Profiler.BeginSample("Squash.Apply");
+
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             m_mixer.SetInputWeight(1, animState.squashWeight);
             m_animSquash.SetTime(animState.squashTime);
+            
+            Profiler.EndSample();
         }
 
-        bool TimeToSquash(PresentationState animState)
+        bool TimeToSquash(CharacterInterpolatedData animState)
         {               
             return Math.Abs(animState.squashTime) < 0.001f || animState.squashTime >= m_animSquash.GetDuration();
         }
@@ -174,7 +183,7 @@ public class AnimGraph_Squash : AnimGraphAsset
         AnimationLayerMixerPlayable m_mixer;
         PlayableGraph m_graph;
 
-        CharPredictedStateData.LocoState m_prevLocoState;
+        CharacterPredictedData.LocoState m_prevLocoState;
         
         float m_prevMoveAngle;
         float m_playSpeed;

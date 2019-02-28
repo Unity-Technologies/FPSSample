@@ -92,6 +92,10 @@ MonoBehaviour:
     bloom: {fileID: 4800000, guid: c1e1d3119c6fd4646aea0b4b74cacc1a, type: 3}
     copy: {fileID: 4800000, guid: cdbdb71de5f9c454b980f6d0e87f0afb, type: 3}
     copyStd: {fileID: 4800000, guid: 4bf4cff0d0bac3d43894e2e8839feb40, type: 3}
+    copyStdFromTexArray: {fileID: 4800000, guid: 02d2da9bc88d25c4d878c1ed4e0b3854,
+      type: 3}
+    copyStdFromDoubleWide: {fileID: 4800000, guid: e8ce9961912f3214586fe8709b9012c1,
+      type: 3}
     discardAlpha: {fileID: 4800000, guid: 5ab0816423f0dfe45841cab3b05ec9ef, type: 3}
     depthOfField: {fileID: 4800000, guid: 0ef78d24e85a44f4da9d5b5eaa00e50b, type: 3}
     finalPass: {fileID: 4800000, guid: f75014305794b3948a3c6d5ccd550e05, type: 3}

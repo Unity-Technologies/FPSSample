@@ -73,41 +73,6 @@ public struct BitInputStream
         m_CurrentByteIdx += count;
     }
 
-    public int ReadByteArray(byte[] dstBuffer, int dstIndex)
-    {
-        var count = (int)ReadUIntPacked();
-        if (count > 0)
-            ReadBytes(dstBuffer, dstIndex, count);
-        return count;
-    }
-
-    public void SkipByteArray()
-    {
-        var count = (int)ReadUIntPacked();
-        if (count > 0)
-        {
-            Align();
-            m_CurrentByteIdx += count;
-        }
-    }
-
-    public void GetByteArray(out byte[] buffer, out int srcIndex, out int count)
-    {
-        count = (int)ReadUIntPacked();
-        if (count > 0)
-        {
-            Align();
-            srcIndex = m_CurrentByteIdx;
-            buffer = m_Buffer;
-            m_CurrentByteIdx += count;
-        }
-        else
-        {
-            srcIndex = -1;
-            buffer = null;
-        }
-    }
-
     public int Align()
     {
         var remainder = m_CurrentBitIdx % 8;

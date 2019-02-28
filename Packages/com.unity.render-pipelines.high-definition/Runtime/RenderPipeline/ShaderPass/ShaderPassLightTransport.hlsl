@@ -17,7 +17,7 @@ CBUFFER_END
 float unity_OneOverOutputBoost;
 float unity_MaxOutputValue;
 
-#include "VertMesh.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/VertMesh.hlsl"
 
 PackedVaryingsToPS Vert(AttributesMesh inputMesh)
 {

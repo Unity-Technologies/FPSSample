@@ -18,6 +18,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public SerializedProperty planarReflectionCacheCompressed;
         public SerializedProperty skyReflectionSize;
         public SerializedProperty skyLightingOverrideLayerMask;
+        public SerializedProperty supportFabricConvolution;
+        public SerializedProperty maxDirectionalLightsOnScreen;
+        public SerializedProperty maxPunctualLightsOnScreen;
+        public SerializedProperty maxAreaLightsOnScreen; 
+        public SerializedProperty maxEnvLightsOnScreen;
+        public SerializedProperty maxDecalsOnScreen;
 
         public SerializedGlobalLightLoopSettings(SerializedProperty root)
         {
@@ -38,6 +44,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             skyReflectionSize = root.Find((GlobalLightLoopSettings s) => s.skyReflectionSize);
             skyLightingOverrideLayerMask = root.Find((GlobalLightLoopSettings s) => s.skyLightingOverrideLayerMask);
+            supportFabricConvolution = root.Find((GlobalLightLoopSettings s) => s.supportFabricConvolution);
+
+            maxDirectionalLightsOnScreen = root.Find((GlobalLightLoopSettings s) => s.maxDirectionalLightsOnScreen);
+            maxPunctualLightsOnScreen = root.Find((GlobalLightLoopSettings s) => s.maxPunctualLightsOnScreen);
+            maxAreaLightsOnScreen = root.Find((GlobalLightLoopSettings s) => s.maxAreaLightsOnScreen);
+            maxEnvLightsOnScreen = root.Find((GlobalLightLoopSettings s) => s.maxEnvLightsOnScreen);
+            maxDecalsOnScreen = root.Find((GlobalLightLoopSettings s) => s.maxDecalsOnScreen);
         }
     }
 }

@@ -87,10 +87,9 @@ GameObject:
   m_Component:
   - component: {fileID: 4262110530356596}
   - component: {fileID: 114981822933599166}
-  - component: {fileID: 114200684399988558}
-  - component: {fileID: 114883076583446932}
-  - component: {fileID: 114630403320523752}
+  - component: {fileID: 3571661906922642312}
   - component: {fileID: 114118690314876128}
+  - component: {fileID: 7097485677900308197}
   m_Layer: 0
   m_Name: Robot_Grenade
   m_TagString: Untagged
@@ -125,48 +124,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bf10cdea1344482e91a4f2b58506b77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &114200684399988558
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1871140747238682}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  guid: fd5e936dd36a9824a9d7982d146472d7
-  netID: b89ce0e0cc5ad14bacbccd419ea5c22c
-  registryId: 15
---- !u!114 &114883076583446932
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1871140747238682}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 29175c45bb934d24a88c9f30737af580, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  active: 1
-  maxLifetime: 4
-  splashDamage:
-    radius: 7
-    falloffStartRadius: 2
-    damage: 40
-    minDamage: 0
-    impulse: 30
-    minImpulse: 0
-    ownerDamageFraction: 0.2
-  proximityTriggerDist: 1
-  gravity: 18
-  bounciness: 0.4
-  collisionRadius: 0.2
---- !u!114 &114630403320523752
+--- !u!114 &3571661906922642312
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -193,3 +151,23 @@ MonoBehaviour:
   geometry: {fileID: 1617072993856886}
   explodeEffect: {fileID: 11400000, guid: 090f8686190245849b000508ef74ad0e, type: 2}
   bounceSound: {fileID: 11400000, guid: bbb634bdfaa3e9745bdda24028034807, type: 2}
+--- !u!114 &7097485677900308197
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871140747238682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 283fe2e03ea48c54e920e72fb43e5e6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  presentationOwner:
+    val0: 1763255006
+    val1: 1293210560
+    val2: 1294123336
+    val3: -86423480
+  platformFlags: 2
+  type: 0
+  variation: 0

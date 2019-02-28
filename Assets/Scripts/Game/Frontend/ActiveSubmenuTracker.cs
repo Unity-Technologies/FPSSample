@@ -11,9 +11,9 @@ public class ActiveSubmenuTracker : MonoBehaviour
 
     void Update()
     {
-        if (Game.game && Game.game.clientFrontend && Game.game.clientFrontend.mainMenu.gameObject.activeSelf)
+        if (Game.game && Game.game.clientFrontend)
         {
-            m_Animator.SetInteger("Menu_Number", Game.game.clientFrontend.mainMenu.activeSubmenuNumber);
+            m_Animator.SetInteger("Menu_Number", Game.game.clientFrontend.ActiveMainMenuNumber);
         }
         else
             m_Animator.SetInteger("Menu_Number", -1);

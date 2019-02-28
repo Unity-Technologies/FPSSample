@@ -2,7 +2,7 @@
 #error SHADERPASS_is_not_correctly_define
 #endif
 
-#include "VertMesh.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/VertMesh.hlsl"
 
 PackedVaryingsType Vert(AttributesMesh inputMesh)
 {
@@ -20,7 +20,7 @@ PackedVaryingsToPS VertTesselation(VaryingsToDS input)
     return PackVaryingsToPS(output);
 }
 
-#include "TessellationShare.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/TessellationShare.hlsl"
 
 #endif // TESSELLATION_ON
 
@@ -30,7 +30,7 @@ void Frag(  PackedVaryingsToPS packedInput
                 #ifdef WRITE_MSAA_DEPTH
             , out float1 depthColor : SV_Target1
                 #endif
-            #else
+            #elif defined(SCENESELECTIONPASS)
             , out float4 outColor : SV_Target0
             #endif
 
@@ -68,7 +68,5 @@ void Frag(  PackedVaryingsToPS packedInput
 #elif defined(SCENESELECTIONPASS)
     // We use depth prepass for scene selection in the editor, this code allow to output the outline correctly
     outColor = float4(_ObjectId, _PassValue, 1.0, 1.0);
-#else
-    outColor = float4(0.0, 0.0, 0.0, 0.0);
 #endif
 }

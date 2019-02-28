@@ -30,6 +30,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             farClip = legacyProbe.FindProperty("m_FarClip");
             legacyBlendDistance = legacyProbe.FindProperty("m_BlendDistance");
             legacyMode = legacyProbe.FindProperty("m_Mode");
+
+            //assigning it again due to inheritance override and Find incompatibility (see parent class)
+            customBakedTexture = legacyProbe.FindProperty("m_CustomBakedTexture");
         }
 
         internal override void Update()

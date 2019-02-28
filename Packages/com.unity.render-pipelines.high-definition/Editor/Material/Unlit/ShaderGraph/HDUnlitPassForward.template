@@ -7,46 +7,38 @@ Pass
     //-------------------------------------------------------------------------------------
     // Render Modes (Blend, Cull, ZTest, Stencil, etc)
     //-------------------------------------------------------------------------------------
-        $splice(Blending)
-        $splice(Culling)
-        $splice(ZTest)
-        $splice(ZWrite)
-        $splice(Stencil)
-        $splice(ColorMask)
+    $splice(Blending)
+    $splice(Culling)
+    $splice(ZTest)
+    $splice(ZWrite)
+    $splice(Stencil)
+    $splice(ColorMask)
     //-------------------------------------------------------------------------------------
     // End Render Modes
     //-------------------------------------------------------------------------------------
 
     HLSLPROGRAM
 
-        #pragma target 4.5
-        #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
-        //#pragma enable_d3d11_debug_symbols
+    #pragma target 4.5
+    #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+    //#pragma enable_d3d11_debug_symbols
 
-        //enable GPU instancing support
-        #pragma multi_compile_instancing
+    //enable GPU instancing support
+    #pragma multi_compile_instancing
 
     //-------------------------------------------------------------------------------------
     // Variant Definitions (active field translations to HDRP defines)
     //-------------------------------------------------------------------------------------
-        $AlphaTest:                      #define _ALPHATEST_ON 1
-        $Material.SubsurfaceScattering:  #define _MATERIAL_FEATURE_SUBSURFACE_SCATTERING 1
-        $Material.Transmission:          #define _MATERIAL_FEATURE_TRANSMISSION 1
-        $Material.Anisotropy:            #define _MATERIAL_FEATURE_ANISOTROPY 1
-        $Material.ClearCoat:             #define _MATERIAL_FEATURE_CLEAR_COAT 1
-        $Material.Iridescence:           #define _MATERIAL_FEATURE_IRIDESCENCE 1
-        $Material.SpecularColor:         #define _MATERIAL_FEATURE_SPECULAR_COLOR 1
-        $SurfaceType.Transparent:        #define _SURFACE_TYPE_TRANSPARENT 1
-        $BlendMode.Alpha:                #define _BLENDMODE_ALPHA 1
-        $BlendMode.Add:                  #define _BLENDMODE_ADD 1
+    $SurfaceType.Transparent:            #define _SURFACE_TYPE_TRANSPARENT 1
+    $BlendMode.Alpha:                    #define _BLENDMODE_ALPHA 1
+    $BlendMode.Add:                      #define _BLENDMODE_ADD 1
+    $BlendMode.Premultiply:              #define _BLENDMODE_PRE_MULTIPLY 1
     //-------------------------------------------------------------------------------------
     // End Variant Definitions
     //-------------------------------------------------------------------------------------
 
     #pragma vertex Vert
     #pragma fragment Frag
-
-    #define UNITY_MATERIAL_UNLIT // Need to be define before including Material.hlsl
 
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Wind.hlsl"
@@ -58,74 +50,48 @@ Pass
     //-------------------------------------------------------------------------------------
     // Defines
     //-------------------------------------------------------------------------------------
-$splice(Defines)
+    $splice(Defines)
 
-        // this translates the new dependency tracker into the old preprocessor definitions for the existing HDRP shader code
-        $AttributesMesh.normalOS:               #define ATTRIBUTES_NEED_NORMAL
-        $AttributesMesh.tangentOS:              #define ATTRIBUTES_NEED_TANGENT
-        $AttributesMesh.uv0:                    #define ATTRIBUTES_NEED_TEXCOORD0
-        $AttributesMesh.uv1:                    #define ATTRIBUTES_NEED_TEXCOORD1
-        $AttributesMesh.uv2:                    #define ATTRIBUTES_NEED_TEXCOORD2
-        $AttributesMesh.uv3:                    #define ATTRIBUTES_NEED_TEXCOORD3
-        $AttributesMesh.color:                  #define ATTRIBUTES_NEED_COLOR
-        $VaryingsMeshToPS.positionRWS:          #define VARYINGS_NEED_POSITION_WS
-        $VaryingsMeshToPS.normalWS:             #define VARYINGS_NEED_TANGENT_TO_WORLD
-        $VaryingsMeshToPS.texCoord0:            #define VARYINGS_NEED_TEXCOORD0
-        $VaryingsMeshToPS.texCoord1:            #define VARYINGS_NEED_TEXCOORD1
-        $VaryingsMeshToPS.texCoord2:            #define VARYINGS_NEED_TEXCOORD2
-        $VaryingsMeshToPS.texCoord3:            #define VARYINGS_NEED_TEXCOORD3
-        $VaryingsMeshToPS.color:                #define VARYINGS_NEED_COLOR
-        $VaryingsMeshToPS.cullFace:             #define VARYINGS_NEED_CULLFACE
-        $features.modifyMesh:                   #define HAVE_MESH_MODIFICATION
+    // this translates the new dependency tracker into the old preprocessor definitions for the existing HDRP shader code
+    $AttributesMesh.normalOS:               #define ATTRIBUTES_NEED_NORMAL
+    $AttributesMesh.tangentOS:              #define ATTRIBUTES_NEED_TANGENT
+    $AttributesMesh.uv0:                    #define ATTRIBUTES_NEED_TEXCOORD0
+    $AttributesMesh.uv1:                    #define ATTRIBUTES_NEED_TEXCOORD1
+    $AttributesMesh.uv2:                    #define ATTRIBUTES_NEED_TEXCOORD2
+    $AttributesMesh.uv3:                    #define ATTRIBUTES_NEED_TEXCOORD3
+    $AttributesMesh.color:                  #define ATTRIBUTES_NEED_COLOR
+    $VaryingsMeshToPS.positionRWS:          #define VARYINGS_NEED_POSITION_WS
+    $VaryingsMeshToPS.normalWS:             #define VARYINGS_NEED_TANGENT_TO_WORLD
+    $VaryingsMeshToPS.texCoord0:            #define VARYINGS_NEED_TEXCOORD0
+    $VaryingsMeshToPS.texCoord1:            #define VARYINGS_NEED_TEXCOORD1
+    $VaryingsMeshToPS.texCoord2:            #define VARYINGS_NEED_TEXCOORD2
+    $VaryingsMeshToPS.texCoord3:            #define VARYINGS_NEED_TEXCOORD3
+    $VaryingsMeshToPS.color:                #define VARYINGS_NEED_COLOR
+    $VaryingsMeshToPS.cullFace:             #define VARYINGS_NEED_CULLFACE
+    $features.modifyMesh:                   #define HAVE_MESH_MODIFICATION
 
     //-------------------------------------------------------------------------------------
     // End Defines
     //-------------------------------------------------------------------------------------
 
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
-    #ifdef DEBUG_DISPLAY
-        #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
-    #endif
+#ifdef DEBUG_DISPLAY
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
+#endif
 
-    #if (SHADERPASS == SHADERPASS_FORWARD)
-        // used for shaders that want to do lighting (and materials)
-        #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
-    #else
-        // used for shaders that don't need lighting
-        #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-    #endif
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/Unlit.hlsl"
+
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/BuiltinUtilities.hlsl"
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
-
-    // this function assumes the bitangent flip is encoded in tangentWS.w
-    // TODO: move this function to HDRP shared file, once we merge with HDRP repo
-    float3x3 BuildWorldToTangent(float4 tangentWS, float3 normalWS)
-    {
-        // tangentWS must not be normalized (mikkts requirement)
-
-        // Normalize normalWS vector but keep the renormFactor to apply it to bitangent and tangent
-	    float3 unnormalizedNormalWS = normalWS;
-        float renormFactor = 1.0 / length(unnormalizedNormalWS);
-
-        // bitangent on the fly option in xnormal to reduce vertex shader outputs.
-	    // this is the mikktspace transformation (must use unnormalized attributes)
-        float3x3 worldToTangent = CreateWorldToTangent(unnormalizedNormalWS, tangentWS.xyz, tangentWS.w > 0.0 ? 1.0 : -1.0);
-
-	    // surface gradient based formulation requires a unit length initial normal. We can maintain compliance with mikkts
-	    // by uniformly scaling all 3 vectors since normalization of the perturbed normal will cancel it.
-        worldToTangent[0] = worldToTangent[0] * renormFactor;
-        worldToTangent[1] = worldToTangent[1] * renormFactor;
-        worldToTangent[2] = worldToTangent[2] * renormFactor;		// normalizes the interpolated vertex normal
-        return worldToTangent;
-    }
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
 
     //-------------------------------------------------------------------------------------
     // Interpolator Packing And Struct Declarations
     //-------------------------------------------------------------------------------------
-        $buildType(AttributesMesh)
-        $buildType(VaryingsMeshToPS)
-        $buildType(VaryingsMeshToDS)
+    $buildType(AttributesMesh)
+    $buildType(VaryingsMeshToPS)
+    $buildType(VaryingsMeshToDS)
     //-------------------------------------------------------------------------------------
     // End Interpolator Packing And Struct Declarations
     //-------------------------------------------------------------------------------------
@@ -133,7 +99,7 @@ $splice(Defines)
     //-------------------------------------------------------------------------------------
     // Graph generated code
     //-------------------------------------------------------------------------------------
-$splice(Graph)
+    $splice(Graph)
     //-------------------------------------------------------------------------------------
     // End graph generated code
     //-------------------------------------------------------------------------------------
@@ -143,24 +109,24 @@ $features.modifyMesh:   $include("VertexAnimation.template.hlsl")
 $include("SharedCode.template.hlsl")
 
 
-    void BuildSurfaceData(FragInputs fragInputs, SurfaceDescription surfaceDescription, float3 V, out SurfaceData surfaceData)
+    void BuildSurfaceData(FragInputs fragInputs, inout SurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData)
     {
         // setup defaults -- these are used if the graph doesn't output a value
         ZERO_INITIALIZE(SurfaceData, surfaceData);
 
         // copy across graph values, if defined
-        $SurfaceDescription.Color:               surfaceData.color = surfaceDescription.Color;
+        $SurfaceDescription.Color: surfaceData.color = surfaceDescription.Color;
+
+#if defined(DEBUG_DISPLAY)
+        if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+        {
+            // TODO
+        }
+#endif
     }
 
     void GetSurfaceAndBuiltinData(FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
     {
-        // this applies the double sided tangent space correction -- see 'ApplyDoubleSidedFlipOrMirror()'
-        $DoubleSided:           if (!fragInputs.isFrontFace) {
-        $DoubleSided.Flip:          fragInputs.worldToTangent[1] = -fragInputs.worldToTangent[1];     // bitangent
-        $DoubleSided.Flip:          fragInputs.worldToTangent[2] = -fragInputs.worldToTangent[2];     // normal
-        $DoubleSided.Mirror:        fragInputs.worldToTangent[2] = -fragInputs.worldToTangent[2];     // normal
-        $DoubleSided:           }
-
         SurfaceDescriptionInputs surfaceDescriptionInputs = FragInputsToSurfaceDescriptionInputs(fragInputs, V);
         SurfaceDescription surfaceDescription = SurfaceDescriptionFunction(surfaceDescriptionInputs);
 
@@ -168,17 +134,22 @@ $include("SharedCode.template.hlsl")
         // TODO: split graph evaluation to grab just alpha dependencies first? tricky..
         $AlphaTest:     DoAlphaTest(surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold);
 
-        BuildSurfaceData(fragInputs, surfaceDescription, V, surfaceData);
+        BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData);
 
         // Builtin Data
         ZERO_INITIALIZE(BuiltinData, builtinData); // No call to InitBuiltinData as we don't have any lighting
 
-        builtinData.opacity =                   surfaceDescription.Alpha;
+        builtinData.opacity = surfaceDescription.Alpha;
 
-$SurfaceDescription.Emission:     builtinData.emissiveColor =             surfaceDescription.Emission;
+        $SurfaceDescription.Emission: builtinData.emissiveColor = surfaceDescription.Emission;
 
-        builtinData.distortion =                float2(0.0, 0.0);           // surfaceDescription.Distortion -- if distortion pass
-        builtinData.distortionBlur =            0.0;                        // surfaceDescription.DistortionBlur -- if distortion pass
+#if (SHADERPASS == SHADERPASS_DISTORTION)
+        builtinData.distortion = surfaceDescription.Distortion;
+        builtinData.distortionBlur = surfaceDescription.DistortionBlur;
+#else
+        builtinData.distortion = float2(0.0, 0.0);
+        builtinData.distortionBlur = 0.0;
+#endif
     }
 
     //-------------------------------------------------------------------------------------

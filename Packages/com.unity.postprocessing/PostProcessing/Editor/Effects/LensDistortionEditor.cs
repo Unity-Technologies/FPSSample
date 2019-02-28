@@ -3,7 +3,7 @@ using UnityEngine.Rendering.PostProcessing;
 namespace UnityEditor.Rendering.PostProcessing
 {
     [PostProcessEditor(typeof(LensDistortion))]
-    public sealed class LensDistortionEditor : DefaultPostProcessEffectEditor
+    internal sealed class LensDistortionEditor : DefaultPostProcessEffectEditor
     {
         public override void OnInspectorGUI()
         {

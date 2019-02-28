@@ -1,0 +1,37 @@
+.selectable > #selection-border
+{
+    position-type: absolute;
+    position-left:0;
+    position-right:0;
+    position-top:0;
+    position-bottom:0;
+}
+
+.selectable:hover  > #selection-border{
+    border-color: rgba(68,192,255, 0.5);
+    border-top-width:1;
+    border-left-width:1;
+    border-right-width:1;
+    border-bottom-width:1;
+    border-top: 1;
+    border-left: 1;
+    border-right: 1;
+    border-bottom: 1;
+}
+
+.selectable:selected  > #selection-border
+{
+    border-color: #44C0FF;
+    border-left-width:1;
+    border-right-width:1;
+    border-top-width:1;
+    border-bottom-width:1;
+}
+
+.selectable:selected:hover  > #selection-border
+{
+    border-left-width:2;
+    border-right-width:2;
+    border-top-width:2;
+    border-bottom-width:2;
+}

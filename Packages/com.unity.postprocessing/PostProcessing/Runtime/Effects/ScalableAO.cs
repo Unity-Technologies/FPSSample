@@ -4,7 +4,7 @@ namespace UnityEngine.Rendering.PostProcessing
 {
     // Scalable ambient obscurance
     [Serializable]
-    public sealed class ScalableAO : IAmbientOcclusionMethod
+    internal sealed class ScalableAO : IAmbientOcclusionMethod
     {
         RenderTexture m_Result;
         PropertySheet m_PropertySheet;

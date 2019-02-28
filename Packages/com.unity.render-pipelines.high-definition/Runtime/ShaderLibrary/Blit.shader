@@ -44,12 +44,22 @@ Shader "Hidden/HDRenderPipeline/Blit"
 
         float4 FragNearest(Varyings input) : SV_Target
         {
+            float2 uv = input.texcoord.xy;
+#if UNITY_SINGLE_PASS_STEREO
+            uv.x = uv.x / 2.0 + unity_StereoEyeIndex * 0.5;
+            uv.y = 1.0 - uv.y; // Always flip Y when rendering stereo since HDRP doesn't support OpenGL
+#endif
             return SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, input.texcoord, _BlitMipLevel);
         }
 
         float4 FragBilinear(Varyings input) : SV_Target
         {
-            return SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_LinearClamp, input.texcoord, _BlitMipLevel);
+            float2 uv = input.texcoord.xy;
+#if UNITY_SINGLE_PASS_STEREO
+            uv.x = uv.x / 2.0 + unity_StereoEyeIndex * 0.5;
+            uv.y = 1.0 - uv.y; // Always flip Y when rendering stereo since HDRP doesn't support OpenGL
+#endif
+            return SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_LinearClamp, uv, _BlitMipLevel);
         }
 
     ENDHLSL

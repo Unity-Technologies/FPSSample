@@ -1,0 +1,190 @@
+Index: com.unity.render-pipelines.high-definition/Runtime/Material/LayeredLit/LayeredLit.shader
+===================================================================
+--- com.unity.render-pipelines.high-definition.orig/Runtime/Material/LayeredLit/LayeredLit.shader
++++ com.unity.render-pipelines.high-definition/Runtime/Material/LayeredLit/LayeredLit.shader
+@@ -439,6 +439,10 @@ Shader "HDRenderPipeline/LayeredLit"
+     // Define
+     //-------------------------------------------------------------------------------------
+ 
++#ifdef LIGHTMAP_ON
++#define DIRLIGHTMAP_COMBINED
++#endif
++
+     // Use surface gradient normal mapping as it handle correctly triplanar normal mapping and multiple UVSet
+     #define SURFACE_GRADIENT
+     // This shader support vertex modification
+@@ -548,9 +552,10 @@ Shader "HDRenderPipeline/LayeredLit"
+ 
+             #pragma multi_compile _ DEBUG_DISPLAY
+             #pragma multi_compile _ LIGHTMAP_ON
+-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
++            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+-            #pragma multi_compile _ SHADOWS_SHADOWMASK
++            //#pragma multi_compile _ SHADOWS_SHADOWMASK
++            #define SHADOWS_SHADOWMASK
+             // Setup DECALS_OFF so the shader stripper can remove variants
+             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+             #pragma multi_compile _ LIGHT_LAYERS
+@@ -728,9 +733,10 @@ Shader "HDRenderPipeline/LayeredLit"
+ 
+             #pragma multi_compile _ DEBUG_DISPLAY
+             #pragma multi_compile _ LIGHTMAP_ON
+-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
++            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+-            #pragma multi_compile _ SHADOWS_SHADOWMASK
++            //#pragma multi_compile _ SHADOWS_SHADOWMASK
++            #define SHADOWS_SHADOWMASK
+             // Setup DECALS_OFF so the shader stripper can remove variants
+             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+             
+Index: com.unity.render-pipelines.high-definition/Runtime/Material/LayeredLit/LayeredLitTessellation.shader
+===================================================================
+--- com.unity.render-pipelines.high-definition.orig/Runtime/Material/LayeredLit/LayeredLitTessellation.shader
++++ com.unity.render-pipelines.high-definition/Runtime/Material/LayeredLit/LayeredLitTessellation.shader
+@@ -450,6 +450,10 @@ Shader "HDRenderPipeline/LayeredLitTesse
+     // Define
+     //-------------------------------------------------------------------------------------
+ 
++#ifdef LIGHTMAP_ON
++#define DIRLIGHTMAP_COMBINED
++#endif
++
+     #define TESSELLATION_ON
+     // Use surface gradient normal mapping as it handle correctly triplanar normal mapping and multiple UVSet
+     #define SURFACE_GRADIENT
+@@ -569,9 +573,10 @@ Shader "HDRenderPipeline/LayeredLitTesse
+ 
+             #pragma multi_compile _ DEBUG_DISPLAY
+             #pragma multi_compile _ LIGHTMAP_ON
+-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
++            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+-            #pragma multi_compile _ SHADOWS_SHADOWMASK
++            //#pragma multi_compile _ SHADOWS_SHADOWMASK
++            #define SHADOWS_SHADOWMASK
+             // Setup DECALS_OFF so the shader stripper can remove variants
+             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+             #pragma multi_compile _ LIGHT_LAYERS
+@@ -766,9 +771,10 @@ Shader "HDRenderPipeline/LayeredLitTesse
+ 
+             #pragma multi_compile _ DEBUG_DISPLAY
+             #pragma multi_compile _ LIGHTMAP_ON
+-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
++            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+-            #pragma multi_compile _ SHADOWS_SHADOWMASK
++            //#pragma multi_compile _ SHADOWS_SHADOWMASK
++            #define SHADOWS_SHADOWMASK
+             // Setup DECALS_OFF so the shader stripper can remove variants
+             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+ 
+Index: com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.shader
+===================================================================
+--- com.unity.render-pipelines.high-definition.orig/Runtime/Material/Lit/Lit.shader
++++ com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.shader
+@@ -275,6 +275,10 @@ Shader "HDRenderPipeline/Lit"
+     // Define
+     //-------------------------------------------------------------------------------------
+ 
++#ifdef LIGHTMAP_ON
++#define DIRLIGHTMAP_COMBINED
++#endif
++
+     // Use surface gradient normal mapping as it handle correctly triplanar normal mapping and multiple UVSet
+     #define SURFACE_GRADIENT
+     // This shader support vertex modification
+@@ -368,9 +372,10 @@ Shader "HDRenderPipeline/Lit"
+ 
+             #pragma multi_compile _ DEBUG_DISPLAY
+             #pragma multi_compile _ LIGHTMAP_ON
+-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
++            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+-            #pragma multi_compile _ SHADOWS_SHADOWMASK
++            //#pragma multi_compile _ SHADOWS_SHADOWMASK
++            #define SHADOWS_SHADOWMASK
+             // Setup DECALS_OFF so the shader stripper can remove variants
+             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+             #pragma multi_compile _ LIGHT_LAYERS
+@@ -588,9 +593,10 @@ Shader "HDRenderPipeline/Lit"
+ 
+             #pragma multi_compile _ DEBUG_DISPLAY
+             #pragma multi_compile _ LIGHTMAP_ON
+-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
++            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+-            #pragma multi_compile _ SHADOWS_SHADOWMASK
++            //#pragma multi_compile _ SHADOWS_SHADOWMASK
++            #define SHADOWS_SHADOWMASK
+             // Setup DECALS_OFF so the shader stripper can remove variants
+             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+             
+@@ -654,9 +660,10 @@ Shader "HDRenderPipeline/Lit"
+ 
+             #pragma multi_compile _ DEBUG_DISPLAY
+             #pragma multi_compile _ LIGHTMAP_ON
+-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
++            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+-            #pragma multi_compile _ SHADOWS_SHADOWMASK
++            //#pragma multi_compile _ SHADOWS_SHADOWMASK
++            #define SHADOWS_SHADOWMASK
+             // Setup DECALS_OFF so the shader stripper can remove variants
+             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+             
+Index: com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitTessellation.shader
+===================================================================
+--- com.unity.render-pipelines.high-definition.orig/Runtime/Material/Lit/LitTessellation.shader
++++ com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitTessellation.shader
+@@ -284,6 +284,10 @@ Shader "HDRenderPipeline/LitTessellation
+     // Define
+     //-------------------------------------------------------------------------------------
+ 
++#ifdef LIGHTMAP_ON
++#define DIRLIGHTMAP_COMBINED
++#endif
++
+     #define TESSELLATION_ON
+ 
+     // Use surface gradient normal mapping as it handle correctly triplanar normal mapping and multiple UVSet
+@@ -387,9 +391,10 @@ Shader "HDRenderPipeline/LitTessellation
+ 
+             #pragma multi_compile _ DEBUG_DISPLAY
+             #pragma multi_compile _ LIGHTMAP_ON
+-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
++            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+-            #pragma multi_compile _ SHADOWS_SHADOWMASK
++            //#pragma multi_compile _ SHADOWS_SHADOWMASK
++            #define SHADOWS_SHADOWMASK
+             // Setup DECALS_OFF so the shader stripper can remove variants
+             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+             #pragma multi_compile _ LIGHT_LAYERS
+@@ -628,9 +633,10 @@ Shader "HDRenderPipeline/LitTessellation
+ 
+             #pragma multi_compile _ DEBUG_DISPLAY
+             #pragma multi_compile _ LIGHTMAP_ON
+-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
++            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+-            #pragma multi_compile _ SHADOWS_SHADOWMASK
++            //#pragma multi_compile _ SHADOWS_SHADOWMASK
++            #define SHADOWS_SHADOWMASK
+             // Setup DECALS_OFF so the shader stripper can remove variants
+             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+             
+@@ -697,9 +703,10 @@ Shader "HDRenderPipeline/LitTessellation
+ 
+             #pragma multi_compile _ DEBUG_DISPLAY
+             #pragma multi_compile _ LIGHTMAP_ON
+-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
++            //#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+             #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+-            #pragma multi_compile _ SHADOWS_SHADOWMASK
++            //#pragma multi_compile _ SHADOWS_SHADOWMASK
++            #define SHADOWS_SHADOWMASK
+             // Setup DECALS_OFF so the shader stripper can remove variants
+             #pragma multi_compile DECALS_OFF DECALS_3RT DECALS_4RT
+             

@@ -6,7 +6,42 @@ using UnityEngine.Audio;
 using UnityEngine.Profiling;
 using Random = UnityEngine.Random;
 
-public class SoundSystem
+public class SoundSystemNull : ISoundSystem
+{
+    public void Init(AudioMixer mixer) { }
+
+    public void MountBank(SoundBank bank) { }
+
+    public SoundSystem.SoundHandle Play(SoundDef soundDef)
+    {
+        return default(SoundSystem.SoundHandle);
+    }
+
+    public SoundSystem.SoundHandle Play(SoundDef soundDef, Transform parent)
+    {
+        return default(SoundSystem.SoundHandle);
+    }
+
+    public SoundSystem.SoundHandle Play(SoundDef soundDef, Vector3 position)
+    {
+        return default(SoundSystem.SoundHandle);
+    }
+
+    public SoundSystem.SoundHandle Play(WeakSoundDef weakSoundDef)
+    {
+        return default(SoundSystem.SoundHandle);
+    }
+
+    public void SetCurrentListener(AudioListener audioListener) { }
+
+    public void Stop(SoundSystem.SoundHandle sh, float fadeOutTime = 0) { }
+
+    public void UnmountBank(SoundBank bank) { }
+
+    public void Update() { }
+}
+
+public class SoundSystem : ISoundSystem
 {
     [ConfigVar(Name = "sound.debug", DefaultValue = "0", Description = "Enable sound debug overlay")]
     public static ConfigVar soundDebug;
@@ -27,9 +62,9 @@ public class SoundSystem
     // Exposed in options menu
     [ConfigVar(Name = "sound.menuvol", DefaultValue = "1", Description = "Menu volume", Flags = ConfigVar.Flags.None)]
     public static ConfigVar soundMenuVol;
-    [ConfigVar(Name = "sound.sfxvol", DefaultValue = "1", Description = "SFX volume", Flags = ConfigVar.Flags.None)]
+    [ConfigVar(Name = "sound.sfxvol", DefaultValue = "1", Description = "SFX volume", Flags = ConfigVar.Flags.Save)]
     public static ConfigVar soundSFXVol;
-    [ConfigVar(Name = "sound.musicvol", DefaultValue = "1", Description = "Music volume", Flags = ConfigVar.Flags.None)]
+    [ConfigVar(Name = "sound.musicvol", DefaultValue = "1", Description = "Music volume", Flags = ConfigVar.Flags.Save)]
     public static ConfigVar soundMusicVol;
 
     // These are passed to the game code
@@ -123,7 +158,16 @@ public class SoundSystem
         {
             var s = e.source;
 
-            // Skip looping
+            if (s == null)
+            {
+                // Could happen if parent was killed. Not good, but fixable:
+                GameDebug.LogWarning("Soundemitter had its audiosource destroyed. Making a new.");
+                e.source = MakeAudioSource();
+                e.repeatCount = 0;
+                s = e.source;
+            }
+
+            // Skip destroyed sources and looping sources
             if (s.loop)
                 continue;
 
@@ -195,14 +239,6 @@ public class SoundSystem
         StartEmitter(e);
         return new SoundHandle(e);
     }
-
-    /*
-    public SoundHandle Play(WeakSoundDef weakSoundDef, Transform parent)
-    {
-        SoundDef def;
-        return m_SoundDefs.TryGetValue(weakSoundDef.guid, out def) ? Play(def, parent) : new SoundHandle(null);
-    }
-    */
 
     public SoundHandle Play(SoundDef soundDef, Transform parent)
     {
@@ -350,7 +386,11 @@ public class SoundSystem
         StartSource(source, soundDef);
     }
 
+#if UNITY_EDITOR
     public static void StartSource(AudioSource source, SoundDef soundDef)
+#else
+    static void StartSource(AudioSource source, SoundDef soundDef)
+#endif
     {
         Profiler.BeginSample(".Set source clip");
         source.clip = soundDef.clips[Random.Range(0, soundDef.clips.Count)];
@@ -426,7 +466,7 @@ public class SoundSystem
         GameDebug.Log("Unmounted soundbank: " + bank.name + " with " + bank.soundDefGuids.Count + " sounds");
     }
 
-    internal void SetCurrentListener(AudioListener audioListener)
+    public void SetCurrentListener(AudioListener audioListener)
     {
         m_CurrentListener = audioListener;
     }

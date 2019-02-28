@@ -41,16 +41,16 @@ public class InputSystem
         command.lookPitch += deltaMousePos.y * Game.configMouseSensitivity.FloatValue;
         command.lookPitch = Mathf.Clamp(command.lookPitch, 0, 180);
 
-        command.jump = command.jump || Game.Input.GetKeyDown(KeyCode.Space) || Game.Input.GetKeyDown(KeyCode.Joystick1Button0); 
-        command.boost = command.boost || Game.Input.GetKey(KeyCode.LeftControl) || Game.Input.GetKey(KeyCode.Joystick1Button4);
-        command.sprint = command.sprint || Game.Input.GetKey(KeyCode.LeftShift);
-        command.primaryFire = command.primaryFire || (Game.Input.GetMouseButton(0) && Game.GetMousePointerLock()) || (Game.Input.GetAxisRaw("Trigger") < -0.5f);
-        command.secondaryFire = command.secondaryFire ||  Game.Input.GetMouseButton(1) || Game.Input.GetKey(KeyCode.Joystick1Button5);
-        command.abilityA = command.abilityA || Game.Input.GetKey(KeyCode.Q);
-        command.reload = command.reload || Game.Input.GetKey(KeyCode.R) || Game.Input.GetKey(KeyCode.Joystick1Button2);
-
-        command.melee = command.melee || Game.Input.GetKey(KeyCode.V) || Game.Input.GetKey(KeyCode.Joystick1Button1);
-        command.use = command.use || Game.Input.GetKey(KeyCode.E);
+        command.buttons.Or(UserCommand.Button.Jump,Game.Input.GetKeyDown(KeyCode.Space) || Game.Input.GetKeyDown(KeyCode.Joystick1Button0)); 
+        command.buttons.Or(UserCommand.Button.Boost,Game.Input.GetKey(KeyCode.LeftControl) || Game.Input.GetKey(KeyCode.Joystick1Button4));
+        command.buttons.Or(UserCommand.Button.PrimaryFire, (Game.Input.GetMouseButton(0) && Game.GetMousePointerLock()) || (Game.Input.GetAxisRaw("Trigger") < -0.5f));
+        command.buttons.Or(UserCommand.Button.SecondaryFire, Game.Input.GetMouseButton(1) || Game.Input.GetKey(KeyCode.Joystick1Button5));
+        command.buttons.Or(UserCommand.Button.Ability1, Game.Input.GetKey(KeyCode.LeftShift));
+        command.buttons.Or(UserCommand.Button.Ability2, Game.Input.GetKey(KeyCode.E));
+        command.buttons.Or(UserCommand.Button.Ability3, Game.Input.GetKey(KeyCode.Q));
+        command.buttons.Or(UserCommand.Button.Reload, Game.Input.GetKey(KeyCode.R) || Game.Input.GetKey(KeyCode.Joystick1Button2));
+        command.buttons.Or(UserCommand.Button.Melee, Game.Input.GetKey(KeyCode.V) || Game.Input.GetKey(KeyCode.Joystick1Button1));
+        command.buttons.Or(UserCommand.Button.Use, Game.Input.GetKey(KeyCode.E));
 
         command.emote = Game.Input.GetKeyDown(KeyCode.J) ? CharacterEmote.Victory : CharacterEmote.None;
         command.emote = Game.Input.GetKeyDown(KeyCode.K) ? CharacterEmote.Defeat : command.emote;

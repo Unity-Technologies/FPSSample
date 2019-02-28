@@ -6,7 +6,7 @@ namespace UnityEditor.Experimental.Rendering
 {
     static class PostProcessShaderIncludePath
     {
-#if UNITY_2018_1_OR_NEWER
+#if UNITY_2018_1_OR_NEWER && !UNITY_2018_3_OR_NEWER
         [ShaderIncludePath]
 #endif
         public static string[] GetPaths()

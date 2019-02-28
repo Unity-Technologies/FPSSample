@@ -8,20 +8,20 @@ using UnityEngine.UI;
 
 public class GameScore : MonoBehaviour
 {
-    public Text team1Score;
-    public Text team2Score;
-    public Text objective;
-    public Text timer;
-    public Text timerMessage;
-    public Text message;
-    public Text action;
+    public TMPro.TextMeshProUGUI team1Score;
+    public TMPro.TextMeshProUGUI team2Score;
+    public TMPro.TextMeshProUGUI objective;
+    public TMPro.TextMeshProUGUI timer;
+    public TMPro.TextMeshProUGUI timerMessage;
+    public TMPro.TextMeshProUGUI message;
+    public TMPro.TextMeshProUGUI action;
 
     // TODO (petera) Move out of GameScore and into replicated capture points
     public GameObject objectiveProgressRoot;
     public Image objectiveBackground;
     public RectTransform objectiveProgressFill;
-    public Text attackersCount;
-    public Text defendersCount;
+    public TMPro.TextMeshProUGUI attackersCount;
+    public TMPro.TextMeshProUGUI defendersCount;
     public void SetObjectiveProgress(float progress, int attackers, int defenders, Color defendColor, Color attackColor)
     {
         if (progress < 0.0f)

@@ -27,7 +27,7 @@ public class CharacterMoveQuery : MonoBehaviour
     [NonSerialized] public CharacterController charController;
     [NonSerialized] public Settings settings;
     
-    public void Initialize(Settings settings, HitCollisionOwner owner)
+    public void Initialize(Settings settings, Entity hitCollOwner)
     {
         //GameDebug.Log("CharacterMoveQuery.Initialize");
         this.settings = settings;
@@ -43,7 +43,7 @@ public class CharacterMoveQuery : MonoBehaviour
         charController.height = settings.height;
 
         var hitCollision = go.GetComponent<HitCollision>();
-        hitCollision.owner = owner;
+        hitCollision.owner = hitCollOwner;
     }
 
     public void Shutdown()

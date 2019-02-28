@@ -1,0 +1,182 @@
+VFXComponentBoard.graphElement
+{
+    position-type:Absolute;
+
+    background-color: #2b2b2b;
+    border-color: #191919;
+
+    padding-left:0;
+    padding-right:0;
+    padding-top:0;
+    padding-bottom:0;
+
+    min-width:140;
+    min-height:100;
+}
+
+ *
+{
+    font-size:11;
+}
+
+#divider {
+    background-color: rgba(35,35,35,0.8);
+    border-color: rgba(35,35,35,0.8);
+}
+
+#divider.horizontal {
+    height:0.01;
+    border-bottom-width: 1;
+}
+
+
+VFXComponentBoard ScrollView
+{
+    flex-direction:column;
+    align-items:stretch;
+    overflow:hidden;
+    flex: 1 1 auto;
+}
+
+VFXComponentBoard, #component-container
+{
+    flex-direction:column;
+    align-items:stretch;
+    overflow:hidden;
+    padding-top:8;
+}
+
+#header {
+    flex-direction: row;
+    align-items: stretch;
+    background-color: #393939;
+    border-bottom-width: 1;
+    border-color: #212121;
+    border-top-right-radius: 4;
+    border-top-left-radius: 4;
+    padding-left: 1;
+    padding-top: 4;
+    padding-bottom: 2;
+}
+#header > #labelContainer {
+    flex:1 0 auto;
+    flex-direction: column;
+    align-items: stretch;
+}
+#header > #labelContainer > #titleLabel {
+    font-size : 14;
+    text-color: #c1c1c1;
+}
+#header > #labelContainer > #subTitleLabel {
+    font-size: 11;
+    text-color: #606060;
+    word-wrap:true;
+
+}
+
+
+VFXComponentBoardEventUI Button, #on-play-button, #on-stop-button,#attach, #select,#component-path
+{
+    height:20;
+}
+
+
+#attach, #select
+{
+    width:60;
+}
+
+#component-path
+{
+    flex:1;
+}
+
+#particle-count-container, #attach-container
+{
+    flex-direction:row;
+}
+
+#attach-container
+{
+    padding-top: 8;
+    padding-bottom: 8;
+}
+#particle-count-container > #particle-count
+{
+    flex:1 0 auto;
+}
+
+#toolbar
+{
+    flex-direction:row;
+}
+
+#toolbar Button
+{
+    flex:1 0 auto;
+    height:24;
+    align-items:center;
+}
+
+#toolbar Button#stop #icon
+{
+    image:resource("VFX/Stop");
+}
+#toolbar Button#play #icon
+{
+    image:resource("VFX/Pause");
+}
+#toolbar Button#play.paused #icon
+{
+    image:resource("VFX/Play");
+}
+#toolbar Button#step #icon
+{
+    image:resource("VFX/Step");
+}
+#toolbar Button#restart #icon
+{
+    image:resource("VFX/Restart");
+}
+
+#play-rate-container
+{
+    flex-direction:row;
+    height:28;
+    align-items: center;
+    padding-bottom:8;
+}
+
+#events-label
+{
+    padding-top:8;
+}
+
+#play-rate-container #play-rate-slider
+{
+    flex:1 0 auto;
+}
+
+#play-rate-container #play-rate-field
+{
+    width:80;
+}
+
+#play-rate-container #play-rate-menu
+{
+    padding-left:0;
+    border-left:0;
+    border-top:0;
+    width:40;
+    height:16;
+}
+
+VFXComponentBoardEventUI
+{
+    flex-direction:row;
+    align-items:center;
+}
+VFXComponentBoardEventUI #event-name
+{
+    flex:1;
+}

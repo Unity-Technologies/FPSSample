@@ -1,5 +1,6 @@
 using System;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -14,12 +15,56 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3   textureScrollingSpeed;
         public Vector3   textureTiling;
 
-        public Vector3   positiveFade;
-        public Vector3   negativeFade;
+        [SerializeField, FormerlySerializedAs("positiveFade")]
+        private Vector3  m_PositiveFade;
+        [SerializeField, FormerlySerializedAs("negativeFade")]
+        private Vector3  m_NegativeFade;
+        [SerializeField]
+        private float    m_UniformFade;
+        public Vector3   size;
+        public bool      advancedFade;
         public bool      invertFade;
 
         public  int      textureIndex; // This shouldn't be public... Internal, maybe?
         private Vector3  volumeScrollingAmount;
+
+        public Vector3 positiveFade
+        {
+            get
+            {
+                return advancedFade ? m_PositiveFade : m_UniformFade * Vector3.one;
+            }
+            set
+            {
+                if (advancedFade)
+                {
+                    m_PositiveFade = value;
+                }
+                else
+                {
+                    m_UniformFade = value.x;
+                }
+            }
+        }
+
+        public Vector3 negativeFade
+        {
+            get
+            {
+                return advancedFade ? m_NegativeFade : m_UniformFade * Vector3.one;
+            }
+            set
+            {
+                if (advancedFade)
+                {
+                    m_NegativeFade = value;
+                }
+                else
+                {
+                    m_UniformFade = value.x;
+                }
+            }
+        }
 
         public DensityVolumeArtistParameters(Color color, float _meanFreePath, float _asymmetry)
         {
@@ -33,8 +78,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             textureTiling         = Vector3.one;
             volumeScrollingAmount = textureScrollingSpeed;
 
-            positiveFade          = Vector3.zero;
-            negativeFade          = Vector3.zero;
+            size                  = Vector3.one;
+
+            m_PositiveFade        = Vector3.zero;
+            m_NegativeFade        = Vector3.zero;
+            m_UniformFade         = 0f;
+            advancedFade          = false;
             invertFade            = false;
         }
 
@@ -77,6 +126,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             data.textureTiling  = textureTiling;
 
             // Clamp to avoid NaNs.
+            Vector3 positiveFade = this.positiveFade;
+            Vector3 negativeFade = this.negativeFade;
+
             data.rcpPosFade.x = Mathf.Min(1.0f / positiveFade.x, float.MaxValue);
             data.rcpPosFade.y = Mathf.Min(1.0f / positiveFade.y, float.MaxValue);
             data.rcpPosFade.z = Mathf.Min(1.0f / positiveFade.z, float.MaxValue);
@@ -95,6 +147,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [AddComponentMenu("Rendering/Density Volume", 1100)]
     public class DensityVolume : MonoBehaviour
     {
+        enum Version
+        {
+            First,
+            ScaleIndependent,
+            // Add new version here and they will automatically be the Current one
+            Max,
+            Current = Max - 1
+        }
+
+        [SerializeField]
+        int m_Version;
+
+        bool needMigrateToScaleIndependent = false;
+
         public DensityVolumeArtistParameters parameters = new DensityVolumeArtistParameters(Color.white, 10.0f, 0.0f);
 
         private Texture3D previousVolumeMask = null;
@@ -124,6 +190,45 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         private void Awake()
         {
+            Migrate();
+        }
+
+        bool CheckMigrationRequirement()
+        {
+            //exit as quicker as possible
+            if (m_Version == (int)Version.Current)
+                return false;
+
+            //it is mandatory to call them in order
+            //they can be grouped (without 'else' or not)
+            if (m_Version < (int)Version.ScaleIndependent)
+            {
+                needMigrateToScaleIndependent = true;
+            }
+            return true;
+        }
+
+        void ApplyMigration()
+        {
+            //it is mandatory to call them in order
+            if (needMigrateToScaleIndependent)
+                MigrateToScaleIndependent();
+        }
+
+        void Migrate()
+        {
+            //Must not be called at deserialisation time if require other component
+            while (CheckMigrationRequirement())
+            {
+                ApplyMigration();
+            }
+        }
+
+        void MigrateToScaleIndependent()
+        {
+            parameters.size = transform.lossyScale;
+            m_Version = (int)Version.ScaleIndependent;
+            needMigrateToScaleIndependent = false;
         }
 
         private void OnEnable()
@@ -143,23 +248,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         private void OnValidate()
         {
             parameters.Constrain();
-        }
-
-        void OnDrawGizmos()
-        {
-            Gizmos.matrix = transform.localToWorldMatrix;
-
-            // Positive fade box.
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireCube(-0.5f * parameters.positiveFade, Vector3.one - parameters.positiveFade);
-
-            // Negative fade box.
-            Gizmos.color = Color.blue;
-            Gizmos.DrawWireCube(0.5f * parameters.negativeFade, Vector3.one - parameters.negativeFade);
-
-            // Bounding box.
-            Gizmos.color = parameters.albedo;
-            Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
         }
     }
 } // UnityEngine.Experimental.Rendering.HDPipeline

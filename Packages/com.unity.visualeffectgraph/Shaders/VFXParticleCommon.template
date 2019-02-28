@@ -1,0 +1,78 @@
+${VFXBegin:VFXVertexCommonProcess}
+#if VFX_USE_COLOR_CURRENT && defined(VFX_VARYING_COLOR)
+o.VFX_VARYING_COLOR = color;
+#endif
+#if VFX_USE_ALPHA_CURRENT && defined(VFX_VARYING_ALPHA) 
+o.VFX_VARYING_ALPHA = alpha;
+#endif
+
+
+#if USE_SOFT_PARTICLE && defined(VFX_VARYING_INVSOFTPARTICLEFADEDISTANCE)
+${VFXLoadParameter:{invSoftParticlesFadeDistance}}
+o.VFX_VARYING_INVSOFTPARTICLEFADEDISTANCE = invSoftParticlesFadeDistance;
+#endif
+
+#if USE_ALPHA_TEST && defined(VFX_VARYING_ALPHATHRESHOLD)
+${VFXLoadParameter:{alphaThreshold}}
+o.VFX_VARYING_ALPHATHRESHOLD = alphaThreshold;
+#endif
+
+#if USE_UV_SCALE_BIAS
+${VFXLoadParameter:{uvScale}}
+${VFXLoadParameter:{uvBias}}
+o.VFX_VARYING_UV.xy = o.VFX_VARYING_UV.xy * uvScale + uvBias;
+#endif
+
+#if defined(VFX_VARYING_POSWS)
+o.VFX_VARYING_POSWS = TransformPositionVFXToWorld(vPos);
+#endif
+
+${VFXEnd}
+
+${VFXBegin:VFXLoadSize}
+float3 size3 = float3(size,size,size);
+#if VFX_USE_SCALEX_CURRENT
+size3.x *= scaleX;
+#endif
+#if VFX_USE_SCALEY_CURRENT
+size3.y *= scaleY;
+#endif
+#if VFX_USE_SCALEZ_CURRENT
+size3.z *= scaleZ;
+#endif
+${VFXEnd}
+
+${VFXBegin:VFXVertexSetFlipbooksInterpolants}
+#if USE_FLIPBOOK
+${VFXLoadParameter:{flipBookSize}}
+${VFXLoadParameter:{invFlipBookSize}}
+VFXUVData uvData = GetUVData(flipBookSize, invFlipBookSize, o.VFX_VARYING_UV.xy, texIndex);
+o.VFX_VARYING_UV.xy = uvData.uvs.xy;
+#if USE_FLIPBOOK_INTERPOLATION
+o.VFX_VARYING_UV.zw = uvData.uvs.zw;
+o.VFX_VARYING_FRAMEBLEND = uvData.blend;
+#endif
+#endif
+${VFXEnd}
+
+${VFXBegin:VFXFragmentCommonFunctions}#include "Packages/com.unity.visualeffectgraph/Shaders/VFXCommonOutput.cginc"${VFXEnd}
+
+${VFXBegin:VFXLoadAttributesOrCull}
+uint deadCount = 0;
+#if USE_DEAD_LIST_COUNT
+deadCount = deadListCount.Load(0);
+#endif	
+if (index >= asuint(nbMax) - deadCount)
+	return o; // cull
+
+#if VFX_HAS_INDIRECT_DRAW
+index = indirectBuffer[index];
+${VFXLoadAttributes}
+#else
+${VFXLoadAttributes:{alive}}
+if (!alive)
+	return o;
+	
+${VFXLoadAttributes:{(?!(alive))(\b\w)}}
+#endif
+${VFXEnd}

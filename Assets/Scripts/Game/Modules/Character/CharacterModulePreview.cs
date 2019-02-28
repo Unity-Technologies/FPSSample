@@ -23,12 +23,11 @@ public class CharacterModulePreview : CharacterModuleShared
         // Handle despawn
         CharacterBehaviours.CreateHandleDespawnSystems(m_world, m_HandleDespawnSystems);
         
-        // Movement 
+        // Behaviors 
+        CharacterBehaviours.CreateAbilityRequestSystems(m_world, m_AbilityRequestUpdateSystems);
         m_MovementStartSystems.Add(m_world.GetECSWorld().CreateManager<UpdateTeleportation>(m_world));
         CharacterBehaviours.CreateMovementStartSystems(m_world,m_MovementStartSystems);
         CharacterBehaviours.CreateMovementResolveSystems(m_world,m_MovementResolveSystems);
-        
-        // Ability
         CharacterBehaviours.CreateAbilityStartSystems(m_world,m_AbilityStartSystems);
         CharacterBehaviours.CreateAbilityResolveSystems(m_world,m_AbilityResolveSystems);
 
@@ -51,14 +50,8 @@ public class CharacterModulePreview : CharacterModuleShared
         var charRegistry = resourceSystem.GetResourceRegistry<CharacterTypeRegistry>();
         for (var i = 0; i < charRegistry.entries.Count; i++)
         {
-            resourceSystem.LoadSingleAssetResource(charRegistry.entries[i].prefab1P.guid);
-            resourceSystem.LoadSingleAssetResource(charRegistry.entries[i].prefabClient.guid);
-        }
-        var itemRegistry = resourceSystem.GetResourceRegistry<ItemRegistry>();
-        for (var i = 0; i < itemRegistry.entries.Count; i++)
-        {
-            resourceSystem.LoadSingleAssetResource(itemRegistry.entries[i].prefab1P.guid);
-            resourceSystem.LoadSingleAssetResource(itemRegistry.entries[i].prefabClient.guid);
+            resourceSystem.GetSingleAssetResource(charRegistry.entries[i].prefab1P);
+            resourceSystem.GetSingleAssetResource(charRegistry.entries[i].prefabClient);
         }
 
         Console.AddCommand("thirdperson", CmdToggleThirdperson, "Toggle third person mode", this.GetHashCode());

@@ -1,0 +1,11 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:vfx="UnityEditor.VFX.UI">
+  <ui:VisualElement name="node-border" pickingMode="Ignore" >
+    <ui:Label name="title" />
+    <ui:TextField name="title-field" />
+    <ui:Label name="contents">
+      <ui:TextField name="contents-field" />
+    </ui:Label>
+  </ui:VisualElement>
+  <ui:VisualElement name="selection-border" pickingMode="Ignore" />
+  <vfx:ResizableElement pickingMode="Ignore" />
+</UXML>

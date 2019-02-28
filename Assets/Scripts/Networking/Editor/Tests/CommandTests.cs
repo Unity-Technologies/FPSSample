@@ -45,12 +45,13 @@ namespace NetcodeTests
 
             var random = new Random(9904);
 
-            var serverTransport = new TestTransport(0);
-            var clientTransport = new TestTransport(1);
+            var serverTransport = new TestTransport("127.0.0.1", 1);
+            var clientTransport = new TestTransport("127.0.0.1", 2);
+            var snapshotConsumer = new NullSnapshotConsumer();
 
             var server = new NetworkServer(serverTransport);
             var client = new NetworkClient(clientTransport);
-            client.Connect("0");
+            client.Connect("127.0.0.1:1");
 
             server.InitializeMap((ref NetworkWriter data) => { data.WriteString("name", "TestMap"); });
 
@@ -70,7 +71,7 @@ namespace NetcodeTests
                 ++serverTick;
                 server.SendData();
 
-                client.Update(this);
+                client.Update(this, snapshotConsumer);
 
                 if (clientTick < RUNS)
                 {
@@ -100,12 +101,13 @@ namespace NetcodeTests
 
             var random = new Random(9904);
 
-            var serverTransport = new TestTransport(0);
-            var clientTransport = new TestTransport(1);
+            var serverTransport = new TestTransport("127.0.0.1", 1);
+            var clientTransport = new TestTransport("127.0.0.1", 2);
+            var snapshotConsumer = new NullSnapshotConsumer();
 
             var server = new NetworkServer(serverTransport);
             var client = new NetworkClient(clientTransport);
-            client.Connect("0");
+            client.Connect("127.0.0.1:1");
 
             server.InitializeMap((ref NetworkWriter data) => { data.WriteString("name", "TestMap"); });
 
@@ -126,7 +128,7 @@ namespace NetcodeTests
                 ++serverTick;
                 server.SendData();
 
-                client.Update(this);
+                client.Update(this, snapshotConsumer);
 
                 if (clientTick < RUNS)
                 {
@@ -178,11 +180,6 @@ namespace NetcodeTests
 
         public void OnMapUpdate(ref NetworkReader data)
         {
-        }
-
-        public void ProcessSnapshot(int serverTime)
-        {
-            throw new NotImplementedException();
         }
 
         Dictionary<int, MyCommand> m_ReceivedCommands = new Dictionary<int, MyCommand>();

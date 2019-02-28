@@ -122,12 +122,6 @@ VaryingsMeshType VertMesh(AttributesMesh input)
     ApplyVertexModification(input, normalWS, positionRWS, _Time);
 #endif
 
-#if _FPS_MODE
-    float3 positionVS = mul(GetWorldToViewMatrix(), float4(positionRWS /*- _WorldSpaceCameraPos*/, 1.0f));
-    positionVS.xy *= 1.0f / (-_ProjMatrix[1].y * tan(_FpsModeFov * 0.5f * PI / 180.0f));    // *= tan(old_fov * 0.5) / tan(new_fov * 0.5)
-    positionRWS = mul(positionVS, (float3x3)GetWorldToViewMatrix()) /*+ _WorldSpaceCameraPos*/;
-#endif
-
 #ifdef TESSELLATION_ON
     output.positionRWS = positionRWS;
     output.normalWS = normalWS;

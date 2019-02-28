@@ -4,7 +4,7 @@ using UnityEngine.Rendering.PostProcessing;
 namespace UnityEditor.Rendering.PostProcessing
 {
     [PostProcessEditor(typeof(AmbientOcclusion))]
-    public sealed class AmbientOcclusionEditor : PostProcessEffectEditor<AmbientOcclusion>
+    internal sealed class AmbientOcclusionEditor : PostProcessEffectEditor<AmbientOcclusion>
     {
         SerializedParameterOverride m_Mode;
         SerializedParameterOverride m_Intensity;

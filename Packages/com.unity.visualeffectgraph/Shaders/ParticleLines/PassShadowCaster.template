@@ -1,0 +1,43 @@
+// Shadow pass
+Pass
+{		
+	Tags { "LightMode"=${VFXPassShadow} }
+
+	ZWrite On
+	Blend Off
+	
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		#if USE_ALPHA_TEST || VFX_USE_ALPHA_CURRENT
+		nointerpolation float2 builtInInterpolants : TEXCOORD0;
+		#endif
+	};
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_ALPHA builtInInterpolants.y
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.x
+		
+${VFXBegin:VFXVertexAdditionalProcess}
+o.pos = VFXApplyShadowBias(o.pos);
+${VFXEnd}
+
+// Needed for HDRP
+#define SHADERPASS SHADERPASS_SHADOWS
+#define USE_LEGACY_UNITY_MATRIX_VARIABLES
+		
+	${VFXInclude("Shaders/ParticleLines/Pass.template")}	
+		
+	#pragma fragment frag
+	float frag(ps_input i) : SV_TARGET
+	{
+		float alpha = VFXGetFragmentColor(i);
+		VFXClipFragmentColor(alpha,i);
+		return 0;
+	}
+	ENDHLSL
+}

@@ -20,5 +20,10 @@ public class LocalPlayer : MonoBehaviour
     public UserCommand command = UserCommand.defaultCommand;     
     public TickStateDenseBuffer<UserCommand> commandBuffer = new TickStateDenseBuffer<UserCommand>(NetworkConfig.commandClientBufferSize); 
     public Entity controlledEntity;   
+
+    [System.NonSerialized] public float m_debugMoveDuration;
+    [System.NonSerialized] public float m_debugMovePhaseDuration;
+    [System.NonSerialized] public float m_debugMoveTurnSpeed;
+    [System.NonSerialized] public float m_debugMoveMag;
 }
 

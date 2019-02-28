@@ -1,12 +1,12 @@
 using System;
 
-
 namespace UnityEngine.Rendering.PostProcessing
 {
-    // This asset is used to store references to shaders and other resources we might need at
-    // runtime without having to use a `Resources` folder. This allows for better memory management,
-    // better dependency tracking and better interoperability with asset bundles.
-
+    /// <summary>
+    /// This asset is used to store references to shaders and other resources we might need at
+    /// runtime without having to use a `Resources` folder. This allows for better memory management,
+    /// better dependency tracking and better interoperability with asset bundles.
+    /// </summary>
     public sealed class PostProcessResources : ScriptableObject
     {
         [Serializable]
@@ -15,6 +15,8 @@ namespace UnityEngine.Rendering.PostProcessing
             public Shader bloom;
             public Shader copy;
             public Shader copyStd;
+            public Shader copyStdFromTexArray;
+            public Shader copyStdFromDoubleWide;
             public Shader discardAlpha;
             public Shader depthOfField;
             public Shader finalPass;
@@ -85,7 +87,6 @@ namespace UnityEngine.Rendering.PostProcessing
             if (changeHandler != null)
                 changeHandler();
         }
-
 #endif
     }
 }

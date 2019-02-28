@@ -90,9 +90,6 @@ public class UpdateCharacterUI : BaseComponentSystem
                         {
                             characterControl.healthUI = GameObject.Instantiate(uiSetup.healthUIPrefab);
                             characterControl.healthUI.transform.SetParent(characterControl.hud.transform, false);
-                            
-                            var healthState = EntityManager.GetComponentObject<HealthState>(characterControl.lastRegisteredControlledEntity);
-                            characterControl.healthUI.health = healthState;
                         }
                     }
 
@@ -119,15 +116,15 @@ public class UpdateCharacterUI : BaseComponentSystem
                 continue;
 
             // Check for damage inflicted and recieved
-            var damageHistory = EntityManager.GetComponentObject<DamageHistory>(characterControl.lastRegisteredControlledEntity);
+            var damageHistory = EntityManager.GetComponentData<DamageHistoryData>(characterControl.lastRegisteredControlledEntity);
             if (damageHistory.inflictedDamage.tick > characterControl.lastDamageInflictedTick)
             {
                 characterControl.lastDamageInflictedTick = damageHistory.inflictedDamage.tick;
-                characterControl.hud.ShowHitMarker(damageHistory.inflictedDamage.lethal);
+                characterControl.hud.ShowHitMarker(damageHistory.inflictedDamage.lethal == 1);
             }
 
             var charAnimState =
-                EntityManager.GetComponentData<PresentationState>(characterControl
+                EntityManager.GetComponentData<CharacterInterpolatedData>(characterControl
                     .lastRegisteredControlledEntity);
             if (charAnimState.damageTick > characterControl.lastDamageReceivedTick)
             {
@@ -136,8 +133,12 @@ public class UpdateCharacterUI : BaseComponentSystem
             }
 
             // Update health
-            if(characterControl.healthUI != null)
-                characterControl.healthUI.UpdateUI();
+            if (characterControl.healthUI != null)
+            {
+                var healthState = EntityManager.GetComponentData<HealthStateData>(characterControl.lastRegisteredControlledEntity);
+                characterControl.healthUI.UpdateUI(ref healthState);
+            }
+                
 
             characterControl.hud.FrameUpdate(player, cameraSettings);
 

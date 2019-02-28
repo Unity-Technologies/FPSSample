@@ -21,7 +21,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             SceneViewOverlay_Window(_.GetContent("Camera Preview"), OnOverlayGUI, -100, target);
 
-            CameraEditorUtils.HandleFrustrum(c);
+            UnityEditor.CameraEditorUtils.HandleFrustum(c, c.GetInstanceID());
         }
 
         void OnOverlayGUI(Object target, SceneView sceneView)

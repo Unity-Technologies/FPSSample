@@ -1,0 +1,20 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements">
+  <ui:VisualElement name="node-border" pickingMode="Ignore" >
+    <ui:VisualElement name="title" pickingMode="Ignore" >
+      <ui:VisualElement name="pill" >
+        <ui:Image name="exposed-icon" pickingMode="Ignore"/>
+        <ui:Label name="title-label" text=""  pickingMode="Ignore"/>
+        <ui:VisualElement name="super-collapse-button" text="">
+          <ui:VisualElement name="icon" text="" pickingMode="Ignore"/>
+        </ui:VisualElement>
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="contents" pickingMode="Ignore">
+      <ui:VisualElement name="top" pickingMode="Ignore">
+        <ui:VisualElement name="input" pickingMode="Ignore" />
+        <ui:VisualElement name="output" pickingMode="Ignore" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+  <ui:VisualElement name="selection-border" pickingMode="Ignore" />
+</UXML>

@@ -42,14 +42,20 @@ public class HandleServerProjectileRequests : BaseComponentSystem
 		}
 
 		// Handle requests
+		var projectileRegistry = m_resourceSystem.GetResourceRegistry<ProjectileRegistry>();
 		foreach (var request in requests)
 		{
-			var projectileEntity = m_settings.projectileFactory.Create(EntityManager, -1);
-			
-			var projectileData = EntityManager.GetComponentData<ProjectileData>(projectileEntity);
+			var registryIndex = projectileRegistry.FindIndex(request.projectileAssetGuid);
+			if (registryIndex == -1)
+			{
+				GameDebug.LogError("Cant find asset guid in registry");
+				continue;
+			}
 
-			projectileData.SetupFromRequest(request);
-			var projectileRegistry = m_resourceSystem.GetResourceRegistry<ProjectileRegistry>();
+			var projectileEntity = m_settings.projectileFactory.Create(EntityManager,m_resourceSystem, m_world);
+
+			var projectileData = EntityManager.GetComponentData<ProjectileData>(projectileEntity);
+			projectileData.SetupFromRequest(request, registryIndex);
 			projectileData.Initialize(projectileRegistry);
 			
 			PostUpdateCommands.SetComponent(projectileEntity, projectileData);

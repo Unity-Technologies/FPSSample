@@ -7,15 +7,14 @@ namespace NetcodeTests
     {
         public static void Reset()
         {
-            for (int i = 0; i < s_EndPoints.Length; ++i)
-                s_EndPoints[i] = null;
+            s_EndPoints.Clear();
         }
 
-        public TestTransport(int id)
+        public TestTransport(string ip, int port)
         {
-            Debug.Assert(s_EndPoints[id] == null);
-            s_EndPoints[id] = this;
-            m_Id = id;
+            m_Name = ip + ":" + port;
+            m_Id = s_EndPoints.Count;
+            s_EndPoints.Add(this);
         }
 
         public void Update()
@@ -52,14 +51,15 @@ namespace NetcodeTests
 
         public int Connect(string ip, int port)
         {
-            int id = int.Parse(ip);
+            var name = ip + ":" + port;
 
-            var remote = s_EndPoints[id];
-            if (remote != null)
+            var ep = s_EndPoints.Find((x)=>x.m_Name == name);
+
+            if (ep != null)
             {
-                m_Connects.Enqueue(id);
-                remote.m_Connects.Enqueue(m_Id);
-                return id;
+                m_Connects.Enqueue(ep.m_Id);
+                ep.m_Connects.Enqueue(m_Id);
+                return ep.m_Id;
             }
             else
                 return -1;
@@ -104,13 +104,13 @@ namespace NetcodeTests
             public byte[] data = new byte[2048];
         }
 
-        const int k_MaxEndPoints = 32;
-        static TestTransport[] s_EndPoints = new TestTransport[k_MaxEndPoints];
+        static List<TestTransport> s_EndPoints = new List<TestTransport>();
 
         int m_Id;
         Queue<Package> m_IncomingPackages = new Queue<Package>();
         Queue<int> m_Connects = new Queue<int>();
         Queue<int> m_Disconnects = new Queue<int>();
+        private string m_Name;
     }
 }
 

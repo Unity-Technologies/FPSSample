@@ -89,9 +89,10 @@ MonoBehaviour:
   punctualIntensity: 600
   areaIntensity: 200
   enableSpotReflector: 0
+  luxAtDistance: 1
   m_InnerSpotPercent: 0
   lightDimmer: 1
-  volumetricDimmer: 1
+  m_VolumetricDimmer: 1
   lightUnit: 0
   sunDiskSize: 1
   sunHaloSize: 0.1
@@ -108,6 +109,7 @@ MonoBehaviour:
   maxSmoothness: 1
   applyRangeAttenuation: 1
   useOldInspector: 0
+  useVolumetric: 1
   featuresFoldout: 1
   showAdditionalSettings: 1
   displayLightIntensity: 200
@@ -117,6 +119,7 @@ MonoBehaviour:
   shadowSoftness: 0.5
   blockerSampleCount: 24
   filterSampleCount: 32
+  minFilterSize: 0.00001
 --- !u!114 &560331098809520575
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,7 +184,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6447479659593270958
 Transform:
   m_ObjectHideFlags: 0
@@ -1092,7 +1095,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: Infinity
+      scalar: 10000000
       minScalar: 10
       maxCurve:
         serializedVersion: 2
@@ -5029,9 +5032,10 @@ MonoBehaviour:
   punctualIntensity: 16000
   areaIntensity: 200
   enableSpotReflector: 1
+  luxAtDistance: 1
   m_InnerSpotPercent: 66
   lightDimmer: 1
-  volumetricDimmer: 1
+  m_VolumetricDimmer: 1
   lightUnit: 0
   sunDiskSize: 1
   sunHaloSize: 0.1
@@ -5048,6 +5052,7 @@ MonoBehaviour:
   maxSmoothness: 0.8
   applyRangeAttenuation: 0
   useOldInspector: 0
+  useVolumetric: 1
   featuresFoldout: 1
   showAdditionalSettings: 1
   displayLightIntensity: 48000
@@ -5057,6 +5062,7 @@ MonoBehaviour:
   shadowSoftness: 0.5
   blockerSampleCount: 24
   filterSampleCount: 32
+  minFilterSize: 0.00001
 --- !u!1 &7685216306435057457
 GameObject:
   m_ObjectHideFlags: 0
@@ -5984,7 +5990,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: Infinity
+      scalar: 10000000
       minScalar: 10
       maxCurve:
         serializedVersion: 2

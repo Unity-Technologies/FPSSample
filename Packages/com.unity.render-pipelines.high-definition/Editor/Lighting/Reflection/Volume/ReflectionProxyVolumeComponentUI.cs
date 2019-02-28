@@ -7,7 +7,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     class ReflectionProxyVolumeComponentUI : BaseUI<SerializedReflectionProxyVolumeComponent>
     {
+#pragma warning disable 618 //CED
         public static readonly CED.IDrawer Inspector;
+#pragma warning restore 618
 
         static ReflectionProxyVolumeComponentUI()
         {

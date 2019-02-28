@@ -26,10 +26,10 @@ VertexDescriptionInputs AttributesMeshToVertexDescriptionInputs(AttributesMesh i
     $VertexDescriptionInputs.TangentSpaceViewDirection: float3x3 tangentSpaceTransform =     float3x3(output.WorldSpaceTangent,output.WorldSpaceBiTangent,output.WorldSpaceNormal);
     $VertexDescriptionInputs.TangentSpaceViewDirection: output.TangentSpaceViewDirection =   mul(tangentSpaceTransform, output.WorldSpaceViewDirection);
     $VertexDescriptionInputs.ScreenPosition:            output.ScreenPosition =              ComputeScreenPos(TransformWorldToHClip(output.WorldSpacePosition), _ProjectionParams.x);
-    $VertexDescriptionInputs.uv0:                       output.uv0 =                         float4(input.uv0, 0.0f, 0.0f);
-    $VertexDescriptionInputs.uv1:                       output.uv1 =                         float4(input.uv1, 0.0f, 0.0f);
-    $VertexDescriptionInputs.uv2:                       output.uv2 =                         float4(input.uv2, 0.0f, 0.0f);
-    $VertexDescriptionInputs.uv3:                       output.uv3 =                         float4(input.uv3, 0.0f, 0.0f);
+    $VertexDescriptionInputs.uv0:                       output.uv0 =                         input.uv0;
+    $VertexDescriptionInputs.uv1:                       output.uv1 =                         input.uv1;
+    $VertexDescriptionInputs.uv2:                       output.uv2 =                         input.uv2;
+    $VertexDescriptionInputs.uv3:                       output.uv3 =                         input.uv3;
     $VertexDescriptionInputs.VertexColor:               output.VertexColor =                 input.color;
 
     return output;

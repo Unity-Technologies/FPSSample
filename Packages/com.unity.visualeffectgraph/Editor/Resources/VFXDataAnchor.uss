@@ -1,0 +1,172 @@
+
+
+
+.VFXDataAnchor > #connector.portHighlight #hole #cap{
+    background-color: rgb(220, 220, 220);
+    border-color: rgb(220, 220, 220);
+}
+
+.VFXDataAnchor
+{
+    flex-direction: row;
+    align-items: center;
+    font-style: normal;
+    text-color: #BBB;
+    font-size:11;
+    padding-bottom:0;
+    min-height:17;
+    height:-1;
+    margin-bottom:0;
+    margin-right:4;
+    Visible:true;
+}
+
+.VFXDataAnchor #lineSpacer
+{
+    flex:1 0 auto;
+}
+.VFXDataAnchor #line
+{
+    align-self:stretch;
+}
+
+
+.VFXDataAnchor.port #type
+{
+    margin-left:0;
+    margin-right:0;
+}
+
+
+.VFXDataAnchor.port #connector
+{
+    margin-right:0;
+}
+
+.VFXDataAnchor #connector #hole
+{
+    position-type:absolute;
+    position-right:0;
+    position-left:0;
+    position-top:0;
+    position-bottom:0;
+}
+.VFXDataAnchor #connector #hole #cap
+{
+    position-type:absolute;
+    position-right:0;
+    position-left:0;
+    position-top:0;
+    position-bottom:0;
+    width:-1;
+    height:-1;
+}
+
+
+.VFXDataAnchor.hidden
+{
+    max-height:0;
+    min-height:0;
+    height:0;
+    Visible:false;
+}
+
+.VFXDataAnchor.hidden #connector
+{
+    margin-top:-12;
+    border-left-width:0;
+    border-right-width:0;
+    border-top-width:0;
+    border-bottom-width:0;
+    background-color:rgba(0,0,0,0);
+}
+
+.node #right > #output {
+    position-right:0;
+}
+
+.VFXDataAnchor.Output
+{
+    position-right:0;
+    padding-right:0;
+    margin-left:0;
+}
+
+VFXDataAnchor.Output #type
+{
+    text-color: rgb(153,153,153);
+    text-alignment:middle-right;
+    flex:1 0 auto;
+}
+.VFXDataAnchor .propertyrm
+{
+    flex:1 1 auto;
+}
+
+.VFXDataAnchor .space
+{
+    border-radius:4;
+    border-left-width:1;
+    border-right-width:1;
+    border-top-width:1;
+    border-bottom-width:1;
+    margin-top:4;
+    margin-bottom:4;
+    padding-left:4;
+    padding-right:4;
+    padding-bottom:2;
+    margin-right:10;
+    border-color: rgb(153,153,153);
+    text-color: rgb(153,153,153);
+    text-alignment: middle-center;
+}
+
+.VFXOutputDataAnchor #icon
+{
+    width:13;
+    height:13;
+}
+.VFXOutputDataAnchor.icon-expandable #icon
+{
+    background-image:resource("IN foldout@2x.png");
+}
+.VFXOutputDataAnchor.icon-expandable #icon:hover
+{
+    background-image:resource("IN foldout focus@2x.png");
+}
+.VFXOutputDataAnchor.icon-expandable #icon:hover:active
+{
+    background-image:resource("IN foldout act@2x.png");
+}
+
+.VFXOutputDataAnchor.icon-expandable.icon-expanded #icon
+{
+    background-image:resource("IN foldout on@2x.png");
+}
+.VFXOutputDataAnchor.icon-expandable.icon-expanded #icon:hover
+{
+    background-image:resource("IN foldout focus on@2x.png");
+}
+.VFXOutputDataAnchor.icon-expandable.icon-expanded #icon:hover:active
+{
+    background-image:resource("IN foldout act on@2x.png");
+}
+
+.VFXOutputDataAnchor #type
+{
+    text-color:#c4c4c4;
+    margin-right:12;
+    flex-grow:1;
+}
+
+/*Default*/
+.VFXDataAnchor.connected > #connector
+{
+    border-color:#787878;
+}
+
+
+*:disabled
+{
+    opacity:0.5;
+}

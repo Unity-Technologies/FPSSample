@@ -28,7 +28,7 @@ namespace NetworkCompression
                     }
                 }
 
-                // other models
+                // additional models
                 int numModels = modelData[readOffset] | (modelData[readOffset + 1] << 8);
                 readOffset += 2;
                 for (int model = 0; model < numModels; model++)
@@ -79,7 +79,7 @@ namespace NetworkCompression
 
         private static byte[] m_DefaultModelData = new byte[] { 16, // 16 symbols
                                                          2, 3, 3, 3,   4, 4, 4, 5,     5, 5, 6, 6,     6, 6, 6, 6,
-                                                         0, 0 };  // no contexts
+                                                         0, 0 };  // no additional models / contexts
 
         public static NetworkCompressionModel DefaultModel = new NetworkCompressionModel(null);
     }

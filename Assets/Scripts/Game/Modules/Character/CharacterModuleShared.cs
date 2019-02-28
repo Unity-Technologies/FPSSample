@@ -34,6 +34,7 @@ public abstract class CharacterModuleShared
     protected SystemCollection m_HandleSpawnSystems = new SystemCollection();
     protected SystemCollection m_HandleDespawnSystems = new SystemCollection();
     
+    protected SystemCollection m_AbilityRequestUpdateSystems = new SystemCollection();
     protected SystemCollection m_MovementStartSystems = new SystemCollection();
     protected SystemCollection m_MovementResolveSystems = new SystemCollection();
     protected SystemCollection m_AbilityStartSystems = new SystemCollection();
@@ -50,6 +51,7 @@ public abstract class CharacterModuleShared
         m_ControlledEntityChangedSystems.Shutdown(m_world.GetECSWorld());
         m_HandleSpawnSystems.Shutdown(m_world.GetECSWorld());
         m_HandleDespawnSystems.Shutdown(m_world.GetECSWorld());
+        m_AbilityRequestUpdateSystems.Shutdown(m_world.GetECSWorld());
         m_MovementStartSystems.Shutdown(m_world.GetECSWorld());
         m_MovementResolveSystems.Shutdown(m_world.GetECSWorld());
         m_AbilityStartSystems.Shutdown(m_world.GetECSWorld());
@@ -70,6 +72,12 @@ public abstract class CharacterModuleShared
     {
         m_ControlledEntityChangedSystems.Update();
     }
+
+    public void AbilityRequestUpdate()
+    {
+        m_AbilityRequestUpdateSystems.Update();
+    }
+
     
     public void MovementStart()
     {

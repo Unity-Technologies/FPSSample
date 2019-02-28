@@ -1,0 +1,63 @@
+// Forward pass
+Pass
+{		
+	Tags { "LightMode"=${VFXPassForward} }
+
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		#if IS_TRANSPARENT_PARTICLE
+		float pixelOffset : TEXCOORD0; // for AA
+		#endif
+		#if VFX_NEEDS_COLOR_INTERPOLATOR
+		nointerpolation float4 color : COLOR0;
+		#endif
+		#if USE_SOFT_PARTICLE || USE_ALPHA_TEST
+		nointerpolation float2 builtInInterpolants : TEXCOORD1;
+		#endif
+		#if VFX_NEEDS_POSWS_INTERPOLATOR
+		float3 posWS : TEXCOORD2;
+		#endif
+	};
+	
+	struct ps_output
+	{
+		float4 color : SV_Target0;
+	};
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_COLOR color.rgb
+#define VFX_VARYING_ALPHA color.a
+#define VFX_VARYING_INVSOFTPARTICLEFADEDISTANCE builtInInterpolants.x
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.y
+#if IS_TRANSPARENT_PARTICLE
+#define VFX_VARYING_PIXELOFFSET pixelOffset
+#endif
+#if VFX_NEEDS_POSWS_INTERPOLATOR
+#define VFX_VARYING_POSWS posWS
+#endif
+	
+	${VFXInclude("Shaders/ParticleLinesSW/Pass.template")}	
+		
+	#pragma fragment frag
+	ps_output frag(ps_input i)
+	{
+		ps_output o = (ps_output)0;
+		o.color = VFXGetFragmentColor(i);
+		
+		// Line AA
+		#if IS_TRANSPARENT_PARTICLE	
+		o.color.a *= 1.0f - abs(i.pixelOffset);
+		#endif
+		
+		o.color = VFXApplyFog(o.color,i);
+		VFXClipFragmentColor(o.color.a,i);
+		o.color.a = saturate(o.color.a);
+		return o;
+	}
+	ENDHLSL
+}

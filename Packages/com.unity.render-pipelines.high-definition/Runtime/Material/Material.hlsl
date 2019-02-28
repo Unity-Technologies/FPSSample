@@ -61,22 +61,26 @@ float4 ApplyBlendMode(float3 color, float opacity)
 
 // Used for transparent object. input color is color + alpha of the original transparent pixel.
 // This must be call after ApplyBlendMode to work correctly
-float4 EvaluateAtmosphericScattering(PositionInputs posInput, float4 inputColor)
+float4 EvaluateAtmosphericScattering(PositionInputs posInput, float3 V, float4 inputColor)
 {
     float4 result = inputColor;
 
 #ifdef _ENABLE_FOG_ON_TRANSPARENT
-    float4 fog = EvaluateAtmosphericScattering(posInput);
+    float4 fog = EvaluateAtmosphericScattering(posInput, V); // Premultiplied alpha
 
     #if defined(_BLENDMODE_ALPHA)
-    // Regular alpha blend need to multiply fog color by opacity (as we do src * src_a inside the shader)
-    result.rgb = lerp(result.rgb, fog.rgb * result.a, fog.a);
+        // Regular alpha blend need to multiply fog color by opacity (as we do src * src_a inside the shader)
+        // result.rgb = lerp(result.rgb, unpremul_fog.rgb * result.a, fog.a);
+        // result.rgb = result.rgb + fog.a * (unpremul_fog.rgb * result.a - result.rgb);
+        // result.rgb = result.rgb + fog.rgb * result.a - result.rgb * fog.a;
+        result.rgb = result.rgb * (1 - fog.a) + fog.rgb * result.a;
     #elif defined(_BLENDMODE_ADD)
-    // For additive, we just need to fade to black with fog density (black + background == background color == fog color)
-    result.rgb = result.rgb * (1.0 - fog.a);
+        // For additive, we just need to fade to black with fog density (black + background == background color == fog color)
+        result.rgb = result.rgb * (1.0 - fog.a);
     #elif defined(_BLENDMODE_PRE_MULTIPLY)
-    // For Pre-Multiplied Alpha Blend, we need to multiply fog color by src alpha to match regular alpha blending formula.
-    result.rgb = lerp(result.rgb, fog.rgb * result.a, fog.a);
+        // For Pre-Multiplied Alpha Blend, we need to multiply fog color by src alpha to match regular alpha blending formula.
+        // result.rgb = lerp(result.rgb, unpremul_fog.rgb * result.a, fog.a);
+        result.rgb = result.rgb * (1 - fog.a) + fog.rgb * result.a;
     #endif
 #else
     // Evaluation of fog for opaque objects is currently done in a full screen pass independent from any material parameters.
@@ -125,116 +129,6 @@ void UpdateLightingHierarchyWeights(inout float hierarchyWeight, inout float wei
 // BuiltinData
 //-----------------------------------------------------------------------------
 
-#include "Builtin/BuiltinData.hlsl"
-
-//-----------------------------------------------------------------------------
-// Material definition
-//-----------------------------------------------------------------------------
-
-// Here we include all the different lighting model supported by the renderloop based on define done in .shader
-// Only one deferred layout is allowed for a HDRenderPipeline, this will be detect by the redefinition of GBUFFERMATERIAL_COUNT
-// If GBUFFERMATERIAL_COUNT is define two time, the shaders will not compile
-#ifdef UNITY_MATERIAL_LIT
-#include "Lit/Lit.hlsl"
-#elif defined(UNITY_MATERIAL_UNLIT)
-#include "Unlit/Unlit.hlsl"
-#elif defined(UNITY_MATERIAL_STACKLIT)
-#include "StackLit/StackLit.hlsl"
-#elif defined(UNITY_MATERIAL_FABRIC)
-#include "Fabric/Fabric.hlsl"
-#elif defined(UNITY_MATERIAL_AXF)
-#include "AxF/AxF.hlsl"
-#endif
-
-//-----------------------------------------------------------------------------
-// Define for GBuffer management
-//-----------------------------------------------------------------------------
-
-#ifdef GBUFFERMATERIAL_COUNT
-
-#if GBUFFERMATERIAL_COUNT == 2
-
-#define OUTPUT_GBUFFER(NAME)                            \
-        out GBufferType0 MERGE_NAME(NAME, 0) : SV_Target0,    \
-        out GBufferType1 MERGE_NAME(NAME, 1) : SV_Target1
-
-#define ENCODE_INTO_GBUFFER(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, NAME) EncodeIntoGBuffer(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, MERGE_NAME(NAME,0), MERGE_NAME(NAME,1))
-
-#elif GBUFFERMATERIAL_COUNT == 3
-
-#define OUTPUT_GBUFFER(NAME)                            \
-        out GBufferType0 MERGE_NAME(NAME, 0) : SV_Target0,    \
-        out GBufferType1 MERGE_NAME(NAME, 1) : SV_Target1,    \
-        out GBufferType2 MERGE_NAME(NAME, 2) : SV_Target2
-
-#define ENCODE_INTO_GBUFFER(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, NAME) EncodeIntoGBuffer(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, MERGE_NAME(NAME,0), MERGE_NAME(NAME,1), MERGE_NAME(NAME,2))
-
-#elif GBUFFERMATERIAL_COUNT == 4
-
-#define OUTPUT_GBUFFER(NAME)                            \
-        out GBufferType0 MERGE_NAME(NAME, 0) : SV_Target0,    \
-        out GBufferType1 MERGE_NAME(NAME, 1) : SV_Target1,    \
-        out GBufferType2 MERGE_NAME(NAME, 2) : SV_Target2,    \
-        out GBufferType3 MERGE_NAME(NAME, 3) : SV_Target3
-
-#define ENCODE_INTO_GBUFFER(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, NAME) EncodeIntoGBuffer(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, MERGE_NAME(NAME, 0), MERGE_NAME(NAME, 1), MERGE_NAME(NAME, 2), MERGE_NAME(NAME, 3))
-
-#elif GBUFFERMATERIAL_COUNT == 5
-
-#define OUTPUT_GBUFFER(NAME)                            \
-        out GBufferType0 MERGE_NAME(NAME, 0) : SV_Target0,    \
-        out GBufferType1 MERGE_NAME(NAME, 1) : SV_Target1,    \
-        out GBufferType2 MERGE_NAME(NAME, 2) : SV_Target2,    \
-        out GBufferType3 MERGE_NAME(NAME, 3) : SV_Target3,    \
-        out GBufferType4 MERGE_NAME(NAME, 4) : SV_Target4
-
-#define ENCODE_INTO_GBUFFER(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, NAME) EncodeIntoGBuffer(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, MERGE_NAME(NAME, 0), MERGE_NAME(NAME, 1), MERGE_NAME(NAME, 2), MERGE_NAME(NAME, 3), MERGE_NAME(NAME, 4))
-
-#elif GBUFFERMATERIAL_COUNT == 6
-
-#define OUTPUT_GBUFFER(NAME)                            \
-        out GBufferType0 MERGE_NAME(NAME, 0) : SV_Target0,    \
-        out GBufferType1 MERGE_NAME(NAME, 1) : SV_Target1,    \
-        out GBufferType2 MERGE_NAME(NAME, 2) : SV_Target2,    \
-        out GBufferType3 MERGE_NAME(NAME, 3) : SV_Target3,    \
-        out GBufferType4 MERGE_NAME(NAME, 4) : SV_Target4,    \
-        out GBufferType5 MERGE_NAME(NAME, 5) : SV_Target5
-
-#define ENCODE_INTO_GBUFFER(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, NAME) EncodeIntoGBuffer(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, MERGE_NAME(NAME, 0), MERGE_NAME(NAME, 1), MERGE_NAME(NAME, 2), MERGE_NAME(NAME, 3), MERGE_NAME(NAME, 4), MERGE_NAME(NAME, 5))
-
-#elif GBUFFERMATERIAL_COUNT == 7
-
-#define OUTPUT_GBUFFER(NAME)                            \
-        out GBufferType0 MERGE_NAME(NAME, 0) : SV_Target0,    \
-        out GBufferType1 MERGE_NAME(NAME, 1) : SV_Target1,    \
-        out GBufferType2 MERGE_NAME(NAME, 2) : SV_Target2,    \
-        out GBufferType3 MERGE_NAME(NAME, 3) : SV_Target3,    \
-        out GBufferType4 MERGE_NAME(NAME, 4) : SV_Target4,    \
-        out GBufferType5 MERGE_NAME(NAME, 5) : SV_Target5,    \
-        out GBufferType6 MERGE_NAME(NAME, 6) : SV_Target6
-
-#define ENCODE_INTO_GBUFFER(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, NAME) EncodeIntoGBuffer(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, MERGE_NAME(NAME, 0), MERGE_NAME(NAME, 1), MERGE_NAME(NAME, 2), MERGE_NAME(NAME, 3), MERGE_NAME(NAME, 4), MERGE_NAME(NAME, 5), MERGE_NAME(NAME, 6))
-
-#elif GBUFFERMATERIAL_COUNT == 8
-
-#define OUTPUT_GBUFFER(NAME)                            \
-        out GBufferType0 MERGE_NAME(NAME, 0) : SV_Target0,    \
-        out GBufferType1 MERGE_NAME(NAME, 1) : SV_Target1,    \
-        out GBufferType2 MERGE_NAME(NAME, 2) : SV_Target2,    \
-        out GBufferType3 MERGE_NAME(NAME, 3) : SV_Target3,    \
-        out GBufferType4 MERGE_NAME(NAME, 4) : SV_Target4,    \
-        out GBufferType5 MERGE_NAME(NAME, 5) : SV_Target5,    \
-        out GBufferType6 MERGE_NAME(NAME, 6) : SV_Target6,    \
-        out GBufferType7 MERGE_NAME(NAME, 7) : SV_Target7
-
-#define ENCODE_INTO_GBUFFER(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, NAME) EncodeIntoGBuffer(SURFACE_DATA, BUILTIN_DATA, UNPOSITIONSS, MERGE_NAME(NAME, 0), MERGE_NAME(NAME, 1), MERGE_NAME(NAME, 2), MERGE_NAME(NAME, 3), MERGE_NAME(NAME, 4), MERGE_NAME(NAME, 5), MERGE_NAME(NAME, 6), MERGE_NAME(NAME, 7))
-
-#endif
-
-#define DECODE_FROM_GBUFFER(UNPOSITIONSS, FEATURE_FLAGS, BSDF_DATA, BUILTIN_DATA) DecodeFromGBuffer(UNPOSITIONSS, FEATURE_FLAGS, BSDF_DATA, BUILTIN_DATA)
-#define MATERIAL_FEATURE_FLAGS_FROM_GBUFFER(UNPOSITIONSS) MaterialFeatureFlagsFromGBuffer(UNPOSITIONSS)
-
-#endif // #ifdef GBUFFERMATERIAL_COUNT
-
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Builtin/BuiltinData.hlsl"
 
 #endif // UNITY_MATERIAL_INCLUDED

@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using Unity.Entities;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -22,10 +24,11 @@ public class BundledResourceManager  {
 #endif
     }
                                  
-    public BundledResourceManager(string registryName)
+    public BundledResourceManager(GameWorld world, string registryName)
     {
         bool useBundles = !Application.isEditor || forceBundles.IntValue > 0;
-      
+
+        m_world = world;
 
 #if UNITY_EDITOR
         if (!useBundles)
@@ -73,7 +76,7 @@ public class BundledResourceManager  {
 
     public void Shutdown()
     {
-        foreach(var bundle in m_singleResourceBundles.Values)
+        foreach(var bundle in m_resources.Values)
         {
             // If we are in editor we may not have loaded these as bundles
             if(bundle.bundle != null)
@@ -87,7 +90,7 @@ public class BundledResourceManager  {
         m_assetRegistryRootBundle = null;
         m_assetRegistryMap.Clear();
         m_assetResourceFolder = "";
-        m_singleResourceBundles.Clear();
+        m_resources.Clear();
     }
     
 
@@ -98,44 +101,93 @@ public class BundledResourceManager  {
         return (T)result;
     }
 
-    public Object LoadSingleAssetResource(string guid)        
+    public Entity CreateEntity(string guid)
     {
+        if (guid == null || guid == "")
+        {
+            GameDebug.LogError("Guid invalid");
+            return Entity.Null;
+        }
+        
+        var reference = new WeakAssetReference(guid);
+        return CreateEntity(reference);
+    }
+    
+    public Entity CreateEntity(WeakAssetReference assetGuid)
+    {
+        var resource = GetSingleAssetResource(assetGuid);
+        if (resource == null)
+            return Entity.Null;
+
+        var prefab = resource as GameObject;
+        if (prefab != null)
+        {
+            var gameObjectEntity = m_world.Spawn<GameObjectEntity>(prefab);
+            return gameObjectEntity.Entity;
+        }
+
+        var factory = resource as ReplicatedEntityFactory;
+        if (factory != null)
+        {
+            return factory.Create(m_world.GetEntityManager(), this, m_world);
+        }
+
+        return Entity.Null;
+    }
+
+//    public Object LoadSingleAssetResource(string guid)
+//    {
+//        if (guid == null || guid == "")
+//        {
+//            GameDebug.LogError("Guid invalid");
+//            return null;
+//        }
+//        
+//        var reference = new WeakAssetReference(guid);
+//        return GetSingleAssetResource(reference);
+//    }
+    
+    public Object GetSingleAssetResource(WeakAssetReference reference)        
+    {
+        
         var def = new SingleResourceBundle();
 
-        if(m_singleResourceBundles.TryGetValue(guid, out def)) {
+        if(m_resources.TryGetValue(reference, out def)) {
             return def.asset;
         }
 
         def = new SingleResourceBundle();
         var useBundles = !Application.isEditor || forceBundles.IntValue > 0;
 
+        var guidStr = reference.GetGuidStr();
+        
 #if UNITY_EDITOR
         if(!useBundles)
         {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
+            var path = AssetDatabase.GUIDToAssetPath(guidStr);
 
             def.asset = AssetDatabase.LoadAssetAtPath(path, typeof(UnityEngine.Object));
 
             if (def.asset == null)
-                GameDebug.LogWarning("Failed to load resource " + guid + " at " + path);
+                GameDebug.LogWarning("Failed to load resource " + guidStr + " at " + path);
             if (verbose.IntValue > 0)
-                GameDebug.Log("resource: loading non-bundled asset " + path + "(" + guid + ")");
+                GameDebug.Log("resource: loading non-bundled asset " + path + "(" + guidStr + ")");
         }
 #endif
         if(useBundles)
         {
             var bundlePath = GetBundlePath();
-            def.bundle = AssetBundle.LoadFromFile(bundlePath + "/" + m_assetResourceFolder + "/" + guid);
+            def.bundle = AssetBundle.LoadFromFile(bundlePath + "/" + m_assetResourceFolder + "/" + guidStr);
             if (verbose.IntValue > 0)
-                GameDebug.Log("resource: loading bundled asset: " + m_assetResourceFolder + "/" + guid);
+                GameDebug.Log("resource: loading bundled asset: " + m_assetResourceFolder + "/" + guidStr);
             var handles = def.bundle.LoadAllAssets();
             if (handles.Length > 0)
                 def.asset = handles[0];
             else
-                GameDebug.LogWarning("Failed to load resource " + guid);
+                GameDebug.LogWarning("Failed to load resource " + guidStr);
         }
 
-        m_singleResourceBundles.Add(guid, def);
+        m_resources.Add(reference, def);
         return def.asset;
     }
 
@@ -144,11 +196,12 @@ public class BundledResourceManager  {
         public AssetBundle bundle;
         public Object asset;
     }
-    
+
+    GameWorld m_world;
     AssetRegistryRoot m_assetRegistryRoot;
     AssetBundle m_assetRegistryRootBundle;
     Dictionary<System.Type, ScriptableObject> m_assetRegistryMap = new Dictionary<System.Type, ScriptableObject>();
     string m_assetResourceFolder = "";
 
-    Dictionary<string, SingleResourceBundle> m_singleResourceBundles = new Dictionary<string, SingleResourceBundle>();
+    Dictionary<WeakAssetReference, SingleResourceBundle> m_resources = new Dictionary<WeakAssetReference, SingleResourceBundle>();
 }
