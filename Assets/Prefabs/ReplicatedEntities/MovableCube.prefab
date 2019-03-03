@@ -10,12 +10,12 @@ GameObject:
   m_Component:
   - component: {fileID: 4357511511748656}
   - component: {fileID: 114675308651595498}
+  - component: {fileID: 114417016604726394}
   - component: {fileID: 33120486762848624}
   - component: {fileID: 23820727232208726}
   - component: {fileID: 65473887346389052}
   - component: {fileID: 54173469913254354}
   - component: {fileID: 114400561217505176}
-  - component: {fileID: 114417016604726394}
   m_Layer: 0
   m_Name: MovableCube
   m_TagString: Untagged
@@ -49,6 +49,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bf10cdea1344482e91a4f2b58506b77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &114417016604726394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1470725320495884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SerializedData:
+    assetGuid:
+      val0: 172300029
+      val1: 373582602
+      val2: -878523240
+      val3: -391256134
+  netID: 5dea8d6add733343bdcb1e6eebf6d7ca
 --- !u!33 &33120486762848624
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -135,18 +154,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23cf0fcc4dd83fe4ebc9fa79b4204ca1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &114417016604726394
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1470725320495884}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  guid: 0a4516fd6b0a164498cca2cbbae7ade8
-  netID: e72b371aa1b93643b0252388b70abda7
-  registryId: 18

@@ -88,7 +88,7 @@ void IntegrateBSDF_AreaRef(float3 V, float3 positionWS,
             //case GPULIGHTTYPE_DISK:
             //    SampleDisk(u, localToWorld, lightData.size.x, lightPdf, P, Ns);
             //   break;
-            // case GPULIGHTTYPE_LINE: handled by a separate function.
+            // case GPULIGHTTYPE_TUBE: handled by a separate function.
         }
 
         // Get distance

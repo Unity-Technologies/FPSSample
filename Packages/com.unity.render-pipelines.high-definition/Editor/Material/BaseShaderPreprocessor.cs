@@ -12,7 +12,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     public abstract class BaseShaderPreprocessor
     {
         // Common keyword list
-        protected ShaderKeyword m_ShadowMask;
         protected ShaderKeyword m_Transparent;
         protected ShaderKeyword m_DebugDisplay;
         protected ShaderKeyword m_TileLighting;
@@ -22,16 +21,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected ShaderKeyword m_Decals3RT;
         protected ShaderKeyword m_Decals4RT;
         protected ShaderKeyword m_LightLayers;
-        protected ShaderKeyword m_PunctualLow;
-        protected ShaderKeyword m_PunctualMedium;
-        protected ShaderKeyword m_PunctualHigh;
-        protected ShaderKeyword m_DirectionalLow;
-        protected ShaderKeyword m_DirectionalMedium;
-        protected ShaderKeyword m_DirectionalHigh;
+        protected ShaderKeyword m_ShadowLow;
+        protected ShaderKeyword m_ShadowMedium;
+        protected ShaderKeyword m_ShadowHigh;
         protected ShaderKeyword m_WriteNormalBuffer;
+        protected ShaderKeyword m_WriteMSAADepth;
+        protected ShaderKeyword m_SubsurfaceScattering;
 
-        protected Dictionary<HDShadowQuality, ShaderKeyword> m_PunctualShadowVariants;
-        protected Dictionary<HDShadowQuality, ShaderKeyword> m_DirectionalShadowVariants;
+        protected Dictionary<HDShadowQuality, ShaderKeyword> m_ShadowVariants;
 
         public BaseShaderPreprocessor()
         {
@@ -49,26 +46,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             m_Decals3RT = new ShaderKeyword("DECALS_3RT");
             m_Decals4RT = new ShaderKeyword("DECALS_4RT");
             m_LightLayers = new ShaderKeyword("LIGHT_LAYERS");
-            m_PunctualLow = new ShaderKeyword("PUNCTUAL_SHADOW_LOW");
-            m_PunctualMedium = new ShaderKeyword("PUNCTUAL_SHADOW_MEDIUM");
-            m_PunctualHigh = new ShaderKeyword("PUNCTUAL_SHADOW_HIGH");
-            m_DirectionalLow = new ShaderKeyword("DIRECTIONAL_SHADOW_LOW");
-            m_DirectionalMedium = new ShaderKeyword("DIRECTIONAL_SHADOW_MEDIUM");
-            m_DirectionalHigh = new ShaderKeyword("DIRECTIONAL_SHADOW_HIGH");
+            m_ShadowLow = new ShaderKeyword("SHADOW_LOW");
+            m_ShadowMedium = new ShaderKeyword("SHADOW_MEDIUM");
+            m_ShadowHigh = new ShaderKeyword("SHADOW_HIGH");
             m_WriteNormalBuffer = new ShaderKeyword("WRITE_NORMAL_BUFFER");
+            m_WriteMSAADepth = new ShaderKeyword("WRITE_MSAA_DEPTH");
+            m_SubsurfaceScattering = new ShaderKeyword("OUTPUT_SPLIT_LIGHTING");
 
-            m_PunctualShadowVariants = new Dictionary<HDShadowQuality, ShaderKeyword>
+            m_ShadowVariants = new Dictionary<HDShadowQuality, ShaderKeyword>
             {
-                {HDShadowQuality.Low, m_PunctualLow},
-                {HDShadowQuality.Medium, m_PunctualMedium},
-                {HDShadowQuality.High, m_PunctualHigh},
-            };
-
-            m_DirectionalShadowVariants = new Dictionary<HDShadowQuality, ShaderKeyword>
-            {
-                {HDShadowQuality.Low, m_DirectionalLow},
-                {HDShadowQuality.Medium, m_DirectionalMedium},
-                {HDShadowQuality.High, m_DirectionalHigh},
+                {HDShadowQuality.Low, m_ShadowLow},
+                {HDShadowQuality.Medium, m_ShadowMedium},
+                {HDShadowQuality.High, m_ShadowHigh},
             };
         }
 

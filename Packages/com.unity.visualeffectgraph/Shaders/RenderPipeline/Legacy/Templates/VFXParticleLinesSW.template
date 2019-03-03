@@ -1,0 +1,8 @@
+{
+	SubShader
+	{	
+		${VFXInclude("Shaders/VFXParticleHeader.template")}
+		${VFXInclude("Shaders/ParticleLinesSW/PassForward.template")}
+		${VFXInclude("Shaders/ParticleLinesSW/PassShadowCaster.template"),USE_CAST_SHADOWS_PASS}
+	}
+}

@@ -17,6 +17,9 @@ namespace UnityEngine.Experimental.Rendering
 
         DebugUI.EnumField m_DebugEntry;
 
+        //saved enum fields for when repainting
+        int m_DebugEntryEnumIndex;
+
         void OnEnable()
         {
             m_OriginalCamera = GetComponent<Camera>();
@@ -50,7 +53,7 @@ namespace UnityEngine.Experimental.Rendering
             m_CameraNames[GetCameraCount() - 1] = new GUIContent("Original Camera");
             m_CameraIndices[GetCameraCount() - 1] = GetCameraCount() - 1;
 
-            m_DebugEntry = new DebugUI.EnumField { displayName = "Camera Switcher", getter = () => m_CurrentCameraIndex, setter = value => SetCameraIndex(value), enumNames = m_CameraNames, enumValues = m_CameraIndices };
+            m_DebugEntry = new DebugUI.EnumField { displayName = "Camera Switcher", getter = () => m_CurrentCameraIndex, setter = value => SetCameraIndex(value), enumNames = m_CameraNames, enumValues = m_CameraIndices, getIndex = () => m_DebugEntryEnumIndex, setIndex = value => m_DebugEntryEnumIndex = value };
             var panel = DebugManager.instance.GetPanel("Camera", true);
             panel.children.Add(m_DebugEntry);
         }

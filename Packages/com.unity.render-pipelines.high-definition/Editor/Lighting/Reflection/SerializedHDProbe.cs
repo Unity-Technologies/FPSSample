@@ -35,7 +35,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal SerializedHDProbe(SerializedObject serializedObject)
         {
             this.serializedObject = serializedObject;
-
+            
+            //Find do not support inheritance override:
+            //customBakedTexture will be assigned again in SerializedHDReflectionProbe
             customBakedTexture = serializedObject.Find((HDProbe p) => p.customTexture);
             renderDynamicObjects = serializedObject.Find((HDProbe p) => p.renderDynamicObjects);
 

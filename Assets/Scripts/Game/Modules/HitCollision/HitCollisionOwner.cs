@@ -10,10 +10,29 @@ public enum HitCollisionFlags
     TeamB = 1 << 1,
 }
 
-[DisallowMultipleComponent]
-public class HitCollisionOwner : MonoBehaviour 
+
+[Serializable]
+public struct HitCollisionOwnerData : IComponentData
 {
-    [EnumBitField(typeof(HitCollisionFlags))] public int colliderFlags;
-    [NonSerialized] public bool collisionEnabled = true;
-    [NonSerialized] public readonly List<DamageEvent> damageEvents = new List<DamageEvent>(16);
+    [EnumBitField(typeof(HitCollisionFlags))] 
+    public uint colliderFlags;
+
+    public int collisionEnabled;
+}
+
+
+[DisallowMultipleComponent]
+public class HitCollisionOwner : ComponentDataWrapper<HitCollisionOwnerData>
+{
+    private void OnEnable()
+    {
+        // Make sure damage event buffer is created
+        // TODO (mogensh) create DamageEvent buffer using monobehavior wrapper (when it is available) 
+        var goe = GetComponent<GameObjectEntity>();
+        if (goe != null && goe.EntityManager != null)
+        {
+            goe.EntityManager.AddBuffer<DamageEvent>(goe.Entity);
+        }
+        
+    }
 }

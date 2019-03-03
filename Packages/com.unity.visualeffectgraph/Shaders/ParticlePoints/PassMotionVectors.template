@@ -1,0 +1,68 @@
+// Motion Vectors pass
+Pass
+{		
+	Name "MOTIONVECTORS"
+	Tags { "LightMode"=${VFXPassVelocity} }
+
+	ZWrite Off
+	Blend Off
+	
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	float4x4 _NonJitteredVP;
+	float4x4 _PreviousVP;
+	
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		#if USE_SOFT_PARTICLE || USE_ALPHA_TEST || VFX_USE_ALPHA_CURRENT
+		nointerpolation float3 builtInInterpolants : TEXCOORD0;
+		#endif
+		
+		float4 previousPos : TEXCOORD1;
+		float4 currentPos : TEXCOORD2;
+	};
+	
+	struct ps_output
+	{
+		float4 motion : SV_Target0;
+	};
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_ALPHA builtInInterpolants.z
+#define VFX_VARYING_INVSOFTPARTICLEFADEDISTANCE builtInInterpolants.x
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.y
+	
+${VFXBegin:VFXVertexAdditionalProcess}
+o.previousPos = mul(_PreviousVP, float4(oldPosition,1.0f));
+o.currentPos = mul(_NonJitteredVP, float4(position,1.0f));
+${VFXEnd}
+
+	${VFXInclude("Shaders/ParticlePoints/Pass.template")}	
+		
+	#pragma fragment frag
+	ps_output frag(ps_input i)
+	{
+		ps_output o = (ps_output)0;
+		float alpha = VFXGetFragmentColor(i).a;
+		VFXClipFragmentColor(alpha,i);
+		
+		float3 p0 = i.previousPos.xyz / i.previousPos.w;
+		float3 p1 = i.currentPos.xyz / i.currentPos.w;
+		
+		p0.xy = (p0.xy + 1.0f) / 2.0f;
+		p1.xy = (p1.xy + 1.0f) / 2.0f;
+
+		#if UNITY_UV_STARTS_AT_TOP
+		p0.y = 1 - p0.y;
+		p1.y = 1 - p1.y;
+		#endif
+		
+		o.motion.xy = (p1 - p0).xy;
+		
+		return o;
+	}
+	ENDHLSL
+}

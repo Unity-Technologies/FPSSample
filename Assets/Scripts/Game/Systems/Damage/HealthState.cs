@@ -3,20 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 
-public class HealthState : MonoBehaviour, INetSerialized      
+[Serializable]
+public struct HealthStateData : IComponentData, IReplicatedComponent      
 {
-    [NonSerialized] public float health = 100;
-    [NonSerialized] public float maxHealth = 100;     
+    [NonSerialized] public float health;
+    [NonSerialized] public float maxHealth;     
     [NonSerialized] public int deathTick;
     [NonSerialized] public Entity killedBy;
 
-
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+    public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
+    {
+        return new ReplicatedComponentSerializerFactory<HealthStateData>();
+    }
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
     {
         writer.WriteFloat("health", health);
     }
 
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
     {
         health = reader.ReadFloat();
     }
@@ -40,4 +45,10 @@ public class HealthState : MonoBehaviour, INetSerialized
             health = 0;
         }
     }
+}
+
+
+public class HealthState : ComponentDataWrapper<HealthStateData>
+{
+    
 }

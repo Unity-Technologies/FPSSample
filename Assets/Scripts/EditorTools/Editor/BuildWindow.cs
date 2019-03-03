@@ -101,8 +101,6 @@ public class BuildWindow : EditorWindow
             quickstartData = JsonUtility.FromJson<QuickstartData>(str);
         else
             quickstartData = new QuickstartData();
-
-        // TODO reset m_LevelInfos if LevelInfos are added/removed
     }
 
     [MenuItem("FPS Sample/Windows/Project Tools")]
@@ -119,6 +117,21 @@ public class BuildWindow : EditorWindow
         if (m_LevelInfos == null)
             m_LevelInfos = BuildTools.LoadLevelInfos();
 
+        // Verify levelinfos
+        bool loadLevelInfos = false;
+        foreach (var levelInfo in m_LevelInfos)
+        {
+            if (levelInfo == null)
+            {
+                loadLevelInfos = true;
+                break;
+            }
+        }
+        if(loadLevelInfos)
+            m_LevelInfos = BuildTools.LoadLevelInfos();
+
+        
+        
         m_ScrollPos = GUILayout.BeginScrollView(m_ScrollPos);
 
         GUILayout.Label("Project", EditorStyles.boldLabel);
@@ -161,6 +174,12 @@ public class BuildWindow : EditorWindow
         GUILayout.EndHorizontal();
         GUILayout.EndHorizontal();
 
+        
+        
+        
+        
+        
+        
         LevelInfo openLevel = null;
         foreach (var levelInfo in m_LevelInfos)
         {
@@ -550,12 +569,12 @@ public class BuildWindow : EditorWindow
         return str;
     }
 
-    static void RunBuild(string args)
+    public static void RunBuild(string args)
     {
         var buildTarget = EditorUserBuildSettings.activeBuildTarget;
         var buildPath = GetBuildPath(buildTarget);
         var buildExe = GetBuildExe(buildTarget);
-        Debug.Log("Starting " + buildExe + " in " + buildPath);
+        Debug.Log("Starting " + buildPath + "/" + buildExe + " " + args);
         var process = new System.Diagnostics.Process();
         process.StartInfo.UseShellExecute = args.Contains("-batchmode");
         process.StartInfo.FileName = Application.dataPath + "/../" + buildPath + "/" + buildExe;    // mogensh: for some reason we now need to specify project path

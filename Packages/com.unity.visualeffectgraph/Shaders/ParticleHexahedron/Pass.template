@@ -1,0 +1,135 @@
+#if !(defined(VFX_VARYING_PS_INPUTS) && defined(VFX_VARYING_POSCS))
+#error VFX_VARYING_PS_INPUTS, VFX_VARYING_POSCS must be defined.
+#endif
+
+${VFXPerPassInclude}
+${VFXGeneratedBlockFunction}
+
+#pragma vertex vert
+VFX_VARYING_PS_INPUTS vert(uint id : SV_VertexID, uint instanceID : SV_InstanceID)
+{
+	uint index = (id >> 3) + instanceID * 1024;
+	VFX_VARYING_PS_INPUTS o = (VFX_VARYING_PS_INPUTS)0;
+	
+	${VFXLoadAttributesOrCull}
+	${VFXProcessBlocks}
+			
+	if (!alive)
+		return o;
+	
+	float3 offsets = (float3)0;
+	offsets.x = float(id & 1);
+	offsets.y = float((id & 3) >> 1);
+	offsets.z = float((id & 7) >> 2);
+	offsets -= 0.5f;
+	
+	${VFXLoadSize}
+	
+	float3x3 rot = GetEulerMatrix(radians(float3(angleX,angleY,angleZ)));
+	float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,rot,float3(pivotX,pivotY,pivotZ),size3,position);
+	
+	float3 vPos = mul(elementToVFX,float4(offsets,1.0f)).xyz;
+	float3 vPosWS = TransformPositionVFXToWorld(vPos);
+	
+#ifdef VFX_VARYING_POSWS
+	o.VFX_VARYING_POSWS = vPosWS;
+#endif
+#ifdef VFX_VARYING_OFFSETS
+	o.VFX_VARYING_OFFSETS = offsets * 2.0f;
+#endif
+#ifdef VFX_VARYING_FACEID
+	o.VFX_VARYING_FACEID = (id & 7) % 5;
+#endif
+#if defined(VFX_VARYING_ROTX) && defined(VFX_VARYING_ROTY)
+	rot = mul(transpose(float3x3(axisX,axisY,axisZ)),rot);
+#ifdef VFX_LOCAL_SPACE 
+	rot = mul((float3x3)VFXGetObjectToWorldMatrix(),rot);
+#endif
+	o.VFX_VARYING_ROTX = rot[0];
+	o.VFX_VARYING_ROTY = rot[1];
+#endif
+	o.VFX_VARYING_POSCS = VFXTransformPositionWorldToClip(vPosWS);
+
+	${VFXVertexCommonProcess}
+	
+	#if USE_FLIPBOOK
+	${VFXLoadParameter:{flipBookSize}}
+	${VFXLoadParameter:{invFlipBookSize}}
+	${VFXLoadParameter:{texIndex}}
+	
+	o.VFX_VARYING_FLIPBOOKSIZE = flipBookSize;
+	o.VFX_VARYING_INVFLIPBOOKSIZE = invFlipBookSize;
+	o.VFX_VARYING_TEXINDEX = texIndex;
+	#endif
+
+	${VFXVertexAdditionalProcess}
+
+	return o;
+}
+
+${VFXFragmentCommonFunctions}
+
+float3 VFXCubeGetLocalNormal(VFX_VARYING_PS_INPUTS i)
+{
+#ifdef VFX_VARYING_OFFSETS
+	//float3 s = i.VFX_VARYING_OFFSETS > 0 ? 1.0f : -1.0f;
+	//return s * (step(1.0f,s * i.VFX_VARYING_OFFSETS + 1e-5));
+	return int3(i.VFX_VARYING_OFFSETS * 1.00001f); // cast uses round_z
+#else
+	return 0.0f;
+#endif
+}
+
+float3 VFXCubeTransformNormalTS(float3 faceNormal,float3 normal)
+{
+	float3x3 tbn = float3x3(faceNormal.zyx,faceNormal.xzy,faceNormal.xyz);
+	return mul(tbn,normal);
+}
+
+float3 VFXCubeTransformNormalTS(VFX_VARYING_PS_INPUTS i,float3 normal,bool frontFace = true)
+{
+#if defined(VFX_VARYING_OFFSETS) && defined(VFX_VARYING_FACEID)
+	float3x3 tbn;
+	float3 faceNormal = VFXCubeGetLocalNormal(i);
+	if (i.VFX_VARYING_FACEID == 0)
+		tbn = float3x3(-faceNormal.zxy,faceNormal.yzx * faceNormal.yzx,faceNormal.xyz);
+	else if (i.VFX_VARYING_FACEID == 1)
+		tbn = float3x3(faceNormal.yxz, faceNormal.xzy, float3(0, 1, 0));
+	else
+		tbn = float3x3(faceNormal.yzx, float3(0,1,0),faceNormal.xyz);
+#ifdef USE_DOUBLE_SIDED
+	float multiplier = frontFace ? 1.0f : -1.0f;
+	tbn[0] *= multiplier;
+	tbn[2] *= multiplier;
+#endif
+	return mul(tbn, normal);
+#else
+	return normal;
+#endif
+}
+
+float3 VFXCubeTransformNormalWS(VFX_VARYING_PS_INPUTS i,float3 normal)
+{
+#if defined(VFX_VARYING_ROTX) && defined(VFX_VARYING_ROTY)
+	float3x3 rot = float3x3(i.rotX,i.rotY,cross(i.rotX,i.rotY));
+	return mul(rot,normal);
+#else
+	return normal;
+#endif
+}
+
+float2 VFXCubeGetUV(VFX_VARYING_PS_INPUTS i) 
+{
+#if defined(VFX_VARYING_OFFSETS) && defined(VFX_VARYING_FACEID)
+	float2 uv;
+	if (i.VFX_VARYING_FACEID == 0)
+		uv = i.VFX_VARYING_OFFSETS.xy * float2(-i.VFX_VARYING_OFFSETS.z,1);
+	else if (i.VFX_VARYING_FACEID == 1)
+		uv = i.VFX_VARYING_OFFSETS.xz * float2(i.VFX_VARYING_OFFSETS.y,1);
+	else
+		uv = i.VFX_VARYING_OFFSETS.zy * float2(i.VFX_VARYING_OFFSETS.x,1);
+	return uv * 0.5f + 0.5f;
+#else
+	return 0.0f;
+#endif
+}

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.Entities;
+using UnityEngine;
 
 public class PlayerModuleServer
 {
@@ -17,16 +18,23 @@ public class PlayerModuleServer
 
     public PlayerState CreatePlayer(GameWorld world, int playerId, string playerName, bool isReady)
     {
-        var prefab = (GameObject)m_resourceSystem.LoadSingleAssetResource(m_settings.playerStatePrefab.guid);
-        var playerState = m_world.Spawn<PlayerState>(prefab);
+        var prefab = (GameObject)m_resourceSystem.GetSingleAssetResource(m_settings.playerStatePrefab);
+        
+        
+        var gameObjectEntity = m_world.Spawn<GameObjectEntity>(prefab);
+        var entityManager = gameObjectEntity.EntityManager;
+        var entity = gameObjectEntity.Entity;
+        
+        var playerState = entityManager.GetComponentObject<PlayerState>(entity);
         playerState.playerId = playerId;
         playerState.playerName = playerName;
 
         // Mark the playerstate as 'owned' by ourselves so we can reduce amount of
         // data replicated out from server
-        var re = playerState.GetComponent<ReplicatedEntity>();
+        var re = entityManager.GetComponentData<ReplicatedEntityData>(entity);
         re.predictingPlayerId = playerId;
-
+        entityManager.SetComponentData(entity,re);
+            
         return playerState;
     }
 

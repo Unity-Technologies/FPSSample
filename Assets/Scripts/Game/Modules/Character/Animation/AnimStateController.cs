@@ -62,15 +62,19 @@ public class AnimStateController : MonoBehaviour
 
     public void UpdatePresentationState(GameTime time, float deltaTime)
     {
+        Profiler.BeginSample("AnimStateController.Update");
+        
         if (m_animGraphLogic == null)
             return;
 
         m_animGraphLogic.UpdateGraphLogic(time, deltaTime);
+        
+        Profiler.EndSample();
     }
     
     public void ApplyPresentationState(GameTime time, float deltaTime)   //
     {
-        Profiler.BeginSample("CharacterAnimController.ClientUpdate");
+        Profiler.BeginSample("AnimStateController.Apply");
 
         if (m_animGraph == null)
             return;
@@ -95,7 +99,7 @@ public class HandleAnimStateCtrlSpawn : InitializeComponentSystem<AnimStateContr
     protected override void Initialize(Entity entity, AnimStateController component)
     {
 
-        var charPresentation = EntityManager.GetComponentObject<CharPresentation>(entity);
+        var charPresentation = EntityManager.GetComponentObject<CharacterPresentationSetup>(entity);
         
         component.Initialize(EntityManager, entity, charPresentation.character);
     }

@@ -3,7 +3,7 @@
 //-----------------------------------------------------------------------------
 
 // SurfaceData is define in Lit.cs which generate Lit.cs.hlsl
-#include "Unlit.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/Unlit.cs.hlsl"
 
 //-----------------------------------------------------------------------------
 // conversion function for forward

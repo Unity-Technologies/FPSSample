@@ -9,7 +9,7 @@ public class HitCollisionModule
 
     [ConfigVar(Name ="hitcollision.showdebug", DefaultValue = "0", Description = "Show debug")]
     public static ConfigVar ShowDebug;
-    
+
     public static int PrimDebugChannel {
         get { return m_primDebugChannel; }
     }

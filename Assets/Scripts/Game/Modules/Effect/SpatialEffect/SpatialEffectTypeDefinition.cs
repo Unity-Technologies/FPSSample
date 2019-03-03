@@ -1,23 +1,28 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using UnityEngine.Experimental.VFX;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 [CreateAssetMenu(fileName = "SpatialEffectTypeDefinition", menuName = "FPS Sample/Effect/SpatialEffectTypeDefinition")]
-public class SpatialEffectTypeDefinition : ScriptableObjectRegistryEntry
+public class SpatialEffectTypeDefinition : ScriptableObject
 {
-    public WeakAssetReference prefab;
-    public int poolSize = 16;
-}
+    [Header("Visual Effect")]
+    [Tooltip("Impact Effect template used by VFXImpactManager")]
+    public VisualEffectAsset effect;
 
-#if UNITY_EDITOR
-[CustomEditor(typeof(SpatialEffectTypeDefinition))]
-public class SpatialEffectTypeDefinitionEditor : ScriptableObjectRegistryEntryEditor<SpatialEffectRegistry, SpatialEffectTypeDefinition>
-{
-    public override void OnInspectorGUI()
+    public SoundDef sound;
+    
+    [Serializable]
+    public class ShockwaveSettings
     {
-        base.OnInspectorGUI();
-        DrawDefaultInspector();
+        public bool enabled;
+        public float force = 7;
+        public float radius = 5;
+        public float upwardsModifier = 0.0f;
+        public ForceMode mode = ForceMode.Impulse;
     }
+
+    public ShockwaveSettings shockwave;
 }
-#endif

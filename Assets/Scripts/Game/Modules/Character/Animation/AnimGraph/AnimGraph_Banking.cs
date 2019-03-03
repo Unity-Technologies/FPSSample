@@ -3,6 +3,7 @@ using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Experimental.Animations;
 using UnityEngine.Playables;
+using UnityEngine.Profiling;
 
 [CreateAssetMenu(fileName = "Banking", menuName = "FPS Sample/Animation/AnimGraph/Banking")]
 public class AnimGraph_Banking : AnimGraphAsset
@@ -29,7 +30,7 @@ public class AnimGraph_Banking : AnimGraphAsset
             var animator = entityManager.GetComponentObject<Animator>(owner);
             GameDebug.Assert(entityManager.HasComponent<Skeleton>(owner), "Owner has no Skeleton component");
             var skeleton = entityManager.GetComponentObject<Skeleton>(owner);
-            GameDebug.Assert(entityManager.HasComponent<CharPredictedStateData>(m_AnimStateOwner),"Owner has no CharPredictedState component");
+            GameDebug.Assert(entityManager.HasComponent<CharacterPredictedData>(m_AnimStateOwner),"Owner has no CharPredictedState component");
             
             var bankTransform = skeleton.bones[skeleton.GetBoneIndex(settings.bankTransform.GetHashCode())];
     
@@ -64,25 +65,25 @@ public class AnimGraph_Banking : AnimGraphAsset
             playablePort = 0;
         }
 
-
         public void UpdateGraphLogic(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
-            var predictedState = m_EntityManager.GetComponentData<CharPredictedStateData>(m_AnimStateOwner);
+            Profiler.BeginSample("Banking.Update");
 
-            if (animState.charLocoState != CharPredictedStateData.LocoState.GroundMove)
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
+            var predictedState = m_EntityManager.GetComponentData<CharacterPredictedData>(m_AnimStateOwner);
+
+            if (animState.charLocoState != CharacterPredictedData.LocoState.GroundMove)
             {   
                 var groundMoveVec = Vector3.ProjectOnPlane(predictedState.velocity, Vector3.up);
-                if (animState.charLocoState == CharPredictedStateData.LocoState.InAir || Vector3.Magnitude(groundMoveVec) < 0.1f)
+                if (animState.charLocoState == CharacterPredictedData.LocoState.InAir || Vector3.Magnitude(groundMoveVec) < 0.1f)
                 {
                     m_PreviousPosition = animState.position;
                 }
-                
             }
                 
             animState.banking = Mathf.MoveTowards(animState.banking, 0f, m_Settings.bankingSettings.bankDamp * deltaTime);
     
-            if (animState.charLocoState == CharPredictedStateData.LocoState.GroundMove)
+            if (animState.charLocoState == CharacterPredictedData.LocoState.GroundMove)
             {
                 var movement = new Vector3(animState.position.x, 0f, animState.position.z) - new Vector3(m_PreviousPosition.x, 0f, m_PreviousPosition.z);
                 var delta = -Vector3.SignedAngle(m_PreviousMovement, movement, Vector3.up) * m_Settings.bankingSettings.bankContribution * deltaTime;                
@@ -101,13 +102,19 @@ public class AnimGraph_Banking : AnimGraphAsset
             }
             
             m_EntityManager.SetComponentData(m_AnimStateOwner, animState);
+
+            Profiler.EndSample();
         }
     
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            Profiler.BeginSample("Banking.Apply");
+
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             var job = m_Playable.GetJobData<BankingJob>();
             job.Update(animState, m_Settings.bankingSettings, m_Playable);
+            
+            Profiler.EndSample();
         }
     
         AnimGraph_Banking m_Settings;

@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using NetworkCompression;
 using UnityEngine.Profiling;
+using Unity.Collections.LowLevel.Unsafe;
 
 public interface ISnapshotGenerator
 {
@@ -17,7 +18,7 @@ public interface IClientCommandProcessor
     void ProcessCommand(int connectionId, int tick, ref NetworkReader data);
 }
 
-public class NetworkServer
+unsafe public class NetworkServer
 {
     [ConfigVar(Name = "server.debug", DefaultValue = "0", Description = "Enable debug printing of server handshake etc.", Flags = ConfigVar.Flags.None)]
     public static ConfigVar serverDebug;
@@ -46,7 +47,7 @@ public class NetworkServer
     // handshake (protocol version etc.)
     public void UpdateClientInfo()
     {
-        clientInfo.serverTickRate = Game.serverTickRate.IntValue;
+        serverInfo.serverTickRate = Game.serverTickRate.IntValue;
 
         foreach (var pair in m_Connections)
             pair.Value.clientInfoAcked = false;
@@ -87,19 +88,36 @@ public class NetworkServer
     [ConfigVar(Name = "server.debug_hashing", DefaultValue = "1", Description = "Send entity hashes to clients for debugging.")]
     public static ConfigVar debug_hashing;
 
-    public ServerInfo clientInfo;
+    public ServerInfo serverInfo;
 
-    public NetworkServer(INetworkTransport transport)
+    unsafe public NetworkServer(INetworkTransport transport)
     {
         m_Transport = transport;
-        clientInfo = new ServerInfo();
+        serverInfo = new ServerInfo();
+
+        // Allocate array to hold world snapshots
+        m_Snapshots = new WorldSnapshot[NetworkConfig.snapshotDeltaCacheSize];
+        for (int i = 0; i < m_Snapshots.Length; ++i)
+        {
+            m_Snapshots[i] = new WorldSnapshot();
+            m_Snapshots[i].data = (uint*)UnsafeUtility.Malloc(NetworkConfig.maxWorldSnapshotDataSize, UnsafeUtility.AlignOf<UInt32>(), Unity.Collections.Allocator.Persistent);
+        }
+
+        // Allocate scratch*) buffer to hold predictions. *) This is overwritten every time
+        // a snapshot is being written to a specific client
+        m_Prediction = (uint*)UnsafeUtility.Malloc(NetworkConfig.maxWorldSnapshotDataSize, UnsafeUtility.AlignOf<UInt32>(), Unity.Collections.Allocator.Persistent);
     }
 
     public void Shutdown()
     {
+        UnsafeUtility.Free(m_Prediction, Unity.Collections.Allocator.Persistent);
+        for (int i = 0; i < m_Snapshots.Length; ++i)
+        {
+            UnsafeUtility.Free(m_Snapshots[i].data, Unity.Collections.Allocator.Persistent);
+        }
     }
 
-    public void InitializeMap(DataGenerator generator)
+    unsafe public void InitializeMap(DataGenerator generator)
     {
         // Generate schema the first time we set map info
         bool generateSchema = false;
@@ -110,7 +128,7 @@ public class NetworkServer
         }
 
         // Update map info
-        var writer = new NetworkWriter(m_MapInfo.data, m_MapInfo.schema, generateSchema);
+        var writer = new NetworkWriter(m_MapInfo.data, 1024, m_MapInfo.schema, generateSchema);
         generator(ref writer);
         writer.Flush();
 
@@ -136,7 +154,7 @@ public class NetworkServer
     public void ReserveSceneEntities(int count)
     {
         GameDebug.Assert(m_Entities.Count == 0, "ReserveSceneEntities: Only allowed before other entities have been registrered");
-        for(var i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
             m_Entities.Add(new EntityInfo());
         }
@@ -151,12 +169,12 @@ public class NetworkServer
         EntityInfo entityInfo;
         int freeCount = m_FreeEntities.Count;
 
-        if(id >= 0)
+        if (id >= 0)
         {
             GameDebug.Assert(m_Entities[id].spawnSequence == 0, "RegisterEntity: Trying to reuse an id that is used by a scene entity");
             entityInfo = m_Entities[id];
         }
-        else if(freeCount > 0)
+        else if (freeCount > 0)
         {
             id = m_FreeEntities[freeCount - 1];
             m_FreeEntities.RemoveAt(freeCount - 1);
@@ -190,7 +208,7 @@ public class NetworkServer
 
     public void HandleClientCommands(int tick, IClientCommandProcessor processor)
     {
-        foreach(var c in m_Connections)
+        foreach (var c in m_Connections)
             c.Value.ProcessCommands(tick, processor);
     }
 
@@ -213,7 +231,7 @@ public class NetworkServer
         info.Release();
     }
 
-    public void GenerateSnapshot(ISnapshotGenerator snapshotGenerator, float simTime)
+    unsafe public void GenerateSnapshot(ISnapshotGenerator snapshotGenerator, float simTime)
     {
         var time = snapshotGenerator.WorldTick;
         GameDebug.Assert(time > serverTime);      // Time should always flow forward
@@ -221,31 +239,34 @@ public class NetworkServer
 
         ++m_ServerSequence;
 
-        // We have to keep entities around until every client has ack'ed the snapshot with the despawn
-        // Then we can delete them from our list and recycle the id
+        // We currently keep entities around until every client has ack'ed the snapshot with the despawn
+        // Then we delete them from our list and recycle the id
+        // TODO: we do not need this anymore?
 
         // Find oldest (smallest seq no) acked snapshot.
         var minClientAck = int.MaxValue;
         foreach (var pair in m_Connections)
         {
             var c = pair.Value;
+            // If a client is so far behind that we have to send non-baseline updates to it
+            // there is no reason to keep despawned entities around for this clients sake
+            if (m_ServerSequence - c.maxSnapshotAck >= NetworkConfig.snapshotDeltaCacheSize - 2) // -2 because we want 3 baselines!
+                continue;
             var acked = c.maxSnapshotAck;
             if (acked < minClientAck)
                 minClientAck = acked;
         }
-        //if (minClientAck == 0)
-            //GameDebug.Log("SERVER NOT ABLE TO RECYCLE DESPAWNS!");
 
         // Recycle despawned entities that have been acked by all
-        for(int i = 0; i < m_Entities.Count; i++)
+        for (int i = 0; i < m_Entities.Count; i++)
         {
             var e = m_Entities[i];
             if (e.despawnSequence > 0 && e.despawnSequence < minClientAck)
             {
+                if (serverDebugEntityIds.IntValue > 1)
+                    GameDebug.Log("Recycling entity id: " + i + " because despawned in " + e.despawnSequence + " and minAck is now " + minClientAck);
                 e.Reset();
                 m_FreeEntities.Add(i);
-                if (serverDebugEntityIds.IntValue > 1)
-                    GameDebug.Log("Recycling entity id: " + i);
             }
         }
 
@@ -254,8 +275,13 @@ public class NetworkServer
 
         m_LastEntityCount = 0;
 
+        // Grab world snapshot from circular buffer
+        var worldsnapshot = m_Snapshots[m_ServerSequence % m_Snapshots.Length];
+        worldsnapshot.serverTime = time;
+        worldsnapshot.length = 0;
+
         // Run through all the registered network entities and serialize the snapshot
-        for(var id = 0; id < m_Entities.Count; id++)
+        for (var id = 0; id < m_Entities.Count; id++)
         {
             var entity = m_Entities[id];
 
@@ -263,9 +289,8 @@ public class NetworkServer
             if (entity.spawnSequence == 0)
                 continue;
 
-            // Skip entities that are depawned unless it has never been updated
-            // If despawned and never updated, we have a spawn/despawn in same tick
-            if (entity.despawnSequence > 0 && entity.updateSequence > 0)
+            // Skip entities that are depawned
+            if (entity.despawnSequence > 0)
                 continue;
 
             // If we are here and are despawned, we must be a despawn/spawn in same frame situation
@@ -285,22 +310,31 @@ public class NetworkServer
             }
 
             // Generate entity snapshot
-            var snapshot = entity.snapshots.Acquire(m_ServerSequence);
-            var writer = new NetworkWriter(snapshot.data, typeInfo.schema, generateSchema);
+            var snapshotInfo = entity.snapshots.Acquire(m_ServerSequence);
+            snapshotInfo.start = worldsnapshot.data + worldsnapshot.length;
+
+            var writer = new NetworkWriter(snapshotInfo.start, NetworkConfig.maxWorldSnapshotDataSize / 4 - worldsnapshot.length, typeInfo.schema, generateSchema);
             snapshotGenerator.GenerateEntitySnapshot(id, ref writer);
             writer.Flush();
-            snapshot.length = writer.GetLength();
+            snapshotInfo.length = writer.GetLength();
+
+            worldsnapshot.length += snapshotInfo.length;
+
             if (entity.despawnSequence == 0)
             {
                 m_LastEntityCount++;
             }
 
-            snapshot.serverTime = time;
-            GameDebug.Assert(snapshot.length > 0);
+            GameDebug.Assert(snapshotInfo.length > 0, "Tried to generate a entity snapshot but no data was delivered by generator?");
 
             if (generateSchema)
             {
-                typeInfo.baseline = (byte[])snapshot.data.Clone();
+                GameDebug.Assert(typeInfo.baseline == null, "Generating schema twice?");
+                // First time a type/schema is encountered, we clone the serialized data and
+                // use it as the type-baseline
+                typeInfo.baseline = (uint*)UnsafeUtility.Malloc(snapshotInfo.length * 4, UnsafeUtility.AlignOf<UInt32>(), Unity.Collections.Allocator.Persistent);// new uint[snapshot.length];// (uint[])snapshot.data.Clone();
+                for (int i = 0; i < snapshotInfo.length; i++)
+                    typeInfo.baseline[i] = *(snapshotInfo.start + i);
             }
 
             // Check if it is different from the previous generated snapshot
@@ -308,8 +342,8 @@ public class NetworkServer
             if (!dirty)
             {
                 var previousSnapshot = entity.snapshots[m_ServerSequence - 1];
-                if (previousSnapshot.length != snapshot.length ||
-                    NetworkUtils.MemCmp(previousSnapshot.data, 0, snapshot.data, 0, snapshot.length) != 0)
+                if (previousSnapshot.length != snapshotInfo.length || // TODO (petera) how could length differ???
+                    UnsafeUtility.MemCmp(previousSnapshot.start, snapshotInfo.start, snapshotInfo.length) != 0)
                 {
                     dirty = true;
                 }
@@ -317,7 +351,11 @@ public class NetworkServer
 
             if (dirty)
                 entity.updateSequence = m_ServerSequence;
+
+            statsGeneratedEntitySnapshots++;
+            statsSnapshotData += snapshotInfo.length;
         }
+        statsGeneratedSnapshotSize += worldsnapshot.length * 4;
     }
 
     public void Update(INetworkCallbacks loop)
@@ -325,7 +363,7 @@ public class NetworkServer
         m_Transport.Update();
 
         TransportEvent e = new TransportEvent();
-        while(m_Transport.NextEvent(ref e))
+        while (m_Transport.NextEvent(ref e))
         {
             switch (e.type)
             {
@@ -401,14 +439,16 @@ public class NetworkServer
     {
         GameDebug.Assert(!m_Connections.ContainsKey(connectionId));
 
-        if(m_Connections.Count >= ServerGameLoop.serverMaxClients.IntValue)
+        if (m_Connections.Count >= ServerGameLoop.serverMaxClients.IntValue)
         {
             GameDebug.Log("Refusing incoming connection " + connectionId + " due to server.maxclients");
             m_Transport.Disconnect(connectionId);
             return;
         }
 
-        var connection = new ServerConnection(this, connectionId, m_Transport, clientInfo);
+        GameDebug.Log("Incoming connection: #" + connectionId + " from: " + m_Transport.GetConnectionDescription(connectionId));
+
+        var connection = new ServerConnection(this, connectionId, m_Transport);
 
         m_Connections.Add(connectionId, connection);
 
@@ -454,36 +494,47 @@ public class NetworkServer
 #pragma warning restore
     }
 
-    class MapInfo
+    unsafe class MapInfo
     {
         public int serverInitSequence;                  // The server frame the map was initialized
         public ushort mapId;                            // Unique sequence number for the map (to deal with redudant mapinfo messages)
         public NetworkSchema schema;                    // Schema for the map info
-        public byte[] data = new byte[1024];            // Game specific payload
+        public uint* data = (uint*)UnsafeUtility.Malloc(1024, UnsafeUtility.AlignOf<uint>(), Unity.Collections.Allocator.Persistent);            // Game specific payload
     }
 
-    public class EntityTypeInfo
+    unsafe public class EntityTypeInfo
     {
         public string name;
         public ushort typeId;
         public NetworkSchema schema;
         public int createdSequence;
-        public byte[] baseline;
+        public uint* baseline;
+        public int stats_count;
+        public int stats_bits;
     }
 
-    // Holds a snapshot for an entity. We keep a number of these for each entity
-    class EntitySnapshot
+    // Holds a information about a snapshot for an entity.
+    // Each entity has a circular history of these
+    unsafe class EntitySnapshotInfo
+    {
+        public uint* start;     // pointer into WorldSnapshot.data block (see below)
+        public int length;      // length of data in words
+    }
+
+    // Each tick a WorldSnapshot is generated. The data buffer contains serialized data
+    // from all serializable entitites
+    unsafe class WorldSnapshot
     {
         public int serverTime;  // server tick for this snapshot
         public int length;      // length of data in data field
-        public byte[] data = new byte[NetworkConfig.maxEntitySnapshotDataSize];
+        public uint* data;
     }
 
-    class EntityInfo
+    unsafe class EntityInfo
     {
         public EntityInfo()
         {
-            snapshots = new SequenceBuffer<EntitySnapshot>(NetworkConfig.snapshotDeltaCacheSize, () => new EntitySnapshot());
+            snapshots = new SequenceBuffer<EntitySnapshotInfo>(NetworkConfig.snapshotDeltaCacheSize, () => new EntitySnapshotInfo());
         }
 
         public void Reset()
@@ -498,7 +549,6 @@ public class NetworkServer
             predictingClientId = -1;
         }
 
-        //public int id;
         public ushort typeId;
         public int predictingClientId = -1;
 
@@ -506,8 +556,8 @@ public class NetworkServer
         public int despawnSequence;
         public int updateSequence;
 
-        public SequenceBuffer<EntitySnapshot> snapshots;
-        public byte[] prediction = new byte[NetworkConfig.maxEntitySnapshotDataSize];
+        public SequenceBuffer<EntitySnapshotInfo> snapshots;
+        public uint* prediction;                                // NOTE: used in WriteSnapshot but invalid outside that function
         public byte[] fieldsChangedPrediction = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
 
         // On server the fieldmask of an entity is different depending on what client we are sending to
@@ -541,17 +591,16 @@ public class NetworkServer
 
     public class ServerConnection : NetworkConnection<NetworkServer.Counters, ServerPackageInfo>
     {
-        ServerInfo serverInfo;
-
-        public void SetSnapshotRate(int snapshotRate)
+        public void SetSnapshotInterval(int _snapshotInterval)
         {
-            timeToNextUpdate = new NetworkUtils.Timer(snapshotRate > 0 ? 1.0f / snapshotRate : 0.0f);
+            if (_snapshotInterval < 1)
+                _snapshotInterval = 1;
+            snapshotInterval = _snapshotInterval;
         }
 
-        public ServerConnection(NetworkServer owner, int connectionId, INetworkTransport transport, ServerInfo serverInfo) : base(connectionId, transport)
+        public ServerConnection(NetworkServer server, int connectionId, INetworkTransport transport) : base(connectionId, transport)
         {
-            this.owner = owner;
-            this.serverInfo = serverInfo;
+            this.server = server;
 
             if (NetworkServer.dump_client_streams.IntValue > 0)
             {
@@ -560,8 +609,10 @@ public class NetworkServer
                 GameDebug.Log("Storing client data stream in " + name);
             }
 
-            // update rate overridden by client info right after connect
-            timeToNextUpdate = new NetworkUtils.Timer(1.0f / 20.0f);
+            // update rate overridden by client info right after connect. Start at 1, i.e. update every tick, to allow fast handshake
+            snapshotInterval = 1;
+            maxBPS = 0;
+            nextOutPackageTime = 0;
         }
 
         public new void Reset()
@@ -578,7 +629,7 @@ public class NetworkServer
             snapshotAcks.Clear();
         }
 
-        public void ProcessCommands(int maxTime, IClientCommandProcessor processor)
+        unsafe public void ProcessCommands(int maxTime, IClientCommandProcessor processor)
         {
             // Check for time jumps backward in the command stream and reset the queue in case
             // we find one. (This will happen if the client determines that it has gotten too
@@ -604,8 +655,11 @@ public class NetworkServer
                 {
                     if (info.time <= maxTime)
                     {
-                        var data = new NetworkReader(info.data, commandSchema);
-                        processor.ProcessCommand(connectionId, info.time, ref data);
+                        fixed(uint* data = info.data)
+                        {
+                            var reader = new NetworkReader(data, commandSchema);
+                            processor.ProcessCommand(connectionId, info.time, ref reader);
+                        }
                         commandSequenceProcessed = sequence;
                     }
                     else
@@ -647,7 +701,20 @@ public class NetworkServer
 
             var rawOutputStream = new BitOutputStream(m_PackageBuffer);
 
-            if (!CanSendPackage(ref rawOutputStream) || !timeToNextUpdate.Update())
+            var canSendPackage = CanSendPackage(ref rawOutputStream);
+            if (!canSendPackage)
+            {
+                //GameDebug.Log("SERVER: Choked by missing acks from client!");
+                return;
+            }
+
+            // Distribute clients evenly according to their with snapshotInterval > 1
+            // TODO: This kind of assumes same update interval by all ....
+            if ((server.m_ServerSequence + connectionId) % snapshotInterval != 0)
+                return;
+
+            // Respect max bps rate cap
+            if (Game.frameTime < nextOutPackageTime)
                 return;
 
             ServerPackageInfo packageInfo;
@@ -655,7 +722,7 @@ public class NetworkServer
 
             int endOfHeaderPos = rawOutputStream.Align();
             var output = default(TOutputStream);// new TOutputStream();  Due to bug new generates garbage here
-            output.Initialize(serverInfo.compressionModel, m_PackageBuffer, endOfHeaderPos, networkCompressionCapture);
+            output.Initialize(server.serverInfo.compressionModel, m_PackageBuffer, endOfHeaderPos, networkCompressionCapture);
 
 
             // We store the server sequence in the package info to be able to map back to 
@@ -663,8 +730,8 @@ public class NetworkServer
             // similarly for the time as we send the server time as a delta relative to 
             // the last acknowledged server time
 
-            packageInfo.serverSequence = owner.m_ServerSequence;   // the server snapshot sequence
-            packageInfo.serverTime = owner.serverTime;             // Server time (could be ticks or could be ms)
+            packageInfo.serverSequence = server.m_ServerSequence;   // the server snapshot sequence
+            packageInfo.serverTime = server.serverTime;             // Server time (could be ticks or could be ms)
 
             // The ifs below are in essence the 'connection handshake' logic.
             if (!clientInfoAcked)
@@ -674,7 +741,7 @@ public class NetworkServer
             }
             else if (!mapAcked)
             {
-                if (owner.m_MapInfo.serverInitSequence > 0)
+                if (server.m_MapInfo.serverInitSequence > 0)
                 {
                     // Keep sending map info until it is acked
                     WriteMapInfo(ref output);
@@ -686,7 +753,7 @@ public class NetworkServer
                 //   if client has declared itself ready
                 //   if we have not already sent for this tick (because we need to be able to map a snapshot 
                 //     sequence to a package sequence we cannot send the same snapshot multiple times).
-                if (mapReady && owner.m_ServerSequence > snapshotServerLastWritten)
+                if (mapReady && server.m_ServerSequence > snapshotServerLastWritten)
                 {
                     WriteSnapshot(ref output);
                 }
@@ -705,47 +772,68 @@ public class NetworkServer
             int compressedSize = output.Flush();
             rawOutputStream.SkipBytes(compressedSize);
 
-            CompleteSendPackage(packageInfo, ref rawOutputStream);
+            var messageSize = CompleteSendPackage(packageInfo, ref rawOutputStream);
+
+            // Decide when next package can go out
+            if (maxBPS > 0)
+            {
+                double timeLimitBPS = messageSize / maxBPS;
+                if (timeLimitBPS > (float)snapshotInterval / Game.serverTickRate.FloatValue)
+                {
+                    GameDebug.Log("SERVER: Choked by BPS sending " + messageSize);
+                    nextOutPackageTime = Game.frameTime + timeLimitBPS;
+                }
+            }
         }
         int lastClearedAck = 0;
 
         void WriteClientInfo<TOutputStream>(ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
         {
-            AddMessage(NetworkMessage.ClientInfo);
+            AddMessageContentFlag(NetworkMessage.ClientInfo);
             output.WriteRawBits((uint)connectionId, 8);
-            output.WriteRawBits((uint)serverInfo.serverTickRate, 8);
+            output.WriteRawBits((uint)server.serverInfo.serverTickRate, 8);
             output.WriteRawBits(NetworkConfig.protocolVersion, 8);
 
-            byte[] modelData = serverInfo.compressionModel.modelData;
+            byte[] modelData = server.serverInfo.compressionModel.modelData;
             output.WriteRawBits((uint)modelData.Length, 16);
             for (int i = 0; i < modelData.Length; i++)
                 output.WriteRawBits(modelData[i], 8);
 
             if (serverDebug.IntValue > 0)
             {
-                GameDebug.Log(string.Format("WriteClientInfo: connectionId {0}   serverTickRate {1}", connectionId, serverInfo.serverTickRate));
+                GameDebug.Log(string.Format("WriteClientInfo: connectionId {0}   serverTickRate {1}", connectionId, server.serverInfo.serverTickRate));
             }
         }
 
-        void WriteMapInfo<TOutputStream>(ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
+        unsafe void WriteMapInfo<TOutputStream>(ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
         {
-            AddMessage(NetworkMessage.MapInfo);
+            AddMessageContentFlag(NetworkMessage.MapInfo);
 
-            output.WriteRawBits(owner.m_MapInfo.mapId, 16);
+            output.WriteRawBits(server.m_MapInfo.mapId, 16);
 
             // Write schema if client haven't acked it
             output.WriteRawBits(mapSchemaAcked ? 0 : 1U, 1);
             if (!mapSchemaAcked)
-                NetworkSchema.WriteSchema(owner.m_MapInfo.schema, ref output);
+                NetworkSchema.WriteSchema(server.m_MapInfo.schema, ref output);
 
             // Write map data
-            NetworkSchema.CopyFieldsFromBuffer(owner.m_MapInfo.schema, owner.m_MapInfo.data, ref output);
+            NetworkSchema.CopyFieldsFromBuffer(server.m_MapInfo.schema, server.m_MapInfo.data, ref output);
         }
 
-        void WriteSnapshot<TOutputStream>(ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
+        unsafe void WriteSnapshot<TOutputStream>(ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
         {
-            // NETTODO: Rename to AddMessageFlag?
-            AddMessage(NetworkMessage.Snapshot);
+            server.statsSentUpdates++;
+
+            Profiler.BeginSample("NetworkServer.WriteSnapshot()");
+            // joinSequence is the *first* snapshot that could have received.
+            if (joinSequence == 0)
+            {
+                joinSequence = server.m_ServerSequence;
+                if (serverDebug.IntValue > 0)
+                    GameDebug.Log("Client " + connectionId + " got first snapshot at " + joinSequence);
+            }
+
+            AddMessageContentFlag(NetworkMessage.Snapshot);
             counters.snapshotsOut++;
 
             bool enableNetworkPrediction = network_prediction.IntValue != 0;
@@ -757,12 +845,19 @@ public class NetworkServer
             // the client to keep the last N updates for any entity, so even though the client might have much older
             // baselines for some entities we cannot guarantee it. 
             // TODO : Can we make this simpler?
-            var haveBaseline = maxSnapshotAck != 0 && owner.m_ServerSequence - maxSnapshotAck < NetworkConfig.snapshotDeltaCacheSize - 2; // -2 because we want 3 baselines!
+            var haveBaseline = maxSnapshotAck != 0;
+            if (server.m_ServerSequence - maxSnapshotAck >= NetworkConfig.snapshotDeltaCacheSize - 2) // -2 because we want 3 baselines!
+            {
+                if (serverDebug.IntValue > 0)
+                    GameDebug.Log("ServerSequence ahead of latest ack'ed snapshot by more than cache size. " + (haveBaseline ? "nobaseline" : "baseline"));
+                haveBaseline = false;
+            }
+            var baseline = haveBaseline ? maxSnapshotAck : 0;
 
 
-            int snapshot0Baseline = maxSnapshotAck;
-            int snapshot1Baseline = maxSnapshotAck;
-            int snapshot2Baseline = maxSnapshotAck;
+            int snapshot0Baseline = baseline;
+            int snapshot1Baseline = baseline;
+            int snapshot2Baseline = baseline;
             int snapshot0BaselineClient = snapshotPackageBaseline;
             int snapshot1BaselineClient = snapshotPackageBaseline;
             int snapshot2BaselineClient = snapshotPackageBaseline;
@@ -776,7 +871,7 @@ public class NetworkServer
                     if (snapshotAcks[a % NetworkConfig.clientAckCacheSize])
                     {
                         var base1 = snapshotSeqs[a % NetworkConfig.clientAckCacheSize];
-                        if (owner.m_ServerSequence - base1 < NetworkConfig.snapshotDeltaCacheSize - 2)
+                        if (server.m_ServerSequence - base1 < NetworkConfig.snapshotDeltaCacheSize - 2)
                         {
                             snapshot1Baseline = base1;
                             snapshot1BaselineClient = a;
@@ -793,7 +888,7 @@ public class NetworkServer
                     if (snapshotAcks[a % NetworkConfig.clientAckCacheSize])
                     {
                         var base2 = snapshotSeqs[a % NetworkConfig.clientAckCacheSize];
-                        if (owner.m_ServerSequence - base2 < NetworkConfig.snapshotDeltaCacheSize - 2)
+                        if (server.m_ServerSequence - base2 < NetworkConfig.snapshotDeltaCacheSize - 2)
                         {
                             snapshot2Baseline = base2;
                             snapshot2BaselineClient = a;
@@ -805,7 +900,8 @@ public class NetworkServer
             }
 
             // NETTODO: Write up a list of all sequence numbers. Ensure they are all needed
-            output.WritePackedIntDelta(haveBaseline ? snapshot0BaselineClient : 0, outSequence - 1, NetworkConfig.baseSequenceContext);
+            output.WriteRawBits(haveBaseline ? 1u : 0, 1);
+            output.WritePackedIntDelta(snapshot0BaselineClient, outSequence - 1, NetworkConfig.baseSequenceContext);
             output.WriteRawBits(enableNetworkPrediction ? 1u : 0u, 1);
             output.WriteRawBits(enableHashing ? 1u : 0u, 1);
             if (enableNetworkPrediction)
@@ -815,72 +911,75 @@ public class NetworkServer
             }
 
             // NETTODO: For us serverTime == tick but network layer only cares about a growing int
-            output.WritePackedIntDelta(owner.serverTime, haveBaseline ? maxSnapshotTime : 0, NetworkConfig.serverTimeContext);
+            output.WritePackedIntDelta(server.serverTime, haveBaseline ? maxSnapshotTime : 0, NetworkConfig.serverTimeContext);
 
             // NETTODO: a more generic way to send stats
-            var temp = owner.m_ServerSimTime * 10;
+            var temp = server.m_ServerSimTime * 10;
             output.WriteRawBits((byte)temp, 8);
 
             // NETTODO: Rename TempListType etc.
             // NETTODO: Consider if we need to distinguish between Type & Schema
-            owner.m_TempTypeList.Clear();
-            owner.m_TempSpawnList.Clear();
-            owner.m_TempDespawnList.Clear();
-            owner.m_TempUpdateList.Clear();
+            server.m_TempTypeList.Clear();
+            server.m_TempSpawnList.Clear();
+            server.m_TempDespawnList.Clear();
+            server.m_TempUpdateList.Clear();
 
-            for(int id = 0, c = owner.m_Entities.Count; id < c; id++)
+            Profiler.BeginSample("NetworkServer.PredictSnapshot");
+            server.m_PredictionIndex = 0;
+            for (int id = 0, c = server.m_Entities.Count; id < c; id++)
             {
-                var entity = owner.m_Entities[id];
+                var entity = server.m_Entities[id];
 
                 // Skip freed
                 if (entity.spawnSequence == 0)
                     continue;
 
-                // or if their despawn have been ack'ed
-                if (entity.despawnSequence > 0 && entity.despawnSequence <= maxSnapshotAck)
-                    continue;
-
-
-                // This is problematic because then clients may get a spawn but no despawn if 
-                // an entity is made and killed while maxSnapshotAck is 0
-                //if (entity.despawnSequence > 0 && maxSnapshotAck == 0)
-                    //continue;
-
-                // or, if newly joined, we have no way of knowing if they have seen the despawn, so never send
-                // This is also problematic as length of spawn-list may change with same (none) baseline when joining
-                //if(maxSnapshotAck == 0 && entity.despawnSequence > 0 && entity.spawnSequence < joinSequence)
-                //{
-                    //GameDebug.Log("SERVER hiding " + id + " because it was spawned " + entity.spawnSequence + " - " + entity.despawnSequence + " and we joined " + joinSequence);
-                    //continue;
-                //}
-
-                // Depending on spawn/despawn we may or may not send update:
-                // Spawn   Despawn           Update?
-                //  0        0                yes
-                //  1        0                yes
-                //  0        1                no
-                //  1        1                yes    (spawn/despawn within same snap)
-
-                bool spawned = (entity.spawnSequence > maxSnapshotAck);
-                if (spawned)
-                    owner.m_TempSpawnList.Add(id);
-
+                bool spawnedSinceBaseline = (entity.spawnSequence > baseline);
                 bool despawned = (entity.despawnSequence > 0);
-                if (despawned)
-                    owner.m_TempDespawnList.Add(id);    // Entity was despawned and the client needs to know about it
 
-                if (!spawned && despawned)
+                // Note to future self: This is a bit tricky... We consider lifetimes of entities
+                // re the baseline (last ack'ed, so in the past) and the snapshot we are building (now)
+                // There are 6 cases (S == spawn, D = despawn):
+                //
+                //  --------------------------------- time ----------------------------------->
+                //
+                //                   BASELINE          SNAPSHOT
+                //                      |                 |
+                //                      v                 v
+                //  1.    S-------D                                                  IGNORE
+                //  2.    S------------------D                                       SEND DESPAWN
+                //  3.    S-------------------------------------D                    SEND UPDATE
+                //  4.                        S-----D                                IGNORE
+                //  5.                        S-----------------D                    SEND SPAWN + UPDATE
+                //  6.                                         S----------D          INVALID (FUTURE)
+                //
+
+                if (despawned && entity.despawnSequence <= baseline)
+                    continue;                               // case 1: ignore
+
+                if(despawned && !spawnedSinceBaseline)
+                {
+                    server.m_TempDespawnList.Add(id);       // case 2: despawn
                     continue;
+                }
+
+                if (spawnedSinceBaseline && despawned)
+                    continue;                               // case 4: ignore
+
+                if(spawnedSinceBaseline)
+                    server.m_TempSpawnList.Add(id);         // case 5: send spawn + update
+
+                // case 5. and 3. fall through to here and gets updated
 
                 // Send data from latest tick
-                var tickToSend = owner.m_ServerSequence;
+                var tickToSend = server.m_ServerSequence;
                 // If despawned, however, we have stopped generating updates so pick latest valid
                 if (despawned)
                     tickToSend = Mathf.Max(entity.updateSequence, entity.despawnSequence - 1);
-                GameDebug.Assert(tickToSend == owner.m_ServerSequence || tickToSend == entity.despawnSequence - 1, "TickToSend...");
+                //GameDebug.Assert(tickToSend == server.m_ServerSequence || tickToSend == entity.despawnSequence - 1, "Sending snapshot. Expect to send either current tick or last tick before despawn.");
 
                 {
-                    var entityType = owner.m_EntityTypes[entity.typeId];
+                    var entityType = server.m_EntityTypes[entity.typeId];
 
                     var snapshot = entity.snapshots[tickToSend];
 
@@ -888,47 +987,51 @@ public class NetworkServer
                     // delta relative to 0 as we cannot know if we have a valid baseline on the client or not
 
                     uint num_baselines = 1; // if there is no normal baseline, we use schema baseline so there is always one
-                    byte[] baseline0 = entityType.baseline;
+                    uint* baseline0 = entityType.baseline;
                     int time0 = maxSnapshotTime;
 
                     if (haveBaseline && entity.spawnSequence <= maxSnapshotAck)
                     {
-                        baseline0 = entity.snapshots[snapshot0Baseline].data;
+                        baseline0 = entity.snapshots[snapshot0Baseline].start;
                     }
 
                     if (enableNetworkPrediction)
                     {
-                        byte[] baseline1 = entityType.baseline;
-                        byte[] baseline2 = entityType.baseline;
+                        uint* baseline1 = entityType.baseline;
+                        uint* baseline2 = entityType.baseline;
                         int time1 = maxSnapshotTime;
                         int time2 = maxSnapshotTime;
 
                         if (haveBaseline && entity.spawnSequence <= maxSnapshotAck)
                         {
-                            GameDebug.Assert(entity.snapshots[snapshot0Baseline].serverTime == maxSnapshotTime, "serverTime == maxSnapshotTime");
+                            GameDebug.Assert(server.m_Snapshots[snapshot0Baseline % server.m_Snapshots.Length].serverTime == maxSnapshotTime, "serverTime == maxSnapshotTime");
                             GameDebug.Assert(entity.snapshots.Exists(snapshot0Baseline), "Exists(snapshot0Baseline)");
 
                             // Newly spawned entities might not have earlier baselines initially
                             if (snapshot1Baseline != snapshot0Baseline && entity.snapshots.Exists(snapshot1Baseline))
                             {
                                 num_baselines = 2;
-                                baseline1 = entity.snapshots[snapshot1Baseline].data;
-                                time1 = entity.snapshots[snapshot1Baseline].serverTime;
+                                baseline1 = entity.snapshots[snapshot1Baseline].start;
+                                time1 = server.m_Snapshots[snapshot1Baseline % server.m_Snapshots.Length].serverTime;
 
                                 if (snapshot2Baseline != snapshot1Baseline && entity.snapshots.Exists(snapshot2Baseline))
                                 {
                                     num_baselines = 3;
-                                    baseline2 = entity.snapshots[snapshot2Baseline].data;
-                                    time2 = entity.snapshots[snapshot2Baseline].serverTime;
+                                    baseline2 = entity.snapshots[snapshot2Baseline].start;
+                                    //time2 = entity.snapshots[snapshot2Baseline].serverTime;
+                                    time2 = server.m_Snapshots[snapshot2Baseline % server.m_Snapshots.Length].serverTime;
                                 }
                             }
                         }
 
-                        NetworkPrediction.PredictSnapshot(entity.prediction, entity.fieldsChangedPrediction, entityType.schema, num_baselines, (uint)time0, baseline0, (uint)time1, baseline1, (uint)time2, baseline2, (uint)owner.serverTime, entity.GetFieldMask(connectionId));
+                        entity.prediction = server.m_Prediction + server.m_PredictionIndex;
+                        NetworkPrediction.PredictSnapshot(entity.prediction,  entity.fieldsChangedPrediction, entityType.schema, num_baselines, (uint)time0, baseline0, (uint)time1, baseline1, (uint)time2, baseline2, (uint)server.serverTime, entity.GetFieldMask(connectionId));
+                        server.m_PredictionIndex += entityType.schema.GetByteSize() / 4;
+                        server.statsProcessedOutgoing += entityType.schema.GetByteSize();
 
-                        if (NetworkUtils.MemCmp(entity.prediction, 0, snapshot.data, 0, entityType.schema.GetByteSize()) != 0)
+                        if (UnsafeUtility.MemCmp(entity.prediction, snapshot.start, entityType.schema.GetByteSize()) != 0)
                         {
-                            owner.m_TempUpdateList.Add(id);
+                            server.m_TempUpdateList.Add(id);
                         }
 
                         if (serverDebug.IntValue > 2)
@@ -938,7 +1041,7 @@ public class NetworkServer
                                 snapshot0Baseline + "(" + snapshot0BaselineClient + "," + time0 + ") - " +
                                 snapshot1Baseline + "(" + snapshot1BaselineClient + "," + time1 + ") - " +
                                 snapshot2Baseline + "(" + snapshot2BaselineClient + "," + time2 + "). Sche: " +
-                                owner.m_TempTypeList.Count + " Spwns: " + owner.m_TempSpawnList.Count + " Desp: " + owner.m_TempDespawnList.Count + " Upd: " + owner.m_TempUpdateList.Count);
+                                server.m_TempTypeList.Count + " Spwns: " + server.m_TempSpawnList.Count + " Desp: " + server.m_TempDespawnList.Count + " Upd: " + server.m_TempUpdateList.Count);
                         }
                     }
                     else
@@ -949,32 +1052,33 @@ public class NetworkServer
                         for (int i = 0, l = fcp.Length; i < l; ++i)
                             fcp[i] = 0;
 
-                        if (NetworkUtils.MemCmp(prediction, 0, snapshot.data, 0, entityType.schema.GetByteSize()) != 0)
+                        if(UnsafeUtility.MemCmp(prediction, snapshot.start, entityType.schema.GetByteSize()) != 0)
                         {
-                            owner.m_TempUpdateList.Add(id);
+                            server.m_TempUpdateList.Add(id);
                         }
 
                         if (serverDebug.IntValue > 2)
                         {
-                            GameDebug.Log((haveBaseline ? "Upd [BL]" : "Upd [  ]") + snapshot0Baseline + "(" + snapshot0BaselineClient + "," + time0 + "). Sche: " + owner.m_TempTypeList.Count + " Spwns: " + owner.m_TempSpawnList.Count + " Desp: " + owner.m_TempDespawnList.Count + " Upd: " + owner.m_TempUpdateList.Count);
+                            GameDebug.Log((haveBaseline ? "Upd [BL]" : "Upd [  ]") + snapshot0Baseline + "(" + snapshot0BaselineClient + "," + time0 + "). Sche: " + server.m_TempTypeList.Count + " Spwns: " + server.m_TempSpawnList.Count + " Desp: " + server.m_TempDespawnList.Count + " Upd: " + server.m_TempUpdateList.Count);
                         }
                     }
                 }
             }
+            Profiler.EndSample();
 
-            if (serverDebug.IntValue > 1 && (owner.m_TempSpawnList.Count > 0 || owner.m_TempDespawnList.Count > 0))
+            if (serverDebug.IntValue > 1 && (server.m_TempSpawnList.Count > 0 || server.m_TempDespawnList.Count > 0))
             {
-                GameDebug.Log(connectionId + ": spwns: " + string.Join(",", owner.m_TempSpawnList) + "    despwans: " + string.Join(",", owner.m_TempDespawnList));
+                GameDebug.Log(connectionId + ": spwns: " + string.Join(",", server.m_TempSpawnList) + "    despwans: " + string.Join(",", server.m_TempDespawnList));
             }
 
-            foreach (var pair in owner.m_EntityTypes)
+            foreach (var pair in server.m_EntityTypes)
             {
                 if (pair.Value.createdSequence > maxSnapshotAck)
-                    owner.m_TempTypeList.Add(pair.Value);
+                    server.m_TempTypeList.Add(pair.Value);
             }
 
-            output.WritePackedUInt((uint)owner.m_TempTypeList.Count, NetworkConfig.schemaCountContext);
-            foreach (var typeInfo in owner.m_TempTypeList)
+            output.WritePackedUInt((uint)server.m_TempTypeList.Count, NetworkConfig.schemaCountContext);
+            foreach (var typeInfo in server.m_TempTypeList)
             {
                 output.WritePackedUInt(typeInfo.typeId, NetworkConfig.schemaTypeIdContext);
                 NetworkSchema.WriteSchema(typeInfo.schema, ref output);
@@ -984,33 +1088,43 @@ public class NetworkServer
             }
 
             int previousId = 1;
-            output.WritePackedUInt((uint)owner.m_TempSpawnList.Count, NetworkConfig.spawnCountContext);
-            foreach (var id in owner.m_TempSpawnList)
+            output.WritePackedUInt((uint)server.m_TempSpawnList.Count, NetworkConfig.spawnCountContext);
+            foreach (var id in server.m_TempSpawnList)
             {
                 output.WritePackedIntDelta(id, previousId, NetworkConfig.idContext);
                 previousId = id;
 
-                var entity = owner.m_Entities[id];
+                var entity = server.m_Entities[id];
 
                 output.WritePackedUInt((uint)entity.typeId, NetworkConfig.spawnTypeIdContext);
                 output.WriteRawBits(entity.GetFieldMask(connectionId), 8);
             }
 
-            output.WritePackedUInt((uint)owner.m_TempDespawnList.Count, NetworkConfig.despawnCountContext);
-            foreach (var id in owner.m_TempDespawnList)
+            output.WritePackedUInt((uint)server.m_TempDespawnList.Count, NetworkConfig.despawnCountContext);
+            foreach (var id in server.m_TempDespawnList)
             {
                 output.WritePackedIntDelta(id, previousId, NetworkConfig.idContext);
                 previousId = id;
             }
 
-            int numUpdates = owner.m_TempUpdateList.Count;
+            int numUpdates = server.m_TempUpdateList.Count;
             output.WritePackedUInt((uint)numUpdates, NetworkConfig.updateCountContext);
-            foreach(var id in owner.m_TempUpdateList)
-            {
-                var entity = owner.m_Entities[id];
-                var entityType = owner.m_EntityTypes[entity.typeId];
 
-                byte[] prediction = null;
+            if (serverDebug.IntValue > 0)
+            {
+                foreach (var t in server.m_EntityTypes)
+                {
+                    t.Value.stats_count = 0;
+                    t.Value.stats_bits = 0;
+                }
+            }
+
+            foreach (var id in server.m_TempUpdateList)
+            {
+                var entity = server.m_Entities[id];
+                var entityType = server.m_EntityTypes[entity.typeId];
+
+                uint* prediction = null;
                 if (enableNetworkPrediction)
                 {
                     prediction = entity.prediction;
@@ -1020,7 +1134,7 @@ public class NetworkServer
                     prediction = entityType.baseline;
                     if (haveBaseline && entity.spawnSequence <= maxSnapshotAck)
                     {
-                        prediction = entity.snapshots[snapshot0Baseline].data;
+                        prediction = entity.snapshots[snapshot0Baseline].start;
                     }
                 }
 
@@ -1028,9 +1142,11 @@ public class NetworkServer
                 previousId = id;
 
                 // TODO (petera) It is a mess that we have to repeat the logic about tickToSend from above here
-                int tickToSend = owner.m_ServerSequence;
-                if(entity.despawnSequence > 0)
+                int tickToSend = server.m_ServerSequence;
+                if (entity.despawnSequence > 0)
                     tickToSend = Mathf.Max(entity.despawnSequence - 1, entity.updateSequence);
+
+                GameDebug.Assert(server.m_ServerSequence - tickToSend < NetworkConfig.snapshotDeltaCacheSize);
 
                 if (!entity.snapshots.Exists(tickToSend))
                 {
@@ -1039,7 +1155,7 @@ public class NetworkServer
                     GameDebug.Log("spawn: " + entity.spawnSequence);
                     GameDebug.Log("despawn: " + entity.despawnSequence);
                     GameDebug.Log("update: " + entity.updateSequence);
-                    GameDebug.Log("tick: " + owner.m_ServerSequence);
+                    GameDebug.Log("tick: " + server.m_ServerSequence);
                     GameDebug.Log("id: " + id);
                     GameDebug.Log("snapshots: " + entity.snapshots.ToString());
                     //GameDebug.Log("WOULD HAVE crashed looking for " + tickToSend + " changing to " + (entity.despawnSequence - 1));
@@ -1051,31 +1167,49 @@ public class NetworkServer
                 // NOTE : As long as the server haven't gotten the spawn acked, it will keep sending
                 // delta relative to 0 as we cannot know if we have a valid baseline on the client or not
                 uint entity_hash = 0;
-                DeltaWriter.Write(ref output, entityType.schema, snapshotInfo.data, prediction, entity.fieldsChangedPrediction, entity.GetFieldMask(connectionId), ref entity_hash);
+                var bef = output.GetBitPosition2();
+                DeltaWriter.Write(ref output, entityType.schema, snapshotInfo.start, prediction, entity.fieldsChangedPrediction, entity.GetFieldMask(connectionId), ref entity_hash);
+                var aft = output.GetBitPosition2();
+                if (serverDebug.IntValue > 0)
+                {
+                    entityType.stats_count++;
+                    entityType.stats_bits += (aft - bef);
+                }
 
                 if (enableHashing)
                     output.WriteRawBits(entity_hash, 32);
             }
+            if (!haveBaseline && serverDebug.IntValue > 0)
+            {
+                Debug.Log("Sending no-baseline snapshot. C: " + connectionId + " Seq: " + outSequence + " Max: " + maxSnapshotAck + "  Total entities sent: " + server.m_TempUpdateList.Count + " Type breakdown:");
+                foreach (var c in server.m_EntityTypes)
+                {
+                    Debug.Log(c.Value.name + " " + c.Key + " #" + (c.Value.stats_count) + " " + (c.Value.stats_bits / 8) + " bytes");
+                }
+            }
 
             if (enableHashing)
             {
-                output.WriteRawBits(owner.m_LastEntityCount, 32);
+                output.WriteRawBits(server.m_LastEntityCount, 32);
             }
 
-            snapshotServerLastWritten = owner.m_ServerSequence;
-            snapshotSeqs[outSequence % NetworkConfig.clientAckCacheSize] = owner.m_ServerSequence;
+            server.statsSentOutgoing += output.GetBitPosition2() / 8;
 
+            snapshotServerLastWritten = server.m_ServerSequence;
+            snapshotSeqs[outSequence % NetworkConfig.clientAckCacheSize] = server.m_ServerSequence;
+
+            Profiler.EndSample();
         }
 
         void ReadClientConfig<TInputStream>(ref TInputStream input) where TInputStream : NetworkCompression.IInputStream
         {
             maxBPS = (int)input.ReadRawBits(32);
-            var snapshotRate = (int)input.ReadRawBits(16);
-            SetSnapshotRate(snapshotRate);
+            var snapshotInterval = (int)input.ReadRawBits(16);
+            SetSnapshotInterval(snapshotInterval);
 
             if (serverDebug.IntValue > 0)
             {
-                GameDebug.Log(string.Format("ReadClientConfig: updateRate: {0}  snapshotRate: {1}", maxBPS, snapshotRate));
+                GameDebug.Log(string.Format("ReadClientConfig: updateRate: {0}  snapshotRate: {1}", maxBPS, snapshotInterval));
             }
         }
 
@@ -1122,7 +1256,7 @@ public class NetworkServer
                     clientInfoAcked = true;
 
                 // Check if the client received the map info
-                if ((info.content & NetworkMessage.MapInfo) != 0 && info.serverSequence >= owner.m_MapInfo.serverInitSequence)
+                if ((info.content & NetworkMessage.MapInfo) != 0 && info.serverSequence >= server.m_MapInfo.serverInitSequence)
                 {
                     mapAcked = true;
                     mapSchemaAcked = true;
@@ -1139,6 +1273,8 @@ public class NetworkServer
                     // Keep track of newest ack'ed snapshot
                     if (info.serverSequence > maxSnapshotAck)
                     {
+                        if (maxSnapshotAck == 0 && serverDebug.IntValue > 0)
+                            Debug.Log("SERVER: first max ack for " + info.serverSequence);
                         maxSnapshotAck = info.serverSequence;
                         maxSnapshotTime = info.serverTime;
                     }
@@ -1149,10 +1285,10 @@ public class NetworkServer
         class CommandInfo
         {
             public int time = 0;
-            public byte[] data = new byte[NetworkConfig.maxCommandDataSize];
+            public uint[] data = new uint[NetworkConfig.maxCommandDataSize];
         }
 
-        NetworkServer owner;
+        NetworkServer server;
 
         // Connection handshake
         public bool clientInfoAcked;
@@ -1160,7 +1296,9 @@ public class NetworkServer
         public bool mapReady;
         bool mapSchemaAcked;
 
-        NetworkUtils.Timer timeToNextUpdate;
+        double nextOutPackageTime;
+        int snapshotInterval;
+        int maxBPS;
         int snapshotServerLastWritten;
 
         int snapshotPackageBaseline;
@@ -1172,6 +1310,8 @@ public class NetworkServer
         public int maxSnapshotAck;
         int maxSnapshotTime;
 
+        int joinSequence;
+
         int commandSequenceIn;
         int commandSequenceProcessed;
         NetworkSchema commandSchema;
@@ -1182,7 +1322,7 @@ public class NetworkServer
 
     public void StartNetworkProfile()
     {
-        m_NetworkCompressionCapture = new NetworkCompressionCapture(NetworkConfig.maxContexts, clientInfo.compressionModel);
+        m_NetworkCompressionCapture = new NetworkCompressionCapture(NetworkConfig.maxContexts, serverInfo.compressionModel);
     }
 
     public void EndNetworkProfile(string filepath)
@@ -1220,6 +1360,17 @@ public class NetworkServer
     List<int> m_TempUpdateList = new List<int>();
 
     NetworkCompressionCapture m_NetworkCompressionCapture = null;
+
+    WorldSnapshot[] m_Snapshots;
+    uint* m_Prediction;
+    int m_PredictionIndex;
+
+    public int statsSnapshotData;
+    public int statsGeneratedEntitySnapshots;
+    public int statsSentUpdates;
+    public int statsProcessedOutgoing;
+    public int statsSentOutgoing;
+    public int statsGeneratedSnapshotSize;
 
     //Counters m_Counters = new Counters();
 

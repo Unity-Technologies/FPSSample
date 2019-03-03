@@ -1,5 +1,9 @@
 Shader "Hidden/HDRenderPipeline/CopyDepthBuffer"
 {
+
+    Properties{
+        _FlipY("FlipY", Int) = 0
+    }
     HLSLINCLUDE
 
 
@@ -42,6 +46,8 @@ Shader "Hidden/HDRenderPipeline/CopyDepthBuffer"
                 float4 positionCS : SV_Position;
             };
 
+            int _FlipY;
+
             Varyings Vert(Attributes input)
             {
                 Varyings output;
@@ -52,7 +58,7 @@ Shader "Hidden/HDRenderPipeline/CopyDepthBuffer"
             float Frag(Varyings input) : SV_Depth
             {
                 PositionInputs posInputs = GetPositionInput(input.positionCS.xy, _ScreenSize.zw);
-                return LOAD_TEXTURE2D(_InputDepthTexture, posInputs.positionSS).x;
+                return LOAD_TEXTURE2D(_InputDepthTexture, (_FlipY == 0) ? posInputs.positionSS : float2(posInputs.positionNDC.x, 1.0 - posInputs.positionNDC.y) * _ScreenSize.xy).x;
             }
 
             ENDHLSL

@@ -1,0 +1,93 @@
+// Forward pass
+Pass
+{		
+	Tags { "LightMode"=${VFXPassForward} }
+	
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+
+		#if VFX_NEEDS_COLOR_INTERPOLATOR
+		nointerpolation float4 color : COLOR0;
+		#endif
+		#if USE_SOFT_PARTICLE || USE_ALPHA_TEST
+		// x: inverse soft particles fade distance
+		// y: alpha threshold
+		nointerpolation float2 builtInInterpolants : TEXCOORD1;
+		#endif
+		
+		#if VFX_USE_RIM_LIGHT
+		float3 offsets : TEXCOORD0;
+		nointerpolation float3 rotX : TEXCOORD2;
+		nointerpolation float3 rotY : TEXCOORD3;
+		float3 posWS : TEXCOORD5;
+		nointerpolation float4 rimSettings : COLOR1;
+		#if VFX_USE_NORMAL_MAP
+		nointerpolation uint faceID : TEXCOORD4;
+		#endif
+		#endif
+	};
+	
+	struct ps_output
+	{
+		float4 color : SV_Target0;
+	};
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_COLOR color.rgb
+#define VFX_VARYING_ALPHA color.a
+#define VFX_VARYING_INVSOFTPARTICLEFADEDISTANCE builtInInterpolants.x
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.y
+
+#if VFX_USE_RIM_LIGHT
+#define VFX_VARYING_OFFSETS offsets
+#define VFX_VARYING_ROTX rotX
+#define VFX_VARYING_ROTY rotY
+#define VFX_VARYING_POSWS posWS
+#if VFX_USE_NORMAL_MAP
+#define VFX_VARYING_FACEID faceID
+#endif
+#endif
+				
+	${VFXBegin:VFXVertexAdditionalProcess}
+#if VFX_USE_RIM_LIGHT
+	${VFXLoadParameter:{rimColor}}
+	${VFXLoadParameter:{rimCoef}}
+	rimCoef = saturate(1.0f - rimCoef);
+	o.rimSettings = float4(rimColor.rgb,rimCoef);
+#endif
+	${VFXEnd}
+				
+	${VFXInclude("Shaders/ParticleHexahedron/Pass.template")}	
+		
+	#pragma fragment frag
+	ps_output frag(ps_input i)
+	{
+		ps_output o = (ps_output)0;
+		o.color = VFXGetFragmentColor(i);
+		
+#if VFX_USE_RIM_LIGHT
+		float3 normal = VFXCubeGetLocalNormal(i);	
+#if VFX_USE_NORMAL_MAP
+		float3 n = VFXGetTextureNormal(VFX_SAMPLER(normalMap),VFXCubeGetUV(i));
+		normal = VFXCubeTransformNormalTS(normal,n);
+#endif
+		normal = VFXCubeTransformNormalWS(i,normal);
+		
+		const float r0 = i.rimSettings.a;
+		float3 posToCam = normalize(VFXGetViewWorldPosition() - i.posWS);
+		const float3 fresnel = r0 + (1.0f - r0) * pow(1.0f - saturate(dot(normal,posToCam)),5.0f);
+		o.color.rgb += saturate(fresnel) * i.rimSettings.rgb;
+#endif
+		
+		o.color = VFXApplyFog(o.color,i);
+		VFXClipFragmentColor(o.color.a,i);
+		o.color.a = saturate(o.color.a);
+		return o;
+	}
+	ENDHLSL
+}

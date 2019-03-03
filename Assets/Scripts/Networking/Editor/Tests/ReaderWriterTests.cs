@@ -13,7 +13,7 @@ namespace NetcodeTests
         {
             var random = new System.Random(192831);
 
-            var buffer = new byte[1024 * 1024];
+            var buffer = new uint[1024 * 1024];
             for (int i = 0; i < 100; ++i)
             {
                 var schema = NetworkTestUtils.GenerateRandomSchema(64, random.Next());

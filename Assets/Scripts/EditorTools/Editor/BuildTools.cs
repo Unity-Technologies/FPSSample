@@ -306,6 +306,11 @@ public class BuildTools
         return "Builds/" + target.ToString() + "/" + GetLongBuildName(target, buildName);
     }
 
+    static string GetBuildFolderPath(BuildTarget target)
+    {
+        return "Builds/" + target.ToString();
+    }
+
     [MenuItem("Assets/ResirializeAssets")]
     public static void ReserializeProject()
     {
@@ -331,14 +336,17 @@ public class BuildTools
     public static void OpenBuildFolder()
     {
         var target = BuildTarget.StandaloneWindows64;
-        var buildName = GetBuildName();
-        var buildPath = GetBuildPath(target, buildName);
+        var buildPath = GetBuildFolderPath(target);
         if (Directory.Exists(buildPath))
         {
             Debug.Log("Opening " + buildPath);
             var p = new System.Diagnostics.Process();
             p.StartInfo = new System.Diagnostics.ProcessStartInfo("explorer.exe", Path.GetFullPath(buildPath));
             p.Start();
+        }
+        else
+        {
+            Debug.LogWarning("No build folder found here: " + buildPath);
         }
     }
 
@@ -383,7 +391,7 @@ public class BuildTools
     }
 
     [MenuItem("FPS Sample/BuildSystem/Win64/PostProcess")]
-    public static void PostProcess()
+    public static void PostProcessWindows64()
     {
         Debug.Log("Window64 build postprocessing...");
         var target = BuildTarget.StandaloneWindows64;
@@ -395,6 +403,7 @@ public class BuildTools
         if (!Directory.Exists(buildPath) || !File.Exists(buildPath + "/" + Application.productName + ".exe"))
         {
             Debug.Log("No build here: " + buildPath);
+            return;
         }
 
         Debug.Log("Writing config files");
@@ -493,7 +502,7 @@ public class BuildTools
             throw new Exception("BuildPipeline.BuildPlayer failed: " + res.ToString());
 
         Debug.Log("Window64 build completed...");
-        PostProcess();
+        PostProcessWindows64();
     }
 
     [MenuItem("FPS Sample/BuildSystem/PS4/CreateBuildPS4")]
@@ -514,13 +523,47 @@ public class BuildTools
             throw new Exception("BuildPipeline.BuildPlayer failed: " + res.ToString());
     }
 
+    [MenuItem("FPS Sample/BuildSystem/Linux64/PostProcess")]
+    public static void PostProcessLinux()
+    {
+        Debug.Log("Linux build postprocessing...");
+        var target = BuildTarget.StandaloneLinux64;
+        var buildName = GetBuildName();
+        var buildPath = GetBuildPath(target, buildName);
+        string executableName = "server-linux.x86_64";
+
+
+        if (!Directory.Exists(buildPath) || !File.Exists(buildPath + "/" + executableName))
+        {
+            Debug.Log("No build here: " + buildPath);
+            return;
+        }
+
+        Debug.Log("Writing config files");
+
+        // Build empty user.cfg
+        File.WriteAllLines(buildPath + "/user.cfg", new string[] { });
+        Debug.Log("  user.cfg");
+
+        // Build boot.cfg
+        var bootCfg = new string[]
+        {
+           "game.modename assault",
+           "serve level_01"
+        };
+        File.WriteAllLines(buildPath + "/" + Game.k_BootConfigFilename, bootCfg);
+        Debug.Log("  " + Game.k_BootConfigFilename);
+
+        Debug.Log("Linux build postprocessing done.");
+    }
+
     [MenuItem("FPS Sample/BuildSystem/Linux64/CreateBuildLinux64")]
     public static void CreateBuildLinux64()
     {
         var target = BuildTarget.StandaloneLinux64;
         var buildName = GetBuildName();
         var buildPath = GetBuildPath(target, buildName);
-        string executableName = Application.productName;
+        string executableName = "server-linux.x86_64";
 
         Directory.CreateDirectory(buildPath);
         BuildBundles(buildPath, target, true, true, true);
@@ -530,6 +573,9 @@ public class BuildTools
             throw new Exception("BuildPipeline.BuildPlayer failed");
         if (res.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
             throw new Exception("BuildPipeline.BuildPlayer failed: " + res.ToString());
+
+        GameDebug.Log("Linux build completed...");
+        PostProcessLinux();
     }
 
     // This is just a little convenience for when iterating on Linux specific code
@@ -540,7 +586,7 @@ public class BuildTools
         var target = BuildTarget.StandaloneLinux64;
         var buildName = GetBuildName();
         var buildPath = GetBuildPath(target, buildName);
-        string executableName = Application.productName;
+        string executableName = "server-linux.x86_64";
 
         Directory.CreateDirectory(buildPath);
         var res = BuildGame(buildPath, executableName, target, BuildOptions.EnableHeadlessMode, buildName, false);
@@ -549,5 +595,7 @@ public class BuildTools
             throw new Exception("BuildPipeline.BuildPlayer failed");
         if (res.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
             throw new Exception("BuildPipeline.BuildPlayer failed: " + res.ToString());
+
+        GameDebug.Log("Linux build completed...");
     }
 }

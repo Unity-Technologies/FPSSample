@@ -1,0 +1,41 @@
+#include "Packages/com.unity.visualeffectgraph/Shaders/RenderPipeline/HDRP/VFXLit.cginc"
+
+void VFXGetHDRPLitData(out SurfaceData surfaceData, out BuiltinData builtinData, out BSDFData bsdfData, out PreLightData preLightData, VFX_VARYING_PS_INPUTS i, float3 normalWS, const VFXUVData uvData, uint2 tileIndex)
+{	
+	#if HDRP_MATERIAL_TYPE_TRANSLUCENT
+	${VFXLoadParameter:{diffusionProfile}} // Loads diffusion profile
+	#else
+	const uint diffusionProfile = 0;
+	#endif
+	
+	float3 posRWS = VFXGetPositionRWS(i);
+	float4 posSS = i.VFX_VARYING_POSCS;
+	PositionInputs posInput = GetPositionInput(posSS.xy, _ScreenSize.zw, posSS.z, posSS.w, posRWS, tileIndex);
+	
+	float alpha;
+	surfaceData = VFXGetSurfaceData(i,normalWS,uvData,diffusionProfile,alpha);	
+	bsdfData = ConvertSurfaceDataToBSDFData(posSS.xy, surfaceData);
+
+	preLightData = GetPreLightData(GetWorldSpaceNormalizeViewDir(posRWS),posInput,bsdfData);
+	
+	preLightData.diffuseFGD = 1.0f;
+    //TODO: investigate why this is needed
+    preLightData.coatPartLambdaV = 0;
+    preLightData.coatIblR = 0;
+    preLightData.coatIblF = 0;
+    
+	builtinData = VFXGetBuiltinData(i,posInput,surfaceData,bsdfData,preLightData,uvData,alpha);
+}
+
+void VFXGetHDRPLitData(out SurfaceData surfaceData, out BuiltinData builtinData, VFX_VARYING_PS_INPUTS i, float3 normalWS, const VFXUVData uvData)
+{
+	BSDFData bsdfData = (BSDFData)0;
+	PreLightData preLightData = (PreLightData)0;
+	preLightData.diffuseFGD = 1.0f;
+	VFXGetHDRPLitData(surfaceData,builtinData,bsdfData,preLightData,i,normalWS,uvData,uint2(0,0));
+}
+
+#include "Packages/com.unity.visualeffectgraph/Shaders/RenderPipeline/HDRP/VFXLitPixelOutput.cginc"
+
+
+

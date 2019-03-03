@@ -9,6 +9,7 @@ public class DestructibleProp : MonoBehaviour
 
 	public Vector3 splashDamageOffset;
 	public SplashDamageSettings splashDamage;
+	
 	public GameObject[] collision;
 
 #if UNITY_EDITOR
@@ -29,56 +30,86 @@ public class DestructibleProp : MonoBehaviour
 }
 
 [DisableAutoCreation]
-[RequireComponent(typeof(HitCollisionOwner))]
-public class UpdateDestructableProps : BaseComponentSystem<HitCollisionOwner,DestructibleProp,DestructablePropReplicatedState> 
+public class UpdateDestructableProps : BaseComponentSystem
 {
+	ComponentGroup Group;
+	
 	public UpdateDestructableProps(GameWorld world) : base(world) {}
-	
-	protected override void Update(Entity entity, HitCollisionOwner hitCollisionOwner, DestructibleProp prop, DestructablePropReplicatedState replicatedState)
+
+	protected override void OnCreateManager()
 	{
-		if (prop.health <= 0)
-			return;
-	
-		if (hitCollisionOwner.damageEvents.Count == 0)
-			return;
+		base.OnCreateManager();
+		Group = GetComponentGroup(typeof(HitCollisionOwnerData), typeof(DestructibleProp),
+			typeof(DestructablePropReplicatedData));
+	}
 
-		var instigator = Entity.Null;
-		foreach (var damageEvent in hitCollisionOwner.damageEvents)
+	protected override void OnUpdate()
+	{
+		var entityArray = Group.GetEntityArray();
+		var hitCollArray = Group.GetComponentDataArray<HitCollisionOwnerData>();
+		var propArray = Group.GetComponentArray<DestructibleProp>();
+		var replicatedDataArray = Group.GetComponentDataArray<DestructablePropReplicatedData>();
+
+		for (int i = 0; i < entityArray.Length; i++)
 		{
-			prop.health -= damageEvent.damage;
-
-			if (damageEvent.instigator != Entity.Null)
-				instigator = damageEvent.instigator;
-
-			if (prop.health < 0)
-				break;
-		}
-		hitCollisionOwner.damageEvents.Clear();
-	
-		if (prop.health <= 0)
-		{
-			hitCollisionOwner.collisionEnabled = false;
-
-			foreach (var gameObject in prop.collision)
-			{
-				gameObject.SetActive(false);
-			}
+			var prop = propArray[i];
 			
-			replicatedState.destroyedTick = m_world.worldTime.tick;
+			if (prop.health <= 0)
+				continue;
 
-			// Create splash damage
-			if (prop.splashDamage.radius > 0)
+			var entity = entityArray[i];
+			var damageBuffer = EntityManager.GetBuffer<DamageEvent>(entity);
+			
+			if (damageBuffer.Length == 0)
+				continue;
+
+			var instigator = Entity.Null;
+			for(int j=0;j<damageBuffer.Length;j++)
 			{
-				var collisionMask = ~0;
-				if (instigator != Entity.Null && EntityManager.HasComponent<Character>(instigator))
+				var damageEvent = damageBuffer[j];
+				prop.health -= damageEvent.damage;
+
+				if (damageEvent.instigator != Entity.Null)
+					instigator = damageEvent.instigator;
+
+				if (prop.health < 0)
+					break;
+			}
+			damageBuffer.Clear();
+
+			if (prop.health <= 0)
+			{
+				var replicatedState = replicatedDataArray[i];
+
+				var hitCollOwner = hitCollArray[i];
+				hitCollOwner.collisionEnabled = 0;
+				EntityManager.SetComponentData(entity,hitCollOwner);
+
+				foreach (var gameObject in prop.collision)
 				{
-					var character = EntityManager.GetComponentObject<Character>(instigator);
-					collisionMask = ~(1 << character.teamId);
+					gameObject.SetActive(false);
+				}
+
+				replicatedState.destroyedTick = m_world.worldTime.tick;
+
+				// Create splash damage
+				if (prop.splashDamage.radius > 0)
+				{
+					var collisionMask = ~0;
+					if (instigator != Entity.Null && EntityManager.HasComponent<Character>(instigator))
+					{
+						var character = EntityManager.GetComponentObject<Character>(instigator);
+						collisionMask = ~(1 << character.teamId);
+					}
+
+					var splashCenter = prop.transform.position + prop.splashDamageOffset;
+					SplashDamageRequest.Create(PostUpdateCommands, m_world.worldTime.tick, instigator, splashCenter,
+						collisionMask, prop.splashDamage);
 				}
 				
-				var splashCenter = prop.transform.position + prop.splashDamageOffset;
-				SplashDamageRequest.Create(PostUpdateCommands, m_world.worldTime.tick, instigator, splashCenter, collisionMask, prop.splashDamage);
+				EntityManager.SetComponentData(entity,replicatedState);
 			}
 		}
+		
 	}
 } 

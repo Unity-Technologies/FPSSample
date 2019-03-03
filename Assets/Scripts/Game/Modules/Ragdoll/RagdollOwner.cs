@@ -84,18 +84,18 @@ public class HandleRagdollDespawn : DeinitializeComponentSystem<RagdollOwner>
 
 
 [DisableAutoCreation]
-public class UpdateRagdolls : BaseComponentSystem<CharPresentation, RagdollOwner>
+public class UpdateRagdolls : BaseComponentSystem<CharacterPresentationSetup, RagdollOwner>
 {
     public UpdateRagdolls(GameWorld gameWorld) : base(gameWorld) {}
     
-    protected override void Update(Entity entity, CharPresentation charPresentation, RagdollOwner ragdollOwner)
+    protected override void Update(Entity entity, CharacterPresentationSetup charPresentation, RagdollOwner ragdollOwner)
     {
         GameDebug.Assert(ragdollOwner.ragdollInstance != null, "Ragdoll instance is NULL for object: {0}", ragdollOwner.gameObject);
         GameDebug.Assert(EntityManager.Exists(charPresentation.character), "CharPresentation character does not exist");
-        GameDebug.Assert(EntityManager.HasComponent<RagdollState>(charPresentation.character), "CharPresentation character does not have RagdollState");
+        GameDebug.Assert(EntityManager.HasComponent<RagdollStateData>(charPresentation.character), "CharPresentation character does not have RagdollState");
 
-        var ragdollState = EntityManager.GetComponentObject<RagdollState>(charPresentation.character);
-        if (!ragdollState.ragdollActive)
+        var ragdollState = EntityManager.GetComponentData<RagdollStateData>(charPresentation.character);
+        if (ragdollState.ragdollActive == 0)
             return;
         
         switch (ragdollOwner.phase)

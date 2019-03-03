@@ -25,7 +25,6 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.cs.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Builtin/BuiltinData.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/ScreenSpaceLighting/ScreenSpaceLighting.cs.hlsl"
 
             CBUFFER_START (UnityDebug)
             float _FullScreenDebugMode;
@@ -222,8 +221,15 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                 if (_FullScreenDebugMode == FULLSCREENDEBUGMODE_CONTACT_SHADOWS)
                 {
                     float4 color = SAMPLE_TEXTURE2D(_DebugFullScreenTexture, s_point_clamp_sampler, input.texcoord);
-                    return float4(color.rrr, 0.0);
+                    return float4(1.0f - color.rrr, 0.0);
                 }
+
+                if (_FullScreenDebugMode == FULLSCREENDEBUGMODE_SCREEN_SPACE_REFLECTIONS)
+                {
+                    float4 color = SAMPLE_TEXTURE2D(_DebugFullScreenTexture, s_point_clamp_sampler, input.texcoord);
+                    return float4(color.rgb, 1.0f);
+                }
+
                 if (_FullScreenDebugMode == FULLSCREENDEBUGMODE_PRE_REFRACTION_COLOR_PYRAMID
                     || _FullScreenDebugMode == FULLSCREENDEBUGMODE_FINAL_COLOR_PYRAMID)
                 {
@@ -233,7 +239,9 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                 if (_FullScreenDebugMode == FULLSCREENDEBUGMODE_DEPTH_PYRAMID)
                 {
                     // Reuse depth display function from DebugViewMaterial
-                    float depth = SAMPLE_TEXTURE2D(_DebugFullScreenTexture, s_point_clamp_sampler, input.texcoord).r;
+                    int2 mipOffset = _DebugDepthPyramidOffsets[_DebugDepthPyramidMip];
+                    uint2 pixCoord = (uint2)input.positionCS.xy >> _DebugDepthPyramidMip;
+                    float depth = LOAD_TEXTURE2D(_DepthPyramidTexture, pixCoord + mipOffset).r;
                     PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V);
                     float linearDepth = frac(posInput.linearDepth * 0.1);
                     return float4(linearDepth.xxx, 1.0);

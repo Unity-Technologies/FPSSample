@@ -1,0 +1,57 @@
+#pragma kernel CSMain
+${VFXGlobalInclude}
+${VFXGlobalDeclaration}
+${VFXPerPassInclude}
+
+CBUFFER_START(params)
+    uint nbMax;
+    uint dispatchWidth;
+CBUFFER_END
+
+CBUFFER_START(cameraParams)
+    float3 cameraPosition;
+CBUFFER_END
+
+ByteAddressBuffer attributeBuffer;
+StructuredBuffer<uint> inputBuffer;
+
+#if USE_DEAD_LIST_COUNT
+ByteAddressBuffer deadListCount;
+#endif
+
+struct Kvp
+{
+	float sortKey;
+	uint index;
+};
+
+RWStructuredBuffer<Kvp> outputBuffer;
+
+[numthreads(NB_THREADS_PER_GROUP,1,1)]
+void CSMain(uint3 groupId          : SV_GroupID,
+            uint3 groupThreadId    : SV_GroupThreadID)
+{
+	uint threshold = nbMax;
+#if USE_DEAD_LIST_COUNT
+	threshold -= deadListCount.Load(0);
+#endif
+	uint id = groupThreadId.x + groupId.x * NB_THREADS_PER_GROUP + groupId.y * dispatchWidth * NB_THREADS_PER_GROUP;
+	if (id < threshold)
+	{
+		uint index = inputBuffer[id];
+		${VFXLoadAttributes:{position}}
+		
+#if VFX_LOCAL_SPACE
+		float3 wPos = mul(localToWorld,float4(position,1.0f)).xyz;
+#else
+		float3 wPos = position;
+#endif
+		float3 camToPos = wPos - cameraPosition;
+		
+		Kvp kvp;
+		kvp.sortKey = dot(camToPos,camToPos); // sqr distance to the camera
+		kvp.index = index;
+
+		outputBuffer[id] = kvp;
+	}
+}

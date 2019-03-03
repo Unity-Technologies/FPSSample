@@ -11,12 +11,11 @@ public class JoinMenu : MonoBehaviour
     public static ConfigVar serverlist;
 
     public ScrollRect servers;
-    public Text selectedServer;
     public TMPro.TextMeshProUGUI connectButtonText;
     public Button connectButton;
-    public InputField serverAddress;
+    public TMPro.TMP_InputField serverAddress;
     public ServerListEntry serverListEntryTemplate;
-    public InputField playername;
+    public TMPro.TMP_InputField playername;
     public RectTransform serverListContentRect;
 
     public void Awake()
@@ -146,7 +145,9 @@ public class JoinMenu : MonoBehaviour
         // Create a SQP query
         System.Net.IPAddress addr;
         int port;
-        NetworkUtils.EndpointParse(server.hostname, out addr, out port, NetworkConfig.serverSQPPort.IntValue);
+        NetworkUtils.EndpointParse(server.hostname, out addr, out port, 0);
+        // SQP Port is sqpPortOffset after whatever port we are using for the game itself
+        port = (port == 0 ? NetworkConfig.serverPort.IntValue : port) + NetworkConfig.sqpPortOffset;
         server.sqpQuery = Game.game.sqpClient.GetSQPQuery(new System.Net.IPEndPoint(addr, port));
 
         UpdateItem(server);

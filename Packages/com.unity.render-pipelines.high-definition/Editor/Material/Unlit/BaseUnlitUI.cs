@@ -9,11 +9,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     // Such a Material will share some properties between it various variant (shader graph variant or hand authored variant).
     // This is the purpose of BaseLitGUI. It contain all properties that are common to all Material based on Lit template.
     // For the default hand written Lit material see LitUI.cs that contain specific properties for our default implementation.
-    public abstract class BaseUnlitGUI : ExpendableAreaMaterial
+    abstract class BaseUnlitGUI : ExpandableAreaMaterial
     {
         //Be sure to end before after last LayeredLitGUI.LayerExpendable
         [Flags]
-        protected enum Expendable : uint
+        protected enum Expandable : uint
         {
             Base = 1<<0,
             Input = 1<<1,
@@ -31,7 +31,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static string TransparencyInputsText = "Transparency Inputs";
             public static string optionText = "Surface Options";
             public static string surfaceTypeText = "Surface Type";
-            public static string blendModeText = "Blend Mode";
+            public static string blendModeText = "Blending Mode";
 
             public static readonly string[] surfaceTypeNames = Enum.GetNames(typeof(SurfaceType));
             public static readonly string[] blendModeNames = Enum.GetNames(typeof(BlendMode));
@@ -158,7 +158,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected abstract void MaterialPropertiesGUI(Material material);
         protected virtual void MaterialPropertiesAdvanceGUI(Material material) {}
         protected abstract void VertexAnimationPropertiesGUI();
-        protected abstract void FpsModePropertiesGUI();
         // This function will say if emissive is used or not regarding enlighten/PVR
         protected virtual bool ShouldEmissionBeEnabled(Material material) { return false; }
 
@@ -475,7 +474,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                         material.SetInt("_DistortionBlurSrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
                         material.SetInt("_DistortionBlurDstBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                        material.SetInt("_DistortionBlurBlendOp", (int)UnityEngine.Rendering.BlendOp.Max);
+                        material.SetInt("_DistortionBlurBlendOp", (int)UnityEngine.Rendering.BlendOp.Add);
                         break;
 
                     case 1: // Multiply
@@ -632,22 +631,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Detect any changes to the material
             EditorGUI.BeginChangeCheck();
             {
-                using (var header = new HeaderScope(StylesBaseUnlit.optionText, (uint)Expendable.Base, this))
+                using (var header = new HeaderScope(StylesBaseUnlit.optionText, (uint)Expandable.Base, this))
                 {
-                    if (header.expended)
+                    if (header.expanded)
                         BaseMaterialPropertiesGUI();
                 }
                 VertexAnimationPropertiesGUI();
-
-                EditorGUILayout.Space();
-                FpsModePropertiesGUI();
-                EditorGUILayout.Space();
-
                 MaterialPropertiesGUI(material);
                 DoEmissionArea(material);
-                using (var header = new HeaderScope(StylesBaseUnlit.advancedText, (uint)Expendable.Advance, this))
+                using (var header = new HeaderScope(StylesBaseUnlit.advancedText, (uint)Expandable.Advance, this))
                 {
-                    if(header.expended)
+                    if(header.expanded)
                     {
                         m_MaterialEditor.EnableInstancingField();
                         MaterialPropertiesAdvanceGUI(material);
@@ -673,6 +667,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
         {
             m_MaterialEditor = materialEditor;
+
+            // We should always register the key used to keep collapsable state
+            InitExpandableState(materialEditor);
+
             // We should always do this call at the beginning
             m_MaterialEditor.serializedObject.Update();
 

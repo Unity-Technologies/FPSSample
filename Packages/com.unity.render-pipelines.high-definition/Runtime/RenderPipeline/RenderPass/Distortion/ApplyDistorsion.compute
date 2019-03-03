@@ -7,8 +7,6 @@
 TEXTURE2D(_DistortionTexture);
 RW_TEXTURE2D(float4, _Destination);
 
-SamplerState sampler_ColorPyramidTexture;
-
 CBUFFER_START(cb)
     float4 _Size;
 CBUFFER_END
@@ -38,7 +36,10 @@ void KMain(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, u
     // Reject distortion if we try to fetch a pixel out of the buffer
     if (any(distortedEncodedDistortionId < 0)
         || any(distortedEncodedDistortionId > int2(_Size.xy)))
-        return;
+    {
+        // In this case we keep the blur, but we offset don't distort the uv coords.
+        distortion = 0.0f;
+    }
 
     // We fetch a second time the _DistortionTexture for the at the distorded coordinate
     // Then we check if this pixels is in the distorded mask (eg: behind any distorted object)
@@ -50,12 +51,15 @@ void KMain(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, u
     DecodeDistortion(encodedDistordedDistortion, distordedDistortion, distordedDistortionBlur, distordedIsSourceValid);
 
     if (!distordedIsSourceValid)
-        return;
+    {
+        // In this case we keep the blur, but we offset don't distort the uv coords.
+        distortion = 0.0f;
+    }
 
     // Get source pixel for distortion
-    float2 distordedUV = float2(dispatchThreadId + int2(distortion * _FetchBias)) * _Size.zw * _ScreenToTargetScale.xy;
+    float2 distordedUV = float2((dispatchThreadId + 0.5) + distortion * _FetchBias) * _Size.zw;
     float mip = (_ColorPyramidScale.z - 1) * clamp(distortionBlur, 0.0, 1.0);
-    float4 sampled = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, sampler_ColorPyramidTexture, distordedUV, mip);
+    float4 sampled = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, distordedUV * _ColorPyramidScale.xy, mip);
 
     _Destination[dispatchThreadId] = sampled;
 }

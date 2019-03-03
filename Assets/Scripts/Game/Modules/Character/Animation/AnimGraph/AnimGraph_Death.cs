@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityEngine.Profiling;
 
 [CreateAssetMenu(fileName = "Death", menuName = "FPS Sample/Animation/AnimGraph/Death")]
 public class AnimGraph_Death : AnimGraphAsset
@@ -53,6 +54,8 @@ public class AnimGraph_Death : AnimGraphAsset
 
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
+            Profiler.BeginSample("Death.Apply");
+            
             if (!m_Started)
             {
                 m_Started = true;
@@ -65,6 +68,8 @@ public class AnimGraph_Death : AnimGraphAsset
                 m_Mixer.SetInputWeight(currentAnim, 1f);
                 m_Mixer.GetInput(currentAnim).Play();
             }
+            
+            Profiler.EndSample();
         }
 
         AnimationMixerPlayable m_Mixer;

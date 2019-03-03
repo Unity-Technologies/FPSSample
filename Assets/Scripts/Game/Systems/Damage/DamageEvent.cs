@@ -1,16 +1,28 @@
 ﻿using System;
 using UnityEngine;
 using Unity.Entities;
+using UnityEditor;
 
-[Serializable]
-public struct DamageEvent
+
+[InternalBufferCapacity(16)]
+public struct DamageEvent : IBufferElementData
 {
-    public DamageEvent(Entity instigator, float damage, Vector3 direction, float impulse)
+    public static void AddEvent(DynamicBuffer<DamageEvent> damageBuffer, Entity instigator, float damage, Vector3 direction, float impulse)
     {
-        this.instigator = instigator;
-        this.damage = damage;
-        this.direction = direction;
-        this.impulse = impulse;
+        DamageEvent e;
+        e.instigator = instigator;
+        e.damage = damage;
+        e.direction = direction;
+        e.impulse = impulse;
+        
+        if (damageBuffer.Length == damageBuffer.Capacity)
+        {
+            // TODO (mogensh) handle buffer full by merging smallest
+            GameDebug.LogError("DamageEvent buffer full. Damage skipped");
+            return;
+        }
+        
+        damageBuffer.Add(e);
     }
 
     public Entity instigator;

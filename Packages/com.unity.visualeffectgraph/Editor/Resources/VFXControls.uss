@@ -1,0 +1,94 @@
+/*FloatField {
+    min-height: 15;
+    margin-left: 4;
+    margin-top: 2;
+    margin-right: 4;
+    margin-bottom: 2;
+    padding-left: 3;
+    padding-top: 1;
+    padding-right: 3;
+    padding-bottom: 2;
+    slice-left: 3;
+    slice-top: 3;
+    slice-right: 3;
+    slice-bottom: 3;
+    selection-color: rgba(61,128,223,166);
+    cursor: text;
+}*/
+
+VFXColorField
+{
+    flex:1 0 auto;
+    flex-direction:row;
+    margin-left:0;
+    margin-right:0;
+}
+
+VFXColorField #indeterminate
+{
+    text-color:#000;
+}
+
+CurveField
+{
+    height:16;
+    background-color:rgb(86, 86, 86);
+    border-left-width:1;
+    border-right-width:1;
+    border-top-width:1;
+    border-bottom-width:1;
+    border-color:#000;
+}
+
+.sliderField
+{
+    flex-direction:row;
+}
+.sliderField Slider
+{
+    flex:1 0 auto;
+}
+.sliderField #Field
+{
+    width:40;
+    flex:0 0 auto;
+}
+.sliderField #indeterminate
+{
+    width:40;
+    flex:0 0 auto;
+}
+
+.PopupButton
+{
+    text-alignment:middle-left;
+    height: 16;
+    slice-left: 6;
+    slice-top: 4;
+    slice-right: 14;
+    slice-bottom: 4;
+    text-color: #B4B4B4;
+    padding-right:14;
+    padding-left:4;
+}
+
+
+VFXEnumField .PopupButton:hover
+{
+    text-color: #FFF;
+}
+
+VFXStringFieldPushButton
+{
+    height:16;
+}
+
+VFXStringFieldPushButton Button
+{
+    height:16;
+}
+
+Button.MiniDropDown
+{
+    slice-right: 12;
+}

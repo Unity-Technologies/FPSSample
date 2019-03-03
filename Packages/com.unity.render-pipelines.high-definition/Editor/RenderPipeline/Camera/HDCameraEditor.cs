@@ -89,7 +89,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             d.Update();
             s.Update();
 
+#pragma warning disable 612 //Draw
             HDCameraUI.Inspector.Draw(s, d, this);
+#pragma warning restore 612
 
             d.Apply();
         }

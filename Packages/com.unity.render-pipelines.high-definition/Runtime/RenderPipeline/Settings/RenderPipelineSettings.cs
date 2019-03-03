@@ -20,6 +20,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     [Serializable]
     public class RenderPipelineSettings
     {
+        public enum SupportedLitShaderMode
+        {
+            ForwardOnly = 1 << 0,
+            DeferredOnly = 1 << 1,
+            Both = ForwardOnly | DeferredOnly
+        }
+
         // Lighting
         public bool supportShadowMask = true;
         public bool supportSSR = false;
@@ -30,17 +37,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool supportVolumetrics = true;
         public bool increaseResolutionOfVolumetrics = false;
         public bool supportLightLayers = false;
-        public bool supportOnlyForward = false;
+        public bool supportDistortion = true;
+        public bool supportTransparentBackface = true;
+        public bool supportTransparentDepthPrepass = true;
+        public bool supportTransparentDepthPostpass = true;
+        public SupportedLitShaderMode supportedLitShaderMode = SupportedLitShaderMode.Both;
 
         // Engine
         [FormerlySerializedAs("supportDBuffer")]
         public bool supportDecals = true;
+        [SerializeField, FormerlySerializedAs("m_SupportMSAA")]
         public bool supportMSAA = false;
-        public MSAASamples  msaaSampleCount = MSAASamples.None;
+        public MSAASamples msaaSampleCount = MSAASamples.None;
         public bool supportMotionVectors = true;
         public bool supportRuntimeDebugDisplay = true;
         public bool supportDitheringCrossFade = true;
-        
+        public bool supportRayTracing =  false;
+
         public GlobalLightLoopSettings  lightLoopSettings = new GlobalLightLoopSettings();
         public HDShadowInitParameters   hdShadowInitParams = new HDShadowInitParameters();
         public GlobalDecalSettings      decalSettings = new GlobalDecalSettings();

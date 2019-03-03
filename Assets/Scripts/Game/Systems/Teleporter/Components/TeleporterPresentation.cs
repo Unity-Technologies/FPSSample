@@ -1,18 +1,31 @@
 ﻿using System;
+using Unity.Entities;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public class TeleporterPresentation : MonoBehaviour, INetSerialized
+
+[System.Serializable]
+public struct TeleporterPresentationData : IComponentData, IReplicatedComponent
 {
     [NonSerialized] public int effectTick;
     
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+    public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
+    {
+        return new ReplicatedComponentSerializerFactory<TeleporterPresentationData>();
+    }
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
     {
         writer.WriteInt32("effectTick", effectTick);
     }
 
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
     {
         effectTick = reader.ReadInt32();
     }
+}
+
+[DisallowMultipleComponent]
+public class TeleporterPresentation : ComponentDataWrapper<TeleporterPresentationData>
+{
+    
 }

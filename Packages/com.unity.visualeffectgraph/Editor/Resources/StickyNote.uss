@@ -1,0 +1,246 @@
+* Label#title, * TextField#title-field,* Label#contents, * TextField#contents-field
+{
+    font:resource("GraphView/DummyFont(LucidaGrande).ttf");
+}
+
+.sticky-note
+{
+    min-height:100;
+    min-width:80;
+    position-type:absolute;
+    flex-direction:column;
+    align-items:stretch;
+    layer:-100;
+    border-radius:0;
+    margin-bottom: 0;
+    border-left-width:0;
+    border-top-width:0;
+    border-bottom-width:0;
+    border-right-width:0;
+    padding-left:0;
+    padding-right:0;
+    padding-top:0;
+    padding-bottom:0;
+    border-radius:2;
+}
+
+.sticky-note #selection-border
+{
+    border-radius:2;
+}
+
+.sticky-note, * TextField
+{
+    background-color: #fcd76e;
+}
+
+.sticky-note .resizer
+{
+    margin-bottom:6;
+    margin-right:6;
+}
+
+.sticky-note *
+{
+    text-color:#584308;
+}
+
+
+/* Themes*/
+
+.theme-black *
+{
+    text-color:#AB924B;
+}
+
+.theme-black > #node-border
+{
+    border-color:#AB924B;
+    border-radius:8;
+}
+.sticky-note.theme-black, .theme-black TextField
+{
+    background-color: #362905;
+}
+
+
+* > #node-border
+{
+    flex:1 0 auto;
+    flex-direction:column;
+    align-items:stretch;
+    border-left-width:2;
+    border-top-width:2;
+    border-bottom-width:2;
+    border-right-width:2;
+}
+
+#title-field
+{
+    positionType:absolute;
+}
+
+
+* #title, * #title-field
+{
+    font-size:20;
+    word-wrap: true;
+}
+
+* #contents
+{
+    margin-top:0;
+    margin-bottom:0;
+    padding-top:0;
+    padding-bottom:0;
+}
+
+* #contents, * #contents *
+{
+    font-size:11;
+    word-wrap:true;
+}
+
+* #title
+{
+    margin-top:0;
+    margin-bottom:0;
+    padding-top:0;
+    padding-bottom:0;
+    -word-wrap: true;
+}
+
+* #title.empty
+{
+    height:12;
+}
+
+* #contents
+{
+    flex:1 0 auto;
+}
+
+* TextField
+{
+    position-type: absolute;
+    position-left:0;
+    position-right:0;
+    position-top:0;
+    position-bottom:0;
+    margin-left:0;
+    margin-right:0;
+    margin-top:0;
+    margin-bottom:0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    background-image:none;
+}
+
+* Label
+{
+    border-top-width:1;
+    border-left-width:1;
+    border-right-width:1;
+    border-bottom-width:1;
+    border-top: 1;
+    border-left: 1;
+    border-right: 1;
+    border-bottom: 1;
+    margin-left:6;
+    margin-right:6;
+    margin-top:1;
+    margin-bottom:1;
+    padding-left:0;
+    padding-right:0;
+    -border-color: rgba(0, 0, 0, 0.5);
+}
+
+.size-medium #title, .size-medium #title-field
+{
+    font-size:40;
+}
+.size-medium #contents, .size-medium #contents *
+{
+    font-size:24;
+}
+
+.size-large #title, .size-large #title-field
+{
+    font-size:60;
+}
+.size-large #contents, .size-large #contents *
+{
+    font-size:36;
+}
+
+.size-huge #title, .size-huge #title-field
+{
+    font-size:80;
+}
+
+.size-huge #contents, .size-huge #contents *
+{
+    font-size:56;
+}
+
+* Label:hover
+{
+    border-color: rgba(68,192,255, 0.5);
+}
+
+* TextField:hover
+{
+    background-image:none;
+}
+
+* TextField:focus
+{
+    background-image:none;
+}
+
+* TextField:focus:hover
+{
+    background-image:none;
+}
+
+
+/*
+
+.sticky-note.theme-orange, .theme-orange TextField
+{
+    background-color:#FCD76E;
+}
+
+.sticky-note.theme-orange *
+{
+    text-color:#000000;
+}
+
+.sticky-note.theme-orange #node-border
+{
+    border-color:none;
+}
+
+.sticky-note.theme-red *
+{
+    text-color:#FF8B8B;
+}
+.sticky-note.theme-green *
+{
+    text-color:#6BE6B0;
+}
+.sticky-note.theme-blue *
+{
+    text-color:#8FC1DF;
+}
+.sticky-note.theme-teal *
+{
+    text-color:#84E4E7;
+}
+.sticky-note.theme-purple *
+{
+    text-color:#FBCBF4;
+}
+*/

@@ -6,8 +6,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     class AxFGUI : BaseUnlitGUI
     {
-        static Expendable state = Expendable.Base | Expendable.Detail | Expendable.Emissive | Expendable.Input | Expendable.Other | Expendable.Tesselation | Expendable.Transparency | Expendable.VertexAnimation;
-        protected override uint expendedState { get { return (uint)state; } set { state = (Expendable)value; } }
+        protected override uint defaultExpandedState { get { return (uint)(Expandable.Base | Expandable.Detail | Expandable.Emissive | Expandable.Input | Expandable.Other | Expandable.Tesselation | Expandable.Transparency | Expandable.VertexAnimation); } }
 
         protected static class Styles
         {
@@ -461,11 +460,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(_material, "_AXF_BRDF_TYPE_SVBRDF", BRDFType == AxfBrdfType.SVBRDF);
             CoreUtils.SetKeyword(_material, "_AXF_BRDF_TYPE_CAR_PAINT", BRDFType == AxfBrdfType.CAR_PAINT);
             CoreUtils.SetKeyword(_material, "_AXF_BRDF_TYPE_BTF", BRDFType == AxfBrdfType.BTF);
-        }
-
-        protected override void FpsModePropertiesGUI()
-        {
-
         }
     }
 } // namespace UnityEditor

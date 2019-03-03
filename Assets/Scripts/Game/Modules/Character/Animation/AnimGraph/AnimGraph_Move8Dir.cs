@@ -21,6 +21,7 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
     public List<BlendSpaceNode> blendSpaceNodes;
 
     public bool enableIK;
+    public bool useVariableMoveSpeed; // Experimentatal
     
     public ActionAnimationDefinition[] actionAnimations;
 
@@ -84,8 +85,11 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
     
         public void UpdatePresentationState(bool firstUpdate, GameTime time, float deltaTime)
         {
-            Profiler.BeginSample("AnimGraph_Move8Dir.UpdatePresentationState");
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            Profiler.BeginSample("Move8Dir.Update");
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
+            var charState = m_EntityManager.GetComponentData<CharacterPredictedData>(m_AnimStateOwner);
+
+            
             
             if (firstUpdate)
             {
@@ -98,12 +102,20 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
                 
                 // Reset the phase and position in blend space if appropriate
                 var timeSincePreviousGroundMove = ticksSincePreviousGroundMove / (float)time.tickRate;                
-                if (animState.previousCharLocoState != CharPredictedStateData.LocoState.GroundMove && timeSincePreviousGroundMove >  m_settings.stateResetWindow)
+                if (animState.previousCharLocoState != CharacterPredictedData.LocoState.GroundMove && timeSincePreviousGroundMove >  m_settings.stateResetWindow)
                 {
 //                    Debug.Log("Reset movement run! (Ticks since: " + ticksSincePreviousGroundMove + " Time since: " + timeSincePreviousGroundMove + ")");
                     animState.locomotionPhase = 0f;
                     animState.moveAngleLocal = CalculateMoveAngleLocal(animState.rotation, animState.moveYaw);
-                    animState.locomotionVector = AngleToPosition(animState.moveAngleLocal);
+
+                    if (m_settings.useVariableMoveSpeed)
+                    {
+                        animState.locomotionVector = AngleToPosition(animState.moveAngleLocal) * charState.velocity.magnitude;                        
+                    }
+                    else
+                    {
+                        animState.locomotionVector = AngleToPosition(animState.moveAngleLocal);
+                    }
                     m_CurrentVelocity = Vector2.zero;
                 }
             }
@@ -119,6 +131,11 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
             
             // Smooth through blend tree
             var targetBlend = AngleToPosition(animState.moveAngleLocal);
+            if (m_settings.useVariableMoveSpeed) // Experimental
+            {
+                targetBlend = AngleToPosition(animState.moveAngleLocal) * charState.velocity.magnitude;
+            }
+
             animState.locomotionVector = Vector2.SmoothDamp(animState.locomotionVector, targetBlend, ref m_CurrentVelocity, m_settings.damping, m_settings.maxStep, deltaTime);
             
             // Update position and increment phase
@@ -133,15 +150,15 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
 
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            Profiler.BeginSample("CharacterAnimGraph_3PMove8Dir.UpdateNetwork");
+            Profiler.BeginSample("Move8Dir.Apply");
             
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
 
             if (m_DoUpdateBlendPositions)
             {
                 m_BlendTree.SetBlendPosition(animState.locomotionVector, false);
             }
-
+            
             m_BlendTree.UpdateGraph();
             m_BlendTree.SetPhase(animState.locomotionPhase);
             

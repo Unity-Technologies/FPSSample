@@ -18,7 +18,7 @@ public class NetworkEvent
     public int sequence;
     public bool reliable;
     public NetworkEventType type;
-    public byte[] data = new byte[NetworkConfig.maxEventDataSize];
+    public uint[] data = new uint[NetworkConfig.maxEventDataSize];
 
     public void AddRef()
     {
@@ -48,7 +48,7 @@ public class NetworkEvent
         return result;
     }
 
-    public static NetworkEvent Serialize(ushort typeId, bool reliable, Dictionary<ushort,NetworkEventType> eventTypes, NetworkEventGenerator generator)
+    public unsafe static NetworkEvent Serialize(ushort typeId, bool reliable, Dictionary<ushort,NetworkEventType> eventTypes, NetworkEventGenerator generator)
     {
         bool generateSchema = false;
         NetworkEventType type;
@@ -64,14 +64,16 @@ public class NetworkEvent
         if (NetworkConfig.netDebug.IntValue > 0)
             GameDebug.Log("Serializing event " + ((GameNetworkEvents.EventType)result.type.typeId) + " in seq no: " + result.sequence);
 
-        NetworkWriter writer = new NetworkWriter(result.data, type.schema, generateSchema);
-        generator(ref writer);
-        writer.Flush();
-
+        fixed (uint* data = result.data)
+        {
+            NetworkWriter writer = new NetworkWriter(data, result.data.Length, type.schema, generateSchema);
+            generator(ref writer);
+            writer.Flush();
+        }
         return result;
     }
 
-    public static int ReadEvents<TInputStream>(Dictionary<ushort,NetworkEventType> eventTypesIn, int connectionId, ref TInputStream input, INetworkCallbacks loop) where TInputStream : NetworkCompression.IInputStream
+    public static int ReadEvents<TInputStream>(Dictionary<ushort,NetworkEventType> eventTypesIn, int connectionId, ref TInputStream input, INetworkCallbacks networkConsumer) where TInputStream : NetworkCompression.IInputStream
     {
         var eventCount = input.ReadPackedUInt(NetworkConfig.eventCountContext);
         for (var eventCounter = 0; eventCounter < eventCount; ++eventCounter)
@@ -94,14 +96,14 @@ public class NetworkEvent
             if (NetworkConfig.netDebug.IntValue > 0)
                 GameDebug.Log("Received event " + ((GameNetworkEvents.EventType)info.type.typeId + ":" + info.sequence));
 
-            loop.OnEvent(connectionId, info);
+            networkConsumer.OnEvent(connectionId, info);
 
             info.Release();
         }
         return (int)eventCount;
     }
 
-    public static void WriteEvents<TOutputStream>(List<NetworkEvent> events, List<NetworkEventType> knownEventTypes, ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
+    unsafe public static void WriteEvents<TOutputStream>(List<NetworkEvent> events, List<NetworkEventType> knownEventTypes, ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
     {
         output.WritePackedUInt((uint)events.Count, NetworkConfig.eventCountContext);
         foreach (var info in events)
@@ -117,7 +119,10 @@ public class NetworkEvent
                 output.WriteRawBits(0, 1);
 
             // Write event data
-            NetworkSchema.CopyFieldsFromBuffer(info.type.schema, info.data, ref output);
+            fixed (uint* data = info.data)
+            {
+                NetworkSchema.CopyFieldsFromBuffer(info.type.schema, data, ref output);
+            }
         }
     }
 

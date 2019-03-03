@@ -40,7 +40,6 @@ public class AnimGraph_StateSelector : AnimGraphAsset
 	}
 
     public ControllerDefinition[] controllers;
-
     
 	public override IAnimGraphInstance Instatiate(EntityManager entityManager, Entity owner, PlayableGraph graph,
 	    Entity animStateOwner)
@@ -61,6 +60,7 @@ public class AnimGraph_StateSelector : AnimGraphAsset
             
             animStateMixer = AnimationMixerPlayable.Create(m_graph, 0, true);
             m_RootPlayable = animStateMixer;
+
 
             // Animation states
             animStates = new AnimationControllerEntry[(int)CharacterAnimationState.NumStates];
@@ -157,16 +157,18 @@ public class AnimGraph_StateSelector : AnimGraphAsset
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
             var animState = GetAnimState();
-            
+                        
             // If animation state has changed the new state needs to be started with current state duration to syncronize with server
-            var state = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
-            if (animState != currentAnimationState || state.charLocoTick != currentAnimationStateTick)
+            var presentationState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
+            var charState = m_EntityManager.GetComponentData<CharacterPredictedData>(m_AnimStateOwner);      
+            
+            if (animState != currentAnimationState || presentationState.charLocoTick != currentAnimationStateTick)
             {
                 var previousState = currentAnimationState;
                 var prevController = (int)currentAnimationState < animStates.Length ? animStates[(int) previousState].controller : null;
                 
                 currentAnimationState = animState;
-                currentAnimationStateTick = state.charLocoTick;
+                currentAnimationStateTick = presentationState.charLocoTick;
                 var newController =  animStates[(int)currentAnimationState].controller;
                 
                 // Reset controller and update previous animation state if it has changed
@@ -194,22 +196,22 @@ public class AnimGraph_StateSelector : AnimGraphAsset
         
         CharacterAnimationState GetAnimState()
         {
-            var healthState = m_EntityManager.GetComponentObject<HealthState>(m_AnimStateOwner);
+            var healthState = m_EntityManager.GetComponentData<HealthStateData>(m_AnimStateOwner);
 
             if (healthState.health <= 0)
                 return CharacterAnimationState.Dead;
                 
-            var state = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            var state = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             
             switch (state.charLocoState)
             {
-                case CharPredictedStateData.LocoState.GroundMove:
+                case CharacterPredictedData.LocoState.GroundMove:
                     return CharacterAnimationState.Run;
-                case CharPredictedStateData.LocoState.Jump:
+                case CharacterPredictedData.LocoState.Jump:
                     return CharacterAnimationState.Jump;
-                case CharPredictedStateData.LocoState.DoubleJump:
+                case CharacterPredictedData.LocoState.DoubleJump:
                     return CharacterAnimationState.InAir;
-                case CharPredictedStateData.LocoState.InAir:
+                case CharacterPredictedData.LocoState.InAir:
                     return CharacterAnimationState.InAir;
             }
     

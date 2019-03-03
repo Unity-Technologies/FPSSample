@@ -17,7 +17,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         ProjectorBox,
 
         // AreaLight
-        Line, // Keep Line lights before Rectangle. This is needed because of a compiler bug (see LightLoop.hlsl)
+        Tube, // Keep Line lights before Rectangle. This is needed because of a compiler bug (see LightLoop.hlsl)
         Rectangle,
         // Currently not supported in real time (just use for reference)
         // Sphere,
@@ -28,7 +28,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         public static bool IsAreaLight(this GPULightType lightType)
         {
-            return lightType == GPULightType.Rectangle || lightType == GPULightType.Line;
+            return lightType == GPULightType.Rectangle || lightType == GPULightType.Tube;
         }
 
         public static bool IsSpot(this GPULightType lightType)

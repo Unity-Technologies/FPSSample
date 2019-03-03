@@ -4,7 +4,7 @@ using System.Net;
 using Unity.Entities;
 using UnityEngine;
 
-public abstract class CharBehaviorFactory : ScriptableObjectRegistryEntry
+public abstract class CharBehaviorFactory : ScriptableObject
 {
     public abstract Entity Create(EntityManager entityManager, List<Entity> entities);
 
@@ -24,7 +24,7 @@ public struct CharBehaviour : IComponentData
     public Entity character;
 }
 
-public struct AbilityControl : INetPredicted<AbilityControl>, IComponentData
+public struct AbilityControl : IPredictedComponent<AbilityControl>, IComponentData
 {
     public enum State
     {
@@ -37,15 +37,20 @@ public struct AbilityControl : INetPredicted<AbilityControl>, IComponentData
     public State behaviorState;        // State is set by behavior
     public int active;                // set by controller        
     public int requestDeactivate;     // set by controller
-	
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+
+    public static IPredictedComponentSerializerFactory CreateSerializerFactory()
+    {
+        return new PredictedComponentSerializerFactory<AbilityControl>();
+    }
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
     {
         writer.WriteByte("state", (byte)behaviorState);
         writer.WriteBoolean("active", active == 1);
         writer.WriteBoolean("requestDeactivate", requestDeactivate == 1);
     }
 
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
     {
         behaviorState = (State)reader.ReadByte();
         active = reader.ReadBoolean() ? 1 : 0;

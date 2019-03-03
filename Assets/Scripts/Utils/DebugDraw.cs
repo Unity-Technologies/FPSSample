@@ -134,4 +134,41 @@ public class DebugDraw
             v2 = Vector3.Cross(normal, v1);
         }
     }
+
+    public static void Arrow(Vector3 pos, float angle, Color color, float length = 1f, float tipSize = 0.25f, float width = 0.5f)
+    {
+        var angleRot = Quaternion.AngleAxis(angle, Vector3.up);
+        var dir = angleRot * Vector3.forward;
+        Arrow(pos, dir, color, length, tipSize, width);           
+    }
+        
+    public static void Arrow(Vector3 pos, Vector2 direction, Color color, float length = 1f, float tipSize = 0.25f, float width = 0.5f)
+    {
+        var dir = new Vector3(direction.x, 0f, direction.y);
+        Arrow(pos, dir, color, length, tipSize, width);
+    }
+        
+    public static void Arrow(Vector3 pos, Vector3 direction, Color color, float length=1f, float tipSize=0.25f, float width=0.5f)
+    {
+        direction.Normalize();
+            
+        var sideLen = length - length * tipSize;
+        var widthOffset = Vector3.Cross(direction, Vector3.up) * width;
+
+        var baseLeft = pos + widthOffset * 0.3f;
+        var baseRight = pos - widthOffset * 0.3f;
+        var tip = pos + direction * length;
+        var upCornerInRight = pos - widthOffset * 0.3f + direction * sideLen;
+        var upCornerInLeft = pos + widthOffset * 0.3f + direction * sideLen;
+        var upCornerOutRight = pos - widthOffset * 0.5f + direction * sideLen;
+        var upCornerOutLeft = pos + widthOffset * 0.5f + direction * sideLen;
+        
+        Debug.DrawLine(baseLeft, baseRight, color);
+        Debug.DrawLine(baseRight, upCornerInRight, color);
+        Debug.DrawLine(upCornerInRight, upCornerOutRight, color);
+        Debug.DrawLine(upCornerOutRight, tip, color);
+        Debug.DrawLine(tip, upCornerOutLeft, color);
+        Debug.DrawLine(upCornerOutLeft, upCornerInLeft, color);
+        Debug.DrawLine(upCornerInLeft, baseLeft, color);
+    }
 }

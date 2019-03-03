@@ -72,7 +72,7 @@ VaryingsPassToDS InterpolateWithBaryCoordsPassToDS(VaryingsPassToDS input0, Vary
 
 // We will use custom attributes for this pass
 #define VARYINGS_NEED_PASS
-#include "VertMesh.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/VertMesh.hlsl"
 
 // Transforms normal from object to world space
 float3 TransformPreviousObjectToWorldNormal(float3 normalOS)
@@ -148,12 +148,6 @@ PackedVaryingsType Vert(AttributesMesh inputMesh,
 #endif
 
         varyingsType.vpass.previousPositionCS = mul(_PrevViewProjMatrix, float4(previousPositionRWS, 1.0));
-
-// sample-game begin: FPS mode needs remapping to avoid crazy velocities on gun
-#if _FPS_MODE
-	varyingsType.vpass.previousPositionCS.xy  *= 1.0f / (-_ProjMatrix[1].y * tan(_FpsModeFov * 0.5f * PI / 180.0f));    // *= tan(old_fov * 0.5) / tan(new_fov * 0.5)
-#endif
-// sample-game end
     }
 
     return PackVaryingsType(varyingsType);
@@ -175,7 +169,7 @@ PackedVaryingsToPS VertTesselation(VaryingsToDS input)
     return PackVaryingsToPS(output);
 }
 
-#include "TessellationShare.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/TessellationShare.hlsl"
 
 #endif // TESSELLATION_ON
 

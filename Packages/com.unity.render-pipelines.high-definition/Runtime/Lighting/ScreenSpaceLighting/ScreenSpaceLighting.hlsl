@@ -1,16 +1,7 @@
-#ifndef UNITY_SCREENSPACELIGHTING_INCLUDED
- #define UNITY_SCREENSPACELIGHTING_INCLUDED
-
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/ScreenSpaceLighting/ScreenSpaceLighting.cs.hlsl"
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Reflection/VolumeProjection.hlsl"
-
-#define SSRTID Reflection
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/ScreenSpaceLighting/ScreenSpaceTracing.hlsl"
-#undef SSRTID
-
-#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Refraction.hlsl"
-#define SSRTID Refraction
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/ScreenSpaceLighting/ScreenSpaceTracing.hlsl"
-#undef SSRTID
-
-#endif
+// Performs fading at the edge of the screen. 
+float EdgeOfScreenFade(float2 coordNDC, float fadeRcpLength)
+{
+    float2 coordCS = coordNDC * 2 - 1;
+    float2 t = Remap10(abs(coordCS), fadeRcpLength, fadeRcpLength);
+    return Smoothstep01(t.x) * Smoothstep01(t.y);
+}

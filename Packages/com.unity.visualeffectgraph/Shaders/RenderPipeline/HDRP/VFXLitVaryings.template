@@ -1,0 +1,99 @@
+#define HDRP_NEEDS_UVS (HDRP_USE_BASE_COLOR_MAP || HDRP_USE_MASK_MAP || USE_NORMAL_MAP || HDRP_USE_EMISSIVE_MAP)
+#define HDRP_USE_EMISSIVE (HDRP_USE_EMISSIVE_MAP || HDRP_USE_EMISSIVE_COLOR || HDRP_USE_ADDITIONAL_EMISSIVE_COLOR)
+
+${VFXBegin:VFXHDRPLitVaryingsMacros}
+#if (VFX_NEEDS_COLOR_INTERPOLATOR && HDRP_USE_BASE_COLOR) || HDRP_USE_ADDITIONAL_BASE_COLOR
+#define VFX_VARYING_COLOR color.rgb
+#define VFX_VARYING_ALPHA color.a
+#endif
+
+#define VFX_VARYING_SMOOTHNESS materialProperties.x
+
+#if HDRP_MATERIAL_TYPE_STANDARD
+#define VFX_VARYING_METALLIC materialProperties.y
+#elif HDRP_MATERIAL_TYPE_SPECULAR
+#define VFX_VARYING_SPECULAR specularColor
+#elif HDRP_MATERIAL_TYPE_TRANSLUCENT
+#define VFX_VARYING_THICKNESS materialProperties.y
+#endif
+
+#if USE_NORMAL_MAP
+#define VFX_VARYING_NORMALSCALE materialProperties.z
+#endif
+
+#if HDRP_USE_EMISSIVE_MAP
+#define VFX_VARYING_EMISSIVESCALE materialProperties.w
+#endif
+
+#if HDRP_USE_EMISSIVE_COLOR || HDRP_USE_ADDITIONAL_EMISSIVE_COLOR
+#define VFX_VARYING_EMISSIVE emissiveColor
+#endif
+${VFXEnd}
+
+${VFXBegin:VFXHDRPLitDeclareVaryings}
+
+#if (VFX_NEEDS_COLOR_INTERPOLATOR && HDRP_USE_BASE_COLOR) || HDRP_USE_ADDITIONAL_BASE_COLOR
+nointerpolation float4 color : COLOR0;
+#endif
+#if HDRP_MATERIAL_TYPE_SPECULAR
+nointerpolation float3 specularColor : COLOR1;
+#endif
+#if HDRP_USE_EMISSIVE_COLOR || HDRP_USE_ADDITIONAL_EMISSIVE_COLOR	
+nointerpolation float3 emissiveColor : COLOR2;
+#endif
+
+// x: smoothness
+// y: metallic/thickness
+// z: normal scale
+// w: emissive scale
+nointerpolation float4 materialProperties : TEXCOORD0;
+${VFXEnd}
+
+${VFXBegin:VFXHDRPLitFillVaryings}
+#ifdef VFX_VARYING_SMOOTHNESS
+${VFXLoadParameter:{smoothness}}
+o.VFX_VARYING_SMOOTHNESS = smoothness;
+#endif
+#if HDRP_MATERIAL_TYPE_STANDARD
+#ifdef VFX_VARYING_METALLIC
+${VFXLoadParameter:{metallic}}
+o.VFX_VARYING_METALLIC = metallic;
+#endif
+#elif HDRP_MATERIAL_TYPE_SPECULAR
+#ifdef VFX_VARYING_SPECULAR
+${VFXLoadParameter:{specularColor}}
+o.VFX_VARYING_SPECULAR = specularColor;
+#endif
+#elif HDRP_MATERIAL_TYPE_TRANSLUCENT
+#ifdef VFX_VARYING_THICKNESS
+${VFXLoadParameter:{thickness}}
+o.VFX_VARYING_THICKNESS = thickness;
+#endif
+#endif
+#if USE_NORMAL_MAP
+#ifdef VFX_VARYING_NORMALSCALE
+${VFXLoadParameter:{normalScale}}
+o.VFX_VARYING_NORMALSCALE = normalScale;
+#endif
+#endif
+#if HDRP_USE_EMISSIVE_MAP
+#ifdef VFX_VARYING_EMISSIVESCALE
+${VFXLoadParameter:{emissiveScale}}
+o.VFX_VARYING_EMISSIVESCALE = emissiveScale;
+#endif
+#endif
+#ifdef VFX_VARYING_EMISSIVE
+#if HDRP_USE_EMISSIVE_COLOR
+o.VFX_VARYING_EMISSIVE = color;
+#elif HDRP_USE_ADDITIONAL_EMISSIVE_COLOR
+${VFXLoadParameter:{emissiveColor}}
+o.VFX_VARYING_EMISSIVE = emissiveColor;
+#endif
+#endif
+#if HDRP_USE_ADDITIONAL_BASE_COLOR
+#ifdef VFX_VARYING_COLOR
+${VFXLoadParameter:{baseColor}}
+o.VFX_VARYING_COLOR = baseColor;
+#endif
+#endif
+${VFXEnd}

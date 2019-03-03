@@ -18,11 +18,6 @@ public class HandleCharacterSpawn : InitializeComponentGroupSystem<Character, Ha
         this.server = server;
     }
 
-    List<Entity> entities = new List<Entity>(16); 
-    List<INetSerialized> netSerializables = new List<INetSerialized>(16);
-    List<IPredictedDataHandler> netPredicted = new List<IPredictedDataHandler>(16); 
-    List<IInterpolatedDataHandler> netInterpolated = new List<IInterpolatedDataHandler>(16);
-    
     private List<Entity> entityBuffer = new List<Entity>(8);
     private List<Character> characterBuffer = new List<Character>(8);
     protected override void Initialize(ref ComponentGroup group)
@@ -45,52 +40,64 @@ public class HandleCharacterSpawn : InitializeComponentGroupSystem<Character, Ha
             var charEntity = entityBuffer[i];
             var character = characterBuffer[i];
             
+            var characterRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(charEntity);
+            
             var heroTypeRegistry = m_resourceManager.GetResourceRegistry<HeroTypeRegistry>();
-            var heroTypeAsset = heroTypeRegistry.entries[character.heroTypeIndex];
+            var heroTypeAsset = heroTypeRegistry.entries[characterRepAll.heroTypeIndex];
             character.heroTypeData = heroTypeAsset;
         
             var characterTypeAsset = heroTypeAsset.character;
             
             // Create main presentation
-            var charPrefabGUID = server ? characterTypeAsset.prefabServer.guid : characterTypeAsset.prefabClient.guid;
-            var charPrefab = m_resourceManager.LoadSingleAssetResource(charPrefabGUID) as GameObject;
+            var charPrefabGUID = server ? characterTypeAsset.prefabServer : characterTypeAsset.prefabClient;
+            var charPrefab = m_resourceManager.GetSingleAssetResource(charPrefabGUID) as GameObject;
             var presentationGOE = m_world.Spawn<GameObjectEntity>(charPrefab);
             var charPresentationEntity = presentationGOE.Entity;
 
             character.presentation = charPresentationEntity;
 
-            var charPresentation = EntityManager.GetComponentObject<CharPresentation>(charPresentationEntity);
+            var charPresentation = EntityManager.GetComponentObject<CharacterPresentationSetup>(charPresentationEntity);
             charPresentation.character = charEntity;
             character.presentations.Add(charPresentation);
             
             // Setup health
-            var healthState = EntityManager.GetComponentObject<HealthState>(charEntity);
+            var healthState = EntityManager.GetComponentData<HealthStateData>(charEntity);
             healthState.SetMaxHealth(heroTypeAsset.health);
-        
+            EntityManager.SetComponentData(charEntity,healthState);
+            
             // Setup CharacterMoveQuery
             var moveQuery = EntityManager.GetComponentObject<CharacterMoveQuery>(charEntity);
-            var hitCollisionOwner = EntityManager.GetComponentObject<HitCollisionOwner>(charEntity);
-            moveQuery.Initialize(heroTypeAsset.characterMovementSettings, hitCollisionOwner);
+            moveQuery.Initialize(heroTypeAsset.characterMovementSettings, charEntity);
 
             // Setup HitCollisionHistory
-            var hitCollisionSettings = EntityManager.GetComponentObject<HitCollisionHistory>(charPresentationEntity);
-            hitCollisionSettings.hitCollisionOwner = charEntity;
-    
-            character.eyeHeight = heroTypeAsset.eyeHeight; 
+            if (EntityManager.HasComponent<HitCollisionData>(charPresentationEntity))
+            {
+                var hitCollisionData = EntityManager.GetComponentData<HitCollisionData>(charPresentationEntity);    
+                hitCollisionData.hitCollisionOwner = charEntity;
+                EntityManager.SetComponentData(charPresentationEntity, hitCollisionData);
+            }
+            else
+            {
+                var hitCollisionData = new HitCollisionData
+                {
+                    hitCollisionOwner = charEntity,
+                };
+                EntityManager.AddComponentData(charPresentationEntity, hitCollisionData);
+            }
+            
+            
+            character.eyeHeight = heroTypeAsset.eyeHeight;
+
             
             // Setup abilities
-            GameDebug.Assert(EntityManager.Exists(character.behaviourController),"behavior controller entity does not exist");
-            GameDebug.Assert(EntityManager.HasComponent<CharBehaviour>(character.behaviourController),"behavior controller entity does not have CharBehaviour component");
-            var charBehaviour = EntityManager.GetComponentData<CharBehaviour>(character.behaviourController);
-            charBehaviour.character = charEntity;
-            EntityManager.SetComponentData(character.behaviourController, charBehaviour);
-            var buffer = EntityManager.GetBuffer<EntityGroupChildren>(character.behaviourController);
+            GameDebug.Assert(EntityManager.Exists(characterRepAll.abilityCollection),"behavior controller entity does not exist");
+            var buffer = EntityManager.GetBuffer<EntityGroupChildren>(characterRepAll.abilityCollection);
             for (int j = 0; j < buffer.Length; j++)
             {
                 var childEntity = buffer[j].entity;
                 if (EntityManager.HasComponent<CharBehaviour>(childEntity))
                 {
-                    charBehaviour = EntityManager.GetComponentData<CharBehaviour>(childEntity);
+                    var charBehaviour = EntityManager.GetComponentData<CharBehaviour>(childEntity);
                     charBehaviour.character = charEntity;
                     EntityManager.SetComponentData(childEntity, charBehaviour);
                 }
@@ -100,15 +107,15 @@ public class HandleCharacterSpawn : InitializeComponentGroupSystem<Character, Ha
             // Create items
             foreach (var itemEntry in heroTypeAsset.items)
             {
-                var itemPrefabGuid = server ? itemEntry.itemType.prefabServer.guid : itemEntry.itemType.prefabClient.guid;
+                var itemPrefabGuid = server ? itemEntry.itemType.prefabServer : itemEntry.itemType.prefabClient;
 
-                if (itemPrefabGuid == null || itemPrefabGuid == "")
+                if (!itemPrefabGuid.IsSet())
                     continue;
                 
-                var itemPrefab = m_resourceManager.LoadSingleAssetResource(itemPrefabGuid) as GameObject;
+                var itemPrefab = m_resourceManager.GetSingleAssetResource(itemPrefabGuid) as GameObject;
                 var itemGOE = m_world.Spawn<GameObjectEntity>(itemPrefab);
 
-                var itemCharPresentation = EntityManager.GetComponentObject<CharPresentation>(itemGOE.Entity);
+                var itemCharPresentation = EntityManager.GetComponentObject<CharacterPresentationSetup>(itemGOE.Entity);
                 itemCharPresentation.character = charEntity;
                 itemCharPresentation.attachToPresentation = charPresentationEntity; 
                 character.presentations.Add(itemCharPresentation);
@@ -157,15 +164,16 @@ public class UpdateTeleportation : BaseComponentSystem<Character>
         {
             character.m_TeleportPending = false;
 
-            var predictedState = EntityManager.GetComponentData<CharPredictedStateData>(entity);
+            var predictedState = EntityManager.GetComponentData<CharacterPredictedData>(entity);
             predictedState.position = character.m_TeleportToPosition;
             predictedState.velocity = character.m_TeleportToRotation * Vector3.forward * predictedState.velocity.magnitude;
             EntityManager.SetComponentData(entity, predictedState);
             
 //            character.transform.position = character.m_TeleportToPosition;
-       
-            var userCommandComponent = character.GetComponent<UserCommandComponent>();
-            userCommandComponent.ResetCommand(m_world.worldTime.tick, character.m_TeleportToRotation.eulerAngles.y, 90);            
+
+            var userCommandComponent = EntityManager.GetComponentData<UserCommandComponentData>(entity);
+            userCommandComponent.ResetCommand(m_world.worldTime.tick, character.m_TeleportToRotation.eulerAngles.y, 90); 
+            EntityManager.SetComponentData(entity,userCommandComponent);
         }
     }
 }
@@ -182,18 +190,20 @@ public class UpdateCharPresentationState : BaseComponentSystem
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        Group = GetComponentGroup(typeof(ServerEntity), typeof(Character), typeof(CharPredictedStateData), typeof(PresentationState),
-            typeof(UserCommandComponent));
+        Group = GetComponentGroup(typeof(ServerEntity), typeof(Character), typeof(CharacterPredictedData), typeof(CharacterInterpolatedData),
+            typeof(UserCommandComponentData));
     }
 
 
     protected override void OnUpdate()
     {
+        Profiler.BeginSample("CharacterSystemShared.UpdatePresentationState");
+
         var entityArray = Group.GetEntityArray();
         var characterArray = Group.GetComponentArray<Character>();
-        var charPredictedStateArray = Group.GetComponentDataArray<CharPredictedStateData>();
-        var charAnimStateArray = Group.GetComponentDataArray<PresentationState>();
-        var userCommandArray = Group.GetComponentArray<UserCommandComponent>();
+        var charPredictedStateArray = Group.GetComponentDataArray<CharacterPredictedData>();
+        var charAnimStateArray = Group.GetComponentDataArray<CharacterInterpolatedData>();
+        var userCommandArray = Group.GetComponentDataArray<UserCommandComponentData>();
 
         var deltaTime = m_world.frameDuration;
         for (var i = 0; i < charPredictedStateArray.Length; i++)
@@ -216,22 +226,17 @@ public class UpdateCharPresentationState : BaseComponentSystem
             
             // Add small buffer between GroundMove and Stand, to reduce animation noise when there are gaps in between
             // input keypresses
-            if (charPredictedState.locoState == CharPredictedStateData.LocoState.Stand 
-                && animState.charLocoState == CharPredictedStateData.LocoState.GroundMove 
+            if (charPredictedState.locoState == CharacterPredictedData.LocoState.Stand 
+                && animState.charLocoState == CharacterPredictedData.LocoState.GroundMove 
                 && m_world.worldTime.DurationSinceTick(animState.lastGroundMoveTick) < k_StopMovePenalty) 
             {
-                animState.charLocoState = CharPredictedStateData.LocoState.GroundMove;
+                animState.charLocoState = CharacterPredictedData.LocoState.GroundMove;
             }
             else
             {
                 animState.charLocoState = charPredictedState.locoState;
             }
             
-            if (charPredictedState.locoState == CharPredictedStateData.LocoState.GroundMove)
-            {
-                animState.lastGroundMoveTick = m_world.worldTime.tick;
-            }
-    
             var groundMoveVec = Vector3.ProjectOnPlane(charPredictedState.velocity, Vector3.up);
             animState.moveYaw = Vector3.Angle(Vector3.forward, groundMoveVec);
             var cross = Vector3.Cross(Vector3.forward, groundMoveVec);
@@ -250,7 +255,16 @@ public class UpdateCharPresentationState : BaseComponentSystem
             // Update presentationstate animstatecontroller
             var animStateCtrl = EntityManager.GetComponentObject<AnimStateController>(character.presentation);    
             animStateCtrl.UpdatePresentationState(m_world.worldTime, deltaTime);
+            
+            if (charPredictedState.locoState == CharacterPredictedData.LocoState.GroundMove)
+            {
+                animState = EntityManager.GetComponentData<CharacterInterpolatedData>(entity);
+                animState.lastGroundMoveTick = m_world.worldTime.tick;
+                EntityManager.SetComponentData(entity, animState);
+            }
         }
+        
+        Profiler.EndSample();
     }
 }
 
@@ -272,12 +286,12 @@ public class GroundTest : BaseComponentSystem
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        Group = GetComponentGroup(typeof(ServerEntity), typeof(Character), typeof(CharPredictedStateData));
+        Group = GetComponentGroup(typeof(ServerEntity), typeof(Character), typeof(CharacterPredictedData));
     }
 
     protected override void OnUpdate()
     {        
-        var charPredictedStateArray = Group.GetComponentDataArray<CharPredictedStateData>();
+        var charPredictedStateArray = Group.GetComponentDataArray<CharacterPredictedData>();
         var characterArray = Group.GetComponentArray<Character>();
         
         var startOffset = 1f;
@@ -330,7 +344,7 @@ public class ApplyPresentationState : BaseComponentSystem
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        CharGroup = GetComponentGroup(typeof(AnimStateController), typeof(CharPresentation), ComponentType.Subtractive<DespawningEntity>() );   
+        CharGroup = GetComponentGroup(typeof(AnimStateController), typeof(CharacterPresentationSetup), ComponentType.Subtractive<DespawningEntity>() );   
     }
 
     protected override void OnUpdate()
@@ -338,11 +352,15 @@ public class ApplyPresentationState : BaseComponentSystem
         var deltaTime = m_world.frameDuration;
         var animStateCtrlArray = CharGroup.GetComponentArray<AnimStateController>();
 
+        Profiler.BeginSample("CharacterSystemShared.ApplyPresentationState");
+
         for (var i = 0; i < animStateCtrlArray.Length; i++)
         {
             var animStateCtrl = animStateCtrlArray[i];
             animStateCtrl.ApplyPresentationState(m_world.worldTime, deltaTime);
         }
+        
+        Profiler.EndSample();
     }
 
 }

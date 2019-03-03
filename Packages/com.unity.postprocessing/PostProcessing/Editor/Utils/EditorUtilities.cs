@@ -7,6 +7,9 @@ using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEditor.Rendering.PostProcessing
 {
+    /// <summary>
+    /// A set of editor utilities used in post-processing editors.
+    /// </summary>
     public static class EditorUtilities
     {
         static Dictionary<string, GUIContent> s_GUIContentCache;
@@ -14,6 +17,9 @@ namespace UnityEditor.Rendering.PostProcessing
 
         static PostProcessEffectSettings s_ClipboardContent;
 
+        /// <summary>
+        /// Returns <c>true</c> if the current target is a console, <c>false</c> otherwise.
+        /// </summary>
         public static bool isTargetingConsoles
         {
             get
@@ -25,6 +31,9 @@ namespace UnityEditor.Rendering.PostProcessing
             }
         }
 
+        /// <summary>
+        /// Returns <c>true</c> if the current target is a mobile, <c>false</c> otherwise.
+        /// </summary>
         public static bool isTargetingMobiles
         {
             get
@@ -44,6 +53,10 @@ namespace UnityEditor.Rendering.PostProcessing
             }
         }
 
+        /// <summary>
+        /// Returns <c>true</c> if the current target is a console or a mobile, <c>false</c>
+        /// otherwise.
+        /// </summary>
         public static bool isTargetingConsolesOrMobiles
         {
             get { return isTargetingConsoles || isTargetingMobiles; }
@@ -91,6 +104,13 @@ namespace UnityEditor.Rendering.PostProcessing
                 : decorator;
         }
 
+        /// <summary>
+        /// Gets a <see cref="GUIContent"/> for the given label and tooltip. These are recycled
+        /// internally and help reduce the garbage collector pressure in the editor.
+        /// </summary>
+        /// <param name="textAndTooltip">The label and tooltip separated by a <c>|</c>
+        /// character</param>
+        /// <returns>A recycled <see cref="GUIContent"/></returns>
         public static GUIContent GetContent(string textAndTooltip)
         {
             if (string.IsNullOrEmpty(textAndTooltip))
@@ -112,6 +132,11 @@ namespace UnityEditor.Rendering.PostProcessing
             return content;
         }
 
+        /// <summary>
+        /// Draws a UI box with a description and a "Fix Me" button next to it.
+        /// </summary>
+        /// <param name="text">The description</param>
+        /// <param name="action">The action to execute when the button is clicked</param>
         public static void DrawFixMeBox(string text, Action action)
         {
             Assert.IsNotNull(action);
@@ -131,6 +156,9 @@ namespace UnityEditor.Rendering.PostProcessing
             GUILayout.Space(11);
         }
 
+        /// <summary>
+        /// Draws a horizontal split line.
+        /// </summary>
         public static void DrawSplitter()
         {
             var rect = GUILayoutUtility.GetRect(1f, 1f);
@@ -145,17 +173,26 @@ namespace UnityEditor.Rendering.PostProcessing
             EditorGUI.DrawRect(rect, Styling.splitter);
         }
 
+        /// <summary>
+        /// Draws a toggle using the "override checkbox" style.
+        /// </summary>
+        /// <param name="rect">The position and size of the toggle</param>
+        /// <param name="property">The override state property for the toggle</param>
         public static void DrawOverrideCheckbox(Rect rect, SerializedProperty property)
         {
             property.boolValue = GUI.Toggle(rect, property.boolValue, GetContent("|Override this setting for this volume."), Styling.smallTickbox);
         }
 
+        /// <summary>
+        /// Draws a header label.
+        /// </summary>
+        /// <param name="title">The label to display as a header</param>
         public static void DrawHeaderLabel(string title)
         {
             EditorGUILayout.LabelField(title, Styling.headerLabel);
         }
 
-        public static bool DrawHeader(string title, bool state)
+        internal static bool DrawHeader(string title, bool state)
         {
             var backgroundRect = GUILayoutUtility.GetRect(1f, 17f);
 
@@ -191,7 +228,7 @@ namespace UnityEditor.Rendering.PostProcessing
             return state;
         }
 
-        public static bool DrawHeader(string title, SerializedProperty group, SerializedProperty activeField, PostProcessEffectSettings target, Action resetAction, Action removeAction)
+        internal static bool DrawHeader(string title, SerializedProperty group, SerializedProperty activeField, PostProcessEffectSettings target, Action resetAction, Action removeAction)
         {
             Assert.IsNotNull(group);
             Assert.IsNotNull(activeField);

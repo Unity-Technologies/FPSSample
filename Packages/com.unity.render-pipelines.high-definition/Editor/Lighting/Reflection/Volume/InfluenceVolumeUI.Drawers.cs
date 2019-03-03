@@ -8,48 +8,48 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
     partial class InfluenceVolumeUI
     {
-        //[TODO: planar / non planar will be redone in next PR]
-        internal static readonly CED.IDrawer SectionFoldoutShapePlanar;
-        internal static readonly CED.IDrawer SectionFoldoutShape;
+#pragma warning disable 618 //CED
         static readonly CED.IDrawer SectionShapeBoxPlanar = CED.Action((s, p, o) => Drawer_SectionShapeBox( s, p, o, false, false, false));
         static readonly CED.IDrawer SectionShapeBox = CED.Action((s, p, o) => Drawer_SectionShapeBox(s, p, o, true, true, true));
         static readonly CED.IDrawer SectionShapeSpherePlanar = CED.Action((s, p, o) => Drawer_SectionShapeSphere(s, p, o, false, false));
         static readonly CED.IDrawer SectionShapeSphere = CED.Action((s, p, o) => Drawer_SectionShapeSphere(s, p, o, true, true));
+#pragma warning restore 618
 
-        static InfluenceVolumeUI()
+#pragma warning disable 618 //CED
+        internal static CED.IDrawer InnerInspector(ReflectionProbeType type)
+#pragma warning restore 618
         {
-            SectionFoldoutShapePlanar = CED.Group(
-                    CED.FoldoutGroup(
-                        influenceVolumeHeader,
-                        (s, d, o) => s.isSectionExpandedShape,
-                        FoldoutOption.Indent,
+            switch (type)
+            {
+                case ReflectionProbeType.PlanarReflection:
+                    return CED.Group(
                         CED.Action(Drawer_InfluenceAdvancedSwitch),
-                        CED.space,
                         CED.Action(Drawer_FieldShapeType),
                         CED.FadeGroup(
                             (s, d, o, i) => s.IsSectionExpanded_Shape((InfluenceShape)i),
+#pragma warning disable 618
                             FadeOption.None,
+#pragma warning restore 618
                             SectionShapeBoxPlanar,
                             SectionShapeSpherePlanar
                             )
-                        )
-                    );
-            SectionFoldoutShape = CED.Group(
-                    CED.FoldoutGroup(
-                        influenceVolumeHeader,
-                        (s, d, o) => s.isSectionExpandedShape,
-                        FoldoutOption.Indent,
+                        );
+                case ReflectionProbeType.ReflectionProbe:
+                    return CED.Group(
                         CED.Action(Drawer_InfluenceAdvancedSwitch),
-                        CED.space,
                         CED.Action(Drawer_FieldShapeType),
                         CED.FadeGroup(
                             (s, d, o, i) => s.IsSectionExpanded_Shape((InfluenceShape)i),
+#pragma warning disable 618
                             FadeOption.None,
+#pragma warning restore 618
                             SectionShapeBox,
                             SectionShapeSphere
                             )
-                        )
-                    );
+                        );
+                default:
+                    throw new System.ArgumentException("Unknown probe type");
+            }
         }
 
         static void Drawer_FieldShapeType(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o)
@@ -69,9 +69,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
 
                 bool advanced = d.editorAdvancedModeEnabled.boolValue;
-                advanced = !GUILayout.Toggle(!advanced, normalModeContent, EditorStyles.miniButtonLeft, GUILayout.Width(60f), GUILayout.ExpandWidth(false));
-                advanced = GUILayout.Toggle(advanced, advancedModeContent, EditorStyles.miniButtonRight, GUILayout.Width(60f), GUILayout.ExpandWidth(false));
-                s.boxInfluenceHandle.allHandleControledByOne = s.boxInfluenceNormalHandle.allHandleControledByOne = !advanced;
+                advanced = GUILayout.Toggle(advanced, advancedModeContent, EditorStyles.miniButton, GUILayout.Width(60f), GUILayout.ExpandWidth(false));
                 if (d.editorAdvancedModeEnabled.boolValue ^ advanced)
                 {
                     d.editorAdvancedModeEnabled.boolValue = advanced;
@@ -100,7 +98,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static void Drawer_SectionShapeBox(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, bool drawOffset, bool drawNormal, bool drawFace)
+        static void Drawer_SectionShapeBox(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, bool drawAllOffset, bool drawNormal, bool drawFace)
         {
             bool advanced = d.editorAdvancedModeEnabled.boolValue;
             var maxFadeDistance = d.boxSize.vector3Value * 0.5f;
@@ -151,10 +149,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.InfluenceShape, o, GUILayout.Width(28f), GUILayout.MinHeight(22f));
             EditorGUILayout.EndHorizontal();
 
-            if (drawOffset)
-            {
-                Drawer_Offset(s, d, o);
-            }
+            Drawer_Offset(s, d, o, drawAllOffset);
             
             GUILayout.Space(EditorGUIUtility.standardVerticalSpacing);
             
@@ -178,12 +173,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (advanced && drawFace)
             {
                 EditorGUILayout.BeginHorizontal();
+                Vector3 positive = d.editorAdvancedModeFaceFadePositive.vector3Value;
+                Vector3 negative = d.editorAdvancedModeFaceFadeNegative.vector3Value;
                 EditorGUI.BeginChangeCheck();
-                CoreEditorUtils.DrawVector6(faceFadeContent, d.editorAdvancedModeFaceFadePositive, d.editorAdvancedModeFaceFadeNegative, Vector3.zero, Vector3.one, HDReflectionProbeEditor.k_handlesColor);
+                CoreEditorUtils.DrawVector6(faceFadeContent, ref positive, ref negative, Vector3.zero, Vector3.one, InfluenceVolumeUI.k_HandlesColor);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    d.boxSideFadePositive.vector3Value = d.editorAdvancedModeFaceFadePositive.vector3Value;
-                    d.boxSideFadeNegative.vector3Value = d.editorAdvancedModeFaceFadeNegative.vector3Value;
+                    d.boxSideFadePositive.vector3Value = d.editorAdvancedModeFaceFadePositive.vector3Value = positive;
+                    d.boxSideFadeNegative.vector3Value = d.editorAdvancedModeFaceFadeNegative.vector3Value = negative;
                 }
                 GUILayout.Space(28f + 9f); //add right margin for alignment
                 EditorGUILayout.EndHorizontal();
@@ -207,15 +204,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (d.editorAdvancedModeEnabled.boolValue)
             {
                 EditorGUI.BeginChangeCheck();
-                blendDistancePositive.vector3Value = editorAdvancedModeBlendDistancePositive.vector3Value;
-                blendDistanceNegative.vector3Value = editorAdvancedModeBlendDistanceNegative.vector3Value;
-                CoreEditorUtils.DrawVector6(
-                    content,
-                    blendDistancePositive, blendDistanceNegative, Vector3.zero, maxBlendDistance, HDReflectionProbeEditor.k_handlesColor);
+                Vector3 positive = blendDistancePositive.vector3Value = editorAdvancedModeBlendDistancePositive.vector3Value;
+                Vector3 negative = blendDistanceNegative.vector3Value = editorAdvancedModeBlendDistanceNegative.vector3Value;
+                CoreEditorUtils.DrawVector6(content, ref positive, ref negative, Vector3.zero, maxBlendDistance, InfluenceVolumeUI.k_HandlesColor);
                 if(EditorGUI.EndChangeCheck())
                 {
-                    editorAdvancedModeBlendDistancePositive.vector3Value = blendDistancePositive.vector3Value;
-                    editorAdvancedModeBlendDistanceNegative.vector3Value = blendDistanceNegative.vector3Value;
+                    editorAdvancedModeBlendDistancePositive.vector3Value = blendDistancePositive.vector3Value = positive;
+                    editorAdvancedModeBlendDistanceNegative.vector3Value = blendDistanceNegative.vector3Value = negative;
                 }
             }
             else
@@ -242,18 +237,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             GUILayout.EndVertical();
         }
 
-        static void Drawer_SectionShapeSphere(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, bool drawOffset, bool drawNormal)
+        static void Drawer_SectionShapeSphere(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, bool drawOffset, bool drawAllOffset)
         {
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PropertyField(d.sphereRadius, radiusContent);
             HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.InfluenceShape, o, GUILayout.Width(28f), GUILayout.MinHeight(22f));
             EditorGUILayout.EndHorizontal();
-
-            if(drawOffset)
-            {
-                Drawer_Offset(s, d, o);
-            }
+            
+            Drawer_Offset(s, d, o, drawAllOffset);
 
             EditorGUILayout.Space();
             var maxBlendDistance = d.sphereRadius.floatValue;
@@ -268,7 +260,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.Blend, o, GUILayout.ExpandHeight(true), GUILayout.Width(28f), GUILayout.MinHeight(22f), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight + 3));
             EditorGUILayout.EndHorizontal();
 
-            if (drawNormal)
+            if (drawAllOffset)
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUI.BeginChangeCheck();
@@ -282,17 +274,32 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        static void Drawer_Offset(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o)
+        static void Drawer_Offset(InfluenceVolumeUI s, SerializedInfluenceVolume d, Editor o, bool drawAllOffset)
         {
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(d.offset, offsetContent);
+            float y = 0f;
+            if (drawAllOffset)
+            {
+                EditorGUILayout.PropertyField(d.offset, offsetContent);
+            }
+            else
+            {
+                y = EditorGUILayout.FloatField(yOffsetContent, d.offset.vector3Value.y);
+            }
             if(EditorGUI.EndChangeCheck())
             {
                 //call the offset setter as it will update legacy reflection probe
                 HDProbeEditor editor = (HDProbeEditor)o;
                 InfluenceVolume influenceVolume = editor.GetTarget(editor.target).influenceVolume;
-                influenceVolume.offset = d.offset.vector3Value;
+                if (drawAllOffset)
+                {
+                    influenceVolume.offset = d.offset.vector3Value;
+                }
+                else
+                {
+                    influenceVolume.offset = new Vector3(0, y, 0);
+                }
             }
             HDProbeUI.Drawer_ToolBarButton(HDProbeUI.ToolBar.CapturePosition, o, GUILayout.Width(28f), GUILayout.MinHeight(22f));
             EditorGUILayout.EndHorizontal();

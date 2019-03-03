@@ -5,18 +5,13 @@ using UnityEngine;
 
 [RequireComponent(typeof(HealthState))]
 [DisallowMultipleComponent]
-public class Character : MonoBehaviour, INetSerialized
+public class Character : MonoBehaviour
 {
     [NonSerialized] public float eyeHeight = 1.8f;
     [NonSerialized] public string characterName;
-    [NonSerialized] public HealthState healthState;
-    [NonSerialized] public int heroTypeIndex;
     [NonSerialized] public HeroTypeAsset heroTypeData;
     [NonSerialized] public Entity presentation;    // Main char presentation used updating animation state 
-    [NonSerialized] public List<CharPresentation> presentations = new List<CharPresentation>();
-    
-    [NonSerialized] public Entity behaviourController;
-    [NonSerialized] public Entity item;    // TODO (mogensh) temp until we get multiple weapon handling
+    [NonSerialized] public List<CharacterPresentationSetup> presentations = new List<CharacterPresentationSetup>();
     
     [NonSerialized] public Vector3 m_TeleportToPosition;    
     [NonSerialized] public Quaternion m_TeleportToRotation;
@@ -35,60 +30,19 @@ public class Character : MonoBehaviour, INetSerialized
         m_TeleportToRotation = rotation;
     }
     
-    private void Awake()
-    {
-        healthState = GetComponent<HealthState>();
-    }    
-    
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
-    {
-        writer.WriteInt16("heroType",(short)heroTypeIndex);
-        refSerializer.SerializeReference(ref writer, "behaviorController",behaviourController);
-    }
-
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
-    {
-        heroTypeIndex = reader.ReadInt16();
-        refSerializer.DeserializeReference(ref reader, ref behaviourController);
-    }
-    
-    public Entity FindAbilityWithComponent(EntityManager entityManager, Type abilityType)
-    {
-        var buffer = entityManager.GetBuffer<EntityGroupChildren>(behaviourController);
-        for (int j = 0; j < buffer.Length; j++)
-        {
-            var childEntity = buffer[j].entity;
-            if (!entityManager.HasComponent<CharBehaviour>(childEntity))
-                continue;
-            if (entityManager.HasComponent(childEntity, abilityType))
-                return childEntity;
-        }  
-        buffer = entityManager.GetBuffer<EntityGroupChildren>(item);
-        for (int j = 0; j < buffer.Length; j++)
-        {
-            var childEntity = buffer[j].entity;
-            if (!entityManager.HasComponent<CharBehaviour>(childEntity))
-                continue;
-            if (entityManager.HasComponent(childEntity, abilityType))
-                return childEntity;
-        }  
-        
-        return Entity.Null;
-    }
-    
-    CharPredictedStateData[] historyBuffer;
+    CharacterPredictedData[] historyBuffer;
     private int historyFirstIndex;
     private int historyCount;
     
     public void ShowHistory(int tick)
     {
         if(historyBuffer == null)
-            historyBuffer = new CharPredictedStateData[30];
+            historyBuffer = new CharacterPredictedData[30];
         
         var goe = GetComponent<GameObjectEntity>();
 
         var nextIndex = (historyFirstIndex + historyCount) % historyBuffer.Length;
-        historyBuffer[nextIndex] = goe.EntityManager.GetComponentData<CharPredictedStateData>(goe.Entity);;
+        historyBuffer[nextIndex] = goe.EntityManager.GetComponentData<CharacterPredictedData>(goe.Entity);;
 //        GameDebug.Log(state.locoState + " sprint:" + state.sprinting + " action:" + state.action);
             
         if (historyCount < historyBuffer.Length)

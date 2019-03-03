@@ -28,6 +28,12 @@ namespace UnityEditor.Experimental.Rendering
     public sealed class DebugWindow : EditorWindow
     {
         static Styles s_Styles;
+        static GUIStyle s_SplitterLeft;
+
+        static float splitterPos = 150f;
+        const float minSideBarWidth = 100;
+        const float minContentWidth = 100;
+        bool dragging = false;
 
         [SerializeField]
         WidgetStateDictionary m_WidgetStates;
@@ -46,7 +52,7 @@ namespace UnityEditor.Experimental.Rendering
         static bool s_TypeMapDirty;
         static Dictionary<Type, Type> s_WidgetStateMap; // DebugUI.Widget type -> DebugState type
         static Dictionary<Type, DebugUIDrawer> s_WidgetDrawerMap; // DebugUI.Widget type -> DebugUIDrawer
-
+        
         [DidReloadScripts]
         static void OnEditorReload()
         {
@@ -311,7 +317,10 @@ namespace UnityEditor.Experimental.Rendering
         void OnGUI()
         {
             if (s_Styles == null)
+            {
                 s_Styles = new Styles();
+                s_SplitterLeft = new GUIStyle();
+            }
 
             var panels = DebugManager.instance.panels;
             int itemCount = panels.Count(x => !x.isRuntimeOnly && x.children.Count(w => !w.isRuntimeOnly) > 0);
@@ -334,7 +343,7 @@ namespace UnityEditor.Experimental.Rendering
             using (new EditorGUILayout.HorizontalScope())
             {
                 // Side bar
-                using (var scrollScope = new EditorGUILayout.ScrollViewScope(m_PanelScroll, s_Styles.sectionScrollView, GUILayout.Width(150f)))
+                using (var scrollScope = new EditorGUILayout.ScrollViewScope(m_PanelScroll, s_Styles.sectionScrollView, GUILayout.Width(splitterPos)))
                 {
                     GUILayout.Space(40f);
 
@@ -384,6 +393,9 @@ namespace UnityEditor.Experimental.Rendering
 
                     m_PanelScroll = scrollScope.scrollPosition;
                 }
+                
+                Rect splitterRect = new Rect(splitterPos - 3, 0, 6, Screen.height);
+                GUI.Box(splitterRect, "", s_SplitterLeft);
 
                 GUILayout.Space(10f);
 
@@ -407,6 +419,35 @@ namespace UnityEditor.Experimental.Rendering
                     if (changedScope.changed)
                         m_Settings.currentStateHash = ComputeStateHash();
                 }
+
+                // Splitter events
+                if (Event.current != null)
+                {
+                    switch (Event.current.rawType)
+                    {
+                        case EventType.MouseDown:
+                            if (splitterRect.Contains(Event.current.mousePosition))
+                            {
+                                dragging = true;
+                            }
+                            break;
+                        case EventType.MouseDrag:
+                            if (dragging)
+                            {
+                                splitterPos += Event.current.delta.x;
+                                splitterPos = Mathf.Clamp(splitterPos, minSideBarWidth, Screen.width - minContentWidth);
+                                Repaint();
+                            }
+                            break;
+                        case EventType.MouseUp:
+                            if (dragging)
+                            {
+                                dragging = false;
+                            }
+                            break;
+                    }
+                }
+                EditorGUIUtility.AddCursorRect(splitterRect, MouseCursor.ResizeHorizontal);
             }
         }
 
@@ -461,7 +502,7 @@ namespace UnityEditor.Experimental.Rendering
             public static float s_DefaultLabelWidth = 0.5f;
 
             public readonly GUIStyle sectionScrollView = "PreferencesSectionBox";
-            public readonly GUIStyle sectionElement = "PreferencesSection";
+            public readonly GUIStyle sectionElement = new GUIStyle("PreferencesSection");
             public readonly GUIStyle selected = "OL SelectedRow";
             public readonly GUIStyle sectionHeader = new GUIStyle(EditorStyles.largeLabel);
             public readonly Color skinBackgroundColor;
@@ -470,6 +511,8 @@ namespace UnityEditor.Experimental.Rendering
             {
                 sectionScrollView = new GUIStyle(sectionScrollView);
                 sectionScrollView.overflow.bottom += 1;
+
+                sectionElement.alignment = TextAnchor.MiddleLeft;
 
                 sectionHeader.fontStyle = FontStyle.Bold;
                 sectionHeader.fontSize = 18;

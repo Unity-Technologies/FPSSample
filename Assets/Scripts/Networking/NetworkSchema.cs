@@ -3,10 +3,19 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using NetworkCompression;
+using Unity.Collections.LowLevel.Unsafe;
 
-
-public class NetworkSchema
+unsafe public class NetworkSchema
 {
+
+    public uint[] predictPlan;
+    public FieldInfo[] fields;
+    public int numFields;
+    public int id;
+
+    private int nextFieldOffset = 0;
+    private List<FieldInfo> fieldsInternal = new List<FieldInfo>();
+
     public enum FieldType
     {
         Bool,
@@ -311,12 +320,15 @@ public class NetworkSchema
             m_Value = value;
         }
 
-        public FieldValueString(byte[] valueBuffer, int valueOffset, int valueLength)
+        unsafe public FieldValueString(byte* valueBuffer, int valueLength)
         {
             if(valueBuffer != null)
             {
-                int numChars = NetworkConfig.encoding.GetChars(valueBuffer, valueOffset, valueLength, s_CharBuffer, 0);
-                m_Value = new string(s_CharBuffer, 0, numChars);
+                fixed(char* dest = s_CharBuffer)
+                {
+                    int numChars = NetworkConfig.encoding.GetChars(valueBuffer, valueLength, dest, s_CharBuffer.Length);
+                    m_Value = new string(s_CharBuffer, 0, numChars);
+                }
             }
             else
             {
@@ -339,12 +351,13 @@ public class NetworkSchema
 
     public struct FieldValueByteArray : IFieldValue<FieldValueByteArray>
     {
-        public FieldValueByteArray(byte[] value, int valueOffset, int valueLength)
+        unsafe public FieldValueByteArray(byte* value, int valueLength)
         {
             if(value != null)
             {
                 m_Value = new byte[valueLength];
-                Array.Copy(value, valueOffset, m_Value, 0, valueLength);
+                for (int i = 0; i < valueLength; i++)
+                    m_Value[i] = value[i];
             }
             else
             {
@@ -359,7 +372,7 @@ public class NetworkSchema
         public string ToString(FieldInfo fieldInfo, bool showRaw) { return ""; }
 
 
-        public readonly static FieldValueByteArray EmptyByteArrayValue = new FieldValueByteArray(null, 0, 0);
+        unsafe public readonly static FieldValueByteArray EmptyByteArrayValue = new FieldValueByteArray(null, 0);
 
         byte[] m_Value;
     }
@@ -477,37 +490,76 @@ public class NetworkSchema
     }
 
     // Functions for updating stats on a field that can be conditionally excluded from the build
-    [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
+    [Conditional("UNITY_EDITOR")]
     static public void AddStatsToFieldBool(FieldInfo fieldInfo, bool value, bool prediction, int numBits) { ((NetworkSchema.FieldStats<NetworkSchema.FieldValueBool>)fieldInfo.stats).Add(new NetworkSchema.FieldValueBool(value), new NetworkSchema.FieldValueBool(prediction), numBits); }
 
-    [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
+    [Conditional("UNITY_EDITOR")]
     static public void AddStatsToFieldInt(FieldInfo fieldInfo, int value, int prediction, int numBits) { ((NetworkSchema.FieldStats<NetworkSchema.FieldValueInt>)fieldInfo.stats).Add(new NetworkSchema.FieldValueInt(value), new NetworkSchema.FieldValueInt(prediction), numBits); }
 
-    [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
+    [Conditional("UNITY_EDITOR")]
     static public void AddStatsToFieldUInt(FieldInfo fieldInfo, uint value, uint prediction, int numBits) { ((NetworkSchema.FieldStats<NetworkSchema.FieldValueUInt>)fieldInfo.stats).Add(new NetworkSchema.FieldValueUInt(value), new NetworkSchema.FieldValueUInt(prediction), numBits); }
-    [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
+    [Conditional("UNITY_EDITOR")]
     static public void AddStatsToFieldFloat(FieldInfo fieldInfo, uint value, uint prediction, int numBits) { ((NetworkSchema.FieldStats<NetworkSchema.FieldValueFloat>)fieldInfo.stats).Add(new NetworkSchema.FieldValueFloat(value), new NetworkSchema.FieldValueFloat(prediction), numBits); }
-    [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
+    [Conditional("UNITY_EDITOR")]
     static public void AddStatsToFieldVector2(FieldInfo fieldInfo, uint vx, uint vy, uint px, uint py, int numBits) { ((NetworkSchema.FieldStats<NetworkSchema.FieldValueVector2>)fieldInfo.stats).Add(new NetworkSchema.FieldValueVector2(vx, vy), new NetworkSchema.FieldValueVector2(px, py), numBits); }
-    [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
+    [Conditional("UNITY_EDITOR")]
     static public void AddStatsToFieldVector3(FieldInfo fieldInfo, uint vx, uint vy, uint vz, uint px, uint py, uint pz, int numBits) { ((NetworkSchema.FieldStats<NetworkSchema.FieldValueVector3>)fieldInfo.stats).Add(new NetworkSchema.FieldValueVector3(vx, vy, vz), new NetworkSchema.FieldValueVector3(px, py, pz), numBits); }
-    [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
+    [Conditional("UNITY_EDITOR")]
     static public void AddStatsToFieldQuaternion(FieldInfo fieldInfo, uint vx, uint vy, uint vz, uint vw, uint px, uint py, uint pz, uint pw, int numBits) { ((NetworkSchema.FieldStats<NetworkSchema.FieldValueQuaternion>)fieldInfo.stats).Add(new NetworkSchema.FieldValueQuaternion(vx, vy, vz, vw), new NetworkSchema.FieldValueQuaternion(px, py, pz, pw), numBits); }
-    [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
-    static public void AddStatsToFieldString(FieldInfo fieldInfo, byte[] valueBuffer, int valueOffset, int valueLength, int numBits) { ((NetworkSchema.FieldStats<FieldValueString>)fieldInfo.stats).Add(new NetworkSchema.FieldValueString(valueBuffer, valueOffset, valueLength), NetworkSchema.FieldValueString.EmptyStringValue, numBits); }
-    [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
-    static public void AddStatsToFieldByteArray(FieldInfo fieldInfo, byte[] valueBuffer, int valueOffset, int valueLength, int numBits) { ((NetworkSchema.FieldStats<FieldValueByteArray>)fieldInfo.stats).Add(new NetworkSchema.FieldValueByteArray(valueBuffer, valueOffset, valueLength), NetworkSchema.FieldValueByteArray.EmptyByteArrayValue, numBits); }
+    [Conditional("UNITY_EDITOR")]
+    static public unsafe void AddStatsToFieldString(FieldInfo fieldInfo, byte* value, int valueLength, int numBits) { ((NetworkSchema.FieldStats<FieldValueString>)fieldInfo.stats).Add(new NetworkSchema.FieldValueString(value, valueLength), NetworkSchema.FieldValueString.EmptyStringValue, numBits); }
+    [Conditional("UNITY_EDITOR")]
+    static public unsafe void AddStatsToFieldByteArray(FieldInfo fieldInfo, byte* value, int valueLength, int numBits) { ((NetworkSchema.FieldStats<FieldValueByteArray>)fieldInfo.stats).Add(new NetworkSchema.FieldValueByteArray(value, valueLength), NetworkSchema.FieldValueByteArray.EmptyByteArrayValue, numBits); }
 
-    public List<FieldInfo> fields = new List<FieldInfo>();
-    public int nextFieldOffset = 0;
-    public int id;
-    
+    // 0bAAAAAAAABBBBBBBBCCCCCCCC0000MMDA   ABC: length of array, MM: mask, D: delta, A: array
+    public void Finalize()
+    {
+        GameDebug.Assert(predictPlan == null);
+
+        predictPlan = new uint[fieldsInternal.Count];
+        for (int i = 0, c = fieldsInternal.Count; i < c; ++i)
+        {
+            var f = fieldsInternal[i];
+            uint arraycount = 0;
+            uint mask = f.fieldMask;
+            uint flags = (ushort)(
+                (fieldsInternal[i].delta ? 2 : 0) |
+                (f.fieldType == NetworkSchema.FieldType.String || f.fieldType == NetworkSchema.FieldType.ByteArray ? 1 : 0));
+            switch (f.fieldType)
+            {
+                case NetworkSchema.FieldType.Bool:
+                case NetworkSchema.FieldType.Int:
+                case NetworkSchema.FieldType.UInt:
+                case NetworkSchema.FieldType.Float:
+                    arraycount = 1;
+                    break;
+                case NetworkSchema.FieldType.Vector2:
+                    arraycount = 2;
+                    break;
+                case NetworkSchema.FieldType.Vector3:
+                    arraycount = 3;
+                    break;
+                case NetworkSchema.FieldType.Quaternion:
+                    arraycount = 4;
+                    break;
+                case NetworkSchema.FieldType.String:
+                case NetworkSchema.FieldType.ByteArray:
+                    arraycount = (ushort)(f.arraySize / 4 + 1);
+                    break;
+            }
+            predictPlan[i] = (uint)(arraycount << 8) | (uint)(mask << 2) | (uint)flags;
+        }
+        numFields = fieldsInternal.Count;
+        fields = fieldsInternal.ToArray();
+    }
+
     public NetworkSchema(int id)
     {
         GameDebug.Assert(id >= 0 && id < NetworkConfig.maxSchemaIds);
         this.id = id;
     }
 
+    // TODO (peter) Should this be in words?
     public int GetByteSize()
     {
         return nextFieldOffset;
@@ -515,10 +567,10 @@ public class NetworkSchema
 
     public void AddField(FieldInfo field)
     {
-        GameDebug.Assert(fields.Count < NetworkConfig.maxFieldsPerSchema);
+        GameDebug.Assert(fieldsInternal.Count < NetworkConfig.maxFieldsPerSchema);
         field.byteOffset = nextFieldOffset;
         field.stats = FieldStatsBase.CreateFieldStats(field);
-        fields.Add(field);
+        fieldsInternal.Add(field);
         nextFieldOffset += CalculateFieldByteSize(field);
     }
     
@@ -528,25 +580,25 @@ public class NetworkSchema
         switch (field.fieldType)
         {
             case FieldType.Bool:
-                size = 1;
+                size = 4;
                 break;
             case FieldType.Int:
             case FieldType.UInt:
             case FieldType.Float:
-                size = (field.bits + 7) / 8;
+                size = 4;// (field.bits + 7) / 8;
                 break;
             case FieldType.Vector2:
-                size = (field.bits + 7) / 8 * 2;
+                size = 8;// (field.bits + 7) / 8 * 2;
                 break;
             case FieldType.Vector3:
-                size = (field.bits + 7) / 8 * 3;
+                size = 12;// (field.bits + 7) / 8 * 3;
                 break;
             case FieldType.Quaternion:
-                size = (field.bits + 7) / 8 * 4;
+                size = 16;//(field.bits + 7) / 8 * 4;
                 break;
             case FieldType.String:
             case FieldType.ByteArray:
-                size = 2 + field.arraySize;
+                size = 4 + field.arraySize;
                 break;
             default:
                 GameDebug.Assert(false);
@@ -564,77 +616,78 @@ public class NetworkSchema
         for (int i = 0; i < count; ++i)
         {
             var field = new FieldInfo();
-            field.fieldType = (FieldType) input.ReadRawBits(4);
+            field.fieldType = (FieldType)input.ReadPackedNibble(NetworkConfig.miscContext);
             field.delta = input.ReadRawBits(1) != 0;
-            field.bits = (int)input.ReadRawBits(6);
-            field.precision = (int)input.ReadRawBits(2);
-            field.arraySize = (int)input.ReadRawBits(16);
-            field.startContext = schema.fields.Count * NetworkConfig.maxContextsPerField + schema.id * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
-            field.fieldMask = (byte)input.ReadRawBits(8);
+            field.bits = (int)input.ReadPackedUInt(NetworkConfig.miscContext);
+            field.precision = (int)input.ReadPackedUInt(NetworkConfig.miscContext);
+            field.arraySize = (int)input.ReadPackedUInt(NetworkConfig.miscContext);
+            field.startContext = schema.fieldsInternal.Count * NetworkConfig.maxContextsPerField + schema.id * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
+            field.fieldMask = (byte)input.ReadPackedUInt(NetworkConfig.miscContext);
             schema.AddField(field);
         }
+        schema.Finalize();
         return schema;
     }
 
     public static void WriteSchema<TOutputStream>(NetworkSchema schema, ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
     {
-        output.WritePackedUInt((uint)schema.fields.Count, NetworkConfig.miscContext);
+        output.WritePackedUInt((uint)schema.fieldsInternal.Count, NetworkConfig.miscContext);
         output.WritePackedUInt((uint)schema.id, NetworkConfig.miscContext);
-        foreach (var field in schema.fields)
+        for(int i = 0; i < schema.numFields; ++i)
         {
-            output.WriteRawBits((uint)field.fieldType, 4);
+            var field = schema.fields[i];
+            output.WritePackedNibble((uint)field.fieldType, NetworkConfig.miscContext);
             output.WriteRawBits(field.delta ? 1U : 0, 1);
-            output.WriteRawBits((uint)field.bits, 6);
-            output.WriteRawBits((uint)field.precision, 2);
-            output.WriteRawBits((uint)field.arraySize, 16);
-            output.WriteRawBits((uint)field.fieldMask, 8);
+            output.WritePackedUInt((uint)field.bits, NetworkConfig.miscContext);
+            output.WritePackedUInt((uint)field.precision, NetworkConfig.miscContext);
+            output.WritePackedUInt((uint)field.arraySize, NetworkConfig.miscContext);
+            output.WritePackedUInt((uint)field.fieldMask, NetworkConfig.miscContext);
         }
     }
     
-    public static void CopyFieldsFromBuffer<TOutputStream>(NetworkSchema schema, byte[] inputBuffer, ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
+    unsafe public static void CopyFieldsFromBuffer<TOutputStream>(NetworkSchema schema, uint* inputBuffer, ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
     {
-        var input = new ByteInputStream(inputBuffer);
+        int index = 0;
 
         int fieldIndex = 0;
-        for (; fieldIndex < schema.fields.Count; ++fieldIndex)
+        for (; fieldIndex < schema.fieldsInternal.Count; ++fieldIndex)
         {
-            var field = schema.fields[fieldIndex];
+            var field = schema.fieldsInternal[fieldIndex];
             switch (field.fieldType)
             {
                 case NetworkSchema.FieldType.Bool:
                 case NetworkSchema.FieldType.UInt:
                 case NetworkSchema.FieldType.Int:
                 case NetworkSchema.FieldType.Float:
-                    output.WriteRawBits(input.ReadBits(field.bits), field.bits);
+                    output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
                     break;
 
                 case NetworkSchema.FieldType.Vector2:
-                    output.WriteRawBits(input.ReadUInt32(), field.bits);
-                    output.WriteRawBits(input.ReadUInt32(), field.bits);
+                    output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
+                    output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
                     break;
 
                 case NetworkSchema.FieldType.Vector3:
-                    output.WriteRawBits(input.ReadUInt32(), field.bits);
-                    output.WriteRawBits(input.ReadUInt32(), field.bits);
-                    output.WriteRawBits(input.ReadUInt32(), field.bits);
+                    output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
+                    output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
+                    output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
                     break;
 
                 case NetworkSchema.FieldType.Quaternion:
-                    output.WriteRawBits(input.ReadUInt32(), field.bits);
-                    output.WriteRawBits(input.ReadUInt32(), field.bits);
-                    output.WriteRawBits(input.ReadUInt32(), field.bits);
-                    output.WriteRawBits(input.ReadUInt32(), field.bits);
+                    output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
+                    output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
+                    output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
+                    output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
                     break;
 
                 case NetworkSchema.FieldType.String:
                 case NetworkSchema.FieldType.ByteArray:
                     {
-                        byte[] data;
-                        int dataIndex;
-                        int dataSize;
-                        input.GetByteArray(out data, out dataIndex, out dataSize, field.arraySize);
-                        output.WritePackedUInt((uint)dataSize, field.startContext);
-                        output.WriteRawBytes(data, dataIndex, dataSize);
+                        uint dataSize = inputBuffer[index++];
+
+                        output.WritePackedUInt(dataSize, field.startContext);
+                        output.WriteRawBytes((byte*)(inputBuffer + index), (int)dataSize);
+                        index += field.arraySize / 4;
                     }
                     break;
 
@@ -643,42 +696,54 @@ public class NetworkSchema
         }
     }
 
-    public static void CopyFieldsToBuffer<TInputStream>(NetworkSchema schema, ref TInputStream input, byte[] outputBuffer) where TInputStream : NetworkCompression.IInputStream
+    unsafe public static void CopyFieldsToBuffer<TInputStream>(NetworkSchema schema, ref TInputStream input, uint[] outputBuffer) where TInputStream : NetworkCompression.IInputStream
     {
-        var output = new ByteOutputStream(outputBuffer);
-        for (var fieldIndex = 0; fieldIndex < schema.fields.Count; ++fieldIndex)
+        var index = 0;
+        for (var fieldIndex = 0; fieldIndex < schema.fieldsInternal.Count; ++fieldIndex)
         {
-            var field = schema.fields[fieldIndex];
+            var field = schema.fieldsInternal[fieldIndex];
             switch (field.fieldType)
             {
                 case NetworkSchema.FieldType.Bool:
                 case NetworkSchema.FieldType.UInt:
                 case NetworkSchema.FieldType.Int:
                 case NetworkSchema.FieldType.Float:
-                    output.WriteBits(input.ReadRawBits(field.bits), field.bits);                    
+                    outputBuffer[index++] = input.ReadPackedUInt(NetworkConfig.miscContext);
                     break;
 
                 case NetworkSchema.FieldType.Vector2:
-                    output.WriteUInt32(input.ReadRawBits(field.bits));
-                    output.WriteUInt32(input.ReadRawBits(field.bits));
+                    outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
+                    outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
                     break;
 
                 case NetworkSchema.FieldType.Vector3:
-                    output.WriteUInt32(input.ReadRawBits(field.bits));
-                    output.WriteUInt32(input.ReadRawBits(field.bits));
-                    output.WriteUInt32(input.ReadRawBits(field.bits));
+                    outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
+                    outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
+                    outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
                     break;
 
                 case NetworkSchema.FieldType.Quaternion:
-                    output.WriteUInt32(input.ReadRawBits(field.bits));
-                    output.WriteUInt32(input.ReadRawBits(field.bits));
-                    output.WriteUInt32(input.ReadRawBits(field.bits));
-                    output.WriteUInt32(input.ReadRawBits(field.bits));
+                    outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
+                    outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
+                    outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
+                    outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
                     break;
 
                 case NetworkSchema.FieldType.String:
                 case NetworkSchema.FieldType.ByteArray:
-                    output.CopyByteArray(ref input, field.arraySize, field.startContext);
+                    var dataSize = input.ReadPackedUInt(NetworkConfig.miscContext);
+                    outputBuffer[index++] = dataSize;
+
+                    fixed(uint* buf = outputBuffer)
+                    {
+                        byte* dst = (byte*)(buf + index);
+                        int i = 0;
+                        for (; i < dataSize; i++)
+                            *dst++ = (byte)input.ReadRawBits(8);
+                        for (; i < field.arraySize; i++)
+                            *dst++ = 0;
+                    }
+                    index += field.arraySize / 4;
                     break;
 
                 default: GameDebug.Assert(false); break;
@@ -688,9 +753,9 @@ public class NetworkSchema
 
     public static void SkipFields<TInputStream>(NetworkSchema schema, ref TInputStream input) where TInputStream : NetworkCompression.IInputStream
     {
-        for (var fieldIndex = 0; fieldIndex < schema.fields.Count; ++fieldIndex)
+        for (var fieldIndex = 0; fieldIndex < schema.fieldsInternal.Count; ++fieldIndex)
         {
-            var field = schema.fields[fieldIndex];
+            var field = schema.fieldsInternal[fieldIndex];
             switch (field.fieldType)
             {
                 case NetworkSchema.FieldType.Bool:

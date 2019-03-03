@@ -4,7 +4,7 @@ using UnityEngine.UI;
 public class ChatLine : MonoBehaviour
 {
     public float changeTime;
-    public Text lineContent;
+    public TMPro.TextMeshProUGUI lineContent;
 
     public void SetText(string text)
     {

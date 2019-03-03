@@ -80,9 +80,9 @@ public class AnimGraph_Sprint : AnimGraphAsset
         }
     
         public void UpdatePresentationState(bool firstUpdate, GameTime time, float deltaTime)
-        {
-            Profiler.BeginSample("AnimGraph_Sprint.UpdatePresentationState");
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+        {            
+            Profiler.BeginSample("Sprint.Update");
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             if (firstUpdate)
             {
                 // Do phase projection for time not spent in state
@@ -94,7 +94,7 @@ public class AnimGraph_Sprint : AnimGraphAsset
                 
                 // Reset the phase if appropriate
                 var timeSincePreviousGroundMove = ticksSincePreviousGroundMove / (float)time.tickRate;                
-                if (animState.previousCharLocoState != CharPredictedStateData.LocoState.GroundMove && 
+                if (animState.previousCharLocoState != CharacterPredictedData.LocoState.GroundMove && 
                     timeSincePreviousGroundMove >  m_settings.stateResetWindow)
                 {
 //                    Debug.Log("Reset movement sprint! (Ticks since: " + ticksSincePreviousGroundMove + " Time since: " + timeSincePreviousGroundMove + ")");
@@ -124,7 +124,9 @@ public class AnimGraph_Sprint : AnimGraphAsset
     
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            Profiler.BeginSample("Sprint.Apply");
+            
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             // Set the phase of the animation
             var clipLength = m_movementClips[0].GetAnimationClip().length;
             for (int i = 0; i < m_movementClips.Length; i++)
@@ -141,6 +143,8 @@ public class AnimGraph_Sprint : AnimGraphAsset
             
             if(m_aimHandler != null)
                 m_aimHandler.SetAngle(animState.aimPitch);
+            
+            Profiler.EndSample();
         }
     
         AnimGraph_Sprint m_settings;

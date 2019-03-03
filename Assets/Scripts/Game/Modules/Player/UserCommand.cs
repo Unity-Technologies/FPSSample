@@ -1,24 +1,59 @@
-﻿using UnityEngine;
+﻿using Unity.Entities;
+using UnityEngine;
 using UnityEngine.Networking;
 
 [System.Serializable]
-public struct UserCommand : INetSerialized
+public struct UserCommand : IReplicatedComponent
 {
+    public enum Button : uint
+    {
+        None = 0,
+        Jump = 1 << 0,
+        Boost = 1 << 1,
+        PrimaryFire = 1 << 2,
+        SecondaryFire = 1 << 3,
+        Reload = 1 << 4,
+        Melee = 1 << 5,
+        Use = 1 << 6,
+        Ability1 = 1 << 7,
+        Ability2 = 1 << 8,
+        Ability3 = 1 << 9,
+    }
+
+    public struct ButtonBitField
+    {
+        public uint flags;
+
+        public bool IsSet(Button button)
+        {
+            return (flags & (uint)button) > 0;
+        }
+
+        public void Or(Button button, bool val)
+        {
+            if(val)
+                flags = flags | (uint) button;
+        }
+
+        
+        public void Set(Button button, bool val)
+        {
+            if(val)
+                flags = flags | (uint) button;
+            else
+            {
+                flags = flags & ~(uint) button;
+            }
+        }
+    }
+    
     public int checkTick;        // For debug purposes
     public int renderTick;      
     public float moveYaw;
     public float moveMagnitude;
     public float lookYaw;
     public float lookPitch;
-    public bool jump;
-    public bool boost;
-    public bool sprint;     
-    public bool primaryFire;
-    public bool secondaryFire;
-    public bool abilityA;
-    public bool reload;
-    public bool melee;
-    public bool use;
+    public ButtonBitField buttons;
     public CharacterEmote emote;
 
     public static readonly UserCommand defaultCommand = new UserCommand(0); 
@@ -31,32 +66,15 @@ public struct UserCommand : INetSerialized
         moveMagnitude = 0;
         lookYaw = 0;
         lookPitch = 90;
-        jump = false;
-        boost = false;
-        sprint = false;
-        primaryFire = false;
-        secondaryFire = false;
-        abilityA = false;
-        reload = false;
-        melee = false;
-        use = false;
+        buttons.flags = 0;
         emote = CharacterEmote.None;
     }
     
     public void ClearCommand()  
     {
-        jump = false;
-        boost = false;
-        sprint = false;
-        primaryFire = false;
-        secondaryFire = false;
-        abilityA = false;
-        reload = false;
-        melee = false;
-        use = false;
+        buttons.flags = 0;
         emote = CharacterEmote.None;
     }
-    
 
     public Vector3 lookDir
     {
@@ -67,7 +85,7 @@ public struct UserCommand : INetSerialized
         get { return Quaternion.Euler(new Vector3(90 - lookPitch, lookYaw, 0)); }
     }
 
-    public void Serialize(ref NetworkWriter networkWriter, IEntityReferenceSerializer refSerializer)
+    public void Serialize(ref SerializeContext context, ref NetworkWriter networkWriter)
     {
         networkWriter.WriteInt32("tick", checkTick);
         networkWriter.WriteInt32("renderTick", renderTick);
@@ -75,19 +93,11 @@ public struct UserCommand : INetSerialized
         networkWriter.WriteFloatQ("moveMagnitude", moveMagnitude, 2);
         networkWriter.WriteFloat("lookYaw", lookYaw); 
         networkWriter.WriteFloat("lookPitch", lookPitch);
-        networkWriter.WriteBoolean("jump", jump);
-        networkWriter.WriteBoolean("boost", boost);
-        networkWriter.WriteBoolean("sprint", sprint);
-        networkWriter.WriteBoolean("primaryFire", primaryFire);
-        networkWriter.WriteBoolean("secondaryFire", secondaryFire);
-        networkWriter.WriteBoolean("abilityA", abilityA);
-        networkWriter.WriteBoolean("reload", reload);
-        networkWriter.WriteBoolean("melee", melee);
-        networkWriter.WriteBoolean("use", use);
+        networkWriter.WriteUInt32("buttons", buttons.flags);
         networkWriter.WriteByte("emote", (byte)emote);
     }
 
-    public void Deserialize(ref NetworkReader networkReader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader networkReader)
     {
         checkTick = networkReader.ReadInt32();
         renderTick = networkReader.ReadInt32();
@@ -95,15 +105,7 @@ public struct UserCommand : INetSerialized
         moveMagnitude = networkReader.ReadFloatQ();
         lookYaw = networkReader.ReadFloat();
         lookPitch = networkReader.ReadFloat();
-        jump = networkReader.ReadBoolean();
-        boost = networkReader.ReadBoolean();
-        sprint = networkReader.ReadBoolean();
-        primaryFire = networkReader.ReadBoolean();
-        secondaryFire = networkReader.ReadBoolean();
-        abilityA = networkReader.ReadBoolean();
-        reload = networkReader.ReadBoolean();
-        melee = networkReader.ReadBoolean();
-        use = networkReader.ReadBoolean();
+        buttons.flags = networkReader.ReadUInt32();
         emote = (CharacterEmote)networkReader.ReadByte();
     }
 
@@ -115,15 +117,7 @@ public struct UserCommand : INetSerialized
         strBuilder.AppendLine("moveMagnitude:" + moveMagnitude);
         strBuilder.AppendLine("lookYaw:" + lookYaw);
         strBuilder.AppendLine("lookPitch:" + lookPitch);
-        strBuilder.AppendLine("jump:" + jump);
-        strBuilder.AppendLine("boost:" + boost);
-        strBuilder.AppendLine("sprint:" + sprint);
-        strBuilder.AppendLine("primaryFire:" + primaryFire);
-        strBuilder.AppendLine("secondaryFire:" + secondaryFire);
-        strBuilder.AppendLine("abilityA:" + abilityA);
-        strBuilder.AppendLine("reload:" + reload);
-        strBuilder.AppendLine("melee:" + melee);
-        strBuilder.AppendLine("use:" + use);
+        strBuilder.AppendLine("buttons:" + buttons);
         strBuilder.AppendLine("emote:" + emote);
         return strBuilder.ToString();
     }

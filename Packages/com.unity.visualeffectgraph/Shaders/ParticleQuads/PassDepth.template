@@ -1,0 +1,46 @@
+// Depth pass
+Pass
+{		
+	Tags { "LightMode"=${VFXPassDepth} }
+
+	ZWrite On
+	Blend Off
+	
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		#if USE_FLIPBOOK_INTERPOLATION
+		float4 uv : TEXCOORD0;
+		#else
+		float2 uv : TEXCOORD0;	
+		#endif
+		#if USE_ALPHA_TEST || USE_FLIPBOOK_INTERPOLATION || VFX_USE_ALPHA_CURRENT
+		// x: alpha threshold
+		// y: frame blending factor
+		// z: alpha
+		nointerpolation float3 builtInInterpolants : TEXCOORD1;
+		#endif
+	};
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_ALPHA builtInInterpolants.z
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.x
+#define VFX_VARYING_FRAMEBLEND builtInInterpolants.y
+#define VFX_VARYING_UV uv
+				
+	${VFXInclude("Shaders/ParticleQuads/Pass.template")}	
+		
+	#pragma fragment frag
+	float4 frag(ps_input i) : SV_TARGET
+	{
+		float alpha = VFXGetFragmentColor(i).a;
+		alpha *= VFXGetTextureColor(VFX_SAMPLER(mainTexture),i).a;		
+		VFXClipFragmentColor(alpha,i);
+		return (float4)0;
+	}
+	ENDHLSL
+}

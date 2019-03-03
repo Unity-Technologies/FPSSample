@@ -1,0 +1,62 @@
+// Forward pass
+Pass
+{		
+	Tags { "LightMode"=${VFXPassForward} }
+	
+	HLSLPROGRAM
+	#pragma target 4.5
+	
+	struct ps_input
+	{
+		float4 pos : SV_POSITION;
+		#if USE_FLIPBOOK_INTERPOLATION
+		float4 uv : TEXCOORD0;
+		#else
+		float2 uv : TEXCOORD0;	
+		#endif
+		#if VFX_NEEDS_COLOR_INTERPOLATOR
+		nointerpolation float4 color : COLOR0;
+		#endif
+		#if USE_SOFT_PARTICLE || USE_ALPHA_TEST || USE_FLIPBOOK_INTERPOLATION
+		// x: inverse soft particles fade distance
+		// y: alpha threshold
+		// z: frame blending factor
+		nointerpolation float3 builtInInterpolants : TEXCOORD1;
+		#endif
+		#if VFX_NEEDS_POSWS_INTERPOLATOR
+		float3 posWS : TEXCOORD2;
+		#endif
+	};
+	
+	struct ps_output
+	{
+		float4 color : SV_Target0;
+	};
+
+#define VFX_VARYING_PS_INPUTS ps_input
+#define VFX_VARYING_POSCS pos
+#define VFX_VARYING_COLOR color.rgb
+#define VFX_VARYING_ALPHA color.a
+#define VFX_VARYING_INVSOFTPARTICLEFADEDISTANCE builtInInterpolants.x
+#define VFX_VARYING_ALPHATHRESHOLD builtInInterpolants.y
+#define VFX_VARYING_FRAMEBLEND builtInInterpolants.z
+#define VFX_VARYING_UV uv
+#if VFX_NEEDS_POSWS_INTERPOLATOR
+#define VFX_VARYING_POSWS posWS
+#endif
+		
+	${VFXInclude("Shaders/ParticleMeshes/Pass.template")}	
+		
+	#pragma fragment frag
+	ps_output frag(ps_input i)
+	{
+		ps_output o = (ps_output)0;
+		o.color = VFXGetFragmentColor(i);
+		o.color *= VFXGetTextureColor(VFX_SAMPLER(mainTexture),i);
+		o.color = VFXApplyFog(o.color,i);
+		VFXClipFragmentColor(o.color.a,i);
+		o.color.a = saturate(o.color.a);
+		return o;
+	}
+	ENDHLSL
+}

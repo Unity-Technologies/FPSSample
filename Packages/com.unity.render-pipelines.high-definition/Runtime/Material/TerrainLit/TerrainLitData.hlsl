@@ -5,7 +5,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Sampling/SampleUVMapping.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
 
-#include "TerrainLitSplatCommon.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/TerrainLit/TerrainLitSplatCommon.hlsl"
 
 // We don't use emission for terrain
 #define _EmissiveColor float3(0,0,0)
@@ -21,20 +21,19 @@ void GetSurfaceAndBuiltinData(inout FragInputs input, float3 V, inout PositionIn
 {
 #ifdef ENABLE_TERRAIN_PERPIXEL_NORMAL
     {
+        // Consider a flat terrain.It should have tangent be(1, 0, 0) and bitangent be(0, 0, 1) as the UV of the terrain grid mesh is a scale of the world XZ position.
+        // In CreateWorldToTangent function(in SpaceTransform.hlsl), it is cross(normal, tangent) * sgn for the bitangent vector.
+        // It is not true in a left - handed coordinate system for the terrain bitangent, if we provide 1 as the tangent.w.It would produce(0, 0, -1) instead of(0, 0, 1).
+        // Also terrain's tangent calculation was wrong in a left handed system because I used `cross((0,0,1), terrainNormalOS)`. It points to the wrong direction as negative X.
+        // Therefore all the 4 xyzw components of the tangent needs to be flipped to correct the tangent frame.
+        // (See ApplyMeshModification in TerrainLitDataMeshModification.hlsl)
         float3 normalOS = SAMPLE_TEXTURE2D(_TerrainNormalmapTexture, sampler_Control0, (input.texCoord0.xy + 0.5f) * _TerrainHeightmapRecipSize.xy).rgb * 2 - 1;
         float3 normalWS = mul((float3x3)GetObjectToWorldMatrix(), normalOS);
-        float3 tangentWS = cross(GetObjectToWorldMatrix()._13_23_33, normalWS);
-        float renormFactor = 1.0 / length(normalWS);
+        float4 tangentWS;
+        tangentWS.xyz = cross(normalWS, GetObjectToWorldMatrix()._13_23_33);
+        tangentWS.w = -1;
 
-        // bitangent on the fly option in xnormal to reduce vertex shader outputs.
-        // this is the mikktspace transformation (must use unnormalized attributes)
-        float3x3 worldToTangent = CreateWorldToTangent(normalWS, tangentWS.xyz, 1);
-
-        // surface gradient based formulation requires a unit length initial normal. We can maintain compliance with mikkts
-        // by uniformly scaling all 3 vectors since normalization of the perturbed normal will cancel it.
-        input.worldToTangent[0] = worldToTangent[0] * renormFactor;
-        input.worldToTangent[1] = worldToTangent[1] * renormFactor;
-        input.worldToTangent[2] = worldToTangent[2] * renormFactor;		// normalizes the interpolated vertex normal
+        input.worldToTangent = BuildWorldToTangent(tangentWS, normalWS);
 
         input.texCoord0.xy *= _TerrainHeightmapRecipSize.zw;
     }

@@ -26,10 +26,10 @@ namespace NetworkCompression
             }
         }
 
-        public void WriteRawBytes(byte[] value, int srcIndex, int count)
+        unsafe public void WriteRawBytes(byte* value, int count)
         {
             for (int i = 0; i < count; i++)
-                m_Buffer[m_CurrentByteIndex + i] = value[srcIndex + i];
+                m_Buffer[m_CurrentByteIndex + i] = value[i];
             m_CurrentByteIndex += count;
         }
 

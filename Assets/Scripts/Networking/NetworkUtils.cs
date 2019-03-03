@@ -17,61 +17,24 @@ public static class NetworkUtils
     public static double DoubleToUInt64(ulong value) { return new ULongDouble() { longValue = value }.doubleValue; }
     public static ulong UInt64ToDouble(double value) { return new ULongDouble() { doubleValue = value }.longValue; }
 
+    static readonly string hexdigits = "0123456789ABCDEF";
+    public static string HexString(byte[] values, int count)
+    {
+        var d = new char[count * 2];
+        for (int i = 0; i < count; i++)
+        {
+            d[i * 2 + 0] = hexdigits[values[i] >> 4];
+            d[i * 2 + 1] = hexdigits[values[i] & 0xf];
+        }
+        return new string(d) + " ("+ count + ")";
+    }
+
     static NetworkUtils()
     {
         stopwatch.Start();
     }
 
-    public struct Timer
-    {
-        public long remaining;
-
-        public Timer(float seconds)
-        {
-            m_Interval = (long)(seconds * System.Diagnostics.Stopwatch.Frequency);
-            m_LastUpdate = stopwatch.ElapsedTicks;
-
-            // By default timer triggers first time it is checked
-            remaining = -1;
-        }
-
-        public void Reset()
-        {
-            remaining = m_Interval;
-        }
-
-        public void SetRemaining(float seconds)
-        {
-            remaining = (long)(seconds * System.Diagnostics.Stopwatch.Frequency);
-        }
-
-        public void AddRemaining(float seconds)
-        {
-            remaining += (long)(seconds * System.Diagnostics.Stopwatch.Frequency);
-        }
-
-        public bool Update()
-        {
-            remaining -= stopwatch.ElapsedTicks - m_LastUpdate;
-            m_LastUpdate = stopwatch.ElapsedTicks;
-            if (remaining < 0)
-            {
-                remaining = remaining < -m_Interval ? m_Interval : remaining + m_Interval;
-                return true;
-            }
-            return false;
-        }
-
-        static Timer()
-        {
-        }
-
-        long m_Interval;
-        long m_LastUpdate;
-    }
-
     public static System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-
 
     [StructLayout(LayoutKind.Explicit)]
     struct UIntFloat
@@ -98,18 +61,12 @@ public static class NetworkUtils
 
     public static void MemCopy(byte[] src, int srcIndex, byte[] dst, int dstIndex, int count)
     {
-        // TODO : Right now we cannot have unsafe code and be able to debug the project
-        // at the same time because the generated project file doesn't add the allow unsafe
-        // block, so do the
         for (int i = 0; i < count; ++i)
             dst[dstIndex++] = src[srcIndex++];
     }
 
     public static int MemCmp(byte[] a, int aIndex, byte[] b, int bIndex, int count)
     {
-        // TODO : Right now we cannot have unsafe code and be able to debug the project
-        // at the same time because the generated project file doesn't add the allow unsafe
-        // block, so do the
         for (int i = 0; i < count; ++i)
         {
             var diff = b[bIndex++] - a[aIndex++];
@@ -119,8 +76,19 @@ public static class NetworkUtils
 
         return 0;
     }
+    public static int MemCmp(uint[] a, int aIndex, uint[] b, int bIndex, int count)
+    {
+        for (int i = 0; i < count; ++i)
+        {
+            var diff = b[bIndex++] - a[aIndex++];
+            if (diff != 0)
+                return (int)diff;
+        }
 
-    public static uint SimpleHash(byte[] array, int count)
+        return 0;
+    }
+
+    public static uint SimpleHash(uint[] array, int count)
     {
         uint hash = 0;
         for (int i = 0; i < count; i++)
@@ -168,6 +136,7 @@ public static class NetworkUtils
     public static List<string> GetLocalInterfaceAddresses()
     {
         // Useful to print 'best guess' for local ip, so...
+        List<NetworkInterface> interfaces = new List<NetworkInterface>();
         List<string> addresses = new List<string>();
         foreach (NetworkInterface item in NetworkInterface.GetAllNetworkInterfaces())
         {
@@ -177,7 +146,14 @@ public static class NetworkUtils
             var type = item.NetworkInterfaceType;
             if (type != NetworkInterfaceType.Ethernet && type != NetworkInterfaceType.Wireless80211)
                 continue;
+            interfaces.Add(item);
+        }
 
+        // Sort interfaces so those with most gateways are first. Attempting to guess what is the 'main' ip address
+        interfaces.Sort((a, b) => { return b.GetIPProperties().GatewayAddresses.Count.CompareTo(a.GetIPProperties().GatewayAddresses.Count); });
+
+        foreach (NetworkInterface item in interfaces)
+        {
             try
             {
                 foreach (UnicastIPAddressInformation addr in item.GetIPProperties().UnicastAddresses)
@@ -233,6 +209,20 @@ class ByteArrayComp : IEqualityComparer<byte[]>, IComparer<byte[]>
             return (int)(x[0] + (x[1] << 8) + (x[2] << 16) + (x[3] << 24));
         else
             return 0;
+    }
+}
+
+public class Aggregator
+{
+    const int k_WindowSize = 120;
+
+    public float previousValue;
+    public FloatRollingAverage graph = new FloatRollingAverage(k_WindowSize);
+
+    public void Update(float value)
+    {
+        graph.Update(value - previousValue);
+        previousValue = value;
     }
 }
 

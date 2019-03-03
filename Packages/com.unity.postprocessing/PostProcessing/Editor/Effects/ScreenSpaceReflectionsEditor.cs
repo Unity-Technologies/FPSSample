@@ -4,7 +4,7 @@ using UnityEngine.Rendering.PostProcessing;
 namespace UnityEditor.Rendering.PostProcessing
 {
     [PostProcessEditor(typeof(ScreenSpaceReflections))]
-    public sealed class ScreenSpaceReflectionsEditor : PostProcessEffectEditor<ScreenSpaceReflections>
+    internal sealed class ScreenSpaceReflectionsEditor : PostProcessEffectEditor<ScreenSpaceReflections>
     {
         SerializedParameterOverride m_Preset;
         SerializedParameterOverride m_MaximumIterationCount;

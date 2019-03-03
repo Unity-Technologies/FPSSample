@@ -21,8 +21,9 @@ Shader "Hidden/HDRenderPipeline/GGXConvolve"
 
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl"
-            #include "GGXConvolution.cs.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/GGXConvolution/GGXConvolution.cs.hlsl"
+
+            SAMPLER(s_trilinear_clamp_sampler);
 
             TEXTURECUBE(_MainTex);
 

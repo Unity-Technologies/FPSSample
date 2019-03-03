@@ -8,10 +8,10 @@ public struct UpdateProjectileFlag : IComponentData
     public int foo;
 }
 
-public struct ProjectileData : IComponentData, INetSerialized
+public struct ProjectileData : IComponentData, IReplicatedComponent
 {
     public int test;        // TODO remove this test no longer needed  
-    public int projectileTypeRegistryId;
+    public int projectileTypeRegistryIndex;
     public Entity projectileOwner;
     public int startTick;
     public float3 startPos;
@@ -20,10 +20,15 @@ public struct ProjectileData : IComponentData, INetSerialized
     public float3 impactPos;
     public float3 impactNormal;
     
-    public void Serialize(ref NetworkWriter networkWriter, IEntityReferenceSerializer refSerializer)
+    public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
     {
-        refSerializer.SerializeReference(ref networkWriter, "owner", projectileOwner);
-        networkWriter.WriteUInt16("typeId", (ushort)projectileTypeRegistryId);
+        return new ReplicatedComponentSerializerFactory<ProjectileData>();
+    }
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter networkWriter)
+    {
+        context.refSerializer.SerializeReference(ref networkWriter, "owner", projectileOwner);
+        networkWriter.WriteUInt16("typeId", (ushort)projectileTypeRegistryIndex);
         networkWriter.WriteInt32("startTick", startTick);
         networkWriter.WriteVector3Q("startPosition", startPos,2);
         networkWriter.WriteVector3Q("endPosition", endPos,2);
@@ -32,10 +37,10 @@ public struct ProjectileData : IComponentData, INetSerialized
         networkWriter.WriteVector3Q("impactNormal", impactNormal,2);
     }
 
-    public void Deserialize(ref NetworkReader networkReader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader networkReader)
     {
-        refSerializer.DeserializeReference(ref networkReader, ref projectileOwner);
-        projectileTypeRegistryId = networkReader.ReadUInt16();
+        context.refSerializer.DeserializeReference(ref networkReader, ref projectileOwner);
+        projectileTypeRegistryIndex = networkReader.ReadUInt16();
         startTick = networkReader.ReadInt32();
         startPos = networkReader.ReadVector3Q();
         endPos = networkReader.ReadVector3Q();
@@ -53,11 +58,11 @@ public struct ProjectileData : IComponentData, INetSerialized
     public float maxAge;
     public int impactTick;
     
-    public void SetupFromRequest(ProjectileRequest request)
+    public void SetupFromRequest(ProjectileRequest request, int projectileTypeRegistryIndex)
     {
         rayQueryId = -1;
         projectileOwner = request.owner;
-        projectileTypeRegistryId = request.projectileTypeRegistryId;
+        this.projectileTypeRegistryIndex = projectileTypeRegistryIndex;
         startTick = request.startTick;
         startPos = request.startPosition;
         endPos = request.endPosition;
@@ -67,7 +72,7 @@ public struct ProjectileData : IComponentData, INetSerialized
 
     public void Initialize(ProjectileRegistry registry) 
     {
-        settings = registry.GetEntryById(projectileTypeRegistryId).properties;
+        settings = registry.entries[projectileTypeRegistryIndex].definition.properties;
         
         maxAge = Vector3.Magnitude(endPos - startPos) / settings.velocity;
         position = startPos;

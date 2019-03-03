@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 public class OptionDropdown : OptionUI
 {
-    public Text title;
-    public Dropdown dropdown;
+    public TMPro.TextMeshProUGUI title;
+    public TMPro.TMP_Dropdown dropdown;
     internal List<string> values;
 
     public override void UpdateFromConfigVar()
@@ -24,7 +24,7 @@ public class OptionDropdown : OptionUI
                 break;
             }
         }
-        // If not found set to ont past last valid value, if the dropdown has one such
+        // If not found set to one past last valid value, if the dropdown has one such
         if(!found && dropdown.options.Count > values.Count)
         {
             dropdown.value = dropdown.options.Count - 1;

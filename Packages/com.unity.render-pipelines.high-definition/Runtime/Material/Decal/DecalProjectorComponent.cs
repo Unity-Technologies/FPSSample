@@ -44,8 +44,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (m_Material == null)
             {
+#if UNITY_EDITOR
                 var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
                 m_Material = hdrp != null ? hdrp.GetDefaultDecalMaterial() : null;
+#else
+                m_Material = null;
+#endif
             }
 
             if (m_Handle != null)
@@ -109,8 +113,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-// sample-game begin: dont call update when in standanlone
-#if !UNITY_STANDALONE
         public void LateUpdate()
         {
             if (m_Handle != null)
@@ -124,8 +126,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
             }
         }
-#endif
-// sample-game end
 
         public void OnDrawGizmosSelected()
         {
@@ -150,9 +150,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_Material == null)
                 return false;
 
+#if UNITY_EDITOR
             var hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
             if ((hdrp != null) && (m_Material == hdrp.GetDefaultDecalMaterial()))
                 return false;
+#endif
 
             return true;
         }

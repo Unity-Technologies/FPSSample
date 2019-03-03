@@ -10,7 +10,7 @@ public class SocketTransport : INetworkTransport
     public SocketTransport(int port = 0, int maxConnections = 16)
     {
         m_IdToConnection = new NativeArray<NetworkConnection>(maxConnections, Allocator.Persistent);
-        m_Socket = new UdpNetworkDriver(new NetworkDataStreamParameter { size = 10 * NetworkConfig.maxPackageSize });
+        m_Socket = new UdpNetworkDriver(new NetworkDataStreamParameter { size = 10 * NetworkConfig.maxPackageSize }, new NetworkConfigParameter { disconnectTimeout = ServerGameLoop.serverDisconnectTimeout.IntValue });
         m_Socket.Bind(new IPEndPoint(IPAddress.Any, port));
 
         if (port != 0)
@@ -98,7 +98,7 @@ public class SocketTransport : INetworkTransport
 
     public string GetConnectionDescription(int connectionId)
     {
-        return "";
+        return ""; // TODO enable this once RemoteEndPoint is implemented m_Socket.RemoteEndPoint(m_IdToConnection[connectionId]).GetIp();
     }
 
     public void Shutdown()

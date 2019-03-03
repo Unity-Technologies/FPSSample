@@ -14,10 +14,10 @@ public class MainMenu : MonoBehaviour
         public TMPro.TextMeshProUGUI buildId;
 
         // Create menu
-        public InputField servername;
-        public Dropdown gamemode;
-        public Dropdown levelname;
-        public Dropdown maxplayers;
+        public TMPro.TMP_InputField servername;
+        public TMPro.TMP_Dropdown gamemode;
+        public TMPro.TMP_Dropdown levelname;
+        public TMPro.TMP_Dropdown maxplayers;
         public Toggle decidatedServer;
     }
 
@@ -56,20 +56,20 @@ public class MainMenu : MonoBehaviour
         m_CanvasGroup = GetComponent<CanvasGroup>();
 
         uiBinding.gamemode.options.Clear();
-        uiBinding.gamemode.options.Add(new Dropdown.OptionData("Assault"));
-        uiBinding.gamemode.options.Add(new Dropdown.OptionData("Deathmatch"));
+        uiBinding.gamemode.options.Add(new TMPro.TMP_Dropdown.OptionData("Assault"));
+        uiBinding.gamemode.options.Add(new TMPro.TMP_Dropdown.OptionData("Deathmatch"));
         uiBinding.gamemode.RefreshShownValue();
 
         uiBinding.levelname.options.Clear();
-        uiBinding.levelname.options.Add(new Dropdown.OptionData("Level_01"));
-        uiBinding.levelname.options.Add(new Dropdown.OptionData("Level_00"));
+        uiBinding.levelname.options.Add(new TMPro.TMP_Dropdown.OptionData("Level_01"));
+        uiBinding.levelname.options.Add(new TMPro.TMP_Dropdown.OptionData("Level_00"));
         uiBinding.levelname.RefreshShownValue();
 
         uiBinding.maxplayers.options.Clear();
-        uiBinding.maxplayers.options.Add(new Dropdown.OptionData("2"));
-        uiBinding.maxplayers.options.Add(new Dropdown.OptionData("4"));
-        uiBinding.maxplayers.options.Add(new Dropdown.OptionData("8"));
-        uiBinding.maxplayers.options.Add(new Dropdown.OptionData("16"));
+        uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("2"));
+        uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("4"));
+        uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("8"));
+        uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("16"));
         uiBinding.maxplayers.RefreshShownValue();
 
         uiBinding.buildId.text = Game.game.buildId;

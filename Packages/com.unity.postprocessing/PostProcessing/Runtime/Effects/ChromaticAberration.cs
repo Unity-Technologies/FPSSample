@@ -3,20 +3,33 @@ using UnityEngine.Serialization;
 
 namespace UnityEngine.Rendering.PostProcessing
 {
+    /// <summary>
+    /// This class holds settings for the Chromatic Aberration effect.
+    /// </summary>
     [Serializable]
     [PostProcess(typeof(ChromaticAberrationRenderer), "Unity/Chromatic Aberration")]
     public sealed class ChromaticAberration : PostProcessEffectSettings
     {
-        [Tooltip("Shift the hue of chromatic aberrations.")]
+        /// <summary>
+        /// A texture used for custom fringing color (it will use a default one when <c>null</c>).
+        /// </summary>
+        [Tooltip("Shifts the hue of chromatic aberrations.")]
         public TextureParameter spectralLut = new TextureParameter { value = null };
 
+        /// <summary>
+        /// The amount of tangential distortion.
+        /// </summary>
         [Range(0f, 1f), Tooltip("Amount of tangential distortion.")]
         public FloatParameter intensity = new FloatParameter { value = 0f };
 
+        /// <summary>
+        /// If <c>true</c>, it will use a faster variant of the effect for improved performances.
+        /// </summary>
         [FormerlySerializedAs("mobileOptimized")]
         [Tooltip("Boost performances by lowering the effect quality. This settings is meant to be used on mobile and other low-end platforms but can also provide a nice performance boost on desktops and consoles.")]
         public BoolParameter fastMode = new BoolParameter { value = false };
-
+        
+        /// <inheritdoc />
         public override bool IsEnabledAndSupported(PostProcessRenderContext context)
         {
             return enabled.value
@@ -24,7 +37,7 @@ namespace UnityEngine.Rendering.PostProcessing
         }
     }
 
-    public sealed class ChromaticAberrationRenderer : PostProcessEffectRenderer<ChromaticAberration>
+    internal sealed class ChromaticAberrationRenderer : PostProcessEffectRenderer<ChromaticAberration>
     {
         Texture2D m_InternalSpectralLut;
 
@@ -59,7 +72,9 @@ namespace UnityEngine.Rendering.PostProcessing
             }
             
             var sheet = context.uberSheet;
-            sheet.EnableKeyword(settings.fastMode
+            bool fastMode = settings.fastMode || SystemInfo.graphicsDeviceType == GraphicsDeviceType.OpenGLES2;
+
+            sheet.EnableKeyword(fastMode
                 ? "CHROMATIC_ABERRATION_LOW"
                 : "CHROMATIC_ABERRATION"
             );

@@ -13,7 +13,7 @@ public class CharacterAnimatorController {
         // Find valid parameters in animatorcontroller
         var animStateParams = new List<AnimStateParams>();
         var actionStateParams = new List<ActionStateParams>();
-        m_supportedActionTriggers = new int[(int)CharPredictedStateData.Action.NumActions];
+        m_supportedActionTriggers = new int[(int)CharacterPredictedData.Action.NumActions];
         for (int i = 0; i < m_animatorController.GetParameterCount(); i++)
         {
             AnimatorControllerParameter param = m_animatorController.GetParameter(i);
@@ -22,7 +22,7 @@ public class CharacterAnimatorController {
             {
                 case AnimatorControllerParameterType.Bool:
                     {
-                        CharPredictedStateData.LocoState animState;
+                        CharacterPredictedData.LocoState animState;
                         if (s_charLocoStateHashes.TryGetValue(param.nameHash, out animState))
                         {
                             var p = new AnimStateParams();
@@ -32,7 +32,7 @@ public class CharacterAnimatorController {
                             continue;
                         }
 
-                        CharPredictedStateData.Action action;
+                        CharacterPredictedData.Action action;
                         if (s_actionStateHashes.TryGetValue(param.nameHash, out action))
                         {
                             var p = new ActionStateParams();
@@ -45,7 +45,7 @@ public class CharacterAnimatorController {
                     }
                 case AnimatorControllerParameterType.Trigger:
                     {
-                        CharPredictedStateData.Action action;
+                        CharacterPredictedData.Action action;
                         if (s_actionTriggerHashes.TryGetValue(param.nameHash, out action))
                         {
                             m_supportedActionTriggers[(int)action] = param.nameHash;
@@ -71,7 +71,7 @@ public class CharacterAnimatorController {
         return m_animatorController;
     }
 
-    public void Update(ref PresentationState animState)
+    public void Update(ref CharacterInterpolatedData animState)
     {
         // Set supported animation state bools
         for (var i = 0; i < m_supportedAnimStates.Length; i++)
@@ -85,12 +85,12 @@ public class CharacterAnimatorController {
         if (animState.charAction != m_lastActionTriggered || animState.charActionTick != lastActionTick)
         {
             // Clear last trigger
-            if (m_lastActionTriggered != CharPredictedStateData.Action.None)
+            if (m_lastActionTriggered != CharacterPredictedData.Action.None)
             {
                 m_animatorController.ResetTrigger(m_supportedActionTriggers[(int)m_lastActionTriggered]);
             }
                 
-            m_lastActionTriggered = CharPredictedStateData.Action.None;
+            m_lastActionTriggered = CharacterPredictedData.Action.None;
 
             // Trigger new action trigger if it is supported
             if (m_supportedActionTriggers[(int)animState.charAction] != 0)
@@ -129,40 +129,40 @@ public class CharacterAnimatorController {
 
     struct AnimStateParams
     {
-        public CharPredictedStateData.LocoState state;
+        public CharacterPredictedData.LocoState state;
         public int hash;
     }
 
     struct ActionStateParams
     {
-        public CharPredictedStateData.Action action;
+        public CharacterPredictedData.Action action;
         public int hash;
     }
 
     readonly static int s_resetHash = Animator.StringToHash("Trigger_Reset");
 
-    readonly static Dictionary<int, CharPredictedStateData.LocoState> s_charLocoStateHashes = new Dictionary<int, CharPredictedStateData.LocoState>() {
-        { Animator.StringToHash("AnimState_Stand"), CharPredictedStateData.LocoState.Stand },
-        { Animator.StringToHash("AnimState_Run"), CharPredictedStateData.LocoState.GroundMove },
-        { Animator.StringToHash("AnimState_Jump"), CharPredictedStateData.LocoState.Jump },
-        { Animator.StringToHash("AnimState_DoubleJump"), CharPredictedStateData.LocoState.DoubleJump },
-        { Animator.StringToHash("AnimState_InAir"), CharPredictedStateData.LocoState.InAir },
+    readonly static Dictionary<int, CharacterPredictedData.LocoState> s_charLocoStateHashes = new Dictionary<int, CharacterPredictedData.LocoState>() {
+        { Animator.StringToHash("AnimState_Stand"), CharacterPredictedData.LocoState.Stand },
+        { Animator.StringToHash("AnimState_Run"), CharacterPredictedData.LocoState.GroundMove },
+        { Animator.StringToHash("AnimState_Jump"), CharacterPredictedData.LocoState.Jump },
+        { Animator.StringToHash("AnimState_DoubleJump"), CharacterPredictedData.LocoState.DoubleJump },
+        { Animator.StringToHash("AnimState_InAir"), CharacterPredictedData.LocoState.InAir },
     };
 
-    readonly static Dictionary<int, CharPredictedStateData.Action> s_actionStateHashes = new Dictionary<int, CharPredictedStateData.Action>() {
-        { Animator.StringToHash("Action_None"), CharPredictedStateData.Action.None },
-        { Animator.StringToHash("Action_PrimaryFire"), CharPredictedStateData.Action.PrimaryFire },
-        { Animator.StringToHash("Action_SecondaryFire"), CharPredictedStateData.Action.SecondaryFire },
-        { Animator.StringToHash("Action_Reloading"), CharPredictedStateData.Action.Reloading },
-        { Animator.StringToHash("Action_Melee"), CharPredictedStateData.Action.Melee },
+    readonly static Dictionary<int, CharacterPredictedData.Action> s_actionStateHashes = new Dictionary<int, CharacterPredictedData.Action>() {
+        { Animator.StringToHash("Action_None"), CharacterPredictedData.Action.None },
+        { Animator.StringToHash("Action_PrimaryFire"), CharacterPredictedData.Action.PrimaryFire },
+        { Animator.StringToHash("Action_SecondaryFire"), CharacterPredictedData.Action.SecondaryFire },
+        { Animator.StringToHash("Action_Reloading"), CharacterPredictedData.Action.Reloading },
+        { Animator.StringToHash("Action_Melee"), CharacterPredictedData.Action.Melee },
     };
 
-    readonly static Dictionary<int, CharPredictedStateData.Action> s_actionTriggerHashes = new Dictionary<int, CharPredictedStateData.Action>() {
-        { Animator.StringToHash("TriggerAction_None"), CharPredictedStateData.Action.None },
-        { Animator.StringToHash("TriggerAction_PrimaryFire"), CharPredictedStateData.Action.PrimaryFire },
-        { Animator.StringToHash("TriggerAction_SecondaryFire"), CharPredictedStateData.Action.SecondaryFire },
-        { Animator.StringToHash("TriggerAction_Reloading"), CharPredictedStateData.Action.Reloading },
-        { Animator.StringToHash("TriggerAction_Melee"), CharPredictedStateData.Action.Melee },
+    readonly static Dictionary<int, CharacterPredictedData.Action> s_actionTriggerHashes = new Dictionary<int, CharacterPredictedData.Action>() {
+        { Animator.StringToHash("TriggerAction_None"), CharacterPredictedData.Action.None },
+        { Animator.StringToHash("TriggerAction_PrimaryFire"), CharacterPredictedData.Action.PrimaryFire },
+        { Animator.StringToHash("TriggerAction_SecondaryFire"), CharacterPredictedData.Action.SecondaryFire },
+        { Animator.StringToHash("TriggerAction_Reloading"), CharacterPredictedData.Action.Reloading },
+        { Animator.StringToHash("TriggerAction_Melee"), CharacterPredictedData.Action.Melee },
     };
 
     readonly int m_sprintState = Animator.StringToHash("State_Sprint");
@@ -179,7 +179,7 @@ public class CharacterAnimatorController {
     bool m_resetSupported;
     
 
-    CharPredictedStateData.Action m_lastActionTriggered = CharPredictedStateData.Action.None;
+    CharacterPredictedData.Action m_lastActionTriggered = CharacterPredictedData.Action.None;
     int lastActionTick;
 }
 

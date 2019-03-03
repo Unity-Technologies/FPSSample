@@ -14,10 +14,15 @@ Shader "Hidden/HDRenderPipeline/Material/Decal/DecalNormalBuffer"
         #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-        #include "Decal.hlsl"
-        #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/NormalBuffer.hlsl"
+		#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/Decal.hlsl"
+		#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/NormalBuffer.hlsl"
 
+#if defined(PLATFORM_NEEDS_UNORM_UAV_SPECIFIER) && defined(PLATFORM_SUPPORTS_EXPLICIT_BINDING)
+        // Explicit binding is needed on D3D since we bind the UAV to slot 1 and we don't have a colour RT bound to fix a D3D warning.
+        RW_TEXTURE2D(unorm float4, _NormalBuffer) : register(u1);
+#else
         RW_TEXTURE2D(float4, _NormalBuffer);
+#endif
 
         struct Attributes
         {
@@ -42,7 +47,7 @@ Shader "Hidden/HDRenderPipeline/Material/Decal/DecalNormalBuffer"
 
         // Force the stencil test before the UAV write.
         [earlydepthstencil]
-        float4 FragNearest(Varyings input) : SV_Target
+        void FragNearest(Varyings input)
         {
             FETCH_DBUFFER(DBuffer, _DBufferTexture, input.texcoord * _ScreenSize.xy);
             DecalSurfaceData decalSurfaceData;
@@ -54,7 +59,6 @@ Shader "Hidden/HDRenderPipeline/Material/Decal/DecalNormalBuffer"
             normalData.normalWS.xyz = normalize(normalData.normalWS.xyz * decalSurfaceData.normalWS.w + decalSurfaceData.normalWS.xyz);
             EncodeIntoNormalBuffer(normalData, uint2(0, 0), GBufferNormal);
             _NormalBuffer[input.texcoord * _ScreenSize.xy] = GBufferNormal;
-            return float4(0, 0, 0, 0); // normal buffer is written into as a RWTexture
         }
 
     ENDHLSL

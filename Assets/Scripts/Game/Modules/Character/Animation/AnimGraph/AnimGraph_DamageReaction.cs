@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityEngine.Profiling;
 
 [CreateAssetMenu(fileName = "DamageReaction", menuName = "FPS Sample/Animation/AnimGraph/DamageReaction")]
 public class AnimGraph_DamageReaction : AnimGraphAsset
@@ -65,7 +66,9 @@ public class AnimGraph_DamageReaction : AnimGraphAsset
     
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
-            var animState = m_EntityManager.GetComponentData<PresentationState>(m_AnimStateOwner);
+            Profiler.BeginSample("DamageReaction.Apply");
+
+            var animState = m_EntityManager.GetComponentData<CharacterInterpolatedData>(m_AnimStateOwner);
             if (animState.damageTick > m_lastReactionTick)
             {
                 // Handle first update
@@ -107,6 +110,8 @@ public class AnimGraph_DamageReaction : AnimGraphAsset
                 }
 
             }
+            
+            Profiler.EndSample();
         }
     
         AnimGraph_DamageReaction m_settings;

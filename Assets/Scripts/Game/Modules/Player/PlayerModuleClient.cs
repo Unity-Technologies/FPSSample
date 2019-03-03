@@ -56,43 +56,50 @@ public class PlayerModuleClient
 
     public void SampleInput(bool userInputEnabled, float deltaTime, int renderTick)
     {
+        SampleInput(m_LocalPlayer, userInputEnabled, deltaTime, renderTick);
+    }
+
+    public static void SampleInput(LocalPlayer localPlayer, bool userInputEnabled, float deltaTime, int renderTick)
+    {
         
         // Only sample input when cursor is locked to avoid affecting multiple clients running on same machine (TODO: find better handling of selected window)
         if (userInputEnabled)
-            Game.inputSystem.AccumulateInput(ref m_LocalPlayer.command, deltaTime);
+            Game.inputSystem.AccumulateInput(ref localPlayer.command, deltaTime);
 
         if (m_debugMove.IntValue == 1)
         {
-            m_LocalPlayer.command.moveMagnitude = 1;
-            m_LocalPlayer.command.lookYaw += 70 * deltaTime;
+            localPlayer.command.moveMagnitude = 1;
+            localPlayer.command.lookYaw += 70 * deltaTime;
         }
 
         if (m_debugMove.IntValue == 2)
         {
-            m_debugMoveDuration += deltaTime;
+            localPlayer.m_debugMoveDuration += deltaTime;
 
             var fireDuration = 2.0f;
             var jumpDuration = 1.0f;
             var maxTurn = 70.0f;
 
-            if (m_debugMoveDuration > m_debugMovePhaseDuration)
+            if (localPlayer.m_debugMoveDuration > localPlayer.m_debugMovePhaseDuration)
             {
-                m_debugMoveDuration = 0;
-                m_debugMovePhaseDuration = 4 + 2*Random.value;
-                m_debugMoveTurnSpeed = maxTurn *0.9f + Random.value * maxTurn * 0.1f;
+                localPlayer.m_debugMoveDuration = 0;
+                localPlayer.m_debugMovePhaseDuration = 4 + 2*Random.value;
+                localPlayer.m_debugMoveTurnSpeed = maxTurn *0.9f + Random.value * maxTurn * 0.1f;
 
-                m_debugMoveMag = Random.value > 0.5f ? 1.0f : 0.0f;
+                localPlayer.m_debugMoveMag = Random.value > 0.5f ? 1.0f : 0.0f;
             }
 
-            m_LocalPlayer.command.moveMagnitude = m_debugMoveMag;
-            m_LocalPlayer.command.lookYaw += m_debugMoveTurnSpeed * deltaTime;
-            m_LocalPlayer.command.lookYaw = m_LocalPlayer.command.lookYaw % 360;
-            while (m_LocalPlayer.command.lookYaw < 0.0f) m_LocalPlayer.command.lookYaw += 360.0f;
-            m_LocalPlayer.command.primaryFire = m_debugMoveDuration < fireDuration;
-            m_LocalPlayer.command.jump = m_debugMoveDuration < jumpDuration;
+            localPlayer.command.moveMagnitude = localPlayer.m_debugMoveMag;
+            localPlayer.command.lookYaw += localPlayer.m_debugMoveTurnSpeed * deltaTime;
+            localPlayer.command.lookYaw = localPlayer.command.lookYaw % 360;
+            while (localPlayer.command.lookYaw < 0.0f) 
+                localPlayer.command.lookYaw += 360.0f;
+            localPlayer.command.buttons.Set(UserCommand.Button.PrimaryFire,localPlayer.m_debugMoveDuration < fireDuration);
+            localPlayer.command.buttons.Set(UserCommand.Button.SecondaryFire,localPlayer.command.buttons.IsSet(UserCommand.Button.PrimaryFire));
+            localPlayer.command.buttons.Set(UserCommand.Button.Jump,localPlayer.m_debugMoveDuration < jumpDuration);
         }
             
-        m_LocalPlayer.command.renderTick = renderTick; 
+        localPlayer.command.renderTick = renderTick; 
     }
 
     public void ResetInput(bool userInputEnabled)
@@ -109,13 +116,15 @@ public class PlayerModuleClient
     {
         if (m_LocalPlayer.playerState == null || m_LocalPlayer.playerState.controlledEntity == Entity.Null)
             return;
-       
+
+        var controlledEntity = m_LocalPlayer.playerState.controlledEntity;
         var commandComponent = m_world.GetEntityManager()
-            .GetComponentObject<UserCommandComponent>(m_LocalPlayer.playerState.controlledEntity);
+            .GetComponentData<UserCommandComponentData>(controlledEntity);
         if (commandComponent.resetCommandTick > commandComponent.lastResetCommandTick)
         {
             commandComponent.lastResetCommandTick = commandComponent.resetCommandTick;
-
+            m_world.GetEntityManager().SetComponentData(controlledEntity,commandComponent);
+            
             m_LocalPlayer.command.lookYaw = commandComponent.resetCommandLookYaw;
             m_LocalPlayer.command.lookPitch = commandComponent.resetCommandLookPitch;
         }
@@ -134,22 +143,26 @@ public class PlayerModuleClient
     
     public void StoreCommand(int tick)
     {
-        if (m_LocalPlayer.playerState == null)
+        StoreCommand(m_LocalPlayer, tick);
+    }
+    public static void StoreCommand(LocalPlayer localPlayer, int tick)
+    {
+        if (localPlayer.playerState == null)
             return;
 
-        m_LocalPlayer.command.checkTick = tick;
+        localPlayer.command.checkTick = tick;
 
-        var lastBufferTick = m_LocalPlayer.commandBuffer.LastTick();
+        var lastBufferTick = localPlayer.commandBuffer.LastTick();
         if (tick != lastBufferTick && tick != lastBufferTick + 1)
         {
-            m_LocalPlayer.commandBuffer.Clear();
+            localPlayer.commandBuffer.Clear();
             GameDebug.Log(string.Format("Trying to store tick:{0} but last buffer tick is:{1}. Clearing buffer", tick, lastBufferTick));
         }
         
         if (tick == lastBufferTick)
-            m_LocalPlayer.commandBuffer.Set(ref m_LocalPlayer.command, tick);
+            localPlayer.commandBuffer.Set(ref localPlayer.command, tick);
         else
-            m_LocalPlayer.commandBuffer.Add(ref m_LocalPlayer.command, tick);
+            localPlayer.commandBuffer.Add(ref localPlayer.command, tick);
     }
 
     // Fetches command for a tick and stores it in the UserCommandComponent
@@ -159,8 +172,7 @@ public class PlayerModuleClient
         if (m_LocalPlayer.controlledEntity == Entity.Null)
             return;
       
-        var userCommand = m_world.GetEntityManager().GetComponentObject<UserCommandComponent>(m_LocalPlayer.controlledEntity);
-        GameDebug.Assert(userCommand != null);
+        var userCommand = m_world.GetEntityManager().GetComponentData<UserCommandComponentData>(m_LocalPlayer.controlledEntity);
 
         var command = UserCommand.defaultCommand;
         var found = m_LocalPlayer.commandBuffer.TryGetValue(tick, ref command);
@@ -168,8 +180,10 @@ public class PlayerModuleClient
         
         // Normally we can expect commands to be present, but if client has done hardcatchup commands might not have been generated yet
         // so we just use the defaultCommand
-        userCommand.prevCommand = userCommand.command;
         userCommand.command = command;
+
+        m_world.GetEntityManager()
+            .SetComponentData<UserCommandComponentData>(m_LocalPlayer.controlledEntity, userCommand);
     }
 
     public bool HasCommands(int firstTick, int lastTick)
@@ -181,16 +195,28 @@ public class PlayerModuleClient
 
     public void SendCommand(int tick)
     {
-        if (m_LocalPlayer.playerState == null)
+        SendCommand(m_LocalPlayer, tick);
+    }
+    public static void SendCommand(LocalPlayer localPlayer, int tick)
+    {
+        if (localPlayer.playerState == null)
             return;
 
         var command =  UserCommand.defaultCommand;
-        var commandValid = m_LocalPlayer.commandBuffer.TryGetValue(tick, ref command);        
+        var commandValid = localPlayer.commandBuffer.TryGetValue(tick, ref command);        
         if (commandValid)
         {
-            m_LocalPlayer.networkClient.QueueCommand(tick, (ref NetworkWriter writer) =>
+            var serializeContext = new SerializeContext
             {
-                command.Serialize(ref writer, null);    
+                entityManager = null,
+                entity = Entity.Null,
+                refSerializer = null,
+                tick = tick
+            };
+            
+            localPlayer.networkClient.QueueCommand(tick, (ref NetworkWriter writer) =>
+            {
+                command.Serialize(ref serializeContext, ref writer);    
             });
         }
     }

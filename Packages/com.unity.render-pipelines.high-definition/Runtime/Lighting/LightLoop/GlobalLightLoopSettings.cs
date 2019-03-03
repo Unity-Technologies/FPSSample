@@ -75,5 +75,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool planarReflectionCacheCompressed = false;
         public SkyResolution skyReflectionSize = SkyResolution.SkyResolution256;
         public LayerMask skyLightingOverrideLayerMask = 0;
+        public bool supportFabricConvolution = false;
+
+        public int maxDirectionalLightsOnScreen = 16;
+        public int maxPunctualLightsOnScreen    = 512;
+        public int maxAreaLightsOnScreen        = 64;
+        public int maxEnvLightsOnScreen         = 64;
+        public int maxDecalsOnScreen            = 512;
     }
 }

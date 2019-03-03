@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace UnityEditor.Rendering.PostProcessing
 {
-    public sealed class CurveEditor
+    internal sealed class CurveEditor
     {
         #region Enums
 

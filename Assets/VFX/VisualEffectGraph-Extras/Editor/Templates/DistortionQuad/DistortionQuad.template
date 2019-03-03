@@ -1,0 +1,80 @@
+{
+	SubShader
+	{	
+		Cull Off
+		
+		${VFXInclude("Shaders/VFXParticleHeader.template")}
+
+			// Forward pass
+			Pass
+			{		
+				Name "Distortion" // Name is not used
+				Tags { "LightMode" = "DistortionVectors" } // This will be only for transparent object based on the RenderQueue index
+				Blend One One
+				HLSLPROGRAM
+				#pragma target 4.5
+				
+				struct ps_input
+				{
+					float4 pos : SV_POSITION;
+					#if USE_FLIPBOOK_INTERPOLATION
+					float4 uv : TEXCOORD0;
+					#else
+					float2 uv : TEXCOORD0;	
+					#endif
+
+					#if USE_SOFT_PARTICLE || USE_ALPHA_TEST || USE_FLIPBOOK_INTERPOLATION || VFX_USE_ALPHA_CURRENT
+					// x: inverse soft particles fade distance
+					// y: alpha
+					// z: frame blending factor
+					nointerpolation float3 builtInInterpolants : TEXCOORD1;
+					#endif
+
+					// x: horizontal value
+					// y: vertical value
+					// z: roughness modifier
+					nointerpolation float3 distortionInterpolants : TEXCOORD2;
+
+					#if USE_SOFT_PARTICLE
+					float4 projPos : TEXCOORD3;		
+					#endif
+				};
+				
+				struct ps_output
+				{
+					float4 distortion : SV_Target0;
+				};
+
+				#define VFX_VARYING_PS_INPUTS ps_input
+				#define VFX_VARYING_POSCS pos
+				#define VFX_VARYING_POSSS projPos
+				#define VFX_VARYING_INVSOFTPARTICLEFADEDISTANCE builtInInterpolants.x
+				#define VFX_VARYING_ALPHA builtInInterpolants.y
+				#define VFX_VARYING_FRAMEBLEND builtInInterpolants.z
+				#define VFX_VARYING_UV uv
+				
+
+				${VFXBegin:VFXVertexAdditionalProcess}
+					${VFXLoadParameter:{Intensity}}
+					${VFXLoadParameter:{Roughness}}
+					o.distortionInterpolants.xy = Intensity;
+					o.distortionInterpolants.z = Roughness;
+				${VFXEnd}
+
+				${VFXInclude("Shaders/ParticleQuads/Pass.template")}	
+					
+				#pragma fragment frag
+				ps_output frag(ps_input i)
+				{
+					ps_output o = (ps_output)0;
+					float3 sampled = VFXGetTextureColor(VFX_SAMPLER(DistortionMap),i).xyz;
+					sampled.xy = sampled.xy * 2.0 - 1.0;
+					o.distortion.xyw = i.VFX_VARYING_ALPHA * sampled * i.distortionInterpolants;
+					o.distortion.z = 1.0;
+					return o;
+				}
+				ENDHLSL
+			}
+
+	}
+}

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class OptionToggle : OptionUI
 {
-    public Text title;
+    public TMPro.TextMeshProUGUI title;
     public Toggle toggle;
 
     public override void UpdateFromConfigVar()

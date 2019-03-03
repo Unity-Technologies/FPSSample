@@ -7,44 +7,6 @@ using UnityEditor;
 using UnityEngine.Profiling;
 
 
-#if UNITY_EDITOR
-[InitializeOnLoad]
-// Class makes sure we have world when starting game in editor (GameObjectEntities in scene needs world in OnEnable)   
-class EditorWorldCreator
-{
-    static EditorWorldCreator()
-    {
-        EditorApplication.playModeStateChanged -= EditorApplicationOnPlayModeStateChanged;
-        EditorApplication.playModeStateChanged += EditorApplicationOnPlayModeStateChanged;
-
-        CreateWorld();
-    }
-
-    private static void EditorApplicationOnPlayModeStateChanged(PlayModeStateChange change)
-    {
-        if (change == PlayModeStateChange.ExitingEditMode) 
-            ShutdownWorld();
-    }
-
-    static void CreateWorld()
-    {
-        if(World.Active == null)
-            World.Active = new World("EditorWorld"); 
-    }
-
-    static void ShutdownWorld()
-    {
-        if (World.Active != null)
-        {
-            World.Active.Dispose();
-            World.Active = null;
-        }
-    }
-}
-#endif        
-
-
-
 public struct DespawningEntity : IComponentData
 {
 }
@@ -104,24 +66,19 @@ public class GameWorld
     
     public GameWorld(string name = "world")
     {
+        GameDebug.Log("GameWorld " + name + " initializing");
+        
         if (gameobjectHierarchy.IntValue == 1)
         {
             m_sceneRoot = new GameObject(name);
             GameObject.DontDestroyOnLoad(m_sceneRoot);
         }
 
-#if UNITY_EDITOR
-        // When running in editor the world could be created, so we silently keep it.
         m_ECSWorld = World.Active != null ? World.Active : new World(name); 
-#else
-        GameDebug.Assert(World.Active == null);
-        m_ECSWorld = new World(name);
-#endif        
-        
-
         World.Active = m_ECSWorld;
+        
         m_EntityManager = m_ECSWorld.GetOrCreateManager<EntityManager>();
-
+        
         GameDebug.Assert(m_EntityManager.IsCreated);
 
         worldTime.tickRate = 60;
@@ -135,19 +92,21 @@ public class GameWorld
 
     public void Shutdown()
     {
+        GameDebug.Log("GameWorld " + m_ECSWorld.Name + " shutting down");
+        
         foreach (var entity in m_dynamicEntities)
         {
             if (m_DespawnRequests.Contains(entity))
                 continue;
 
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
             if (entity == null)
                 continue;
 
             var gameObjectEntity = entity.GetComponent<GameObjectEntity>();
             if (gameObjectEntity != null && !m_EntityManager.Exists(gameObjectEntity.Entity))
                 continue;
-#endif            
+//#endif            
             
             RequestDespawn(entity);
         }
@@ -172,8 +131,11 @@ public class GameWorld
         sceneEntities.Sort((a, b) => ByteArrayComp.instance.Compare(a.netID, b.netID));
         for (int i = 0; i < sceneEntities.Count; i++)
         {
-            GameDebug.Assert(sceneEntities[i].GetComponent<SceneEntity>() != null, "Entity {0} has replciated component but does not have scene entity",sceneEntities[i]);
-            sceneEntities[i].id = i;
+            var gameObjectEntity = sceneEntities[i].GetComponent<GameObjectEntity>();
+
+            var replicatedEntityData = gameObjectEntity.EntityManager.GetComponentData<ReplicatedEntityData>(gameObjectEntity.Entity);
+            replicatedEntityData.id = i;
+            gameObjectEntity.EntityManager.SetComponentData(gameObjectEntity.Entity,replicatedEntityData);
         }
         m_sceneEntities.AddRange(sceneEntities);
     }

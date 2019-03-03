@@ -4,7 +4,7 @@ using UnityEngine.Rendering.PostProcessing;
 namespace UnityEditor.Rendering.PostProcessing
 {
     [PostProcessEditor(typeof(DepthOfField))]
-    public sealed class DepthOfFieldEditor : PostProcessEffectEditor<DepthOfField>
+    internal sealed class DepthOfFieldEditor : PostProcessEffectEditor<DepthOfField>
     {
         SerializedParameterOverride m_FocusDistance;
         SerializedParameterOverride m_Aperture;

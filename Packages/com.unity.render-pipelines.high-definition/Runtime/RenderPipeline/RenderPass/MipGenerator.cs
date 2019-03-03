@@ -109,6 +109,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Note: smaller mips are excluded as we don't need them and the gaussian compute works
             // on 8x8 blocks
             // TODO: Could be further optimized by merging the smaller mips to reduce the amount of dispatches
+            // Specifically, levels 2x2 and 1x1 (or their variations, depending on the aspect ratio) should not be used.
             while (srcMipWidth >= 8 || srcMipHeight >= 8)
             {
                 int dstMipWidth  = Mathf.Max(1, srcMipWidth  >> 1);
@@ -141,7 +142,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 srcMipHeight = srcMipHeight >> 1;
             }
 
-            return srcMipLevel - 1;
+            return srcMipLevel + 1;
         }
     }
 }

@@ -29,6 +29,14 @@ public class ConfigVar
         s_Initialized = true;
     }
 
+    public static void ResetAllToDefault()
+    {
+        foreach(var v in ConfigVars)
+        {
+            v.Value.ResetToDefault();
+        }
+    }
+
     public static void SaveChangedVars(string filename)
     {
         if ((DirtyFlags & Flags.Save) == Flags.None)
@@ -78,11 +86,12 @@ public class ConfigVar
         User = 0x10,      // User created variable
     }
 
-    public ConfigVar(string name, string description, Flags flags = Flags.None)
+    public ConfigVar(string name, string description, string defaultValue, Flags flags = Flags.None)
     {
         this.name = name;
         this.flags = flags;
         this.description = description;
+        this.defaultValue = defaultValue;
     }
 
     public virtual string Value
@@ -142,8 +151,8 @@ public class ConfigVar
                         GameDebug.LogError("ConfigVars (" + name + ") should not be initialized from code; just marked with attribute");
                         continue;
                     }
-                    cvar = new ConfigVar(name, attr.Description, attr.Flags);
-                    cvar.Value = attr.DefaultValue;
+                    cvar = new ConfigVar(name, attr.Description, attr.DefaultValue, attr.Flags);
+                    cvar.ResetToDefault();
                     RegisterConfigVar(cvar);
                     field.SetValue(null, cvar);
                 }
@@ -154,6 +163,11 @@ public class ConfigVar
         DirtyFlags = Flags.None;
     }
 
+    void ResetToDefault()
+    {
+        this.Value = defaultValue;
+    }
+
     public bool ChangeCheck()
     {
         if (!changed)
@@ -162,9 +176,10 @@ public class ConfigVar
         return true;
     }
 
-    public string name;
-    public string description;
-    public Flags flags;
+    public readonly string name;
+    public readonly string description;
+    public readonly string defaultValue;
+    public readonly Flags flags;
     public bool changed;
 
     string _stringValue;

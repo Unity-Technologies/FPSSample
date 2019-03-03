@@ -26,7 +26,7 @@ Shader "Hidden/ScriptableRenderPipeline/ShadowClear"
                 return GetFullScreenTriangleVertexPosition( vertexID, UNITY_RAW_FAR_CLIP_VALUE );
             }
 
-            float4 Frag() : SV_Target{ return 0.0.xxxx; }
+            void Frag()  { }
 
 
             ENDHLSL

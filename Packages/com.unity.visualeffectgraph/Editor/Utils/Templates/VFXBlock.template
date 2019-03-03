@@ -1,0 +1,73 @@
+﻿using UnityEngine;
+using System.Collections.Generic;
+
+namespace UnityEditor.VFX.Block
+{
+    // %CLASSNAME% nodeblock.
+    // Use VFXInfo Class Attribute to make it appear in the menu under given category.
+    [VFXInfo(category = "Category")]
+    class %CLASSNAME% : VFXBlock
+    {
+        // Implement Class Members using [VFXSetting] PropertyAttribute to add "unconnectable"
+        // properties to the nodeblock. Use these properties to alter yield attributes, yield parameters,
+        // and source code generation.
+        // [VFXSetting]
+        // public bool MyBoolean = false; 
+
+        // Name is the Block title, and can be dynamically generated.
+        public override string name { get { return "%CLASSNAME%"; } }
+
+        // Compatible Contexts enable your block to be used on one, some or all contexts.
+        public override VFXContextType compatibleContexts { get { return VFXContextType.kInitAndUpdateAndOutput; } }
+
+        // Compatible Data enable your block to be used on one, some or all Data Types
+        public override VFXDataType compatibleData { get { return VFXDataType.kParticle; } }
+
+        // All attributes that can be read, written or both by the nodeblock
+        public override IEnumerable<VFXAttributeInfo> attributes
+        {
+            get
+            {
+                // Add statements such as the following example to access simulation attributes
+                // in your nodeblock source code. The following statement tells that we will need to
+                // read particle seed (for example if needing to use RAND functions). 
+                yield return new VFXAttributeInfo(VFXAttribute.Seed, VFXAttributeMode.ReadWrite);
+
+            }
+        }
+
+        // InputProperties subclass enumerates all connectable properties for the nodeblock
+        public class InputProperties
+        {
+            // Implement public members to be able to read them in the source, and connect them in the graph
+            // public Vector3 MyVector = new Vector3(0.0f, 1.0f, 0.0f);
+        }
+
+        // Source code is the actual code of your nodeblock where you can access properties, attributes and optionally parameters.
+        public override string source
+        {
+            get
+            {
+                string outSource = @"";
+                return outSource;
+            }
+        }
+
+        // ADVANCED : implement parameters override to extend the parameters sent to the nodeblock
+        // by default, keep it unimplemented to send automatically InputProperties members.
+        // Implement it if you need to send additional parameters to the nodeblock, for instance, deltaTime.
+        /*
+        public override IEnumerable<VFXNamedExpression> parameters
+        {
+            get
+            {
+                // this function gets all the InputProperties members and sends them to the node block
+                foreach (var p in GetExpressionsFromSlots(this)) yield return p;
+
+                // this statement enables using deltaTime builtin expressin in the nodeblock Source.
+                yield return new VFXNamedExpression(VFXBuiltInExpression.DeltaTime, "deltaTime");
+            }
+        }
+        */
+    }
+}

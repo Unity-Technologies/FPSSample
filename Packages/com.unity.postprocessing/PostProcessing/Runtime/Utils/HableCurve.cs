@@ -1,10 +1,12 @@
 namespace UnityEngine.Rendering.PostProcessing
 {
-    // Raw, mostly unoptimized implementation of Hable's artist-friendly tonemapping curve
-    // http://filmicworlds.com/blog/filmic-tonemapping-with-piecewise-power-curves/
+    /// <summary>
+    /// A raw implementation of John Hable's artist-friendly tonemapping curve.
+    /// See http://filmicworlds.com/blog/filmic-tonemapping-with-piecewise-power-curves/
+    /// </summary>
     public class HableCurve
     {
-        public class Segment
+        class Segment
         {
             public float offsetX;
             public float offsetY;
@@ -41,30 +43,62 @@ namespace UnityEngine.Rendering.PostProcessing
             internal float gamma;
         }
 
+        /// <summary>
+        /// The curve's white point.
+        /// </summary>
         public float whitePoint { get; private set; }
+
+        /// <summary>
+        /// The inverse of the curve's white point.
+        /// </summary>
         public float inverseWhitePoint { get; private set; }
-        public float x0 { get; private set; }
-        public float x1 { get; private set; }
 
-        public readonly Segment[] segments = new Segment[3];
+        internal float x0 { get; private set; }
+        internal float x1 { get; private set; }
 
+        // Toe, mid, shoulder
+        readonly Segment[] m_Segments = new Segment[3];
+
+        /// <summary>
+        /// Creates a new curve.
+        /// </summary>
         public HableCurve()
         {
             for (int i = 0; i < 3; i++)
-                segments[i] = new Segment();
+                m_Segments[i] = new Segment();
 
             uniforms = new Uniforms(this);
         }
 
+        /// <summary>
+        /// Evaluates a given point on the curve.
+        /// </summary>
+        /// <param name="x">The point within the curve to evaluate (on the horizontal axis)</param>
+        /// <returns>The value of the curve, at the point specified</returns>
         public float Eval(float x)
         {
             float normX = x * inverseWhitePoint;
             int index = (normX < x0) ? 0 : ((normX < x1) ? 1 : 2);
-            var segment = segments[index];
+            var segment = m_Segments[index];
             float ret = segment.Eval(normX);
             return ret;
         }
 
+        /// <summary>
+        /// Initializes the curve with given settings.
+        /// </summary>
+        /// <param name="toeStrength">Affects the transition between the toe and the mid section of
+        /// the curve. A value of 0 means no toe, a value of 1 means a very hard transition</param>
+        /// <param name="toeLength">Affects how much of the dynamic range is in the toe. With a
+        /// small value, the toe will be very short and quickly transition into the linear section,
+        /// and with a longer value having a longer toe</param>
+        /// <param name="shoulderStrength">Affects the transition between the mid section and the
+        /// shoulder of the curve. A value of 0 means no shoulder, a value of 1 means a very hard
+        /// transition</param>
+        /// <param name="shoulderLength">Affects how many F-stops (EV) to add to the dynamic range
+        /// of the curve</param>
+        /// <param name="shoulderAngle">Affects how much overshoot to add to the shoulder</param>
+        /// <param name="gamma">Applies a gamma function to the curve</param>
         public void Init(float toeStrength, float toeLength, float shoulderStrength, float shoulderLength, float shoulderAngle, float gamma)
         {
             var dstParams = new DirectParams();
@@ -152,7 +186,7 @@ namespace UnityEngine.Rendering.PostProcessing
                     return y0*scaleY + m_offsetY;
                 */
 
-                var midSegment = segments[1];
+                var midSegment = m_Segments[1];
                 midSegment.offsetX = -(b / m);
                 midSegment.offsetY = 0f;
                 midSegment.scaleX = 1f;
@@ -175,7 +209,7 @@ namespace UnityEngine.Rendering.PostProcessing
 
             // Toe section
             {
-                var toeSegment = segments[0];
+                var toeSegment = m_Segments[0];
                 toeSegment.offsetX = 0;
                 toeSegment.offsetY = 0f;
                 toeSegment.scaleX = 1f;
@@ -190,7 +224,7 @@ namespace UnityEngine.Rendering.PostProcessing
             // Shoulder section
             {
                 // Use the simple version that is usually too flat 
-                var shoulderSegment = segments[2];
+                var shoulderSegment = m_Segments[2];
 
                 float x0 = (1f + paramsCopy.overshootX) - paramsCopy.x1;
                 float y0 = (1f + paramsCopy.overshootY) - paramsCopy.y1;
@@ -211,17 +245,17 @@ namespace UnityEngine.Rendering.PostProcessing
             // skipped the overshoot part.
             {
                 // Evaluate shoulder at the end of the curve
-                float scale = segments[2].Eval(1f);
+                float scale = m_Segments[2].Eval(1f);
                 float invScale = 1f / scale;
 
-                segments[0].offsetY *= invScale;
-                segments[0].scaleY *= invScale;
+                m_Segments[0].offsetY *= invScale;
+                m_Segments[0].scaleY *= invScale;
 
-                segments[1].offsetY *= invScale;
-                segments[1].scaleY *= invScale;
+                m_Segments[1].offsetY *= invScale;
+                m_Segments[1].scaleY *= invScale;
 
-                segments[2].offsetY *= invScale;
-                segments[2].scaleY *= invScale;
+                m_Segments[2].offsetY *= invScale;
+                m_Segments[2].scaleY *= invScale;
             }
         }
 
@@ -259,9 +293,9 @@ namespace UnityEngine.Rendering.PostProcessing
             return ret;
         }
 
-        //
-        // Uniform building for ease of use
-        //
+        /// <summary>
+        /// Utility class to retrieve curve values for shader evaluation.
+        /// </summary>
         public class Uniforms
         {
             HableCurve parent;
@@ -271,66 +305,90 @@ namespace UnityEngine.Rendering.PostProcessing
                 this.parent = parent;
             }
 
+            /// <summary>
+            /// A pre-built <see cref="Vector4"/> holding: <c>(inverseWhitePoint, x0, x1, 0)</c>.
+            /// </summary>
             public Vector4 curve
             {
                 get { return new Vector4(parent.inverseWhitePoint, parent.x0, parent.x1, 0f); }
             }
 
+            /// <summary>
+            /// A pre-built <see cref="Vector4"/> holding: <c>(toe.offsetX, toe.offsetY, toe.scaleX, toe.scaleY)</c>.
+            /// </summary>
             public Vector4 toeSegmentA
             {
                 get
                 {
-                    var toe = parent.segments[0];
+                    var toe = parent.m_Segments[0];
                     return new Vector4(toe.offsetX, toe.offsetY, toe.scaleX, toe.scaleY);
                 }
             }
 
+            /// <summary>
+            /// A pre-built <see cref="Vector4"/> holding: <c>(toe.lnA, toe.B, 0, 0)</c>.
+            /// </summary>
             public Vector4 toeSegmentB
             {
                 get
                 {
-                    var toe = parent.segments[0];
+                    var toe = parent.m_Segments[0];
                     return new Vector4(toe.lnA, toe.B, 0f, 0f);
                 }
             }
 
+            /// <summary>
+            /// A pre-built <see cref="Vector4"/> holding: <c>(mid.offsetX, mid.offsetY, mid.scaleX, mid.scaleY)</c>.
+            /// </summary>
             public Vector4 midSegmentA
             {
                 get
                 {
-                    var mid = parent.segments[1];
+                    var mid = parent.m_Segments[1];
                     return new Vector4(mid.offsetX, mid.offsetY, mid.scaleX, mid.scaleY);
                 }
             }
 
+            /// <summary>
+            /// A pre-built <see cref="Vector4"/> holding: <c>(mid.lnA, mid.B, 0, 0)</c>.
+            /// </summary>
             public Vector4 midSegmentB
             {
                 get
                 {
-                    var mid = parent.segments[1];
+                    var mid = parent.m_Segments[1];
                     return new Vector4(mid.lnA, mid.B, 0f, 0f);
                 }
             }
 
+            /// <summary>
+            /// A pre-built <see cref="Vector4"/> holding: <c>(toe.offsetX, toe.offsetY, toe.scaleX, toe.scaleY)</c>.
+            /// </summary>
             public Vector4 shoSegmentA
             {
                 get
                 {
-                    var sho = parent.segments[2];
+                    var sho = parent.m_Segments[2];
                     return new Vector4(sho.offsetX, sho.offsetY, sho.scaleX, sho.scaleY);
                 }
             }
 
+            /// <summary>
+            /// A pre-built <see cref="Vector4"/> holding: <c>(sho.lnA, sho.B, 0, 0)</c>.
+            /// </summary>
             public Vector4 shoSegmentB
             {
                 get
                 {
-                    var sho = parent.segments[2];
+                    var sho = parent.m_Segments[2];
                     return new Vector4(sho.lnA, sho.B, 0f, 0f);
                 }
             }
         }
 
+        /// <summary>
+        /// The builtin <see cref="Uniforms"/> instance for this curve.
+        /// </summary>
         public readonly Uniforms uniforms;
     }
 }

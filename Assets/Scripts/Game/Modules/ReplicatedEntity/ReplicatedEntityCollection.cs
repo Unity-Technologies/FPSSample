@@ -6,242 +6,18 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-public interface IPredictedDataHandler
-{
-    void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer);
-    void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick);
-    void Rollback();
-    
-#if UNITY_EDITOR
-    Entity GetEntity();
-    bool HasServerState(int tick);
-    object GetServerState(int tick);
-    void StorePredictedState(int sampleIndex, int predictionIndex);
-    object GetPredictedState(int sampleIndex, int predictionIndex);
-    bool VerifyPrediction(int sampleIndex, int tick);
-#endif
-}
 
-public interface IInterpolatedDataHandler 
-{
-    void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer);
-    void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick);
-    void Interpolate(GameTime time);
-}
-
-class SerializedComponentDataHandler<T> : INetSerialized  
-    where T : struct, INetSerialized, IComponentData    
-{
-    protected EntityManager entityManager;
-    protected Entity entity;
-
-    public SerializedComponentDataHandler(EntityManager entityManager, Entity entity)
-    {
-        this.entityManager = entityManager;
-        this.entity = entity;
-    }
-
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
-    {
-        var state = entityManager.GetComponentData<T>(entity);
-        state.Serialize(ref writer, refSerializer);
-    }
-
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
-    {
-        var state = entityManager.GetComponentData<T>(entity);
-        state.Deserialize(ref reader, refSerializer, tick);
-        entityManager.SetComponentData(entity, state);
-    }
-}
-
-
-class NetworkPredictedDataHandler<T> : IPredictedDataHandler  
-    where T : struct, INetPredicted<T>, IComponentData    
-{
-    protected EntityManager entityManager;
-    protected Entity entity;
-    private T m_lastServerState;
-
-#if UNITY_EDITOR    
-    SparseTickBuffer serverStateTicks;
-    T[] serverStates;
-
-//    SparseTickBuffer predictedStateTicks;
-    T[] predictedStates;
-#endif      
-    
-    public NetworkPredictedDataHandler(EntityManager entityManager, Entity entity)
-    {
-        this.entityManager = entityManager;
-        this.entity = entity;
-        
-#if UNITY_EDITOR    
-        serverStateTicks = new SparseTickBuffer(ReplicatedEntityCollection.HistorySize);
-        serverStates = new T[ReplicatedEntityCollection.HistorySize];
-        
-//        predictedStateTicks = new SparseTickBuffer(ReplicatedEntityCollection.HistorySize);
-        predictedStates = new T[ReplicatedEntityCollection.HistorySize*ReplicatedEntityCollection.PredictionSize]; 
-#endif 
-    }
-
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
-    {
-        var state = entityManager.GetComponentData<T>(entity);
-        state.Serialize(ref writer, refSerializer);
-    }
-
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
-    {
-        m_lastServerState.Deserialize(ref reader, refSerializer, tick);
-        
-#if UNITY_EDITOR
-        if (ReplicatedEntityCollection.SampleHistory)
-        {
-            var index = serverStateTicks.GetIndex((uint)tick);
-            if(index == -1)                
-                index = serverStateTicks.Register((uint)tick);
-            serverStates[index] = m_lastServerState;
-        }
-#endif          
-    }
-
-    public void Rollback()
-    {
-//        GameDebug.Log("Rollback:" + m_lastServerState); 
-        entityManager.SetComponentData(entity, m_lastServerState);
-    }
-    
-#if UNITY_EDITOR
-
-    public Entity GetEntity()
-    {
-        return entity;
-    }
-
-    public object GetServerState(int tick)
-    {
-        var index = serverStateTicks.GetIndex((uint)tick);
-        if (index == -1)
-            return null;
-
-        return serverStates[index];
-    }
-
-    public bool HasServerState(int tick)
-    {
-        var index = serverStateTicks.GetIndex((uint)tick);
-        return index != -1;
-    }
-
-    public void StorePredictedState(int sampleIndex, int predictionIndex)
-    {
-        if (!ReplicatedEntityCollection.SampleHistory)
-            return;
-
-        if (predictionIndex >= ReplicatedEntityCollection.PredictionSize)
-            return;
-
-        var index = sampleIndex * ReplicatedEntityCollection.PredictionSize + predictionIndex;
-
-        var state = entityManager.GetComponentData<T>(entity);
-        predictedStates[index] = state;
-    }
-
-    public object GetPredictedState(int sampleIndex, int predictionIndex)
-    {
-        if (predictionIndex >= ReplicatedEntityCollection.PredictionSize)
-            return null;
-
-        var index = sampleIndex * ReplicatedEntityCollection.PredictionSize + predictionIndex;
-        return predictedStates[index];
-    }
-
-    public bool VerifyPrediction(int sampleIndex, int tick)
-    {
-        var serverIndex = serverStateTicks.GetIndex((uint)tick);
-        if (serverIndex == -1)
-            return true;
-
-        var predictedIndex = sampleIndex * ReplicatedEntityCollection.PredictionSize;
-        return serverStates[serverIndex].VerifyPrediction(ref predictedStates[predictedIndex]);
-    }
-
-#endif
-}
-
-
-class NetworkInterpolatedDataHandler<T> : IInterpolatedDataHandler  
-    where T : struct, INetInterpolated<T>, IComponentData    
-{
-    protected EntityManager entityManager;
-    protected Entity entity;
-    TickStateSparseBuffer<T> stateHistory = new TickStateSparseBuffer<T>(32);
-
-    public NetworkInterpolatedDataHandler(EntityManager entityManager, Entity entity)
-    {
-        this.entityManager = entityManager;
-        this.entity = entity;
-    }
-
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
-    {
-        var state = entityManager.GetComponentData<T>(entity);
-        state.Serialize(ref writer, refSerializer);
-    }
-
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
-    {
-        var state = new T();
-        state.Deserialize(ref reader, refSerializer, tick);
-        stateHistory.Add(tick, state);
-    }
-
-    public void Interpolate(GameTime interpTime)
-    {
-
-        T state = new T();
-
-        if (stateHistory.Count > 0)
-        {
-            int lowIndex = 0, highIndex = 0;
-            float interpVal = 0;
-            var interpValid = stateHistory.GetStates(interpTime.tick, interpTime.TickDurationAsFraction, ref lowIndex, ref highIndex, ref interpVal);
-            
-            if (interpValid)
-            {
-                var prevState = stateHistory[lowIndex];
-                var nextState = stateHistory[highIndex];
-                state.Interpolate(ref prevState, ref nextState, interpVal);
-            }
-            else
-            {
-                state = stateHistory.Last();
-            }
-        }
-        
-        entityManager.SetComponentData(entity, state);
-    }
-}
 
 
 public class ReplicatedEntityCollection : IEntityReferenceSerializer 
 {
-    [ConfigVar(Name = "replicatedentity.showcollectioninfo", DefaultValue = "0", Description = "Show replicated system info")]
-    static ConfigVar m_showInfo;
-
-    public static bool SampleHistory;
-    
-    public static int HistorySize = 128;
-    public static int PredictionSize = 32;
-    
     public struct ReplicatedData
     {
         public Entity entity;
         public GameObject gameObject;
-        public INetSerialized[] serializableArray;
-        public IPredictedDataHandler[] predictedArray;
-        public IInterpolatedDataHandler[] interpolatedArray;
+        public IReplicatedSerializer[] serializableArray;
+        public IPredictedSerializer[] predictedArray;
+        public IInterpolatedSerializer[] interpolatedArray;
         public int lastServerUpdate;
         
 #if UNITY_EDITOR     
@@ -268,9 +44,20 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
 #endif 
     }
 
+    [ConfigVar(Name = "replicatedentity.showcollectioninfo", DefaultValue = "0", Description = "Show replicated system info")]
+    static ConfigVar m_showInfo;
+
+    public static bool SampleHistory;
+    
+    public static int HistorySize = 128;
+    public static int PredictionSize = 32;
+
+    DataComponentSerializers serializers = new DataComponentSerializers();
+    
     public ReplicatedEntityCollection(GameWorld world)
     {
         m_world = world;
+
         
 #if UNITY_EDITOR           
         historyCommands = new UserCommand[HistorySize];
@@ -279,11 +66,9 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
 #endif        
     }
     
-
-    
-    List<INetSerialized> netSerializables = new List<INetSerialized>(32);
-    List<IPredictedDataHandler> netPredicted = new List<IPredictedDataHandler>(32); 
-    List<IInterpolatedDataHandler> netInterpolated = new List<IInterpolatedDataHandler>(32);
+    List<IReplicatedSerializer> netSerializables = new List<IReplicatedSerializer>(32);
+    List<IPredictedSerializer> netPredicted = new List<IPredictedSerializer>(32); 
+    List<IInterpolatedSerializer> netInterpolated = new List<IInterpolatedSerializer>(32);
     public void Register(EntityManager entityManager, int entityId, Entity entity)
     {
         if (m_showInfo.IntValue > 0)
@@ -346,44 +131,38 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
 
     void FindSerializers(EntityManager entityManager, Entity entity)
     {
-        // Add data handlers for monobehaviors
-        // TODO (mogensh) create datahandlers for interpolate and predict. Use generic interface on monobehaviors (like IComponentData)
-        if (entityManager.HasComponent<Transform>(entity))
-        {
-            var go = entityManager.GetComponentObject<Transform>(entity).gameObject;
-            netSerializables.AddRange(go.GetComponentsInChildren<INetSerialized>());
-            netPredicted.AddRange(go.GetComponentsInChildren<IPredictedDataHandler>());
-            netInterpolated.AddRange(go.GetComponentsInChildren<IInterpolatedDataHandler>());
-
-            if (m_showInfo.IntValue > 0)
-            {
-                GameDebug.Log("  Handle MonoBehavior components");
-                GameDebug.Log("    netSerializables:" + netSerializables.Count);
-                GameDebug.Log("    netPredicted:" + netPredicted.Count);
-                GameDebug.Log("    netInterpolated:" + netInterpolated.Count);
-            }
-        }
-
         // Add entity data handlers
         if (m_showInfo.IntValue > 0)
-            GameDebug.Log("  Handle ECS data component");
+            GameDebug.Log("  FindSerializers");
         var componentTypes = entityManager.GetComponentTypes(entity);
-        foreach (var componentType in componentTypes)
+
+        // Sort to ensure order when serializing components
+        var typeArray = componentTypes.ToArray();
+        Array.Sort(typeArray, delegate(ComponentType type1, ComponentType type2) {
+            return type1.GetManagedType().Name.CompareTo(type2.GetManagedType().Name);
+        });
+
+        var serializedComponentType = typeof(IReplicatedComponent);
+        var predictedComponentType = typeof(IPredictedDataBase);
+        var interpolatedComponentType = typeof(IInterpolatedDataBase);
+        
+        foreach (var componentType in typeArray)
         {
             var managedType = componentType.GetManagedType();
 
             if (!typeof(IComponentData).IsAssignableFrom(managedType))
                 continue;
             
-            if (typeof(INetSerialized).IsAssignableFrom(managedType))
+            if (serializedComponentType.IsAssignableFrom(managedType))
             {
                 if (m_showInfo.IntValue > 0)
                     GameDebug.Log("   new SerializedComponentDataHandler for:" + managedType.Name);
-                var dataHandlerType = typeof(SerializedComponentDataHandler<>).MakeGenericType(managedType);
-                var dataHandler = (INetSerialized)Activator.CreateInstance(dataHandlerType, entityManager, entity);
-                netSerializables.Add(dataHandler);
+                
+                var serializer = serializers.CreateNetSerializer(managedType, entityManager, entity, this);
+                if(serializer != null)    
+                    netSerializables.Add(serializer);
             }
-            else if (typeof(IPredictedDataBase).IsAssignableFrom(managedType))
+            else if (predictedComponentType.IsAssignableFrom(managedType))
             {
                 var interfaceTypes = managedType.GetInterfaces();
                 foreach (var it in interfaceTypes)
@@ -393,14 +172,16 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
                         var type = it.GenericTypeArguments[0];
                         if (m_showInfo.IntValue > 0)
                             GameDebug.Log("   new IPredictedDataHandler for:" + it.Name + " arg type:" + type);
-                        var dataHandlerType = typeof(NetworkPredictedDataHandler<>).MakeGenericType(type);
-                        var dataHandler = (IPredictedDataHandler)Activator.CreateInstance(dataHandlerType, entityManager, entity);
-                        netPredicted.Add(dataHandler);
+                        
+                        var serializer = serializers.CreatePredictedSerializer(managedType, entityManager, entity, this);
+                        if(serializer != null)    
+                            netPredicted.Add(serializer);
+
                         break;
                     }
                 }
             }
-            else if (typeof(IInterpolatedDataBase).IsAssignableFrom(managedType))
+            else if (interpolatedComponentType.IsAssignableFrom(managedType))
             {
                 var interfaceTypes = managedType.GetInterfaces();
                 foreach (var it in interfaceTypes)
@@ -410,9 +191,11 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
                         var type = it.GenericTypeArguments[0];
                         if (m_showInfo.IntValue > 0)
                             GameDebug.Log("   new IInterpolatedDataHandler for:" + it.Name + " arg type:" + type);
-                        var dataHandlerType = typeof(NetworkInterpolatedDataHandler<>).MakeGenericType(type);
-                        var dataHandler = (IInterpolatedDataHandler)Activator.CreateInstance(dataHandlerType, entityManager, entity);
-                        netInterpolated.Add(dataHandler);
+                        
+                        var serializer = serializers.CreateInterpolatedSerializer(managedType, entityManager, entity, this);
+                        if(serializer != null)    
+                            netInterpolated.Add(serializer);
+
                         break;
                     }
                 }
@@ -448,13 +231,13 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
         GameDebug.Assert(data.serializableArray != null, "Failed to apply snapshot. Serializablearray is null");
 
         foreach (var entry in data.serializableArray)
-            entry.Deserialize(ref reader, this, serverTick);
+            entry.Deserialize(ref reader, serverTick);
         
         foreach (var entry in data.predictedArray)
-            entry.Deserialize(ref reader, this, serverTick);
+            entry.Deserialize(ref reader, serverTick);
         
         foreach (var entry in data.interpolatedArray)
-            entry.Deserialize(ref reader, this, serverTick);
+            entry.Deserialize(ref reader, serverTick);
 
         m_replicatedData[id] = data;
     }
@@ -466,16 +249,16 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
         GameDebug.Assert(data.serializableArray != null, "Failed to generate snapshot. Serializablearray is null");
         
         foreach (var entry in data.serializableArray)
-            entry.Serialize(ref writer, this);
+            entry.Serialize(ref writer);
         
         writer.SetFieldSection(NetworkWriter.FieldSectionType.OnlyPredicting);
         foreach (var entry in data.predictedArray)
-            entry.Serialize(ref writer, this);
+            entry.Serialize(ref writer);
         writer.ClearFieldSection();
         
         writer.SetFieldSection(NetworkWriter.FieldSectionType.OnlyNotPredicting);
         foreach (var entry in data.interpolatedArray)
-            entry.Serialize(ref writer, this);
+            entry.Serialize(ref writer);
         writer.ClearFieldSection();
     }
 
@@ -534,7 +317,7 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
             if (entry is Component)
                 name += (entry as Component).GetType();
             else
-                name += "?";
+                name += entry.GetType().ToString();
             first = false;
         }
         return name;
@@ -548,16 +331,9 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
             return;
         }
 
-        if (m_world.GetEntityManager().HasComponent<ReplicatedEntity>(entity))
+        if (m_world.GetEntityManager().HasComponent<ReplicatedEntityData>(entity))
         {
-            var replicatedEntity = m_world.GetEntityManager().GetComponentObject<ReplicatedEntity>(entity);
-            writer.WriteInt32(name, replicatedEntity.id);
-            return;
-        }
-
-        if (m_world.GetEntityManager().HasComponent<ReplicatedDataEntity>(entity))
-        {
-            var replicatedDataEntity = m_world.GetEntityManager().GetComponentData<ReplicatedDataEntity>(entity);
+            var replicatedDataEntity = m_world.GetEntityManager().GetComponentData<ReplicatedEntityData>(entity);
             writer.WriteInt32(name, replicatedDataEntity.id);
             return;
         }

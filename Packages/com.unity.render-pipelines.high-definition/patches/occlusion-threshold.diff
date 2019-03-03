@@ -1,0 +1,26 @@
+Index: com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/HDRenderPipeline.cs
+===================================================================
+--- com.unity.render-pipelines.high-definition.orig/Runtime/RenderPipeline/HDRenderPipeline.cs
++++ com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/HDRenderPipeline.cs
+@@ -782,6 +782,10 @@ namespace UnityEngine.Experimental.Rende
+             CoreUtils.SetKeyword(cmd, "WRITE_MSAA_DEPTH", hdCamera.frameSettings.enableMSAA);
+         }
+ 
++        // sample-game: begin: occlusion threshold
++        public static float s_OcclusionThreshold;
++        // sample-game: end
++
+         CullResults m_CullResults;
+         ReflectionProbeCullResults m_ReflectionProbeCullResults;
+         public override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
+@@ -1032,6 +1036,10 @@ namespace UnityEngine.Experimental.Rende
+ 
+                     using (new ProfilingSample(cmd, "CullResults.Cull", CustomSamplerId.CullResultsCull.GetSampler()))
+                     {
++                        // sample-game: begin: occlusion threshold
++                        cullingParams.accurateOcclusionThreshold = s_OcclusionThreshold;
++                        // sample-game: end
++
+                         CullResults.Cull(ref cullingParams, renderContext, ref m_CullResults);
+                     }
+ 

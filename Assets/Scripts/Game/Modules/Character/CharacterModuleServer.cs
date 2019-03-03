@@ -109,40 +109,30 @@ public class HandleCharacterSpawnRequests : BaseComponentSystem
         heroIndex = Mathf.Min(heroIndex, heroTypeRegistry.entries.Count);
         var heroTypeAsset = heroTypeRegistry.entries[heroIndex];
 
-        var charPrefabGUID = m_settings.characterPrefab.guid;
-        
-        var charResource = resourceSystem.LoadSingleAssetResource(charPrefabGUID);
-        
-        if(charResource == null)
-        {
-            GameDebug.LogError("BundledResourceManager Cant find resource with guid:" + charPrefabGUID);
-            return null;
-        }
-
-        var charPrefab = (GameObject)charResource;
-        var charGameObjectEntity = world.Spawn<GameObjectEntity>(charPrefab);
-        charGameObjectEntity.name = string.Format("{0}_{1}",charPrefab.name,owner.playerName);
-        GameDebug.Log("Spawning character:" + charGameObjectEntity.name + " tick:" + m_world.worldTime.tick);
-        var charEntity = charGameObjectEntity.Entity;
-
-        // Set as predicted by owner
-        var replicatedEntity = EntityManager.GetComponentObject<ReplicatedEntity>(charEntity);
-        replicatedEntity.predictingPlayerId = owner.playerId;
+        var replicatedEntityRegistry = resourceSystem.GetResourceRegistry<ReplicatedEntityRegistry>();
+        var charEntity = replicatedEntityRegistry.Create(EntityManager, resourceSystem, m_world, m_settings.character);
 
         var character = EntityManager.GetComponentObject<Character>(charEntity);
-        character.heroTypeIndex = heroIndex;
         character.teamId = 0;
         character.TeleportTo(position, rotation);
-        character.behaviourController = heroTypeAsset.behaviorsController.Create(EntityManager, owner.playerId);
 
-        // TODO (mogensh) support multiple weapons (for now we just take first)
-        if(heroTypeAsset.items.Length > 0)
-        {
-            character.item = heroTypeAsset.items[0].itemType.Create(EntityManager, owner.playerId);
-            var itemState = EntityManager.GetComponentData<ItemTypeDefinition.State>(character.item);
-            itemState.character = charEntity;
-            EntityManager.SetComponentData(character.item,itemState);
-        }
+        var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(charEntity);
+        charRepAll.heroTypeIndex = heroIndex;
+        
+        //charRepAll.abilityCollection = heroTypeAsset.abilities.Create(EntityManager, resourceSystem, m_world);
+
+        charRepAll.abilityCollection = resourceSystem.CreateEntity(heroTypeAsset.abilities);
+        EntityManager.SetComponentData(charEntity,charRepAll);
+        
+        // Set as predicted by owner
+        var replicatedEntity = EntityManager.GetComponentData<ReplicatedEntityData>(charEntity);
+        replicatedEntity.predictingPlayerId = owner.playerId;
+        EntityManager.SetComponentData(charEntity,replicatedEntity);
+        
+        
+        var behaviorCtrlRepEntity = EntityManager.GetComponentData<ReplicatedEntityData>(charRepAll.abilityCollection);
+        behaviorCtrlRepEntity.predictingPlayerId = owner.playerId;
+        EntityManager.SetComponentData(charRepAll.abilityCollection, behaviorCtrlRepEntity);
         
         return character;
     }
@@ -189,10 +179,8 @@ public class HandleCharacterDespawnRequests : BaseComponentSystem
             
             m_world.RequestDespawn(character.gameObject, PostUpdateCommands);
 
-            
-            
-            m_world.RequestDespawn(PostUpdateCommands, character.behaviourController);
-            m_world.RequestDespawn(PostUpdateCommands, character.item);
+            var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(request.characterEntity);            
+            m_world.RequestDespawn(PostUpdateCommands, charRepAll.abilityCollection);
             
             PostUpdateCommands.DestroyEntity(requestEntityArray[i]);
         }
@@ -202,77 +190,99 @@ public class HandleCharacterDespawnRequests : BaseComponentSystem
 }
 
 [DisableAutoCreation]
-public class HandleDamage : BaseComponentSystem<HealthState,HitCollisionOwner>
+public class HandleDamage : BaseComponentSystem
 {
+    private ComponentGroup Group;
+    
     public HandleDamage(GameWorld gameWorld) : base(gameWorld)
     {}
 
-    protected override void Update(Entity entity, HealthState healthState, HitCollisionOwner hitCollisionOwner)
+    protected override void OnCreateManager()
     {
-        if (healthState.health <= 0)
-            return;
-
-        var isDamaged = false;
-        var impulseVec = Vector3.zero;
-        var damage = 0.0f;
-        var damageVec = Vector3.zero;
-
-
-        // Apply hitcollider damage events
-        var damageEvents = hitCollisionOwner.damageEvents;
-        for (var eventIndex=0;eventIndex < damageEvents.Count; eventIndex++)
+        base.OnCreateManager();
+        Group = GetComponentGroup(typeof(HealthStateData), typeof(HitCollisionOwnerData));
+    }
+    
+    protected override void OnUpdate()
+    {
+        var entityArray = Group.GetEntityArray();
+        var healthStateArray = Group.GetComponentDataArray<HealthStateData>();
+        var collOwnerArray = Group.GetComponentDataArray<HitCollisionOwnerData>();
+        for (int i = 0; i < entityArray.Length; i++)
         {
-            isDamaged = true;
-
-            var damageEvent = damageEvents[eventIndex];
-
-            //GameDebug.Log(string.Format("ApplyDamage. Target:{0} Instigator:{1} Dam:{2}", healthState.name, m_world.GetGameObjectFromEntity(damageEvent.instigator), damageEvent.damage ));
-            healthState.ApplyDamage(ref damageEvent, m_world.worldTime.tick);
-
-            impulseVec += damageEvent.direction * damageEvent.impulse;
-            damageVec += damageEvent.direction * damageEvent.damage;
-            damage += damageEvent.damage;
-
-            //damageHistory.ApplyDamage(ref damageEvent, m_world.worldTime.tick);
-
-            if (damageEvents[eventIndex].instigator != Entity.Null && EntityManager.Exists(damageEvent.instigator) && EntityManager.HasComponent<DamageHistory>(damageEvent.instigator))
-            {
-                var instigatorDamageHistory = EntityManager.GetComponentObject<DamageHistory>(damageEvent.instigator);
-                if (m_world.worldTime.tick > instigatorDamageHistory.inflictedDamage.tick)
-                {
-                    instigatorDamageHistory.inflictedDamage.tick = m_world.worldTime.tick;
-                    instigatorDamageHistory.inflictedDamage.lethal = false;
-                }
-                instigatorDamageHistory.inflictedDamage.lethal |= healthState.health <= 0;
-            }
-
-            hitCollisionOwner.collisionEnabled = healthState.health > 0;
-        }
-        hitCollisionOwner.damageEvents.Clear();
-
-        if (isDamaged)
-        {
-            var damageImpulse = impulseVec.magnitude;
-            var damageDir = damageImpulse > 0 ? impulseVec.normalized : damageVec.normalized;
+            var healthState = healthStateArray[i];
             
-            var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(entity);
-            charPredictedState.damageTick = m_world.worldTime.tick;
-            charPredictedState.damageDirection = damageDir;
-            charPredictedState.damageImpulse = damageImpulse;
-            EntityManager.SetComponentData(entity, charPredictedState);
-
             if (healthState.health <= 0)
+                continue;
+
+            var entity = entityArray[i]; 
+            var collOwner = collOwnerArray[i];
+
+            var isDamaged = false;
+            var impulseVec = Vector3.zero;
+            var damage = 0.0f;
+            var damageVec = Vector3.zero;
+    
+    
+            // Apply hitcollider damage events
+            var damageBuffer = EntityManager.GetBuffer<DamageEvent>(entity);
+            for (var eventIndex=0;eventIndex < damageBuffer.Length; eventIndex++)
             {
-                var ragdollState =  EntityManager.GetComponentObject<RagdollState>(entity);
-                ragdollState.ragdollActive = true;
-                ragdollState.impulse = impulseVec;
+                isDamaged = true;
+    
+                var damageEvent = damageBuffer[eventIndex];
+    
+                //GameDebug.Log(string.Format("ApplyDamage. Target:{0} Instigator:{1} Dam:{2}", healthState.name, m_world.GetGameObjectFromEntity(damageEvent.instigator), damageEvent.damage ));
+                healthState.ApplyDamage(ref damageEvent, m_world.worldTime.tick);
+                EntityManager.SetComponentData(entity,healthState);
+                
+                impulseVec += damageEvent.direction * damageEvent.impulse;
+                damageVec += damageEvent.direction * damageEvent.damage;
+                damage += damageEvent.damage;
+    
+                //damageHistory.ApplyDamage(ref damageEvent, m_world.worldTime.tick);
+    
+                if (damageBuffer[eventIndex].instigator != Entity.Null && EntityManager.Exists(damageEvent.instigator) && EntityManager.HasComponent<DamageHistoryData>(damageEvent.instigator))
+                {
+                    var instigatorDamageHistory = EntityManager.GetComponentData<DamageHistoryData>(damageEvent.instigator);
+                    if (m_world.worldTime.tick > instigatorDamageHistory.inflictedDamage.tick)
+                    {
+                        instigatorDamageHistory.inflictedDamage.tick = m_world.worldTime.tick;
+                        instigatorDamageHistory.inflictedDamage.lethal = 0;
+                    }
+                    if(healthState.health <= 0)
+                        instigatorDamageHistory.inflictedDamage.lethal = 1;
+                    
+                    EntityManager.SetComponentData(damageEvent.instigator,instigatorDamageHistory);
+                }
+    
+                collOwner.collisionEnabled = healthState.health > 0 ? 1 : 0;
+                EntityManager.SetComponentData(entity,collOwner);
+            }
+            damageBuffer.Clear();
+    
+            if (isDamaged)
+            {
+                var damageImpulse = impulseVec.magnitude;
+                var damageDir = damageImpulse > 0 ? impulseVec.normalized : damageVec.normalized;
+                
+                var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(entity);
+                charPredictedState.damageTick = m_world.worldTime.tick;
+                charPredictedState.damageDirection = damageDir;
+                charPredictedState.damageImpulse = damageImpulse;
+                EntityManager.SetComponentData(entity, charPredictedState);
+    
+                if (healthState.health <= 0)
+                {
+                    var ragdollState =  EntityManager.GetComponentData<RagdollStateData>(entity);
+                    ragdollState.ragdollActive = 1;
+                    ragdollState.impulse = impulseVec;
+                    EntityManager.SetComponentData(entity,ragdollState);
+                }
             }
         }
-     
     }
 }
-
-
 
 public class CharacterModuleServer : CharacterModuleShared
 {
@@ -291,15 +301,13 @@ public class CharacterModuleServer : CharacterModuleShared
         // Handle despawn
         CharacterBehaviours.CreateHandleDespawnSystems(m_world, m_HandleDespawnSystems);
         
-        // Movement
+        // Behavior
+        CharacterBehaviours.CreateAbilityRequestSystems(m_world, m_AbilityRequestUpdateSystems);
         m_MovementStartSystems.Add(m_world.GetECSWorld().CreateManager<UpdateTeleportation>(m_world));
         CharacterBehaviours.CreateMovementStartSystems(m_world,m_MovementStartSystems);
         CharacterBehaviours.CreateMovementResolveSystems(m_world,m_MovementResolveSystems);
-
-        // Ability 
         CharacterBehaviours.CreateAbilityStartSystems(m_world,m_AbilityStartSystems);
         CharacterBehaviours.CreateAbilityResolveSystems(m_world,m_AbilityResolveSystems);
-        
         
         
         m_UpdateCharPresentationState = m_world.GetECSWorld().CreateManager<UpdateCharPresentationState>(m_world);

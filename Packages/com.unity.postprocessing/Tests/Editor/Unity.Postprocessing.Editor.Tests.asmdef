@@ -1,0 +1,19 @@
+{
+    "name": "Unity.Postprocessing.Editor.Tests",
+    "references": [
+        "Unity.Postprocessing.Runtime",
+        "Unity.Postprocessing.Editor"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}

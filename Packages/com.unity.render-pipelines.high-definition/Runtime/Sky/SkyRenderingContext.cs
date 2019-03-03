@@ -5,26 +5,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     internal class SkyRenderingContext
     {
-        IBLFilterGGX            m_IBLFilterGGX;
-        RTHandleSystem.RTHandle m_SkyboxCubemapRT;
-        RTHandleSystem.RTHandle m_SkyboxGGXCubemapRT;
-        RTHandleSystem.RTHandle m_SkyboxMarginalRowCdfRT;
-        RTHandleSystem.RTHandle m_SkyboxConditionalCdfRT;
-        Vector4                 m_CubemapScreenSize;
-        Matrix4x4[]             m_facePixelCoordToViewDirMatrices   = new Matrix4x4[6];
-        Matrix4x4[]             m_faceCameraInvViewProjectionMatrix = new Matrix4x4[6];
-        bool                    m_SupportsConvolution = false;
-        bool                    m_SupportsMIS = false;
-        BuiltinSkyParameters    m_BuiltinParameters = new BuiltinSkyParameters();
-        bool                    m_NeedUpdate = true;
+        IBLFilterBSDF[]             m_IBLFilterArray;
+        RTHandleSystem.RTHandle     m_SkyboxCubemapRT;
+        RTHandleSystem.RTHandle     m_SkyboxBSDFCubemapIntermediate;
+        CubemapArray                m_SkyboxBSDFCubemapArray;
+        RTHandleSystem.RTHandle     m_SkyboxMarginalRowCdfRT;
+        RTHandleSystem.RTHandle     m_SkyboxConditionalCdfRT;
+        Vector4                     m_CubemapScreenSize;
+        Matrix4x4[]                 m_facePixelCoordToViewDirMatrices   = new Matrix4x4[6];
+        Matrix4x4[]                 m_faceCameraInvViewProjectionMatrix = new Matrix4x4[6];
+        bool                        m_SupportsConvolution = false;
+        bool                        m_SupportsMIS = false;
+        BuiltinSkyParameters        m_BuiltinParameters = new BuiltinSkyParameters();
+        bool                        m_NeedUpdate = true;
 
         public RenderTexture cubemapRT { get { return m_SkyboxCubemapRT; } }
-        public Texture reflectionTexture { get { return m_SkyboxGGXCubemapRT; } }
+        public Texture reflectionTexture { get { return m_SkyboxBSDFCubemapArray; } }
 
 
-        public SkyRenderingContext(IBLFilterGGX filterGGX, int resolution, bool supportsConvolution)
+        public SkyRenderingContext(IBLFilterBSDF[] iblFilterBDSDFArray, int resolution, bool supportsConvolution)
         {
-            m_IBLFilterGGX = filterGGX;
+            m_IBLFilterArray = iblFilterBDSDFArray;
             m_SupportsConvolution = supportsConvolution;
 
             RebuildTextures(resolution);
@@ -38,10 +39,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (updateNeeded)
             {
                 RTHandles.Release(m_SkyboxCubemapRT);
-                RTHandles.Release(m_SkyboxGGXCubemapRT);
-
                 m_SkyboxCubemapRT = null;
-                m_SkyboxGGXCubemapRT = null;
+
+                if(m_SupportsConvolution)
+                {
+                    RTHandles.Release(m_SkyboxBSDFCubemapIntermediate);
+                    if (m_SkyboxBSDFCubemapArray != null)
+                    {
+                        CoreUtils.Destroy(m_SkyboxBSDFCubemapArray);
+                        m_SkyboxBSDFCubemapArray = null;
+                    }
+                }
+
             }
 
             if (!m_SupportsMIS && (m_SkyboxConditionalCdfRT != null))
@@ -59,9 +68,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_SkyboxCubemapRT = RTHandles.Alloc(resolution, resolution, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, dimension: TextureDimension.Cube, useMipMap: true, autoGenerateMips: false, filterMode: FilterMode.Trilinear, name: "SkyboxCubemap");
             }
 
-            if (m_SkyboxGGXCubemapRT == null && m_SupportsConvolution)
+            if (m_SupportsConvolution)
             {
-                m_SkyboxGGXCubemapRT = RTHandles.Alloc(resolution, resolution, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, dimension: TextureDimension.Cube, useMipMap: true, autoGenerateMips: false, filterMode: FilterMode.Trilinear, name: "SkyboxGGXCubemap");
+                m_SkyboxBSDFCubemapIntermediate = RTHandles.Alloc(resolution, resolution, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, dimension: TextureDimension.Cube, useMipMap: true, autoGenerateMips: false, filterMode: FilterMode.Trilinear, name: "SkyboxBSDFIntermediate");
+                m_SkyboxBSDFCubemapArray = new CubemapArray(resolution, m_IBLFilterArray.Length, TextureFormat.RGBAHalf, true)
+                {
+                    hideFlags = HideFlags.HideAndDontSave,
+                    wrapMode = TextureWrapMode.Repeat,
+                    wrapModeV = TextureWrapMode.Clamp,
+                    filterMode = FilterMode.Trilinear,
+                    anisoLevel = 0,
+                    name = "SkyboxCubemapConvolution"
+                };
             }
 
             if (m_SupportsMIS && (m_SkyboxConditionalCdfRT == null))
@@ -95,7 +113,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var lookAt      = Matrix4x4.LookAt(Vector3.zero, CoreUtils.lookAtList[i], CoreUtils.upVectorList[i]);
                 var worldToView = lookAt * Matrix4x4.Scale(new Vector3(1.0f, 1.0f, -1.0f)); // Need to scale -1.0 on Z to match what is being done in the camera.wolrdToCameraMatrix API. ...
 
-                m_facePixelCoordToViewDirMatrices[i] = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(0.5f * Mathf.PI, m_CubemapScreenSize, worldToView, true);
+                m_facePixelCoordToViewDirMatrices[i] = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(0.5f * Mathf.PI, Vector2.zero, m_CubemapScreenSize, worldToView, true);
                 m_faceCameraInvViewProjectionMatrix[i] = HDUtils.GetViewProjectionMatrix(lookAt, cubeProj).inverse;
             }
         }
@@ -103,7 +121,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void Cleanup()
         {
             RTHandles.Release(m_SkyboxCubemapRT);
-            RTHandles.Release(m_SkyboxGGXCubemapRT);
+            if (m_SkyboxBSDFCubemapArray != null)
+            {
+                CoreUtils.Destroy(m_SkyboxBSDFCubemapArray);
+            }
+
             RTHandles.Release(m_SkyboxMarginalRowCdfRT);
             RTHandles.Release(m_SkyboxConditionalCdfRT);
         }
@@ -131,10 +153,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             using (new ProfilingSample(m_BuiltinParameters.commandBuffer, "Update Env: GGX Convolution"))
             {
-                if (skyContext.skySettings.useMIS && m_SupportsMIS)
-                    m_IBLFilterGGX.FilterCubemapMIS(m_BuiltinParameters.commandBuffer, m_SkyboxCubemapRT, m_SkyboxGGXCubemapRT, m_SkyboxConditionalCdfRT, m_SkyboxMarginalRowCdfRT);
-                else
-                    m_IBLFilterGGX.FilterCubemap(m_BuiltinParameters.commandBuffer, m_SkyboxCubemapRT, m_SkyboxGGXCubemapRT);
+                for(int bsdfIdx = 0; bsdfIdx < m_IBLFilterArray.Length; ++bsdfIdx)
+                {
+                    // First of all filter this cubemap using the target filter
+                    m_IBLFilterArray[bsdfIdx].FilterCubemap(m_BuiltinParameters.commandBuffer, m_SkyboxCubemapRT, m_SkyboxBSDFCubemapIntermediate);
+                    // Then copy it to the cubemap array slice
+                    for(int i = 0; i < 6; ++i)
+                    {
+                        m_BuiltinParameters.commandBuffer.CopyTexture(m_SkyboxBSDFCubemapIntermediate, i, m_SkyboxBSDFCubemapArray, 6 * bsdfIdx + i);
+                    }
+                }
             }
         }
 
@@ -225,7 +253,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         CoreUtils.ClearCubemap(cmd, m_SkyboxCubemapRT, Color.black, true);
                         if (m_SupportsConvolution)
                         {
-                            CoreUtils.ClearCubemap(cmd, m_SkyboxGGXCubemapRT, Color.black, true);
+                            CoreUtils.ClearCubemap(cmd, m_SkyboxBSDFCubemapIntermediate, Color.black, true);
+                            for (int bsdfIdx = 0; bsdfIdx < m_IBLFilterArray.Length; ++bsdfIdx)
+                            {
+                                cmd.CopyTexture(m_SkyboxBSDFCubemapIntermediate, 0, m_SkyboxBSDFCubemapArray, bsdfIdx);
+                            }
                         }
                     }
 
@@ -245,7 +277,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     m_BuiltinParameters.commandBuffer = cmd;
                     m_BuiltinParameters.sunLight = sunLight;
-                    m_BuiltinParameters.pixelCoordToViewDirMatrix = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(hdCamera.camera.fieldOfView * Mathf.Deg2Rad, hdCamera.screenSize, hdCamera.viewMatrix, false);
+#if UNITY_2019_1_OR_NEWER
+                    m_BuiltinParameters.pixelCoordToViewDirMatrix = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(hdCamera.camera.GetGateFittedFieldOfView() * Mathf.Deg2Rad, hdCamera.camera.GetGateFittedLensShift(), hdCamera.screenSize, hdCamera.viewMatrix, false);
+#else
+                    m_BuiltinParameters.pixelCoordToViewDirMatrix = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(hdCamera.camera.fieldOfView * Mathf.Deg2Rad, Vector2.zero, hdCamera.screenSize, hdCamera.viewMatrix, false);
+#endif
                     m_BuiltinParameters.invViewProjMatrix = hdCamera.viewProjMatrix.inverse;
                     m_BuiltinParameters.screenSize = hdCamera.screenSize;
                     m_BuiltinParameters.cameraPosWS = hdCamera.camera.transform.position;

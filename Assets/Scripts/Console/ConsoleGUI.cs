@@ -107,6 +107,10 @@ public class ConsoleGUI : MonoBehaviour, IConsoleUI
         Console.EnqueueCommand(value);
     }
 
+    public void SetPrompt(string prompt)
+    {
+    }
+
     List<string> m_Lines = new List<string>();
     int m_WantedCaretPosition = -1;
 

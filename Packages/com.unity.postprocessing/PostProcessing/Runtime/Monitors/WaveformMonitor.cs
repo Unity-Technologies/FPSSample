@@ -2,10 +2,24 @@ using System;
 
 namespace UnityEngine.Rendering.PostProcessing
 {
+    /// <summary>
+    /// This class holds settings for the Waveform monitor.
+    /// </summary>
     [Serializable]
     public sealed class WaveformMonitor : Monitor
     {
+        /// <summary>
+        /// The exposure multiplier applied to the waveform values.
+        /// </summary>
         public float exposure = 0.12f;
+
+        /// <summary>
+        /// The height of the rendered waveform.
+        /// </summary>
+        /// <remarks>
+        /// Waveforms display localized values so the width is dynamic and depends on the current
+        /// aspect ratio.
+        /// </remarks>
         public int height = 256;
 
         ComputeBuffer m_Data;

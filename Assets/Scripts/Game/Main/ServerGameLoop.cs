@@ -31,9 +31,8 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 
         m_CharacterModule = new CharacterModuleServer(m_GameWorld, resourceSystem);
         m_ProjectileModule = new ProjectileModuleServer(m_GameWorld, resourceSystem);
-        m_HitCollisionModule = new HitCollisionModule(m_GameWorld, 128, 1);   
+        m_HitCollisionModule = new HitCollisionModule(m_GameWorld, 128, 1);
         m_PlayerModule = new PlayerModuleServer(m_GameWorld, resourceSystem);
-        m_DebugPrimitiveModule = new DebugPrimitiveModule(m_GameWorld, 0.4f, 0.02f);
         m_SpectatorCamModule = new SpectatorCamModuleServer(m_GameWorld, resourceSystem);
         m_ReplicatedEntityModule = new ReplicatedEntityModuleServer(m_GameWorld, resourceSystem, m_NetworkServer);
         m_ReplicatedEntityModule.ReserveSceneEntities(networkServer);
@@ -63,22 +62,21 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         m_ProjectileModule.Shutdown();
         m_HitCollisionModule.Shutdown();
         m_PlayerModule.Shutdown();
-        m_DebugPrimitiveModule.Shutdown();
         m_SpectatorCamModule.Shutdown();
-        
+
         m_GameWorld.GetECSWorld().DestroyManager(m_DestructablePropSystem);
         m_GameWorld.GetECSWorld().DestroyManager(m_DamageAreaSystem);
         m_GameWorld.GetECSWorld().DestroyManager(m_TeleporterSystem);
-        
+
         m_GameWorld.GetECSWorld().DestroyManager(m_HandleGrenadeRequests);
         m_GameWorld.GetECSWorld().DestroyManager(m_StartGrenadeMovement);
         m_GameWorld.GetECSWorld().DestroyManager(m_FinalizeGrenadeMovement);
-        
+
         m_GameWorld.GetECSWorld().DestroyManager(m_platformSystem);
 
         m_ReplicatedEntityModule.Shutdown();
         m_ItemModule.Shutdown();
-        
+
         m_CameraSystem.Shutdown();
         m_MoveableSystem.Shutdown();
 
@@ -87,12 +85,12 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 
     public void RespawnPlayer(PlayerState player)
     {
-        if(player.controlledEntity == Entity.Null)
+        if (player.controlledEntity == Entity.Null)
             return;
 
         if (m_GameWorld.GetEntityManager().HasComponent<Character>(player.controlledEntity))
-            CharacterDespawnRequest.Create(m_GameWorld,player.controlledEntity);
-        
+            CharacterDespawnRequest.Create(m_GameWorld, player.controlledEntity);
+
         player.controlledEntity = Entity.Null;
     }
 
@@ -110,7 +108,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
             player.playerName = settings.playerName;
         }
 
-        var playerEntity =  player.gameObject.GetComponent<GameObjectEntity>().Entity; 
+        var playerEntity = player.gameObject.GetComponent<GameObjectEntity>().Entity;
         var charControl = m_GameWorld.GetEntityManager().GetComponentObject<PlayerCharacterControl>(playerEntity);
 
         charControl.requestedCharacterType = settings.characterType;
@@ -122,26 +120,36 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         if (!m_Clients.TryGetValue(connectionId, out client))
             return;
 
-        if(client.player)
+        if (client.player)
         {
+            var serializeContext = new SerializeContext
+            {
+                entityManager = m_GameWorld.GetEntityManager(),
+                entity = Entity.Null,
+                refSerializer = null,
+                tick = tick
+            };
+                
             if (tick == m_GameWorld.worldTime.tick)
-                client.latestCommand.Deserialize(ref data, null, tick);
+                client.latestCommand.Deserialize(ref serializeContext, ref data);
 
             // Pass on command to controlled entity
             if (client.player.controlledEntity != Entity.Null)
             {
-                var userCommand = m_GameWorld.GetEntityManager().GetComponentObject<UserCommandComponent>(client.player.controlledEntity);
+                var userCommand = m_GameWorld.GetEntityManager().GetComponentData<UserCommandComponentData>(
+                    client.player.controlledEntity);
 
-                GameDebug.Assert(userCommand != null, "Controlled entity does not have UserCommandComponent");
-                userCommand.prevCommand = userCommand.command;
                 userCommand.command = client.latestCommand;
+
+                m_GameWorld.GetEntityManager().SetComponentData<UserCommandComponentData>(
+                    client.player.controlledEntity,userCommand);
             }
         }
     }
 
     public bool HandleClientCommand(ServerGameLoop.ClientInfo client, string v)
     {
-        if(v == "nextchar")
+        if (v == "nextchar")
         {
             GameDebug.Log("nextchar for client " + client.id);
             m_GameModeSystem.RequestNextChar(client.player);
@@ -175,35 +183,33 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         m_CharacterModule.HandleSpawnRequests();
         m_SpectatorCamModule.HandleSpawnRequests();
         m_ProjectileModule.HandleRequests();         
-        m_DebugPrimitiveModule.HandleRequests();
         m_HandleGrenadeRequests.Update();
-        
+
         // Handle newly spawned entities          
         m_CharacterModule.HandleSpawns();
-        m_HitCollisionModule.HandleSpawning();  
+        m_HitCollisionModule.HandleSpawning();
         m_ReplicatedEntityModule.HandleSpawning();
         m_ItemModule.HandleSpawn();
 
         // Handle controlled entity changed
-        m_CharacterModule.HandleControlledEntityChanged();    
+        m_CharacterModule.HandleControlledEntityChanged();
 
         // Start movement of scene objects. Scene objects that player movement
         // depends on should finish movement in this phase
         m_MoveableSystem.Update();
-        m_platformSystem.Update();                     
-        m_ProjectileModule.MovementStart();        
+        m_platformSystem.Update();
+        m_ProjectileModule.MovementStart();
         m_StartGrenadeMovement.Update();
         m_CameraSystem.Update();
-        
+
         // Update movement of player controlled units 
         m_TeleporterSystem.Update();
+        m_CharacterModule.AbilityRequestUpdate();
         m_CharacterModule.MovementStart();
         m_CharacterModule.MovementResolve();
-        
-        // Update abilities 
         m_CharacterModule.AbilityStart();
         m_CharacterModule.AbilityResolve();
-        
+
         // Finalize movement of modules that only depend on data from previous frames
         // We want to wait as long as possible so queries potentially can be handled in jobs  
         m_ProjectileModule.MovementResolve();
@@ -211,12 +217,12 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 
         // Handle damage
         m_DestructablePropSystem.Update();
-        m_DamageAreaSystem.Update();                                
+        m_DamageAreaSystem.Update();
         m_HitCollisionModule.HandleSplashDamage();
         m_CharacterModule.HandleDamage();
-        
+
         // 
-        m_CharacterModule.PresentationUpdate();       
+        m_CharacterModule.PresentationUpdate();
 
         // Update gamemode. Run last to allow picking up deaths etc.
         m_GameModeSystem.Update();
@@ -237,10 +243,6 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         m_CharacterModule.AttachmentUpdate();
 
         m_HitCollisionModule.StoreColliderState();
-
-#if UNITY_EDITOR
-        m_DebugPrimitiveModule.DrawPrimitives();
-#endif
     }
 
     public void HandleClientConnect(ServerGameLoop.ClientInfo client)
@@ -279,22 +281,21 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     readonly ProjectileModuleServer m_ProjectileModule;
     readonly HitCollisionModule m_HitCollisionModule;
     readonly PlayerModuleServer m_PlayerModule;
-    readonly DebugPrimitiveModule m_DebugPrimitiveModule;
     readonly SpectatorCamModuleServer m_SpectatorCamModule;
     readonly ReplicatedEntityModuleServer m_ReplicatedEntityModule;
     readonly ItemModule m_ItemModule;
-    
+
     readonly ServerCameraSystem m_CameraSystem;
     readonly GameModeSystemServer m_GameModeSystem;
 
     readonly DamageAreaSystemServer m_DamageAreaSystem;
     readonly TeleporterSystemServer m_TeleporterSystem;
-    
-    
+
+
     readonly HandleGrenadeRequest m_HandleGrenadeRequests;
     readonly StartGrenadeMovement m_StartGrenadeMovement;
     readonly FinalizeGrenadeMovement m_FinalizeGrenadeMovement;
-    
+
     readonly MoverUpdate m_platformSystem;
     readonly UpdateDestructableProps m_DestructablePropSystem;
     readonly MovableSystemServer m_MoveableSystem;
@@ -315,28 +316,31 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
         m_StateMachine.SwitchTo(ServerState.Idle);
 
-        m_NetworkTransport = new SocketTransport(serverPort.IntValue);
-        GameDebug.Log("Listening on " + string.Join(", ", NetworkUtils.GetLocalInterfaceAddresses()) + " on port " + serverPort.IntValue);
+        m_NetworkTransport = new SocketTransport(NetworkConfig.serverPort.IntValue, serverMaxClients.IntValue);
+        var listenAddresses = NetworkUtils.GetLocalInterfaceAddresses();
+        if (listenAddresses.Count > 0)
+            Console.SetPrompt(listenAddresses[0] + ":" + NetworkConfig.serverPort.Value + "> ");
+        GameDebug.Log("Listening on " + string.Join(", ", NetworkUtils.GetLocalInterfaceAddresses()) + " on port " + NetworkConfig.serverPort.IntValue);
         m_NetworkServer = new NetworkServer(m_NetworkTransport);
 
-        if(Game.game.clientFrontend != null)
+        if (Game.game.clientFrontend != null)
         {
             var serverPanel = Game.game.clientFrontend.serverPanel;
             serverPanel.SetPanelActive(true);
             serverPanel.serverInfo.text += "Listening on:\n";
-            foreach(var a in NetworkUtils.GetLocalInterfaceAddresses())
+            foreach (var a in NetworkUtils.GetLocalInterfaceAddresses())
             {
-                serverPanel.serverInfo.text += a + ":" + serverPort.IntValue + "\n";
+                serverPanel.serverInfo.text += a + ":" + NetworkConfig.serverPort.IntValue + "\n";
             }
         }
 
         m_NetworkServer.UpdateClientInfo();
-        m_NetworkServer.clientInfo.compressionModel = m_Model;
+        m_NetworkServer.serverInfo.compressionModel = m_Model;
 
         if (serverServerName.Value == "")
             serverServerName.Value = MakeServername();
 
-        m_ServerQueryProtocolServer = new SQP.SQPServer(NetworkConfig.serverSQPPort.IntValue);
+        m_ServerQueryProtocolServer = new SQP.SQPServer(NetworkConfig.serverSQPPort.IntValue > 0? NetworkConfig.serverSQPPort.IntValue : NetworkConfig.serverPort.IntValue + NetworkConfig.sqpPortOffset);
 
 
 #if UNITY_EDITOR        
@@ -344,7 +348,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         World.DisposeAllWorlds();
 #endif        
         m_GameWorld = new GameWorld("ServerWorld");
-        
+
         m_NetworkStatistics = new NetworkStatisticsServer(m_NetworkServer);
 
         m_ChatSystem = new ChatSystemServer(m_Clients, m_NetworkServer);
@@ -380,17 +384,17 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
         m_NetworkTransport.Shutdown();
         Game.game.levelManager.UnloadLevel();
-        
+
         m_GameWorld.Shutdown();
         m_GameWorld = null;
     }
 
     public void Update()
     {
-        if(serverRecycleInterval.FloatValue > 0.0f)
+        if (serverRecycleInterval.FloatValue > 0.0f)
         {
             // Recycle server if time is up and no clients connected
-            if(m_Clients.Count == 0 && Time.time > m_ServerStartTime + serverRecycleInterval.FloatValue)
+            if (m_Clients.Count == 0 && Time.time > m_ServerStartTime + serverRecycleInterval.FloatValue)
             {
                 GameDebug.Log("Server exiting because recycle timeout was hit.");
                 Console.EnqueueCommandNoHistory("quit");
@@ -400,7 +404,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         if (m_Clients.Count > m_MaxClients)
             m_MaxClients = m_Clients.Count;
 
-        if(serverQuitWhenEmpty.IntValue > 0 && m_MaxClients > 0 && m_Clients.Count == 0)
+        if (serverQuitWhenEmpty.IntValue > 0 && m_MaxClients > 0 && m_Clients.Count == 0)
         {
             GameDebug.Log("Server exiting because last client disconnected");
             Console.EnqueueCommandNoHistory("quit");
@@ -447,32 +451,35 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         }
     }
 
-    public void OnEvent(int clientId, NetworkEvent info)
+    unsafe public void OnEvent(int clientId, NetworkEvent info)
     {
         var client = m_Clients[clientId];
         var type = info.type.typeId;
-        var data = new NetworkReader(info.data, info.type.schema);
-
-        switch ((GameNetworkEvents.EventType)type)
+        fixed (uint* data = info.data)
         {
-            case GameNetworkEvents.EventType.PlayerReady:
-                m_NetworkServer.MapReady(clientId); // TODO (petera) hacky
-                client.isReady = true;
-                break;
+            var reader = new NetworkReader(data, info.type.schema);
 
-            case GameNetworkEvents.EventType.PlayerSetup:
-                client.playerSettings.Deserialize(ref data);
-                if (client.player != null)
-                    m_serverGameWorld.HandlePlayerSetupEvent(client.player, client.playerSettings);
-                break;
+            switch ((GameNetworkEvents.EventType)type)
+            {
+                case GameNetworkEvents.EventType.PlayerReady:
+                    m_NetworkServer.MapReady(clientId); // TODO (petera) hacky
+                    client.isReady = true;
+                    break;
 
-            case GameNetworkEvents.EventType.RemoteConsoleCmd:
-                HandleClientCommand(client, data.ReadString());
-                break;
+                case GameNetworkEvents.EventType.PlayerSetup:
+                    client.playerSettings.Deserialize(ref reader);
+                    if (client.player != null)
+                        m_serverGameWorld.HandlePlayerSetupEvent(client.player, client.playerSettings);
+                    break;
 
-            case GameNetworkEvents.EventType.Chat:
-                m_ChatSystem.ReceiveMessage(client, data.ReadString(256));
-                break;
+                case GameNetworkEvents.EventType.RemoteConsoleCmd:
+                    HandleClientCommand(client, reader.ReadString());
+                    break;
+
+                case GameNetworkEvents.EventType.Chat:
+                    m_ChatSystem.ReceiveMessage(client, reader.ReadString(256));
+                    break;
+            }
         }
     }
 
@@ -504,7 +511,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         // Update SQP data with current values
         var sid = m_ServerQueryProtocolServer.ServerInfoData;
         sid.BuildId = Game.game.buildId;
-        sid.Port = (ushort)serverPort.IntValue;
+        sid.Port = (ushort)NetworkConfig.serverPort.IntValue;
         sid.CurrentPlayers = (ushort)m_Clients.Count;
         sid.GameType = GameModeSystemServer.modeName.Value;
         sid.Map = Game.game.levelManager.currentLevel.name;
@@ -543,8 +550,8 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         GameDebug.Assert(m_serverGameWorld == null);
 
         m_GameWorld.RegisterSceneEntities();
-        
-        m_resourceSystem = new BundledResourceManager("BundledResources/Server");
+
+        m_resourceSystem = new BundledResourceManager(m_GameWorld,"BundledResources/Server");
 
         m_NetworkServer.InitializeMap((ref NetworkWriter data) =>
         {
@@ -713,7 +720,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
             if (!usePlayerId && client.player.playerName != playerName)
                 continue;
-            
+
             m_serverGameWorld.RespawnPlayer(client.player);
         }
 
@@ -765,14 +772,14 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         }
         catch (System.Exception e)
         {
-            Console.Write("Failed to read file: " + args[0] + " ("+e.ToString()+")");
+            Console.Write("Failed to read file: " + args[0] + " (" + e.ToString() + ")");
             return;
         }
 
         m_Model = new NetworkCompressionModel(modelData);
 
         if (networkServer != null)
-            networkServer.clientInfo.compressionModel = m_Model;
+            networkServer.serverInfo.compressionModel = m_Model;
         Console.Write("Model Loaded");
     }
 
@@ -782,7 +789,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         Console.Write("-------------------");
         Console.Write(string.Format("   {0,2} {1,-15}", "ID", "PlayerName"));
         Console.Write("-------------------");
-        foreach(var c in m_Clients)
+        foreach (var c in m_Clients)
         {
             var client = c.Value;
             Console.Write(string.Format("   {0:00} {1,-15}", client.id, client.playerSettings.playerName));
@@ -794,7 +801,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     string MakeServername()
     {
 
-        var f = new string[] { "Ultimate", "Furry", "Quick", "Laggy", "Hot", "Curious", "Flappy", "Sneaky", "Nested", "Deep", "Blue", "Hipster", "Artificial"};
+        var f = new string[] { "Ultimate", "Furry", "Quick", "Laggy", "Hot", "Curious", "Flappy", "Sneaky", "Nested", "Deep", "Blue", "Hipster", "Artificial" };
         var l = new string[] { "Speedrun", "Fragfest", "Win", "Exception", "Prefab", "Scene", "Garbage", "System", "Souls", "Whitespace", "Dolphin" };
         return f[Random.Range(0, f.Length)] + " " + l[Random.Range(0, l.Length)];
     }
@@ -830,7 +837,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     }
     StateMachine<ServerState> m_StateMachine;
 
-    public class ClientInfo     
+    public class ClientInfo
     {
         public int id;
         public PlayerSettings playerSettings = new PlayerSettings();
@@ -864,9 +871,6 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     [ConfigVar(Name = "show.gameloopinfo", DefaultValue = "0", Description = "Show gameloop info")]
     static ConfigVar showGameLoopInfo;
 
-    [ConfigVar(Name = "server.port", DefaultValue = "7913", Description = "Port listened to by server")]
-    static ConfigVar serverPort;
-
     [ConfigVar(Name = "server.quitwhenempty", DefaultValue = "0", Description = "If enabled, quit when last client disconnects.")]
     static ConfigVar serverQuitWhenEmpty;
 
@@ -878,6 +882,9 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
     [ConfigVar(Name = "server.maxclients", DefaultValue = "8", Description = "Maximum allowed clients")]
     public static ConfigVar serverMaxClients;
+
+    [ConfigVar(Name = "server.disconnecttimeout", DefaultValue = "30000", Description = "Timeout in ms. Server will kick clients after this interval if nothing has been heard.")]
+    public static ConfigVar serverDisconnectTimeout;
 
     [ConfigVar(Name = "server.servername", DefaultValue = "", Description = "Servername")]
     static ConfigVar serverServerName;

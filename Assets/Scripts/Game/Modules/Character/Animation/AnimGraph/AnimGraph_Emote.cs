@@ -3,6 +3,7 @@ using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityEngine.Profiling;
 using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "Emote", menuName = "FPS Sample/Animation/AnimGraph/Emote")]
@@ -87,17 +88,22 @@ public class AnimGraph_Emote : AnimGraphAsset
 
         public void ApplyPresentationState(GameTime time, float deltaTime)
         {
+            Profiler.BeginSample("Emote.Apply");
+            
             // Find ability entity
             if (!m_EntityManager.Exists(ability))
             {
-                var character = m_EntityManager.GetComponentObject<Character>(m_AnimStateOwner);
-                ability = character.FindAbilityWithComponent(m_EntityManager, typeof(Ability_Emote.SerializedState));
+                var charRepAll = m_EntityManager.GetComponentData<CharacterReplicatedData>(m_AnimStateOwner);
+                ability = charRepAll.FindAbilityWithComponent(m_EntityManager, typeof(Ability_Emote.SerializerState));
             }
 
             if (ability == Entity.Null)
+            {
+                Profiler.EndSample();
                 return;
+            }
 
-            var abilityState = m_EntityManager.GetComponentData<Ability_Emote.SerializedState>(ability);
+            var abilityState = m_EntityManager.GetComponentData<Ability_Emote.SerializerState>(ability);
 
             var blendVel = m_settings.blendTime > 0 ? 1.0f / m_settings.blendTime : 1.0f / deltaTime;
 
@@ -110,6 +116,7 @@ public class AnimGraph_Emote : AnimGraphAsset
                 }
 
                 m_Transition.Update(activePort, blendVel, Time.deltaTime);
+                Profiler.EndSample();
                 return;
             }
 
@@ -119,6 +126,7 @@ public class AnimGraph_Emote : AnimGraphAsset
                 lastEmoteCount = abilityState.emoteCount;
                 StartEmote(requestedPort);
                 m_Transition.Update(activePort, blendVel, Time.deltaTime);
+                Profiler.EndSample();
                 return;
             }
 
@@ -141,6 +149,8 @@ public class AnimGraph_Emote : AnimGraphAsset
             }
 
             m_Transition.Update(activePort, blendVel, Time.deltaTime);
+            
+            Profiler.EndSample();
         }
 
         void StartEmote(int port)

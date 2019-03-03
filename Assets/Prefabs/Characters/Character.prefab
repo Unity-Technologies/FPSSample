@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 8201756634621499973}
   - component: {fileID: 2744273219068310496}
   - component: {fileID: 9211920234252203404}
+  - component: {fileID: 1339883604161239200}
   m_Layer: 0
   m_Name: Character
   m_TagString: Untagged
@@ -65,8 +66,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  netID: 3f504d2c8548c946a2fb0cc79ac73992
-  registryId: 10
+  m_SerializedData:
+    assetGuid:
+      val0: 1536487357
+      val1: -554387478
+      val2: 963780184
+      val3: 180654068
+  netID: edc6bdc49ca8ec4b9f2eb6b19814d7ce
 --- !u!114 &3582152881772207947
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -103,6 +109,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f08812f3dcab18c4492eee34ebc2f9dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_SerializedData:
+    tick: 0
+    position: {x: 0, y: 0, z: 0}
+    velocity: {x: 0, y: 0, z: 0}
+    locoState: 0
+    locoStartTick: 0
+    action: 0
+    actionStartTick: 0
+    jumpCount: 0
+    sprinting: 0
+    cameraProfile: 0
+    damageTick: 0
+    damageDirection: {x: 0, y: 0, z: 0}
+    damageImpulse: 0
 --- !u!114 &7339034719779384493
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -207,4 +227,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8148f8d3ecb80a4d95915a7b6e09459, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  colliderFlags: 0
+  m_SerializedData:
+    colliderFlags: 0
+    collisionEnabled: 1
+--- !u!114 &1339883604161239200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3637207506115784108}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b9aa07eb1bcb7e4a9eeb3f467b8a990, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

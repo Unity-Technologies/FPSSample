@@ -1,0 +1,57 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:uie="UnityEditor.Experimental.UIElements" xmlns:vfx="UnityEditor.VFX.UI">
+
+  <ui:VisualElement name="header" pickingMode="Ignore">
+      <ui:VisualElement name="labelContainer" pickingMode="Ignore">
+          <ui:Label name="titleLabel" text="Target visual effect GameObject" />
+          <ui:Label name="subTitleLabel" text="Select a visual effect gameobject in the scenes and attach for additionnal control." />
+      </ui:VisualElement>
+  </ui:VisualElement>
+  <ui:ScrollView class="stretchContentWidth">
+    <ui:VisualElement name="attach-container">
+        <ui:Button name="attach" text="Attach" />
+        <ui:Label name="component-path" text="" pickingMode="Ignore"/>
+        <ui:Button name="select" text="select" />
+    </ui:VisualElement>
+    <ui:VisualElement name="divider" class="horizontal"/>
+    <ui:VisualElement name="component-container">
+        <ui:VisualElement name="parameter-container" pickingMode="Ignore"/>
+        <!--<ui:VisualElement name="particle-count-container" pickingMode="Ignore">
+            <ui:Label text="Particle Count" pickingMode="Ignore"/>
+            <ui:Label name="particle-count" text="1337000" pickingMode="Ignore"/>
+        </ui:VisualElement>-->
+        <ui:VisualElement pickingMode="Ignore" >
+            <ui:VisualElement name="toolbar" pickingMode="Ignore" >
+                <ui:Button name="stop">
+                    <ui:Image name="icon"/>
+                </ui:Button>
+                <ui:Button name="play">
+                    <ui:Image name="icon"/>
+                </ui:Button>
+                <ui:Button name="step">
+                    <ui:Image name="icon"/>
+                </ui:Button>
+                <ui:Button name="restart">
+                    <ui:Image name="icon"/>
+                </ui:Button>
+            </ui:VisualElement>
+            <ui:VisualElement name="play-rate-container" pickingMode="Ignore" >
+                <ui:Label text="Play Rate" />
+                <ui:Slider name="play-rate-slider" direction="Horizontal" />
+                <uie:IntegerField name="play-rate-field"/>
+                <ui:Button name="play-rate-menu" text="Set" class="MiniDropDown"/>
+            </ui:VisualElement>
+          <ui:VisualElement>
+            <ui:VisualElement name="divider" class="horizontal"/>
+            <ui:Label name="events-label" text="Events" />
+            <ui:VisualElement pickingMode="Ignore" style="flex-direction:row">
+              <ui:Button name="on-play-button" text="OnPlay" style="flex:1"/>
+              <ui:Button name="on-stop-button" text="OnStop" style="flex:1"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="events-container" pickingMode="Ignore" >
+            </ui:VisualElement>
+          </ui:VisualElement>
+        </ui:VisualElement>
+      </ui:VisualElement>
+  </ui:ScrollView>
+    <vfx:ResizableElement pickingMode="Ignore" />
+</UXML>

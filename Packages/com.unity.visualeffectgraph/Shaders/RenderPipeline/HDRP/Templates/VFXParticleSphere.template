@@ -1,0 +1,11 @@
+{
+	SubShader
+	{	
+		Cull Off
+		
+		${VFXInclude("Shaders/VFXParticleHeader.template")}
+		${VFXInclude("Shaders/RenderPipeline/HDRP/Templates/Sphere/PassDepth.template")}
+		${VFXInclude("Shaders/RenderPipeline/HDRP/Templates/Sphere/PassGBuffer.template")}
+		${VFXInclude("Shaders/particleSpheres/PassShadowCaster.template"),USE_CAST_SHADOWS_PASS}
+	}
+}

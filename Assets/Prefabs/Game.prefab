@@ -335,6 +335,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4496992773002774}
   - component: {fileID: 114884037441297484}
+  - component: {fileID: 632104652}
   m_Layer: 0
   m_Name: Game
   m_TagString: Untagged
@@ -380,6 +381,18 @@ MonoBehaviour:
   defaultBank: {fileID: 11400000, guid: 4e9db283fb7cecb4bb999325034c7c63, type: 2}
   bootCamera: {fileID: 20780552474701210}
   clientFrontend: {fileID: 0}
+--- !u!114 &632104652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1573906733081610}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48225de983e4c8b449fa2483d99225a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1625622626952942
 GameObject:
   m_ObjectHideFlags: 0
@@ -522,7 +535,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Texture: {fileID: 2800000, guid: ec3bf67780c0bdc4dbb5bf26987204d5, type: 3}
   m_UVRect:
     serializedVersion: 2

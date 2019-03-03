@@ -15,7 +15,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 textureTiling;
         public int     textureIndex;
         public Vector3 textureScroll;
-        public int     invertFade;    // No bool support :-(
+        public int     invertFade;    // bool...
         public Vector3 rcpPosFade;
         public float   pad1;
         public Vector3 rcpNegFade;
@@ -86,41 +86,46 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public struct VBufferParameters
         {
-            public Vector4 viewportResolution;
-            public Vector2 viewportSliceCount;
-            public Vector4 depthEncodingParams;
-            public Vector4 depthDecodingParams;
+            public Vector3Int viewportSize;
+            public Vector4    depthEncodingParams;
+            public Vector4    depthDecodingParams;
 
-            public VBufferParameters(Vector3Int viewportResolution, Vector2 depthRange, float depthDistributionUniformity)
+            public VBufferParameters(Vector3Int viewportResolution, float depthExtent, float camNear, float camFar, float camVFoV, float sliceDistributionUniformity)
             {
-                int w = viewportResolution.x;
-                int h = viewportResolution.y;
-                int d = viewportResolution.z;
+                viewportSize = viewportResolution;
 
+                // The V-Buffer is sphere-capped, while the camera frustum is not.
+                // We always start from the near plane of the camera.
 
-                this.viewportResolution = new Vector4(w, h, 1.0f / w, 1.0f / h);
-                this.viewportSliceCount = new Vector2(d, 1.0f / d);
+                float aspectRatio    = viewportResolution.x / (float)viewportResolution.y;
+                float farPlaneHeight = 2.0f * Mathf.Tan(0.5f * camVFoV) * camFar;
+                float farPlaneWidth  = farPlaneHeight * aspectRatio;
+                float farPlaneMaxDim = Mathf.Max(farPlaneWidth, farPlaneHeight);
+                float farPlaneDist   = Mathf.Sqrt(camFar * camFar + 0.25f * farPlaneMaxDim * farPlaneMaxDim);
 
-                float n = depthRange.x;
-                float f = depthRange.y;
-                float c = 2 - 2 * depthDistributionUniformity; // remap [0, 1] -> [2, 0]
+                float nearDist = camNear;
+                float farDist  = Math.Min(nearDist + depthExtent, farPlaneDist);
 
-                depthEncodingParams = ComputeLogarithmicDepthEncodingParams(n, f, c);
-                depthDecodingParams = ComputeLogarithmicDepthDecodingParams(n, f, c);
+                float c = 2 - 2 * sliceDistributionUniformity; // remap [0, 1] -> [2, 0]
+                      c = Mathf.Max(c, 0.001f);                // Avoid NaNs
+
+                depthEncodingParams = ComputeLogarithmicDepthEncodingParams(nearDist, farDist, c);
+                depthDecodingParams = ComputeLogarithmicDepthDecodingParams(nearDist, farDist, c);
             }
 
             public Vector4 ComputeUvScaleAndLimit(Vector2Int bufferSize)
             {
-                // The depth is fixed for now.
-                // vp_scale = vp_dim / tex_dim.
-                Vector2 uvScale = new Vector2(viewportResolution.x / bufferSize.x,
-                                              viewportResolution.y / bufferSize.y);
+                // The slice count is fixed for now.
+                return HDUtils.ComputeUvScaleAndLimit(new Vector2Int(viewportSize.x, viewportSize.y), bufferSize);
+            }
 
-                // clamp to (vp_dim - 0.5) / tex_dim.
-                Vector2 uvLimit = new Vector2((viewportResolution.x - 0.5f) / bufferSize.x,
-                                              (viewportResolution.y - 0.5f) / bufferSize.y);
+            public float ComputeLastSliceDistance()
+            {
+                float d   = 1.0f - 0.5f / viewportSize.z;
+                float ln2 = 0.69314718f;
 
-                return new Vector4(uvScale.x, uvScale.y, uvLimit.x, uvLimit.y);
+                // DecodeLogarithmicDepthGeneralized(1 - 0.5 / sliceCount)
+                return depthDecodingParams.x * Mathf.Exp(ln2 * d * depthDecodingParams.y) + depthDecodingParams.z;
             }
 
         } // struct Parameters
@@ -144,10 +149,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Is the feature globally disabled?
         bool m_SupportVolumetrics = false;
-
-        // The history buffer starts in the uninitialized state after being created or resized,
-        // and contains arbitrary data. Therefore, we must initialize it before use.
-        Vector3Int m_PreviousResolutionOfHistoryBuffer = Vector3Int.zero;
 
         Vector4[] m_PackedCoeffs;
         ZonalHarmonicsL2 m_PhaseZH;
@@ -250,7 +251,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_DensityBufferHandle = RTHandles.Alloc(scaleFunc:         ComputeVBufferResolutionXY,
                     slices:            d,
                     dimension:         TextureDimension.Tex3D,
-                    colorFormat:       RenderTextureFormat.ARGBHalf,
+                    colorFormat:       RenderTextureFormat.ARGB32,
                     sRGB:              false,
                     enableRandomWrite: true,
                     enableMSAA:        false,
@@ -271,26 +272,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // For the initial allocation, no suballocation happens (the texture is full size).
         VBufferParameters ComputeVBufferParameters(HDCamera hdCamera)
         {
-            Vector3Int viewportResolution = ComputeVBufferResolution(preset, hdCamera.camera.pixelWidth, hdCamera.camera.pixelHeight);
+            Vector3Int viewportResolution = ComputeVBufferResolution(preset, hdCamera.actualWidth, hdCamera.actualHeight);
 
             var controller = VolumeManager.instance.stack.GetComponent<VolumetricLightingController>();
 
-            // We must not allow the V-Buffer to extend outside of the camera's frustum.
-            float n = hdCamera.camera.nearClipPlane;
-            float f = hdCamera.camera.farClipPlane;
-
-            Vector2 vBufferDepthRange = controller.depthRange.value;
-            vBufferDepthRange.y = Mathf.Clamp(vBufferDepthRange.y, n, f);               // far
-            vBufferDepthRange.x = Mathf.Clamp(vBufferDepthRange.x, n, vBufferDepthRange.y); // near
-            float vBufferDepthDistributionUniformity = controller.depthDistributionUniformity.value;
-
-            return new VBufferParameters(viewportResolution, vBufferDepthRange, vBufferDepthDistributionUniformity);
+            return new VBufferParameters(viewportResolution, controller.depthExtent.value,
+                                         hdCamera.camera.nearClipPlane,
+                                         hdCamera.camera.farClipPlane,
+                                         hdCamera.camera.fieldOfView,
+                                         controller.sliceDistributionUniformity.value);
         }
 
-        public void InitializePerCameraData(HDCamera hdCamera)
+        public void InitializePerCameraData(HDCamera hdCamera, int bufferCount)
         {
             // Note: Here we can't test framesettings as they are not initialize yet
-            // TODO: Here we allocate history even for camera that may not use volumetric
             if (!m_SupportVolumetrics)
                 return;
 
@@ -300,12 +295,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             hdCamera.vBufferParams[0] = parameters;
             hdCamera.vBufferParams[1] = parameters;
 
-            if (hdCamera.camera.cameraType == CameraType.Game ||
-                hdCamera.camera.cameraType == CameraType.SceneView)
+            hdCamera.volumetricHistoryIsValid = false;
+
+            if (bufferCount != 0)
             {
-                // We don't need reprojection for other view types, such as reflection and preview.
-                hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.VolumetricLighting, HistoryBufferAllocatorFunction);
+                hdCamera.AllocHistoryFrameRT((int)HDCameraFrameHistoryType.VolumetricLighting, HistoryBufferAllocatorFunction, bufferCount);
             }
+        }
+
+        public void DeinitializePerCameraData(HDCamera hdCamera)
+        {
+            if (!m_SupportVolumetrics)
+                return;
+
+            hdCamera.vBufferParams = null;
+
+            hdCamera.volumetricHistoryIsValid = false;
+
+            // Cannot free the history buffer from within this function.
         }
 
         // This function relies on being called once per camera per frame.
@@ -379,14 +386,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        static Vector3Int ComputeVBufferResolution(VolumetricLightingPreset preset,
-            int screenWidth, int screenHeight)
+        static Vector3Int ComputeVBufferResolution(VolumetricLightingPreset preset, int screenWidth, int screenHeight)
         {
             int t = ComputeVBufferTileSize(preset);
 
-            // ceil(ScreenSize / TileSize).
-            int w = (screenWidth  + (t - 1)) / t;
-            int h = (screenHeight + (t - 1)) / t;
+            int w = HDUtils.DivRoundUp(screenWidth,  t);
+            int h = HDUtils.DivRoundUp(screenHeight, t);
             int d = ComputeVBufferSliceCount(preset);
 
             return new Vector3Int(w, h, d);
@@ -399,8 +404,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             float n = nearPlane;
             float f = farPlane;
-
-            c = Mathf.Max(c, 0.001f); // Avoid NaNs
 
             depthParams.y = 1.0f / Mathf.Log(c * (f - n) + 1, 2);
             depthParams.x = Mathf.Log(c, 2) * depthParams.y;
@@ -417,8 +420,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             float n = nearPlane;
             float f = farPlane;
-
-            c = Mathf.Max(c, 0.001f); // Avoid NaNs
 
             depthParams.x = 1.0f / c;
             depthParams.y = Mathf.Log(c * (f - n) + 1, 2);
@@ -450,12 +451,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             var visualEnvironment = VolumeManager.instance.stack.GetComponent<VisualEnvironment>();
 
-            // VisualEnvironment sets global fog parameters: _GlobalAnisotropy, _GlobalScattering, _GlobalExtinction.
+            // VisualEnvironment sets global fog parameters
 
             if (!hdCamera.frameSettings.enableVolumetrics || visualEnvironment.fogType.value != FogType.Volumetric)
             {
-                // Set the neutral black texture.
-                cmd.SetGlobalTexture(HDShaderIDs._VBufferLighting, CoreUtils.blackVolumeTexture);
+                var neutralTexture = UnityEngine.Rendering.PostProcessing.RuntimeUtilities.transparentTexture3D;
+                cmd.SetGlobalTexture(HDShaderIDs._VBufferLighting, neutralTexture);
                 return;
             }
 
@@ -470,19 +471,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // All buffers are of the same size, and are resized at the same time, at the beginning of the frame.
             Vector2Int bufferSize = new Vector2Int(m_LightingBufferHandle.rt.width, m_LightingBufferHandle.rt.height);
 
-            cmd.SetGlobalVector(HDShaderIDs._VBufferResolution,              currFrameParams.viewportResolution);
-            cmd.SetGlobalVector(HDShaderIDs._VBufferSliceCount,              currFrameParams.viewportSliceCount);
-            cmd.SetGlobalVector(HDShaderIDs._VBufferUvScaleAndLimit,         currFrameParams.ComputeUvScaleAndLimit(bufferSize));
-            cmd.SetGlobalVector(HDShaderIDs._VBufferDepthEncodingParams,     currFrameParams.depthEncodingParams);
-            cmd.SetGlobalVector(HDShaderIDs._VBufferDepthDecodingParams,     currFrameParams.depthDecodingParams);
+            var cvp = currFrameParams.viewportSize;
+            var pvp = prevFrameParams.viewportSize;
 
-            cmd.SetGlobalVector(HDShaderIDs._VBufferPrevResolution,          prevFrameParams.viewportResolution);
-            cmd.SetGlobalVector(HDShaderIDs._VBufferPrevSliceCount,          prevFrameParams.viewportSliceCount);
+            cmd.SetGlobalVector(HDShaderIDs._VBufferResolution,              new Vector4(cvp.x, cvp.y, 1.0f / cvp.x, 1.0f / cvp.y));
+            cmd.SetGlobalInt(   HDShaderIDs._VBufferSliceCount,              cvp.z);
+            cmd.SetGlobalFloat( HDShaderIDs._VBufferRcpSliceCount,           1.0f / cvp.z);
+            cmd.SetGlobalVector(HDShaderIDs._VBufferUvScaleAndLimit,         currFrameParams.ComputeUvScaleAndLimit(bufferSize));
+            cmd.SetGlobalVector(HDShaderIDs._VBufferDistanceEncodingParams,  currFrameParams.depthEncodingParams);
+            cmd.SetGlobalVector(HDShaderIDs._VBufferDistanceDecodingParams,  currFrameParams.depthDecodingParams);
+            cmd.SetGlobalFloat( HDShaderIDs._VBufferLastSliceDist,           currFrameParams.ComputeLastSliceDistance());
+
+            cmd.SetGlobalVector(HDShaderIDs._VBufferPrevResolution,          new Vector4(pvp.x, pvp.y, 1.0f / pvp.x, 1.0f / pvp.y));
             cmd.SetGlobalVector(HDShaderIDs._VBufferPrevUvScaleAndLimit,     prevFrameParams.ComputeUvScaleAndLimit(bufferSize));
             cmd.SetGlobalVector(HDShaderIDs._VBufferPrevDepthEncodingParams, prevFrameParams.depthEncodingParams);
             cmd.SetGlobalVector(HDShaderIDs._VBufferPrevDepthDecodingParams, prevFrameParams.depthDecodingParams);
 
-            cmd.SetGlobalTexture(HDShaderIDs._VBufferLighting,                m_LightingBufferHandle);
+            cmd.SetGlobalTexture(HDShaderIDs._VBufferLighting,               m_LightingBufferHandle);
         }
 
         public DensityVolumeList PrepareVisibleDensityVolumeList(HDCamera hdCamera, CommandBuffer cmd, float time)
@@ -517,7 +522,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     DensityVolume volume = volumes[i];
 
                     // TODO: cache these?
-                    var obb = OrientedBBox.Create(volume.transform);
+                    var obb = new OrientedBBox(Matrix4x4.TRS(volume.transform.position, volume.transform.rotation, volume.parameters.size));
 
                     // Handle camera-relative rendering.
                     obb.center -= camOffset;
@@ -546,7 +551,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public void VolumeVoxelizationPass(HDCamera hdCamera, CommandBuffer cmd, uint frameIndex, DensityVolumeList densityVolumes)
+        public void VolumeVoxelizationPass(HDCamera hdCamera, CommandBuffer cmd, uint frameIndex, DensityVolumeList densityVolumes, LightLoop lightLoop)
         {
             if (!hdCamera.frameSettings.enableVolumetrics)
                 return;
@@ -557,30 +562,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, "Volume Voxelization"))
             {
-                int numVisibleVolumes = m_VisibleVolumeBounds.Count;
+                int  numVisibleVolumes = m_VisibleVolumeBounds.Count;
+                bool tiledLighting     = hdCamera.frameSettings.lightLoopSettings.enableBigTilePrepass;
+                bool highQuality       = preset == VolumetricLightingPreset.High;
 
-                bool highQuality     = preset == VolumetricLightingPreset.High;
-                bool enableClustered = hdCamera.frameSettings.lightLoopSettings.enableTileAndCluster;
+                int kernel = (tiledLighting ? 1 : 0) | (highQuality ? 2 : 0);
 
-                int kernel;
+                var currFrameParams = hdCamera.vBufferParams[0];
+                var cvp = currFrameParams.viewportSize;
 
-                if (highQuality)
-                {
-                    kernel = m_VolumeVoxelizationCS.FindKernel(enableClustered ? "VolumeVoxelizationClusteredHQ"
-                                                                               : "VolumeVoxelizationBruteforceHQ");
-                }
-                else
-                {
-                    kernel = m_VolumeVoxelizationCS.FindKernel(enableClustered ? "VolumeVoxelizationClusteredMQ"
-                                                                               : "VolumeVoxelizationBruteforceMQ");
-                }
-
-                var     frameParams = hdCamera.vBufferParams[0];
-                Vector4 resolution  = frameParams.viewportResolution;
-                float   vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
+                Vector4 resolution  = new Vector4(cvp.x, cvp.y, 1.0f / cvp.x, 1.0f / cvp.y);
+#if UNITY_2019_1_OR_NEWER
+                var vFoV        = hdCamera.camera.GetGateFittedFieldOfView() * Mathf.Deg2Rad;
+                var lensShift = hdCamera.camera.GetGateFittedLensShift();
+#else
+                var vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
+                var lensShift = Vector2.zero;
+#endif
 
                 // Compose the matrix which allows us to compute the world space view direction.
-                Matrix4x4 transform   = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, resolution, hdCamera.viewMatrix, false);
+                Matrix4x4 transform = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, lensShift, resolution, hdCamera.viewMatrix, false);
+
+                // Compute texel spacing at the depth of 1 meter.
+                float unitDepthTexelSpacing = HDUtils.ComputZPlaneTexelSpacing(1.0f, vFoV, resolution.y);
 
                 Texture3D volumeAtlas = DensityVolumeManager.manager.volumeAtlas.GetAtlas();
                 Vector4 volumeAtlasDimensions = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -597,15 +601,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     volumeAtlas = CoreUtils.blackVolumeTexture;
                 }
 
-                cmd.SetComputeTextureParam(m_VolumeVoxelizationCS, kernel, HDShaderIDs._VBufferDensity, m_DensityBufferHandle);
-                cmd.SetComputeBufferParam(m_VolumeVoxelizationCS, kernel, HDShaderIDs._VolumeBounds,   s_VisibleVolumeBoundsBuffer);
-                cmd.SetComputeBufferParam(m_VolumeVoxelizationCS, kernel, HDShaderIDs._VolumeData,     s_VisibleVolumeDataBuffer);
+                if(hdCamera.frameSettings.VolumeVoxelizationRunsAsync())
+                {
+                    // We explicitly set the big tile info even though it is set globally, since this could be running async before the PushGlobalParams
+                    cmd.SetComputeIntParam(m_VolumeVoxelizationCS, HDShaderIDs._NumTileBigTileX, lightLoop.GetNumTileBigTileX(hdCamera));
+                    cmd.SetComputeIntParam(m_VolumeVoxelizationCS, HDShaderIDs._NumTileBigTileY, lightLoop.GetNumTileBigTileY(hdCamera));
+                    if (hdCamera.frameSettings.lightLoopSettings.enableBigTilePrepass)
+                        cmd.SetComputeBufferParam(m_VolumeVoxelizationCS, kernel, HDShaderIDs.g_vBigTileLightList, lightLoop.GetBigTileLightList());
+                }
+
+                cmd.SetComputeTextureParam(m_VolumeVoxelizationCS, kernel, HDShaderIDs._VBufferDensity,  m_DensityBufferHandle);
+                cmd.SetComputeBufferParam( m_VolumeVoxelizationCS, kernel, HDShaderIDs._VolumeBounds,    s_VisibleVolumeBoundsBuffer);
+                cmd.SetComputeBufferParam( m_VolumeVoxelizationCS, kernel, HDShaderIDs._VolumeData,      s_VisibleVolumeDataBuffer);
                 cmd.SetComputeTextureParam(m_VolumeVoxelizationCS, kernel, HDShaderIDs._VolumeMaskAtlas, volumeAtlas);
 
                 // TODO: set the constant buffer data only once.
-                cmd.SetComputeMatrixParam(m_VolumeVoxelizationCS, HDShaderIDs._VBufferCoordToViewDirWS,  transform);
-                cmd.SetComputeIntParam(m_VolumeVoxelizationCS, HDShaderIDs._NumVisibleDensityVolumes, numVisibleVolumes);
-                cmd.SetComputeVectorParam(m_VolumeVoxelizationCS, HDShaderIDs._VolumeMaskDimensions, volumeAtlasDimensions);
+                cmd.SetComputeMatrixParam(m_VolumeVoxelizationCS, HDShaderIDs._VBufferCoordToViewDirWS,      transform);
+                cmd.SetComputeFloatParam( m_VolumeVoxelizationCS, HDShaderIDs._VBufferUnitDepthTexelSpacing, unitDepthTexelSpacing);
+                cmd.SetComputeIntParam(   m_VolumeVoxelizationCS, HDShaderIDs._NumVisibleDensityVolumes,     numVisibleVolumes);
+                cmd.SetComputeVectorParam(m_VolumeVoxelizationCS, HDShaderIDs._VolumeMaskDimensions,         volumeAtlasDimensions);
 
                 int w = (int)resolution.x;
                 int h = (int)resolution.y;
@@ -662,46 +676,34 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, "Volumetric Lighting"))
             {
+                // Get the interpolated anisotropy value.
+                var fog = VolumeManager.instance.stack.GetComponent<VolumetricFog>();
+
                 // Only available in the Play Mode because all the frame counters in the Edit Mode are broken.
-                bool highQuality        = preset == VolumetricLightingPreset.High;
-                bool enableClustered    = hdCamera.frameSettings.lightLoopSettings.enableTileAndCluster;
+                bool tiledLighting      = hdCamera.frameSettings.lightLoopSettings.enableBigTilePrepass;
                 bool enableReprojection = Application.isPlaying && hdCamera.camera.cameraType == CameraType.Game &&
                                           hdCamera.frameSettings.enableReprojectionForVolumetrics;
+                bool enableAnisotropy   = fog.anisotropy != 0;
+                bool highQuality        = preset == VolumetricLightingPreset.High;
 
-                int kernel;
+                int kernel = (tiledLighting ? 1 : 0) | (enableReprojection ? 2 : 0) | (enableAnisotropy ? 4 : 0) | (highQuality ? 8 : 0);
 
-                if (highQuality)
-                {
-                    if (enableReprojection)
-                    {
-                        kernel = m_VolumetricLightingCS.FindKernel(enableClustered ? "VolumetricLightingClusteredReprojHQ"
-                                                                                   : "VolumetricLightingBruteforceReprojHQ");
-                    }
-                    else
-                    {
-                        kernel = m_VolumetricLightingCS.FindKernel(enableClustered ? "VolumetricLightingClusteredHQ"
-                                                                                   : "VolumetricLightingBruteforceHQ");
-                    }
-                }
-                else
-                {
-                    if (enableReprojection)
-                    {
-                        kernel = m_VolumetricLightingCS.FindKernel(enableClustered ? "VolumetricLightingClusteredReprojMQ"
-                                                                                   : "VolumetricLightingBruteforceReprojMQ");
-                    }
-                    else
-                    {
-                        kernel = m_VolumetricLightingCS.FindKernel(enableClustered ? "VolumetricLightingClusteredMQ"
-                                                                                   : "VolumetricLightingBruteforceMQ");
-                    }
-                }
+                var currFrameParams = hdCamera.vBufferParams[0];
+                var cvp = currFrameParams.viewportSize;
 
-                var       frameParams = hdCamera.vBufferParams[0];
-                Vector4   resolution  = frameParams.viewportResolution;
-                float     vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
+                Vector4 resolution = new Vector4(cvp.x, cvp.y, 1.0f / cvp.x, 1.0f / cvp.y);
+#if UNITY_2019_1_OR_NEWER
+                var vFoV = hdCamera.camera.GetGateFittedFieldOfView() * Mathf.Deg2Rad;
+                var lensShift = hdCamera.camera.GetGateFittedLensShift();
+#else
+                var vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
+                var lensShift   = Vector2.zero;
+#endif
                 // Compose the matrix which allows us to compute the world space view direction.
-                Matrix4x4 transform   = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, resolution, hdCamera.viewMatrix, false);
+                Matrix4x4 transform   = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, lensShift, resolution, hdCamera.viewMatrix, false);
+
+                // Compute texel spacing at the depth of 1 meter.
+                float unitDepthTexelSpacing = HDUtils.ComputZPlaneTexelSpacing(1.0f, vFoV, resolution.y);
 
                 GetHexagonalClosePackedSpheres7(m_xySeq);
 
@@ -712,37 +714,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_xySeqOffset.Set(m_xySeq[sampleIndex].x, m_xySeq[sampleIndex].y, m_zSeq[sampleIndex], frameIndex);
 
 
-                // Get the interpolated anisotropy value.
-                var fog = VolumeManager.instance.stack.GetComponent<VolumetricFog>();
-
                 // TODO: set 'm_VolumetricLightingPreset'.
                 // TODO: set the constant buffer data only once.
-                cmd.SetComputeMatrixParam( m_VolumetricLightingCS,         HDShaderIDs._VBufferCoordToViewDirWS, transform);
-                cmd.SetComputeVectorParam( m_VolumetricLightingCS,         HDShaderIDs._VBufferSampleOffset,     m_xySeqOffset);
-                cmd.SetComputeFloatParam(  m_VolumetricLightingCS,         HDShaderIDs._CornetteShanksConstant,  CornetteShanksPhasePartConstant(fog.anisotropy));
-                cmd.SetComputeTextureParam(m_VolumetricLightingCS, kernel, HDShaderIDs._VBufferDensity,          m_DensityBufferHandle);  // Read
-                cmd.SetComputeTextureParam(m_VolumetricLightingCS, kernel, HDShaderIDs._VBufferLightingIntegral, m_LightingBufferHandle); // Write
+                cmd.SetComputeMatrixParam( m_VolumetricLightingCS,         HDShaderIDs._VBufferCoordToViewDirWS,      transform);
+                cmd.SetComputeFloatParam(  m_VolumetricLightingCS,         HDShaderIDs._VBufferUnitDepthTexelSpacing, unitDepthTexelSpacing);
+                cmd.SetComputeFloatParam(  m_VolumetricLightingCS,         HDShaderIDs._CornetteShanksConstant,       CornetteShanksPhasePartConstant(fog.anisotropy));
+                cmd.SetComputeVectorParam( m_VolumetricLightingCS,         HDShaderIDs._VBufferSampleOffset,          m_xySeqOffset);
+                cmd.SetComputeTextureParam(m_VolumetricLightingCS, kernel, HDShaderIDs._VBufferDensity,               m_DensityBufferHandle);  // Read
+                cmd.SetComputeTextureParam(m_VolumetricLightingCS, kernel, HDShaderIDs._VBufferLightingIntegral,      m_LightingBufferHandle); // Write
+
                 if (enableReprojection)
                 {
                     var historyRT  = hdCamera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.VolumetricLighting);
                     var feedbackRT = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.VolumetricLighting);
 
-                    // Detect if the history buffer has been recreated or resized.
-                    Vector3Int currentResolutionOfHistoryBuffer = new Vector3Int();
-                    currentResolutionOfHistoryBuffer.x = historyRT.rt.width;
-                    currentResolutionOfHistoryBuffer.y = historyRT.rt.height;
-                    currentResolutionOfHistoryBuffer.z = historyRT.rt.volumeDepth;
-
-                    // We allow downsizing, as this does not cause a reallocation.
-                    bool validHistory = (currentResolutionOfHistoryBuffer.x <= m_PreviousResolutionOfHistoryBuffer.x &&
-                                         currentResolutionOfHistoryBuffer.y <= m_PreviousResolutionOfHistoryBuffer.y &&
-                                         currentResolutionOfHistoryBuffer.z <= m_PreviousResolutionOfHistoryBuffer.z);
-
-                    cmd.SetComputeIntParam(    m_VolumetricLightingCS,         HDShaderIDs._VBufferLightingHistoryIsValid, validHistory ? 1 : 0);
+                    cmd.SetComputeIntParam(    m_VolumetricLightingCS,         HDShaderIDs._VBufferLightingHistoryIsValid, hdCamera.volumetricHistoryIsValid ? 1 : 0);
                     cmd.SetComputeTextureParam(m_VolumetricLightingCS, kernel, HDShaderIDs._VBufferLightingHistory,        historyRT);  // Read
                     cmd.SetComputeTextureParam(m_VolumetricLightingCS, kernel, HDShaderIDs._VBufferLightingFeedback,       feedbackRT); // Write
 
-                    m_PreviousResolutionOfHistoryBuffer = currentResolutionOfHistoryBuffer;
+                    hdCamera.volumetricHistoryIsValid = true; // For the next frame...
                 }
 
                 int w = (int)resolution.x;

@@ -26,6 +26,8 @@ float3 ComputeSunLightDirection(DirectionalLightData lightData, float3 N, float3
 float3 PreEvaluateDirectionalLightTransmission(BSDFData bsdfData, inout DirectionalLightData light,
                                                inout float3 N, inout float NdotL)
 {
+    float3 transmittance = 0.0;
+
 #ifdef MATERIAL_INCLUDE_TRANSMISSION
     if (MaterialSupportsTransmission(bsdfData))
     {
@@ -47,7 +49,7 @@ float3 PreEvaluateDirectionalLightTransmission(BSDFData bsdfData, inout Directio
                 light.shadowMaskSelector.x = -1;
 
                 // We use the precomputed value (based on "baked" thickness).
-                return bsdfData.transmittance;
+                transmittance = bsdfData.transmittance;
             }
             else
             {
@@ -59,7 +61,7 @@ float3 PreEvaluateDirectionalLightTransmission(BSDFData bsdfData, inout Directio
     }
 #endif
 
-    return 0;
+    return transmittance;
 }
 
 DirectLighting ShadeSurface_Directional(LightLoopContext lightLoopContext,

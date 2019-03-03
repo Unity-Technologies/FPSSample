@@ -2,6 +2,7 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Experimental.VFX;
 
 [ClientOnlyComponent]
 public class ClientProjectile : MonoBehaviour
@@ -82,10 +83,10 @@ public class ClientProjectile : MonoBehaviour
     
     void StopAllEffects(GameObject root)
     {
-        ParticleSystem[] particleSystems = root.GetComponentsInChildren<ParticleSystem>();
-        for (int i = 0; i < particleSystems.Length; i++)
+        VisualEffect[] effects = root.GetComponentsInChildren<VisualEffect>();
+        for (int i = 0; i < effects.Length; i++)
         {
-            particleSystems[i].Stop();
+            effects[i].Stop();
         }
 
         Light[] lights = root.GetComponentsInChildren<Light>();
@@ -100,10 +101,10 @@ public class ClientProjectile : MonoBehaviour
         if (root == null)
             return;
 
-        ParticleSystem[] particleSystems = root.GetComponentsInChildren<ParticleSystem>();
-        for (int i = 0; i < particleSystems.Length; i++)
+        VisualEffect[] effects = root.GetComponentsInChildren<VisualEffect>();
+        for (int i = 0; i < effects.Length; i++)
         {
-            particleSystems[i].Play();
+            effects[i].Play();
         }
     }
 

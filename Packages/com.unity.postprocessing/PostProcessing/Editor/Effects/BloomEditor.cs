@@ -3,7 +3,7 @@ using UnityEngine.Rendering.PostProcessing;
 namespace UnityEditor.Rendering.PostProcessing
 {
     [PostProcessEditor(typeof(Bloom))]
-    public sealed class BloomEditor : PostProcessEffectEditor<Bloom>
+    internal sealed class BloomEditor : PostProcessEffectEditor<Bloom>
     {
         SerializedParameterOverride m_Intensity;
         SerializedParameterOverride m_Threshold;

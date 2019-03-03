@@ -9,7 +9,7 @@ using UnityEditor;
 [CreateAssetMenu(fileName = "Ability_Chaingun",menuName = "FPS Sample/Abilities/Ability_Chaingun")]
 public class Ability_Chaingun : CharBehaviorFactory
 {
-    public enum Action
+    public enum State
     {
         Idle,
         Fire,
@@ -24,40 +24,47 @@ public class Ability_Chaingun : CharBehaviorFactory
     [Serializable]
     public struct Settings : IComponentData
     {
-        public CharPredictedStateData.Action fireAction;
+        public UserCommand.Button fireButton;
+        public UserCommand.Button reloadButton;
+
         public int clipSize;
         public float minFireRate;
         public float maxFireRate;
         public float fireRateAcceleration;
         public float reloadDuration;
         public float projectileRange;
-        [NonSerialized] public int projectileRegistryId;
+        public WeakAssetReference projectileAssetGuid;
     }
 
-    public struct PredictedState : INetPredicted<PredictedState>, IComponentData
+    public struct PredictedState : IPredictedComponent<PredictedState>, IComponentData
     {
-        public Action action;
+        public State state;
         public int actionStartTick;
         public int ammoInClip;
         public float fireRate;
 
-        public void SetPhase(Action action, int tick)
+        public void SetPhase(State action, int tick)
         {
-            this.action = action;
+            this.state = action;
             this.actionStartTick = tick;
         }
-
-        public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+        
+        public static IPredictedComponentSerializerFactory CreateSerializerFactory()
         {
-            writer.WriteInt32("phase", (int)action);
+            return new PredictedComponentSerializerFactory<PredictedState>();
+        }
+
+        public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
+        {
+            writer.WriteInt32("phase", (int)state);
             writer.WriteInt32("phaseStart", actionStartTick);
             writer.WriteInt32("ammoInClip", ammoInClip);
             writer.WriteFloatQ("fireRate", fireRate,2);
         }
 
-        public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+        public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
         {
-            action = (Action)reader.ReadInt32();
+            state = (State)reader.ReadInt32();
             actionStartTick = reader.ReadInt32();
             ammoInClip = reader.ReadInt32();
             fireRate = reader.ReadFloatQ();
@@ -66,34 +73,39 @@ public class Ability_Chaingun : CharBehaviorFactory
 #if UNITY_EDITOR
         public bool VerifyPrediction(ref PredictedState state)
         {
-            return action == state.action
+            return this.state == state.state
                    && actionStartTick == state.actionStartTick;
         }
 #endif    
     }
     
-    public struct InterpolatedState : INetInterpolated<InterpolatedState>, IComponentData
+    public struct InterpolatedState : IInterpolatedComponent<InterpolatedState>, IComponentData
     {
         public int fireTick;
         
-        public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+        public static IInterpolatedComponentSerializerFactory CreateSerializerFactory()
+        {
+            return new InterpolatedComponentSerializerFactory<InterpolatedState>();
+        }
+
+        public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
         {
             writer.WriteInt32("fireTick", fireTick);
         }
 
-        public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+        public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
         {
             fireTick = reader.ReadInt32();
         }
 
-        public void Interpolate(ref InterpolatedState first, ref InterpolatedState last, float t)
+        public void Interpolate(ref SerializeContext context, ref InterpolatedState first, ref InterpolatedState last,
+            float t)
         {
             this = first;
         }
     }
     
     public Settings settings;
-    public ProjectileTypeDefinition projectileType;
 
     public override Entity Create(EntityManager entityManager, List<Entity> entities)
     {
@@ -106,7 +118,6 @@ public class Ability_Chaingun : CharBehaviorFactory
             ammoInClip = settings.clipSize,
             fireRate = settings.minFireRate
         };
-        settings.projectileRegistryId = projectileType.registryId;
 
         entityManager.AddComponentData(entity, settings);
         entityManager.AddComponentData(entity, new LocalState());
@@ -115,27 +126,26 @@ public class Ability_Chaingun : CharBehaviorFactory
         return entity;
     }
     
-    static public Action GetCommandRequest(ref PredictedState predictedState, ref Settings settings, 
+    static public State GetPreferredState(ref PredictedState predictedState, ref Settings settings, 
         ref UserCommand command)
     {
-        if (command.reload && predictedState.ammoInClip < settings.clipSize)
+        if (command.buttons.IsSet(settings.reloadButton) && predictedState.ammoInClip < settings.clipSize)
         {
-            return Action.Reload;
+            return State.Reload;
         }
 		
-        var isIdle = predictedState.action == Action.Idle;
+        var isIdle = predictedState.state == State.Idle;
         if (isIdle)
         {
-            if (command.primaryFire && predictedState.ammoInClip == 0)
+            if (command.buttons.IsSet(settings.fireButton) && predictedState.ammoInClip == 0)
             {
-                return Action.Reload;
+                return State.Reload;
             }
         }
 
-        return command.primaryFire ? Action.Fire : Action.Idle;
+        return command.buttons.IsSet(settings.fireButton) ? State.Fire : State.Idle;
     }
 }
-
 
 [DisableAutoCreation]
 class Chaingun_RequestActive : BaseComponentDataSystem<CharBehaviour,AbilityControl,Ability_Chaingun.PredictedState,Ability_Chaingun.Settings>
@@ -151,9 +161,9 @@ class Chaingun_RequestActive : BaseComponentDataSystem<CharBehaviour,AbilityCont
         if (abilityCtrl.behaviorState == AbilityControl.State.Active || abilityCtrl.behaviorState == AbilityControl.State.Cooldown)
             return;
         
-        var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character).command;
-        var request = Ability_Chaingun.GetCommandRequest(ref predictedState, ref settings, ref command);
-        abilityCtrl.behaviorState = request != Ability_Chaingun.Action.Idle ?  AbilityControl.State.RequestActive : AbilityControl.State.Idle;
+        var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
+        var request = Ability_Chaingun.GetPreferredState(ref predictedState, ref settings, ref command);
+        abilityCtrl.behaviorState = request != Ability_Chaingun.State.Idle ?  AbilityControl.State.RequestActive : AbilityControl.State.Idle;
         EntityManager.SetComponentData(entity, abilityCtrl);			
     }
 }
@@ -172,7 +182,7 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
         var time = m_world.worldTime;
 
         // Adjust fire rate
-        if (predictedState.action == Ability_Chaingun.Action.Fire)
+        if (predictedState.state == Ability_Chaingun.State.Fire)
         {
             predictedState.fireRate += settings.fireRateAcceleration * time.tickDuration;
         }
@@ -186,33 +196,33 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
             return;
         }
             
-        var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character).command;
-        var request = Ability_Chaingun.GetCommandRequest(ref predictedState, ref settings, ref command);
+        var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
+        var request = Ability_Chaingun.GetPreferredState(ref predictedState, ref settings, ref command);
 
-        switch (predictedState.action)
+        switch (predictedState.state)
         {
-            case Ability_Chaingun.Action.Idle:
+            case Ability_Chaingun.State.Idle:
                 {
-                    if (request == Ability_Chaingun.Action.Reload)
+                    if (request == Ability_Chaingun.State.Reload)
                     {
                         EnterReloadingPhase(abilityEntity, ref abilityCtrl, ref predictedState, time.tick);
                         break;
                     }
 
-                    if (request == Ability_Chaingun.Action.Fire)
+                    if (request == Ability_Chaingun.State.Fire)
                     {
                         EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, ref settings, time.tick);
                         break;
                     }
                     break;
                 }
-            case Ability_Chaingun.Action.Fire:
+            case Ability_Chaingun.State.Fire:
                 {
                     var fireDuration = 1.0f / predictedState.fireRate;
                     var phaseDuration = time.DurationSinceTick(predictedState.actionStartTick);
                     if (phaseDuration > fireDuration)
                     {
-                        if (request == Ability_Chaingun.Action.Fire && predictedState.ammoInClip > 0)
+                        if (request == Ability_Chaingun.State.Fire && predictedState.ammoInClip > 0)
                             EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, ref settings, time.tick);
                         else
                             EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, time.tick);
@@ -221,7 +231,7 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
                     }
                     break;
                 }
-            case Ability_Chaingun.Action.Reload:
+            case Ability_Chaingun.State.Reload:
                 {
                     var phaseDuration = time.DurationSinceTick(predictedState.actionStartTick);
                     if (phaseDuration > settings.reloadDuration)
@@ -243,11 +253,11 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
 //        GameDebug.Log("Chaingun.EnterReloadingPhase");
 
         var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);
-        var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
+        var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
 
         abilityCtrl.behaviorState = AbilityControl.State.Active;
-        predictedState.SetPhase(Ability_Chaingun.Action.Reload, tick);
-        charPredictedState.SetAction(CharPredictedStateData.Action.Reloading, tick);
+        predictedState.SetPhase(Ability_Chaingun.State.Reload, tick);
+        charPredictedState.SetAction(CharacterPredictedData.Action.Reloading, tick);
         
         EntityManager.SetComponentData(abilityEntity, abilityCtrl);
         EntityManager.SetComponentData(abilityEntity, predictedState);
@@ -260,11 +270,11 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
 //        GameDebug.Log("Chaingun.EnterIdlePhase");
         
         var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);
-        var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
+        var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
         
         abilityCtrl.behaviorState = AbilityControl.State.Idle;
-        predictedState.SetPhase(Ability_Chaingun.Action.Idle, tick);
-        charPredictedState.SetAction(CharPredictedStateData.Action.None, tick);
+        predictedState.SetPhase(Ability_Chaingun.State.Idle, tick);
+        charPredictedState.SetAction(CharacterPredictedData.Action.None, tick);
         
         EntityManager.SetComponentData(abilityEntity, abilityCtrl);
         EntityManager.SetComponentData(abilityEntity, predictedState);
@@ -277,13 +287,13 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
 //        GameDebug.Log("Chaingun.EnterFiringPhase");
 
         var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);
-        var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
+        var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
         var character = EntityManager.GetComponentObject<Character>(charAbility.character);
 
         abilityCtrl.behaviorState = AbilityControl.State.Active;
-        predictedState.SetPhase(Ability_Chaingun.Action.Fire, tick);
+        predictedState.SetPhase(Ability_Chaingun.State.Fire, tick);
         predictedState.ammoInClip -= 1;
-        charPredictedState.SetAction(CharPredictedStateData.Action.PrimaryFire, tick);
+        charPredictedState.SetAction(CharacterPredictedData.Action.PrimaryFire, tick);
 
         // Only fire shot once for each tick (so it does not fire again when re-predicting)
         var localState = EntityManager.GetComponentData<Ability_Chaingun.LocalState>(abilityEntity);
@@ -291,13 +301,13 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
         {
             localState.lastFireTick = tick;
 
-            var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character).command;
+            var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
             var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight; 
             var endPos = eyePos + command.lookDir * settings.projectileRange;
 
             //GameDebug.Log("Request Projectile. Tick:" + tick);
             ProjectileRequest.Create(PostUpdateCommands, tick, tick - command.renderTick,
-                settings.projectileRegistryId, charAbility.character, character.teamId, eyePos, endPos);
+                settings.projectileAssetGuid, charAbility.character, character.teamId, eyePos, endPos);
 
             // 
             var interpolatedState = EntityManager.GetComponentData<Ability_Chaingun.InterpolatedState>(abilityEntity);

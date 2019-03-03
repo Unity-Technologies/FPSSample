@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Entities;
 using UnityEngine;
 
 // TODO (petera) Rename this to GameModeState or something even better
@@ -8,7 +9,7 @@ using UnityEngine;
 // This is data is replicated to the clients about the 'global' state of
 // the game mode, scores etc.
 
-public class GameMode : MonoBehaviour, INetSerialized
+public class GameMode : MonoBehaviour
 {
     public int gameTimerSeconds;
     public string gameTimerMessage;
@@ -17,25 +18,49 @@ public class GameMode : MonoBehaviour, INetSerialized
     public int teamScore0;
     public int teamScore1;
 
-    public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+    private void OnEnable()
     {
-        writer.WriteInt32("gameTimerSeconds", gameTimerSeconds);
-        writer.WriteString("gameTimerMessage", gameTimerMessage);
+        // TODO (mogensh) As we dont have good way of having strings on ECS data components we keep this as monobehavior and only use GameModeData for serialization 
+        var goe = GetComponent<GameObjectEntity>();
+        goe.EntityManager.AddComponent(goe.Entity,typeof(GameModeData));
+    }
+}
 
-        writer.WriteString("teamName0", teamName0);
-        writer.WriteString("teamName1", teamName1);
-        writer.WriteInt32("teamScore0", teamScore0);
-        writer.WriteInt32("teamScore1", teamScore1);
+
+
+[Serializable]
+public struct GameModeData : IComponentData, IReplicatedComponent
+{
+    public int foo;
+    
+    public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
+    {
+        return new ReplicatedComponentSerializerFactory<GameModeData>();
+    }    
+    
+    public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
+    {
+        var behaviour = context.entityManager.GetComponentObject<GameMode>(context.entity);
+        
+        writer.WriteInt32("gameTimerSeconds", behaviour.gameTimerSeconds);
+        writer.WriteString("gameTimerMessage", behaviour.gameTimerMessage);
+
+        writer.WriteString("teamName0", behaviour.teamName0);
+        writer.WriteString("teamName1", behaviour.teamName1);
+        writer.WriteInt32("teamScore0", behaviour.teamScore0);
+        writer.WriteInt32("teamScore1", behaviour.teamScore1);
     }
 
-    public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+    public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
     {
-        gameTimerSeconds = reader.ReadInt32();
-        gameTimerMessage = reader.ReadString();
+        var behaviour = context.entityManager.GetComponentObject<GameMode>(context.entity);
+        
+        behaviour.gameTimerSeconds = reader.ReadInt32();
+        behaviour.gameTimerMessage = reader.ReadString();
 
-        teamName0 = reader.ReadString();
-        teamName1 = reader.ReadString();
-        teamScore0 = reader.ReadInt32();
-        teamScore1 = reader.ReadInt32();
+        behaviour.teamName0 = reader.ReadString();
+        behaviour.teamName1 = reader.ReadString();
+        behaviour.teamScore0 = reader.ReadInt32();
+        behaviour.teamScore1 = reader.ReadInt32();
     }
 }

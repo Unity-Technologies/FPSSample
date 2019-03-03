@@ -48,7 +48,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceFillingCurves.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightDefinition.cs.hlsl"
-#include "SubsurfaceScattering.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/SubsurfaceScattering/SubsurfaceScattering.hlsl"
 
 
 //--------------------------------------------------------------------------------------------------
@@ -235,7 +235,7 @@ void SubsurfaceScattering(uint2 groupId       : SV_GroupID,
     groupThreadId &= GROUP_SIZE_2D - 1; // Help the compiler
 
     // Note: any factor of 64 is a suitable wave size for our algorithm.
-    uint waveIndex = WaveReadFirstLane(groupThreadId / 64);
+    uint waveIndex = WaveReadLaneFirst(groupThreadId / 64);
     uint laneIndex = groupThreadId % 64;
     uint quadIndex = laneIndex / 4;
 

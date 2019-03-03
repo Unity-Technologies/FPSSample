@@ -7,7 +7,7 @@ using UnityEngine.Playables;
 [Serializable]
 public struct ActionAnimationDefinition
 {
-    public CharPredictedStateData.Action action;
+    public CharacterPredictedData.Action action;
     public AnimationClip animation;
     public float restartTimeOffset;
 }
@@ -46,13 +46,13 @@ public class ActionAnimationHandler
         }
     }
 
-    public void UpdateAction(CharPredictedStateData.Action newAction, float actionTime)
+    public void UpdateAction(CharacterPredictedData.Action newAction, float actionTime)
     {
         // Handle action change. This does not happen when action changes to None
-        if (newAction != m_currentAction && newAction != CharPredictedStateData.Action.None && m_actionAnimations.ContainsKey(newAction))
+        if (newAction != m_currentAction && newAction != CharacterPredictedData.Action.None && m_actionAnimations.ContainsKey(newAction))
         {
             // Stop current action
-            if (m_currentAction != CharPredictedStateData.Action.None)
+            if (m_currentAction != CharacterPredictedData.Action.None)
             {
                 m_actionAnimations[m_currentAction].animation.Pause();
                 m_mixer.SetInputWeight(m_actionAnimations[m_currentAction].port, 0);
@@ -65,7 +65,7 @@ public class ActionAnimationHandler
             m_mixer.SetInputWeight(m_actionAnimations[m_currentAction].port, 1);
         }
 
-        if (m_currentAction == CharPredictedStateData.Action.None)
+        if (m_currentAction == CharacterPredictedData.Action.None)
             return;
 
 
@@ -88,13 +88,13 @@ public class ActionAnimationHandler
         {
             m_actionAnimations[m_currentAction].animation.Pause();
             m_mixer.SetInputWeight(m_actionAnimations[m_currentAction].port, 0);
-            m_currentAction = CharPredictedStateData.Action.None;
+            m_currentAction = CharacterPredictedData.Action.None;
             m_actionRestarted = false;
             m_lastActionTime = 0;
         }
     }
 
-    public ActionAnimation GetActionAnimation(CharPredictedStateData.Action action)
+    public ActionAnimation GetActionAnimation(CharacterPredictedData.Action action)
     {
         ActionAnimation actionAnimation;
         m_actionAnimations.TryGetValue(action, out actionAnimation);
@@ -102,8 +102,8 @@ public class ActionAnimationHandler
     }
 
     AnimationLayerMixerPlayable m_mixer;
-    Dictionary<CharPredictedStateData.Action, ActionAnimation> m_actionAnimations = new Dictionary<CharPredictedStateData.Action, ActionAnimation>();
-    CharPredictedStateData.Action m_currentAction;
+    Dictionary<CharacterPredictedData.Action, ActionAnimation> m_actionAnimations = new Dictionary<CharacterPredictedData.Action, ActionAnimation>();
+    CharacterPredictedData.Action m_currentAction;
     float m_lastActionTime;
     bool m_actionRestarted;
 }

@@ -145,6 +145,10 @@ public class ConsoleTextLinux : IConsoleUI
     {
     }
 
+    public void SetPrompt(string prompt)
+    {
+    }
+
     void ClearInputLine()
     {
         if (IsDumb())

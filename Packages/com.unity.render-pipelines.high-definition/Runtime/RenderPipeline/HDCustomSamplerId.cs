@@ -51,6 +51,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         HDRenderPipelineRender,
         CullResultsCull,
         CopyDepth,
+        UpdateStencilCopyForSSRExclusion,
 
         // Profile sampler for tile pass
         TPPrepareLightsForGPU,

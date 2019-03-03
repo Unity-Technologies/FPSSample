@@ -1,0 +1,78 @@
+* Label#title, * TextField#title-field
+{
+    font:resource("GraphView/DummyFont(LucidaGrande).ttf");
+}
+
+VFXSystemBorder.graphElement
+{
+    start-color:#17AB6A;
+    middle-color:#BF9220;
+    end-color:#C24F30;
+    border-width: 6;
+    border: 6;
+    opacity:0.25;
+    flex-direction:column;
+    align-items:stretch;
+    layer:-400;
+}
+
+VFXSystemBorder.graphElement Label
+{
+    border-top-width:1;
+    border-left-width:1;
+    border-right-width:1;
+    border-bottom-width:1;
+    border-top: 1;
+    border-left: 1;
+    border-right: 1;
+    border-bottom: 1;
+    margin-left:12;
+    margin-right:12;
+    margin-top:1;
+    margin-bottom:1;
+    padding-left:0;
+    padding-right:0;
+}
+
+VFXSystemBorder.graphElement Label:hover
+{
+    border-color: rgba(68,192,255, 0.5);
+}
+
+
+#title-field
+{
+    position-type:absolute;
+}
+
+#title, #title-field
+{
+    font-size:48;
+    word-wrap: true;
+}
+
+#title
+{
+    color:#17AB6A;
+    opacity:0.75;
+}
+
+#title.empty
+{
+    height : 12;
+}
+
+VFXSystemBorder.graphElement TextField#title-field
+{
+    padding-left:0;
+    padding-right:0;
+    padding-top:0;
+    padding-bottom:0;
+    margin-left:0;
+    margin-right:0;
+    margin-top:0;
+    margin-bottom:0;
+    border-top-width:1;
+    background-color:#000;
+    position-type:absolute;
+}

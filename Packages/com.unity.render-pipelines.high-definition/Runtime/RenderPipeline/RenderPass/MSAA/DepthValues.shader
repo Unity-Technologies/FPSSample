@@ -33,7 +33,7 @@ Shader "Hidden/HDRenderPipeline/DepthValues"
         {
             Varyings output;
             output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID);
-            output.texcoord   = GetFullScreenTriangleTexCoord(input.vertexID) * _ScreenSize.xy;
+            output.texcoord   = TexCoordStereoOffset(GetFullScreenTriangleTexCoord(input.vertexID) * _ScreenSize.xy);
             return output;
         }
 

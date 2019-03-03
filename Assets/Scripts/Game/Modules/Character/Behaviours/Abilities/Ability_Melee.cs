@@ -22,6 +22,8 @@ public class Ability_Melee : CharBehaviorFactory
     [Serializable]
     public struct Settings : IComponentData
     {
+        public UserCommand.Button activateButton;
+        
         public float damage;
         public float damageDist;
         public float damageRadius;
@@ -29,10 +31,10 @@ public class Ability_Melee : CharBehaviorFactory
         public float impactTime;
         public int punchPerSecond;
 
-        public CharPredictedStateData.Action punchAction;
+        public CharacterPredictedData.Action punchAction;
     }
 
-    public struct PredictedState : INetPredicted<PredictedState>, IComponentData
+    public struct PredictedState : IPredictedComponent<PredictedState>, IComponentData
     {
         public Phase phase;
         public int phaseStartTick;
@@ -43,13 +45,18 @@ public class Ability_Melee : CharBehaviorFactory
             this.phaseStartTick = tick;
         }
 
-        public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+        public static IPredictedComponentSerializerFactory CreateSerializerFactory()
+        {
+            return new PredictedComponentSerializerFactory<PredictedState>();
+        }
+        
+        public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
         {
             writer.WriteInt32("phase", (int)phase);
             writer.WriteInt32("startTick", phaseStartTick);
         }
 
-        public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+        public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
         {
             phase = (Phase)reader.ReadInt32();
             phaseStartTick = reader.ReadInt32();
@@ -63,21 +70,27 @@ public class Ability_Melee : CharBehaviorFactory
 #endif        
     }
     
-    public struct InterpolatedState : INetInterpolated<InterpolatedState>, IComponentData
+    public struct InterpolatedState : IInterpolatedComponent<InterpolatedState>, IComponentData
     {
         public int impactTick;
         
-        public void Serialize(ref NetworkWriter writer, IEntityReferenceSerializer refSerializer)
+        public static IInterpolatedComponentSerializerFactory CreateSerializerFactory()
+        {
+            return new InterpolatedComponentSerializerFactory<InterpolatedState>();
+        }
+
+        public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
         {
             writer.WriteInt32("impactTick", impactTick);
         }
 
-        public void Deserialize(ref NetworkReader reader, IEntityReferenceSerializer refSerializer, int tick)
+        public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
         {
             impactTick = reader.ReadInt32();
         }
 
-        public void Interpolate(ref InterpolatedState first, ref InterpolatedState last, float t)
+        public void Interpolate(ref SerializeContext context, ref InterpolatedState first, ref InterpolatedState last,
+            float t)
         {
             this = first;
         }
@@ -102,6 +115,31 @@ public class Ability_Melee : CharBehaviorFactory
         return entity;
     }
 }
+
+
+
+[DisableAutoCreation]
+class Melee_RequestActive : BaseComponentDataSystem<CharBehaviour,AbilityControl,
+    Ability_Melee.PredictedState,Ability_Melee.Settings>
+{
+    public Melee_RequestActive(GameWorld world) : base(world)
+    {
+        ExtraComponentRequirements = new ComponentType[] { typeof(ServerEntity) } ;
+    }
+
+    protected override void Update(Entity entity, CharBehaviour charAbility, AbilityControl abilityCtrl, 
+        Ability_Melee.PredictedState predictedState, Ability_Melee.Settings settings)
+    {
+        if (abilityCtrl.behaviorState == AbilityControl.State.Active || abilityCtrl.behaviorState == AbilityControl.State.Cooldown)
+            return;
+		
+        var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
+        abilityCtrl.behaviorState = command.buttons.IsSet(settings.activateButton) ?  
+            AbilityControl.State.RequestActive : AbilityControl.State.Idle;
+        EntityManager.SetComponentData(entity, abilityCtrl);			
+    }
+}
+
 
 [DisableAutoCreation]
 class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Ability_Melee.LocalState,
@@ -129,7 +167,7 @@ class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Abili
         {
             case Ability_Melee.Phase.Idle:
                 {
-                    var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
+                    var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
 
                     abilityCtrl.behaviorState = AbilityControl.State.Active;
                     predictedState.SetPhase(Ability_Melee.Phase.Punch, time.tick);
@@ -147,8 +185,8 @@ class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Abili
                     if (phaseDuration >= settings.impactTime)
                     {
                         var character = EntityManager.GetComponentObject<Character>(charAbility.character);
-                        var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
-                        var command = EntityManager.GetComponentObject<UserCommandComponent>(charAbility.character).command;
+                        var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
+                        var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
                         var viewDir = command.lookDir;
                         var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight;
 
@@ -160,11 +198,10 @@ class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Abili
                             origin = eyePos,
                             direction = viewDir,
                             distance = settings.damageDist,
-                            sphereCastExcludeOwner = charAbility.character,
+                            ExcludeOwner = charAbility.character,
                             hitCollisionTestTick = command.renderTick,
-                            testAgainsEnvironment = 0,
-                            sphereCastRadius = settings.damageRadius,
-                            sphereCastMask = ~0,
+                            radius = settings.damageRadius,
+                            mask = ~0U,
                         });
 
                         EntityManager.SetComponentData(abilityEntity,localState);
@@ -180,11 +217,11 @@ class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Abili
                     var phaseDuration = time.DurationSinceTick(predictedState.phaseStartTick);
                     if (phaseDuration > holdEndDuration)
                     {
-                        var charPredictedState = EntityManager.GetComponentData<CharPredictedStateData>(charAbility.character);
+                        var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
 
                         abilityCtrl.behaviorState = AbilityControl.State.Idle;
                         predictedState.SetPhase(Ability_Melee.Phase.Idle, time.tick);
-                        charPredictedState.SetAction(CharPredictedStateData.Action.None, time.tick);
+                        charPredictedState.SetAction(CharacterPredictedData.Action.None, time.tick);
 
                         EntityManager.SetComponentData(abilityEntity, abilityCtrl);
                         EntityManager.SetComponentData(abilityEntity, predictedState);
@@ -217,19 +254,17 @@ class Melee_HandleCollision : BaseComponentDataSystem<Ability_Melee.LocalState>
         var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
         
         RaySphereQueryReciever.Query query;
-        RaySphereQueryReciever.Result result;
-        queryReciever.GetResult(localState.rayQueryId, out query, out result);
+        RaySphereQueryReciever.QueryResult queryResult;
+        queryReciever.GetResult(localState.rayQueryId, out query, out queryResult);
         localState.rayQueryId = -1;
         
-        if (result.hitCollisionOwner != Entity.Null)
+        if (queryResult.hitCollisionOwner != Entity.Null)
         {
             var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);       
             var settings = EntityManager.GetComponentData<Ability_Melee.Settings>(abilityEntity);
 
-            var hitCollisionOwner =
-                EntityManager.GetComponentObject<HitCollisionOwner>(result.hitCollisionOwner);
-            hitCollisionOwner.damageEvents.Add(new DamageEvent(charAbility.character, settings.damage, query.direction, 
-                settings.damageImpulse));
+            var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(queryResult.hitCollisionOwner);
+            DamageEvent.AddEvent(damageEventBuffer, charAbility.character, settings.damage, query.direction, settings.damageImpulse);
 
             var interpolatedState = EntityManager.GetComponentData<Ability_Melee.InterpolatedState>(abilityEntity);
             interpolatedState.impactTick = m_world.worldTime.tick;            

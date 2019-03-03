@@ -1,0 +1,40 @@
+#if !(defined(VFX_VARYING_PS_INPUTS) && defined(VFX_VARYING_POSCS))
+#error VFX_VARYING_PS_INPUTS and VFX_VARYING_POSCS must be defined.
+#endif
+
+${VFXPerPassInclude}
+${VFXGeneratedBlockFunction}
+
+#pragma vertex vert
+
+VFX_VARYING_PS_INPUTS vert(uint id : SV_VertexID, uint instanceID : SV_InstanceID)
+{
+	uint index = id >> 1;
+	VFX_VARYING_PS_INPUTS o = (VFX_VARYING_PS_INPUTS)0;
+	
+	${VFXLoadAttributesOrCull}
+	${VFXProcessBlocks}
+			
+	if (!alive)
+		return o;
+
+	#if TARGET_FROM_ATTRIBUTES
+	${VFXLoadSize}
+	float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);
+
+	position = mul(elementToVFX,float4(0,0,0,1)).xyz;
+	
+	${VFXLoadParameter:{targetOffset}}
+	targetPosition = mul(elementToVFX,float4(targetOffset,1)).xyz;
+	#endif
+		
+	float3 vPos = id & 1 ? targetPosition : position;
+	o.VFX_VARYING_POSCS = TransformPositionVFXToClip(vPos);
+	
+	${VFXVertexCommonProcess}
+	${VFXVertexAdditionalProcess}
+
+	return o;
+}
+
+${VFXFragmentCommonFunctions}
