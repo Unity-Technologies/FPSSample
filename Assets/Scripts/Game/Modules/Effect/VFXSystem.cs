@@ -5,6 +5,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Experimental.VFX;
 
+[DisableAutoCreation]
 public class VFXSystem : ComponentSystem
 {
     static readonly int positionID = Shader.PropertyToID("position");

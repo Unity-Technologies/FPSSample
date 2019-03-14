@@ -8,7 +8,7 @@ namespace UnityEngine.Ucg.Matchmaking
     {
         public delegate void RequestMatchSuccess();
         public delegate void RequestMatchError(string error);
-        public delegate void GetAssignmentSuccess(string connectionInfo);
+        public delegate void GetAssignmentSuccess(Assignment assignment);
         public delegate void GetAssignmentError(string error);
 
         RequestMatchSuccess m_RequestMatchSuccess;
@@ -101,8 +101,16 @@ namespace UnityEngine.Ucg.Matchmaking
                 return;
             }
 
-            ConnectionInfo result = JsonUtility.FromJson<ConnectionInfo>(m_GetAssignmentOperation.webRequest.downloadHandler.text);
-            m_GetAssignmentSuccess.Invoke(result.ConnectionString);
+            Assignment result = JsonUtility.FromJson<Assignment>(m_GetAssignmentOperation.webRequest.downloadHandler.text);
+
+            if (!string.IsNullOrEmpty(result.AssignmentError))
+            {
+                m_GetAssignmentError.Invoke(result.AssignmentError);
+                return;
+            }
+
+            m_GetAssignmentSuccess.Invoke(result);
+
         }
     }
 }

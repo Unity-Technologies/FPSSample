@@ -38,5 +38,5 @@ public struct UserCommandComponentData: IComponentData, IReplicatedComponent
     }
 }
 
-public class UserCommandComponent : ComponentDataWrapper<UserCommandComponentData>
+public class UserCommandComponent : ComponentDataProxy<UserCommandComponentData>
 {}

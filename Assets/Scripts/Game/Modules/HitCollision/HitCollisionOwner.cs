@@ -22,7 +22,7 @@ public struct HitCollisionOwnerData : IComponentData
 
 
 [DisallowMultipleComponent]
-public class HitCollisionOwner : ComponentDataWrapper<HitCollisionOwnerData>
+public class HitCollisionOwner : ComponentDataProxy<HitCollisionOwnerData>
 {
     private void OnEnable()
     {

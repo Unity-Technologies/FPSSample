@@ -48,7 +48,7 @@ public struct ReplicatedEntityData : IComponentData, IReplicatedComponent
 
 [ExecuteAlways, DisallowMultipleComponent]
 [RequireComponent(typeof(GameObjectEntity))]
-public class ReplicatedEntity : ComponentDataWrapper<ReplicatedEntityData>
+public class ReplicatedEntity : ComponentDataProxy<ReplicatedEntityData>
 {
     public byte[] netID;    // guid of instance. Used for identifying replicated entities from the scene
 

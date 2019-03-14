@@ -25,7 +25,7 @@ public struct TeleporterPresentationData : IComponentData, IReplicatedComponent
 }
 
 [DisallowMultipleComponent]
-public class TeleporterPresentation : ComponentDataWrapper<TeleporterPresentationData>
+public class TeleporterPresentation : ComponentDataProxy<TeleporterPresentationData>
 {
     
 }

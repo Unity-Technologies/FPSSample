@@ -3,23 +3,21 @@ using System.Net;
 
 namespace UnityEngine.Ucg.Matchmaking
 {
-    public class Matchmaker
+    public class Matchmaker 
     {
         /// <summary>
-        /// The hostname[:port]/{projectid} for the running matchmaker assigned to this project
+        /// The hostname[:port]/{projectid} of your matchmaking server
         /// </summary>
         public string Endpoint;
 
-        MatchmakingRequest MatchmakingRequest;
-
         MatchmakingController matchmakingController;
+        private MatchmakingRequest request;
 
-        public delegate void SuccessCallback(string connectionInfo);
-
+        public delegate void SuccessCallback(Assignment assignment);
         public delegate void ErrorCallback(string error);
 
-        SuccessCallback m_Success;
-        ErrorCallback m_Error;
+        public SuccessCallback successCallback;
+        public ErrorCallback errorCallback;
 
         public enum MatchmakingState
         {
@@ -35,9 +33,34 @@ namespace UnityEngine.Ucg.Matchmaking
         /// </summary>
         public MatchmakingState State = MatchmakingState.None;
 
-        public Matchmaker(string endpoint)
+        /// <summary>
+        /// Matchmaker
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <param name="onSuccessCallback">If a match is found, this callback will provide the connection information</param>
+        /// <param name="onErrorCallback">If matchmaking fails, this callback will provided some failure information</param>
+        public Matchmaker(string endpoint, SuccessCallback onSuccessCallback = null, ErrorCallback onErrorCallback = null)
         {
             Endpoint = endpoint;
+            this.successCallback = onSuccessCallback;
+            this.errorCallback = onErrorCallback;
+        }
+
+        /// <summary>
+        /// Start Matchmaking
+        /// </summary>
+        /// <param name="playerId">The id of the player</param>
+        /// <param name="playerProps">Custom player properties relevant to the matchmaking function</param>
+        /// <param name="groupProps">Custom group properties relevant to the matchmaking function</param>
+        public void RequestMatch(string playerId, MatchmakingPlayerProperties playerProps, MatchmakingGroupProperties groupProps)
+        {
+            request = CreateMatchmakingRequest(playerId, playerProps, groupProps);
+
+            matchmakingController = new MatchmakingController(Endpoint);
+
+            matchmakingController.StartRequestMatch(request, GetAssignment, OnError);
+            State = MatchmakingState.Requesting;
+            Debug.Log(State);
         }
 
         /// <summary>
@@ -56,8 +79,7 @@ namespace UnityEngine.Ucg.Matchmaking
                     break;
                 case MatchmakingState.Found:
                 case MatchmakingState.Error:
-                    Debug.Log("Update() is still being called after matchmaking finished.");
-                    break;
+                    break; // User hasn't stopped the state machine yet.
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -70,58 +92,49 @@ namespace UnityEngine.Ucg.Matchmaking
         /// <param name="playerProps">Custom player properties relevant to the matchmaking function</param>
         /// <param name="groupProps">Custom group properties relevant to the matchmaking function</param>
         /// <returns></returns>
-        public static MatchmakingRequest CreateMatchmakingRequest(string playerId, MatchmakingPlayerProperties playerProps, MatchmakingGroupProperties groupProps)
+        private static MatchmakingRequest CreateMatchmakingRequest(string playerId, MatchmakingPlayerProperties playerProps, MatchmakingGroupProperties groupProps)
         {
-            MatchmakingRequest request = new MatchmakingRequest();
-            MatchmakingPlayer thisPlayer = new MatchmakingPlayer(playerId);
+            // TODO: WORKAROUND: Currently matchmaker handles IDs as UUIDs, not player names, and will only ever generate 1 match assignment for each UUID
+            //   Therefore, we'll append the current time in Ticks as an attempt at creating a UUID
+            playerId = playerId + DateTime.UtcNow.Ticks.ToString();
 
-            thisPlayer.Properties = JsonUtility.ToJson(playerProps);
+            MatchmakingPlayer thisPlayer = new MatchmakingPlayer(playerId)
+            {
+                Properties = JsonUtility.ToJson(playerProps)
+            };
+
+            MatchmakingRequest request = new MatchmakingRequest()
+            {
+                Properties = JsonUtility.ToJson(groupProps)
+            };
+
 
             request.Players.Add(thisPlayer);
-            request.Properties = JsonUtility.ToJson(groupProps);
 
             return request;
         }
 
-        /// <summary>
-        /// Start matchmaking
-        /// </summary>
-        /// <param name="request">The matchmaking request</param>
-        /// <param name="successCallback">If a match is found, this callback will provide the connection information</param>
-        /// <param name="errorCallback">If matchmaking fails, this callback will provided some failure information</param>
-        public void RequestMatch(MatchmakingRequest request, SuccessCallback successCallback,
-            ErrorCallback errorCallback)
-        {
-            m_Success = successCallback;
-            m_Error = errorCallback;
-            MatchmakingRequest = request;
 
-            matchmakingController = new MatchmakingController(Endpoint);
-
-            matchmakingController.StartRequestMatch(request, GetAssignment, OnError);
-            State = MatchmakingState.Requesting;
-            Debug.Log(State);
-        }
 
         void GetAssignment()
         {
-            matchmakingController.StartGetAssignment(MatchmakingRequest.Players[0].Id, OnSuccess, OnError);
+            matchmakingController.StartGetAssignment(request.Players[0].Id, OnSuccess, OnError);
             State = MatchmakingState.Searching;
             Debug.Log(State);
         }
 
-        void OnSuccess(string connectionInfo)
+        void OnSuccess(Assignment assignment)
         {
             State = MatchmakingState.Found;
             Debug.Log(State);
-            m_Success.Invoke(connectionInfo);
+            successCallback?.Invoke(assignment);
         }
 
         void OnError(string error)
         {
             State = MatchmakingState.Error;
             Debug.Log(State);
-            m_Error.Invoke(error);
+            errorCallback?.Invoke(error ?? "Undefined Error");
         }
     }
 }

@@ -22,6 +22,6 @@ public struct DestructablePropReplicatedData : IComponentData, IReplicatedCompon
     }
 }
 
-public class DestructablePropReplicatedState : ComponentDataWrapper<DestructablePropReplicatedData>
+public class DestructablePropReplicatedState : ComponentDataProxy<DestructablePropReplicatedData>
 {
 }

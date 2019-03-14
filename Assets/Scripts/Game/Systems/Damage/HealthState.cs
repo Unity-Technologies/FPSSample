@@ -48,7 +48,7 @@ public struct HealthStateData : IComponentData, IReplicatedComponent
 }
 
 
-public class HealthState : ComponentDataWrapper<HealthStateData>
+public class HealthState : ComponentDataProxy<HealthStateData>
 {
     
 }

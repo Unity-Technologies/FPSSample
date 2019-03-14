@@ -17,11 +17,11 @@ namespace UnityEngine.Ucg.Matchmaking
 
         internal MatchmakingClient(string endpoint)
         {
-            Url = "https://" + endpoint + "/matchmaking/api/v" + k_ApiVersion;
+            Url = "https://" + endpoint + "/api/v" + k_ApiVersion + "/matchmaking";
         }
 
         /// <summary>
-        /// Start matchmaking for a provided request. This tells your matchmaking endpoint to add 
+        /// Start matchmaking for a provided request. This tells your matchmaking endpoint to add
         /// the players and group data in the request to the matchmaking pool for consideration
         /// </summary>
         /// <param name="request">The matchmaking request</param>

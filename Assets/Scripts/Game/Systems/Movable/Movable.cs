@@ -39,7 +39,7 @@ public struct MovableData : IComponentData, IInterpolatedComponent<MovableData>
 }
 
 [RequireComponent(typeof(Rigidbody))]
-public class Movable : ComponentDataWrapper<MovableData>
+public class Movable : ComponentDataProxy<MovableData>
 {
     public void Start()
     {

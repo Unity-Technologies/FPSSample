@@ -27,7 +27,7 @@ public struct SpectatorCamData : IComponentData, IReplicatedComponent
 
 
 
-public class SpectatorCam : ComponentDataWrapper<SpectatorCamData>
+public class SpectatorCam : ComponentDataProxy<SpectatorCamData>
 {
     
 }

@@ -133,5 +133,5 @@ public struct CharacterPredictedData : IComponentData, IPredictedComponent<Chara
 #endif    
 }
 
-public class CharacterPredicted : ComponentDataWrapper<CharacterPredictedData>
+public class CharacterPredicted : ComponentDataProxy<CharacterPredictedData>
 {}

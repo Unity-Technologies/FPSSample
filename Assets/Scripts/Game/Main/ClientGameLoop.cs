@@ -527,7 +527,6 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
 #if UNITY_EDITOR        
         Game.game.levelManager.UnloadLevel();
-        World.DisposeAllWorlds();
 #endif
         m_GameWorld = new GameWorld("ClientWorld");
         
@@ -988,7 +987,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
         if (string.IsNullOrEmpty(endpoint))
         {
-            GameDebug.LogError("matchmake: command requires an endpoint <hostname[:port]/{projectid}>");
+            GameDebug.LogError("matchmake: command requires an endpoint <ex: cloud.connected.unity3d.com/{projectid}>");
             return;
         }
 
@@ -1004,27 +1003,36 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
             return;
         }
 
-        GameDebug.Log($"matchmake: Starting the matchmaker. Requesting match from {endpoint} for player {clientPlayerName.Value}.");
+        GameDebug.Log($"matchmake: Starting the matchmaker. Requesting match from {endpoint} for request ID {clientPlayerName.Value}.");
         m_useMatchmaking = true;
-        m_matchmaker = new Matchmaker(endpoint);
+        m_matchmaker = new Matchmaker(endpoint, OnMatchmakingSuccess, OnMatchmakingError);
 
         MatchmakingPlayerProperties playerProps = new MatchmakingPlayerProperties() {hats = 5};
         MatchmakingGroupProperties groupProps = new MatchmakingGroupProperties() {mode = 0};
-        MatchmakingRequest request = Matchmaker.CreateMatchmakingRequest(clientPlayerName.Value, playerProps, groupProps);
-        m_matchmaker.RequestMatch(request, OnMatchmakingSuccess, OnMatchmakingError);
+
+        m_matchmaker.RequestMatch(clientPlayerName.Value, playerProps, groupProps);
     }
-    
-    void OnMatchmakingSuccess(string connectionInfo)
+
+    void OnMatchmakingSuccess(Assignment assignment)
     {
-        GameDebug.Log($"Matchmaking has found a game! The server is at: {connectionInfo}");
-        // TODO: Uncomment following line when matchmaking service returns an endpoint instead of the roster
-        //Console.EnqueueCommand($"connect {connectionInfo}");
+        if (string.IsNullOrEmpty(assignment.ConnectionString))
+        {
+            GameDebug.Log("Matchmaking finished, but did not return a game server.  Ensure your server has been allocated and is running then try again.");
+            GameDebug.Log($"MM Error: {assignment.AssignmentError ?? "None"}");
+        }
+        else
+        {
+            GameDebug.Log($"Matchmaking has found a game! The server is at {assignment.ConnectionString}.  Attempting to connect...");
+            Console.EnqueueCommand($"connect {assignment.ConnectionString}");
+        }
+        m_useMatchmaking = false;
         m_matchmaker = null;
     }
 
     void OnMatchmakingError(string errorInfo)
     {
         GameDebug.LogError($"Matchmaking failed! Error is: {errorInfo}");
+        m_useMatchmaking = false;
         m_matchmaker = null;
     }
 

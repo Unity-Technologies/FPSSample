@@ -249,7 +249,6 @@ public class ThinClientGameLoop : Game.IGameLoop
 
 #if UNITY_EDITOR        
         Game.game.levelManager.UnloadLevel();
-        World.DisposeAllWorlds();
 #endif
         Console.AddCommand("disconnect", CmdDisconnect, "Disconnect from server if connected", this.GetHashCode());
 

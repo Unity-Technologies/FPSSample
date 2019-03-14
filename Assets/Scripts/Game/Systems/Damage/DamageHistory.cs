@@ -42,7 +42,7 @@ public struct DamageHistoryData : IComponentData, IReplicatedComponent
     }
 }
 
-public class DamageHistory : ComponentDataWrapper<DamageHistoryData>
+public class DamageHistory : ComponentDataProxy<DamageHistoryData>
 {
 }
 

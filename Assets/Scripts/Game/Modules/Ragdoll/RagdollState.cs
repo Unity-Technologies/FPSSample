@@ -26,7 +26,7 @@ public struct RagdollStateData : IComponentData, IReplicatedComponent
     }
 }
 
-public class RagdollState : ComponentDataWrapper<RagdollStateData>
+public class RagdollState : ComponentDataProxy<RagdollStateData>
 {
     
 }

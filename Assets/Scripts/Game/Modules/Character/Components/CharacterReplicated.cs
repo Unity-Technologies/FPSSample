@@ -40,6 +40,6 @@ public struct CharacterReplicatedData : IComponentData, IReplicatedComponent
     }
 }
 
-public class CharacterReplicated : ComponentDataWrapper<CharacterReplicatedData>
+public class CharacterReplicated : ComponentDataProxy<CharacterReplicatedData>
 {
 }

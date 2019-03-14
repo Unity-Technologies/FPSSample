@@ -73,9 +73,9 @@ public class GameWorld
             m_sceneRoot = new GameObject(name);
             GameObject.DontDestroyOnLoad(m_sceneRoot);
         }
-
-        m_ECSWorld = World.Active != null ? World.Active : new World(name); 
-        World.Active = m_ECSWorld;
+        
+        GameDebug.Assert(World.Active != null,"There is no active world");
+        m_ECSWorld = World.Active; 
         
         m_EntityManager = m_ECSWorld.GetOrCreateManager<EntityManager>();
         
@@ -113,13 +113,6 @@ public class GameWorld
         ProcessDespawns();
 
         s_Worlds.Remove(this);
-
-        if (m_ECSWorld.IsCreated)
-        {
-            m_ECSWorld.Dispose();
-            m_ECSWorld = null;
-            World.Active = null;
-        }
 
         GameObject.Destroy(m_sceneRoot);
     }

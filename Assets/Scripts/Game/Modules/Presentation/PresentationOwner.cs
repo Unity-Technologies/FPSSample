@@ -18,7 +18,7 @@ public struct PresentationOwnerData : IComponentData
     }
 }
 
-public class PresentationOwner : ComponentDataWrapper<PresentationOwnerData>
+public class PresentationOwner : ComponentDataProxy<PresentationOwnerData>
 {}
 
 

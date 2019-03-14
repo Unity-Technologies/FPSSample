@@ -180,5 +180,5 @@ public struct CharacterInterpolatedData : IInterpolatedComponent<CharacterInterp
     }
 }
 
-public class CharacterInterpolated : ComponentDataWrapper<CharacterInterpolatedData>
+public class CharacterInterpolated : ComponentDataProxy<CharacterInterpolatedData>
 {}

@@ -345,7 +345,6 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
 #if UNITY_EDITOR        
         Game.game.levelManager.UnloadLevel();
-        World.DisposeAllWorlds();
 #endif        
         m_GameWorld = new GameWorld("ServerWorld");
 
