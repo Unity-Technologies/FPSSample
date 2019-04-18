@@ -44,7 +44,7 @@ namespace TransportTests
             var rcv = new ChallangeRequest();
             rcv.FromStream(reader, ref context);
 
-            Assert.AreEqual((byte)SQPMessageType.ChallangeRequest, rcv.Header.Type);
+            Assert.AreEqual((byte)SQPMessageType.ChallengeRequest, rcv.Header.Type);
         }
 
         [Test]
