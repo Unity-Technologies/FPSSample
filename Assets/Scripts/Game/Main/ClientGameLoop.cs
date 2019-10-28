@@ -3,6 +3,9 @@ using UnityEngine;
 using Unity.Entities;
 using UnityEngine.Profiling;
 using UnityEngine.Ucg.Matchmaking;
+using System.Net;
+using System.Net.Sockets;
+using VivoxUnity;
 
 public class ClientGameWorld
 {
@@ -251,6 +254,8 @@ public class ClientGameWorld
         // TODO (petera) fix this hack
         chatSystem.UpdateLocalTeamIndex(teamId);
 
+        // Update Vivox voice channel
+        VivoxSettings.teamIndex = teamId;
         
         m_ItemModule.LateUpdate();
 
@@ -497,7 +502,7 @@ public class ClientGameWorld
     readonly UpdateNamePlates m_UpdateNamePlates;
     readonly SpinSystem m_SpinSystem;
     readonly TeleporterSystemClient m_TeleporterSystemClient;
-     
+
     LocalPlayer m_localPlayer;
 }
 
@@ -561,6 +566,20 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         }
         else
             m_StateMachine.SwitchTo(ClientState.Browsing);
+
+
+        VivoxSettings.chatSystemClient = m_ChatSystem;
+        VivoxSettings.targetServer = targetServer;
+        if (targetServer == "127.0.0.1")
+        {
+            // Get real IPV4 address for localhost
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            {
+                socket.Connect("8.8.8.8", 65530);
+                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                VivoxSettings.targetServer = endPoint.Address.ToString();
+            }
+        } 
 
         GameDebug.Log("Client initialized");
 
@@ -760,6 +779,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
     void EnterPlayingState()
     {
+        VivoxSettings.Login(m_NetworkClient.clientId.ToString());
+
         GameDebug.Assert(m_clientWorld == null && Game.game.levelManager.IsCurrentLevelLoaded());
 
         m_GameWorld.RegisterSceneEntities();
@@ -778,6 +799,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
     void LeavePlayingState()
     {
+        VivoxSettings.Logout();
+
         m_resourceSystem.Shutdown();
 
         m_LocalPlayer = null;

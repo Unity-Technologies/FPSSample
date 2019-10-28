@@ -373,6 +373,7 @@ public class Game : MonoBehaviour
         else
         {
             RenderSettings.Init();
+            VivoxSettings.Init();
         }
 
         // Out of the box game behaviour is driven by boot.cfg unless you ask it not to
@@ -509,7 +510,10 @@ public class Game : MonoBehaviour
     public void Update()
     {
         if (!m_isHeadless)
+        {
             RenderSettings.Update();
+            VivoxSettings.Update();
+        }
 
         // TODO (petera) remove this hack once we know exactly when renderer is available...
         if (!pipeSetup)
@@ -680,6 +684,7 @@ public class Game : MonoBehaviour
         System.Diagnostics.Process.GetCurrentProcess().Kill();
 #endif
         ShutdownGameLoops();
+        VivoxSettings.Uninit();
     }
 
     float m_NextCpuProfileTime = 0;

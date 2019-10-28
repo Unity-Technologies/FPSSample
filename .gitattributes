@@ -55,3 +55,4 @@ ProjectSettings/*.asset text
 **/Assets/**/*.unity filter=lfs diff=lfs merge=lfs -text
 **/Assets/**/*.entities filter=lfs diff=lfs merge=lfs -text
 **/Assets/**/*.wav filter=lfs diff=lfs merge=lfs -text
+Assets/Vivox/Plugins/iOS/libvivoxsdk.a filter=lfs diff=lfs merge=lfs -text

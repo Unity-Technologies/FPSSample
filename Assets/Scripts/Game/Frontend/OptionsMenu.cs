@@ -139,6 +139,18 @@ public class OptionsMenu : MonoBehaviour
         AddSlider(SoundSystem.soundMusicVol, "Music volume");
         AddSlider(SoundSystem.soundSFXVol, "SFX volume");
 
+        AddSpace(100.0f);
+        AddHeading("Vivox settings");
+
+        AddDropdown(VivoxSettings.outputDevice, "Output Device", new List<string>() { "<default>", "Another Output" }, new List<string>() { "0", "1" });
+        AddDropdown(VivoxSettings.inputDevice, "Input Device", new List<string>() { "<default>", "Another Input" }, new List<string>() { "0", "1" });
+        AddToggle(VivoxSettings.chatEnabled, "Enable Voice Chat");
+        AddInput(VivoxSettings.pushToTalkKey, "Push-to-talk Key");
+        AddToggle(VivoxSettings.chatAutoJoin, "Auto-join when not in a channel");
+        AddToggle(VivoxSettings.chatShowBubble, "Show chat bubble speaking icon");
+        AddSlider(VivoxSettings.voiceChatVol, "Voice Chat Volume");
+        AddSlider(VivoxSettings.micVol, "Microphone Volume");
+
         Canvas.ForceUpdateCanvases(); // TODO (petera) why is this needed?
 
         scrollRect.verticalNormalizedPosition = 1f;
