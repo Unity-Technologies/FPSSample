@@ -133,7 +133,7 @@ Variable | Function
 `server.port` | The port to listen on (7912)
 `server.quitwhenempty` | Set to 1 to make server quit when last player leaves
 `server.recycleinterval` | If > 0 server will shut down after this seconds when no players
-`server.sqp_port` | Server Query Protocol poert (7912)
+`server.sqp_port` | Server Query Protocol port (7912)
 `server.tickrate` | The tickrate of the server (and client)
 `show.compactstats` | Set to 1 to show FPS and RTT in top left corner
 `show.fps` | Show some fps stats if > 0
