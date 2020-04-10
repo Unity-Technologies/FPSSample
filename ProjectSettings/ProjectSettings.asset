@@ -231,7 +231,7 @@ PlayerSettings:
   iOSURLSchemes: []
   iOSBackgroundModes: 0
   iOSMetalForceHardShadows: 0
-  metalEditorSupport: 0
+  metalEditorSupport: 1
   metalAPIValidation: 0
   iOSRenderExtraFrameOnPause: 1
   appleDeveloperTeamID: 
@@ -315,6 +315,9 @@ PlayerSettings:
   m_BuildTargetGraphicsAPIs:
   - m_BuildTarget: WindowsStandaloneSupport
     m_APIs: 02000000
+    m_Automatic: 0
+  - m_BuildTarget: MacStandaloneSupport
+    m_APIs: 10000000
     m_Automatic: 0
   m_BuildTargetVRSettings:
   - m_BuildTarget: Android
