@@ -2,15 +2,15 @@
 
 ## The game
 
-The FPS Sample is a multiplayer only game. There is no single player mode and
+The FPS Sample is a multiplayer-only game. There is no singleplayer mode and
 you cannot play the game without being connected to a server. It is a pretty
 traditional shooter game with two different characters: The Terraformer and
-The Robot. Each have their own weapon with a primary and secondary fire mode.
+The Robot. Each has a weapon with a primary and secondary fire mode.
 There are two game modes:
 
 1. Team deathmatch
 
-    Two teams fights for frags. Winner is team with most scores when time is up.
+    Two teams fight for frags. When time is up, the winner is the team with the highest score.
 
 2. Assault mode
 
@@ -34,22 +34,20 @@ LeftClick | Primary fire
 RightClick | Secondary fire
 Space | Jump
 V | Melee attack
-H | When in captured base or spawn: change character
+H | When in a captured base or spawn: change the character
 Enter | Open chat
 Tab | Show scores
 ESC | Menu
 F1 | Open console
-Alt+Enter | Toggle full screen
+Alt+Enter | Toggle fullscreen
 
 ## Understanding the workflow: Standalone and AssetBundles
 
 Working with a multiplayer game in Unity means you will be working a lot with the
-standalone player. To make a client and a server that talks over a network connection there
-has to be two processes. To make this workflow as frictionless as possible, we
-use assetbundles for all the content (levels and characters etc.). 
-The only thing that goes into the standalone player is the code and a single, very small, bootstrapper scene. 
-Only if you have made changes to a level or a prefab do you have to rebuild the assetbundles. 
-(And you can rebuild selectively -- to some degree.)
+standalone player. To make a client and a server that talks over a network connection there have to be two processes. To make this workflow as frictionless as possible, we
+use asset bundles for all the content (levels and characters, etc.). 
+The only thing that goes into the standalone player is the code and a single, very small, bootstrapper scene.
+You only need to rebuild the asset bundles if you have made changes to a level or a prefab. To some degree, you can rebuild selectively.
 
 The Project Tools window is used to make this workflow function in practice. The most commonly used functions here are:
 
@@ -60,11 +58,11 @@ __Levels [force]__ | Build all the levels into bundles
 __Assets [force]__ | Build all prefabs into bundles (players etc)
 __All [force]__ | Build all levels and prefabs into bundles
 __Build game__ | Build code and bootstrapper scene
-__Run__ | Start game in _boot mode_. No level loaded, only bootstrapper.
+__Run__ | Start game in _boot mode_. No level loaded. Only bootstrapper.
 __Open build folder__ | Open the folder containing the standalone player
 __Update Registry__ | Updates the registry used when building prefab bundles. 
 
-Updating the registry only needs to be done when new game elements (ect. Character, Replicated entity, Hero definition) 
+Updating the registry only needs to be done when new game elements (Character, Replicated entity, Hero definition) 
 are added to the project  
 
 
@@ -75,7 +73,7 @@ This will enter preview mode on level_01. This is equivalent to pressing play in
 preview level_01
 ```
 
-The following will enter client mode and connect to an ip address
+The following will enter client mode and connect to an IP address
 ```
 connect 127.0.0.1
 ```
@@ -85,17 +83,17 @@ And finally, we can start a server by typing
 serve level_00
 ```
 
-These are the main modes. In practice one will most often use the __Quick Start__ section on the
-Project Tools window to launch different combinations of clients and servers. The way this works is that _command line arguments_ are passed on to the standalone player. Any command line argument
-that is prefixed with `+` will become an command on the console. At the very bottom of the
-Project Tools window the actual command line arguments are shown. This is a good place to learn
+These are the main modes. In practice, one will most often use the __Quick Start__ section on the
+Project Tools window to launch different combinations of clients and servers. The way this works is that _command line arguments_ are passed on to the standalone player. Any command-line argument
+that is prefixed with `+` will become a command on the console. At the very bottom of the
+Project Tools window the actual command-line arguments are shown. This is a good place to learn
 how the quick start tool functions.
 
-## The Console, Commands and Vars
+## The Console, Commands, and Vars
 
 To open the console at any time, press __F1__.
 
-The console support __commands__ and __variables__. As an example the command `quit` will quit the game. The console has __tab__ completion. Here are some of the commonly used commands:
+The console support __commands__ and __variables__. As an example, the command `quit` will quit the game. The console has __tab__ completion. Here are some of the commonly used commands:
 
 
 Command | Function
@@ -105,13 +103,13 @@ Command | Function
 `connect <host>` | Enter client mode and connect to host
 `preview <levelname>` | Enter preview mode for testing levelname
 `nextchar` | Toggles character
-`exec <file>` | Executes the commands in file as if they were typed on console
+`exec <file>` | Executes the commands in file as if they were typed on the console
 `respawn` | Force a respawn
 `thirdperson` | Toggle thirdperson view (for debugging)
 `runatserver <command>` | Executes the command on the server's console
 `vars` | Show all vars
 
-There are many more variables than commands. Here are a some of the most commonly used
+There are many more variables than commands. Here are some of the most commonly used
 
 Variable | Function
 --- | --- 
@@ -141,7 +139,6 @@ Variable | Function
 
 ## Making builds
 
-To make a full build of the game, there is some menu items under __FPS Sample__ > __BuildSystem__. Use __CreateBuildWindows64__ to make a full windows build, for example.
+To make a full build of the game, there is some menu items under __FPS Sample__ > __BuildSystem__. To make a full Windows build use __CreateBuildWindows64__
 
-These menu items are directly available as functions that can be called from the commandline of Unity if you want to integrate with a build machine.
-
+These menu items are directly available as functions that can be called from the command-line of Unity if you want to integrate with a build machine.
