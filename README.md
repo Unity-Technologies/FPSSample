@@ -2,10 +2,16 @@
 
 # FPS Sample
 
-Thanks for checking out our project!
+**Update about the state of the project:**
+This project is based on Unity 2018.3 and no longer being actively maintained.
+Feel free to continue to use it as a learning resource or simply for
+inspiration. As always, you should upgrade to latest version of Unity
+and packages if you intend to start a project.
+
+Thanks for checking out this sample!
 
 This is a fully functional, first person multiplayer shooter game made in
-Unity and with full source and assets. It is in active development by a small
+Unity and with full source and assets. It was developed by a small
 team from Unity Technologies. Our goals are to test and showcase new
 features in Unity and to be of use for teams who can bootstrap on top of
 this, extract useful bits and tools or simply learn from and get inspired by
