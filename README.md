@@ -1,6 +1,6 @@
 ![](Documentation/Images/Banner.png)
 
-# FPS Sample
+# FPS Sample very usefull script
 
 **Update about the state of the project:**
 This project is based on Unity 2018.3 and no longer being actively maintained.
