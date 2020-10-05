@@ -25,6 +25,9 @@ public static class GameDebug
         forwardToDebug = Application.isEditor;
         Application.logMessageReceived += LogCallback;
 
+        if (!System.IO.Directory.Exists(logfilePath))
+            System.IO.Directory.CreateDirectory(logfilePath);
+
         // Try creating logName; attempt a number of suffixxes
         string name = "";
         for (var i = 0; i < 10; i++)
