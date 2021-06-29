@@ -314,9 +314,11 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         m_StateMachine.Add(ServerState.Loading, null, UpdateLoadingState, null);
         m_StateMachine.Add(ServerState.Active, EnterActiveState, UpdateActiveState, LeaveActiveState);
 
-        m_StateMachine.SwitchTo(ServerState.Idle);
+        m_StateMachine.SwitchTo(ServerState.Idle); 
+        //m_NetworkTransport = new SocketTransport(NetworkConfig.serverPort.IntValue, serverMaxClients.IntValue);
+        var isServer = true;
+        m_NetworkTransport =  new GDNTransport(isServer,7932, 16);
 
-        m_NetworkTransport = new SocketTransport(NetworkConfig.serverPort.IntValue, serverMaxClients.IntValue);
         var listenAddresses = NetworkUtils.GetLocalInterfaceAddresses();
         if (listenAddresses.Count > 0)
             Console.SetPrompt(listenAddresses[0] + ":" + NetworkConfig.serverPort.Value + "> ");
@@ -850,8 +852,8 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     NetworkStatisticsServer m_NetworkStatistics;
     NetworkCompressionModel m_Model = NetworkCompressionModel.DefaultModel;
 
-    SocketTransport m_NetworkTransport;
-
+    //SocketTransport m_NetworkTransport;
+    GDNTransport  m_NetworkTransport;
     BundledResourceManager m_resourceSystem;
     ChatSystemServer m_ChatSystem;
     Dictionary<int, ClientInfo> m_Clients = new Dictionary<int, ClientInfo>();

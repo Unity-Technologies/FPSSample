@@ -530,7 +530,10 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 #endif
         m_GameWorld = new GameWorld("ClientWorld");
         
-        m_NetworkTransport = new SocketTransport();
+        //m_NetworkTransport = new SocketTransport();
+        var isServer = false;
+        m_NetworkTransport =  new GDNTransport(isServer,7932, 16);
+        
         m_NetworkClient = new NetworkClient(m_NetworkTransport);
 
         if (Application.isEditor || Game.game.buildId == "AutoBuild")
@@ -1074,7 +1077,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
     GameWorld m_GameWorld;
 
-    SocketTransport m_NetworkTransport;
+    //SocketTransport m_NetworkTransport;
+    GDNTransport m_NetworkTransport;
 
     NetworkClient m_NetworkClient;
     
