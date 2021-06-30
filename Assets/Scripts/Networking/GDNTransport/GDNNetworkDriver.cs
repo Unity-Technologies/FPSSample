@@ -201,7 +201,6 @@ public class GDNNetworkDriver : MonoBehaviour {
 
             var baseHtttpReply = JsonUtility.FromJson<BaseHtttpReply>(www.downloadHandler.text);
             if (baseHtttpReply.error == true) {
-                GameDebug.Log("create set TTL failed:" + baseHtttpReply.code);
                 currentNetworkErrors++;
             }
             else {
@@ -375,7 +374,6 @@ public class GDNNetworkDriver : MonoBehaviour {
     }
     
     public void ProducerSend(int id, VirtualMsgType msgType, byte[] payload) {
-        Debug.Log("ProducerSend payload.Length: "+payload.Length);
         if (!gdnConnections.ContainsKey(id)) {
             GameDebug.Log("ProducerSend bad id:" + id);
         }

@@ -82,8 +82,7 @@ public class GDNTransport :  INetworkTransport {
         e.data = new byte[8192];
         switch (ev) {
             case GDNNetworkDriver.DriverTransportEvent.Type.Data:
-                e.type = TransportEvent.Type.Data;
-                Debug.Log("driverTransportEvent.dataSize "+driverTransportEvent.dataSize);
+                e.type = TransportEvent.Type.Data; 
                 Array.Copy(driverTransportEvent.data, e.data, driverTransportEvent.dataSize);
                 e.dataSize = driverTransportEvent.dataSize;
                 e.connectionId = driverTransportEvent.connectionId;
@@ -108,7 +107,6 @@ public class GDNTransport :  INetworkTransport {
         Array.Copy(data, sendData, sendSize);
         gdnNetworkDriver.ProducerSend(connectionId, Macrometa.VirtualMsgType.Data, sendData);
         LogFrequency.IncrPrintByteA("SendData",sendData,sendSize);
-        GameDebug.Log("SendData: " + connectionId + " : " + sendSize);
     }
 
     public string GetConnectionDescription(int connectionId) {
