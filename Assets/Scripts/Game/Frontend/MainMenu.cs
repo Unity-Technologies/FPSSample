@@ -118,6 +118,8 @@ public class MainMenu : MonoBehaviour
 
     public void OnCreateGame()
     {
+        Console.EnqueueCommand("connect localhost");
+        /*
         var servername = uiBinding.servername.text;
 
         var levelname = uiBinding.levelname.options[uiBinding.levelname.value].text;
@@ -174,6 +176,7 @@ public class MainMenu : MonoBehaviour
             Console.EnqueueCommand("serve " + levelname);
             Console.EnqueueCommand("servername \"" + servername + "\"");
         }
+        */
     }
 
     static readonly string k_AutoBuildPath = "AutoBuild";
