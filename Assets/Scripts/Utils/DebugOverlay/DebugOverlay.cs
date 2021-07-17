@@ -10,9 +10,9 @@ public class DebugOverlay : MonoBehaviour
 {
     [Header("Overlay size")]
     [SerializeField]
-    int width = 80;
+    int width = 320;
     [SerializeField]
-    int height = 25;
+    int height = 100;
 
     [Header("Font material info")]
     public Material instanceMaterialProc;
@@ -21,9 +21,9 @@ public class DebugOverlay : MonoBehaviour
     [Tooltip("Number of rows of glyphs on texture")]
     public int charRows = 16;
     [Tooltip("Width in pixels of each glyph")]
-    public int cellWidth = 32;
+    public int cellWidth = 64;
     [Tooltip("Height in pixels of each glyph")]
-    public int cellHeight = 32;
+    public int cellHeight = 64;
 
     public Shader lineShaderProc;
 

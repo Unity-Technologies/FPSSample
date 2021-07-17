@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Macrometa;
 using UnityEngine;
 
 public class GDNTransport :  INetworkTransport {
     public static bool setupComplete = false;
+    public static bool isPingOn; // must be set before websockets are opened.
     
     private GDNNetworkDriver gdnNetworkDriver;
     private GDNNetworkDriver.GDNConnection[] m_IdToConnection;
@@ -18,8 +20,9 @@ public class GDNTransport :  INetworkTransport {
     public GDNTransport(bool isServer, int port = 0, int maxConnections = 16 )
     {
         
-        GDNNetworkDriver.overrideIsServer = isServer;
-        GDNNetworkDriver.overrideIsServerValue = true;
+        GDNNetworkDriver.overrideIsServer = true;
+        GDNNetworkDriver.overrideIsServerValue = isServer;
+        GDNNetworkDriver.isPingOn = !isServer;
 
         gdnNetworkDriver= new GameObject().AddComponent<GDNNetworkDriver>();
 
@@ -33,11 +36,29 @@ public class GDNTransport :  INetworkTransport {
         LogFrequency.AddLogFreq("SendDataB",1, "oSendDataB: ", 2 );
 
     }
-
     
     /// <summary>
-    /// ip can client consumer name or server in property
-    /// port can be port in
+    ///  get latency on consumer1
+    /// </summary>
+    /// <returns>returns -3 if consumer1 does not exist</returns>
+    public int GetLatency() {
+        if (gdnNetworkDriver != null && gdnNetworkDriver.consumer1 != null) {
+            if (gdnNetworkDriver.consumer1.IsOpen == false) {
+                return -1;
+            }
+            if (gdnNetworkDriver.consumer1.StartPingThread == false) {
+                return -2;
+            }
+            return gdnNetworkDriver.consumer1.Latency;
+        }
+        else {
+            return -3;
+        }
+        
+    }
+    
+    /// <summary>
+    /// ip and port are currently ignored
     /// make a connection object with internalID
     /// assign to m_IdToConnection
     /// return connection.InternalId;
@@ -56,6 +77,7 @@ public class GDNTransport :  INetworkTransport {
 
         return 0;
     }
+    
     /// <summary>
     /// send disconnect message type
     /// disable due new error previously unseen occuring in game
@@ -77,7 +99,7 @@ public class GDNTransport :  INetworkTransport {
         var driverTransportEvent = gdnNetworkDriver.PopEventQueue();
         var ev = driverTransportEvent.type;
 
-        if (ev == GDNNetworkDriver.DriverTransportEvent.Type.empty)
+        if (ev == GDNNetworkDriver.DriverTransportEvent.Type.Empty)
             return false;
         e.data = new byte[8192];
         switch (ev) {
@@ -120,5 +142,20 @@ public class GDNTransport :  INetworkTransport {
     public void Update()
     {
         // not needed with GDN
+    }
+    
+    
+    public void ServerReceivePing(TransportEvent te) {
+       
+    }
+    public void ClientReceivePing(TransportEvent te) {
+        
+    }
+    
+    public void ServerSendPing() {
+        
+    }
+    public void ClientSendPing() {
+        
     }
 }

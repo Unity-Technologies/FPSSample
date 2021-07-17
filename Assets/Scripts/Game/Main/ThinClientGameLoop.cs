@@ -324,6 +324,7 @@ public class ThinClient : INetworkCallbacks, INetworkClientCallbacks
 
         //m_Transport = new SocketTransport();
         var isServer = false;
+        GDNTransport.isPingOn = false;
         m_Transport =  new GDNTransport(isServer,7932, 16);
 
         m_NetworkClient = new NetworkClient(m_Transport);

@@ -121,7 +121,8 @@ namespace Macrometa {
         Connect,
         Data,
         Disconnect,
-        Dummy  //used as bulk for testing
+        Ping,
+        Pong
     }
     
     [Serializable]
@@ -145,6 +146,8 @@ namespace Macrometa {
         public string desitination;
         public int port;
         public VirtualMsgType msgType;
+        public int pingId;
+        public bool serverPing;
         public int payloadByteSize;
 
     }

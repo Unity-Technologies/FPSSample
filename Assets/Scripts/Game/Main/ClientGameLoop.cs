@@ -287,25 +287,25 @@ public class ClientGameWorld
     {
         if (!m_PlayerModule.PlayerStateReady)
         {
-            GameDebug.Log("No predict! No player state.");
+           // GameDebug.Log("No predict! No player state.");
             return false;
         }
         
         if(!m_PlayerModule.IsControllingEntity)
         {
-            GameDebug.Log("No predict! No controlled entity.");
+            //GameDebug.Log("No predict! No controlled entity.");
             return false;
         }
 
         if (m_PredictedTime.tick <= m_NetworkClient.serverTime)
         {
-            GameDebug.Log("No predict! Predict time not ahead of server tick! " + GetFramePredictInfo());
+            //GameDebug.Log("No predict! Predict time not ahead of server tick! " + GetFramePredictInfo());
             return false;
         }
 
         if (!m_PlayerModule.HasCommands(m_NetworkClient.serverTime + 1, m_PredictedTime.tick))
         {
-            GameDebug.Log("No predict! No commands available. " + GetFramePredictInfo());
+           // GameDebug.Log("No predict! No commands available. " + GetFramePredictInfo());
             return false;
         }
 
@@ -532,6 +532,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         
         //m_NetworkTransport = new SocketTransport();
         var isServer = false;
+        GDNTransport.isPingOn = false;
         m_NetworkTransport =  new GDNTransport(isServer,7932, 16);
         
         m_NetworkClient = new NetworkClient(m_NetworkTransport);

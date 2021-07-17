@@ -69,7 +69,7 @@ public class MainMenu : MonoBehaviour
         uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("2"));
         uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("4"));
         uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("8"));
-        uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("16"));
+        //uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("16"));
         uiBinding.maxplayers.RefreshShownValue();
 
         uiBinding.buildId.text = Game.game.buildId;
