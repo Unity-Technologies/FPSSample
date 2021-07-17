@@ -66,7 +66,7 @@ public class JoinMenu : MonoBehaviour
 
     public void OnJoinGame()
     {
-        Console.EnqueueCommandNoHistory("connect " + connectButtonText.text);
+        Console.EnqueueCommandNoHistory("connect " + "localhost");
     }
 
     public void OnAddServer()
