@@ -13,7 +13,9 @@ using UnityEngine.Serialization;
 
 //need to finish Connection distinary at bottom
 // need event queue
-public class GDNNetworkDriver : MonoBehaviour {
+public class GDNNetworkDriverBinary : MonoBehaviour {
+    
+    private const string streamPostFix = "_Binary";
     
     public static bool overrideIsServer = false;
     public static bool overrideIsServerValue = false;
@@ -37,7 +39,7 @@ public class GDNNetworkDriver : MonoBehaviour {
     public int port;
     
     //Connection handling
-    public int increasePauseConnectionError = 10;
+    public int maxConnectionError = 20;
     public bool isWaitingDebug = false;
     private bool _isWaiting;
     private const string GDNDriverPing = "GDNDriver";
@@ -59,9 +61,6 @@ public class GDNNetworkDriver : MonoBehaviour {
         get => _currentNetworkErrors;
         set {
             _currentNetworkErrors = value;
-            if (currentNetworkErrors == 0) {
-                pauseNetworkError = basePauseNetworkError;
-            }
             if (isWaitingDebug) {
                 GameDebug.Log("NetworkError: " + value);
                 pauseNetworkErrorUntil = Time.time + pauseNetworkError;
@@ -70,8 +69,6 @@ public class GDNNetworkDriver : MonoBehaviour {
     }
 
     public float pauseNetworkError = 1f;
-    public float basePauseNetworkError = 1f;
-    public float pauseNetworkErrorMultiplier = 2f;
     public float pauseNetworkErrorUntil = 0f;
     public bool isNetworkErrorPause = false;
 
@@ -107,8 +104,7 @@ public class GDNNetworkDriver : MonoBehaviour {
     
     public void Awake() {
         
-        BestHTTP.HTTPManager.Setup();
-        BestHTTP.HTTPManager.MaxConnectionPerServer = 64;
+    BestHTTP.HTTPManager.Setup();
         //var configGDNjson = Resources.Load<TextAsset>("configGDN");
         var defaultConfig = RwConfig.ReadConfig();
         RwConfig.WriteConfig( defaultConfig);
@@ -131,8 +127,8 @@ public class GDNNetworkDriver : MonoBehaviour {
             isServer = defaultConfig.isServer;
         }
 
-        serverInStreamName = gameName + "_InStream";
-        serverOutStreamName = gameName + "_OutStream";
+        serverInStreamName = gameName + streamPostFix + "_InStream";
+        serverOutStreamName = gameName + streamPostFix + "_OutStream";
         serverName = consumerName;
        
         if (isServer) {
@@ -163,11 +159,12 @@ public class GDNNetworkDriver : MonoBehaviour {
     public void SetupLoopBody() {
         
         
-       
+        if (isNetworkErrorPause) return;
         if (pauseNetworkErrorUntil > Time.time) return;
-        if (currentNetworkErrors >= increasePauseConnectionError) {
-            pauseNetworkError *= pauseNetworkErrorMultiplier;
-            
+        if (currentNetworkErrors >= maxConnectionError) {
+            isNetworkErrorPause = true;
+            //Debug.LogError("Network problem Game Paused");
+            //AddText("Sorry Network there are problems try restarting\n");
             return;
         }
 
@@ -202,9 +199,16 @@ public class GDNNetworkDriver : MonoBehaviour {
             CreateProducer(producerStreamName);
             return;
         }
-
+/*
         if (!consumerExists) {
             CreateConsumer(consumerStreamName, consumerName);
+            return;
+        }
+*/
+
+
+        if (!consumerExists) {
+            CreateConsumerBinary(producerStreamName, consumerName);
             return;
         }
 
@@ -212,7 +216,16 @@ public class GDNNetworkDriver : MonoBehaviour {
             GameDebug.Log("Set up Complete as " + gameName + " : " + consumerName);
             setupComplete = true;
             GDNTransport.setupComplete = true;
+
+
+            binarySent = new byte[256];
+            for (int i = 0; i < 256; i++) {
+                binarySent[i] = (byte) i;
+            }
+            ProducerSendBinary(binarySent);
         }
+
+        /*
         if (!sendConnect && !isServer) {
             GameDebug.Log("Connect after complete " + gameName + " : " + consumerName);
             Connect();
@@ -228,6 +241,7 @@ public class GDNNetworkDriver : MonoBehaviour {
             }
             StartCoroutine(RepeatTransportPing());
         }
+        */
         
     }
 
@@ -457,6 +471,7 @@ public class GDNNetworkDriver : MonoBehaviour {
             producer1Stats.IncrementCounts(msgJSON.Length);
         }
     }
+    
     
     public void CreateConsumer(string streamName, string consumerName) {
         isWaiting = true;
@@ -836,5 +851,91 @@ public class GDNNetworkDriver : MonoBehaviour {
          //store dummy stats somewhere
      }
      #endregion
+
      
+     #region Binary
+
+     protected byte[] binarySent;
+     protected byte[] binaryReceived;
+     
+     class BinaryMsg {
+         public string payload;
+     }
+     public void ProducerSendBinary( byte[] payload) {
+         payload = new byte[1];
+         payload[0] = (byte) 0;
+         binarySent = payload;
+         
+         
+         
+         var msg = new BinaryMsg() {
+             payload = Convert.ToBase64String(payload)
+         };
+         string msgJSON = JsonUtility.ToJson(msg);
+         
+         //var message = Convert.ToBase64String(payload);
+         //var msgJSON = "{\"payload:\"" + message+ "\"}";
+         GameDebug.Log("sent B: " + msgJSON);
+         //var message = "test";
+         producer1.Send(msgJSON);
+        
+     }
+      public void CreateConsumerBinary(string streamName, string consumerName) {
+        
+        StartCoroutine(MacrometaAPI.Consumer(baseGDNData, streamName, consumerName, SetConsumerBinary));
+    }
+
+     public void SetConsumerBinary(WebSocket ws, string debug = "") {
+
+        consumer1 = ws;
+        consumer1.StartPingThread = isSocketPingOn;
+        consumer1.OnOpen += (o) => {
+            GameDebug.Log("Open " + debug + " isPingOn: "+ isSocketPingOn);
+            consumerExists = true;
+            isWaiting = false;
+        };
+        
+        consumer1.OnMessage += (sender, e) => {
+            GameDebug.Log("raw string: " + e);
+            /*
+            binaryReceived = Convert.FromBase64String(e);
+            
+            var matchLength = (binaryReceived.Length == binarySent.Length);
+            GameDebug.Log("raw string: " + e);
+            GameDebug.Log("matchLength: " + matchLength);
+            for (int i = 0; i < binaryReceived.Length; i++) {
+                if (binaryReceived[i] != binarySent[i]) {
+                    GameDebug.Log(" not Match at: " + i);
+                    return;
+                }
+            }
+
+            GameDebug.Log("OK Binary");
+*/
+
+        };
+        consumer1.OnError += (sender, e) => {
+            GameDebug.Log("WebSocket Error" + debug + " : " + e);
+            
+            //Debug.Log("producer1: " + producer1);
+            //Debug.Log("IsOpen: " + producer1?.IsOpen.ToString());
+            if (producer1 != null && producer1.IsOpen) {
+                producer1.Close();
+            }
+            else {
+                consumerExists = false;
+                isWaiting = false;
+            }
+        };
+        
+        consumer1.OnClosed += (socket, code, message) => {
+            consumerExists = false;
+            isWaiting = false;
+        };
+        
+        consumer1.Open();
+
+    }
+     
+     #endregion
 }

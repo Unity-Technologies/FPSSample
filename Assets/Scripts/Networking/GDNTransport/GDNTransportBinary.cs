@@ -4,36 +4,15 @@ using System.Collections.Generic;
 using Macrometa;
 using UnityEngine;
 
-public class GDNTransport :  INetworkTransport {
+public class GDNTransportBinary :  INetworkTransport {
     public static bool setupComplete = false;
     // must be set before websockets are opened.
     public static bool isSocketPingOn = false; //off by default for compatibility
     public static bool isStatsOn= false; //off by default for compatibility
     public static bool sendDummyTraffic= false; //off by default for compatibility
-    public static bool connectionStarted = false;
     
-    public GDNNetworkDriver gdnNetworkDriver;
-    private GDNNetworkDriver.GDNConnection[] m_IdToConnection;
-   
-
-    private static GDNTransport instance=null;
-
-    private GDNTransport()
-    {
-    }
-
-    public static GDNTransport Instance
-    {
-        get
-        {
-            if (instance==null)
-            {
-                instance = new GDNTransport();
-            }
-            return instance;
-        }
-    }
-    
+    public GDNNetworkDriverBinary gdnNetworkDriver;
+    private GDNNetworkDriverBinary.GDNConnection[] m_IdToConnection;
     
     /// <summary>
     /// Setup m_IdToConnection = new NativeArray<NetworkConnection>(maxConnections, Allocator.Persistent);
@@ -41,20 +20,20 @@ public class GDNTransport :  INetworkTransport {
     /// </summary>
     /// <param name="port"></param>
     /// <param name="maxConnections"></param>
-    public void Connect(bool isServer, int port = 0, int maxConnections = 16 )
+    public GDNTransportBinary(bool isServer, int port = 0, int maxConnections = 16 )
     {
-        connectionStarted = true;
-        GDNNetworkDriver.overrideIsServer = true;
-        GDNNetworkDriver.overrideIsServerValue = isServer;
-        GDNNetworkDriver.isSocketPingOn = isSocketPingOn;
-        GDNNetworkDriver.isStatsOn = isStatsOn;
-        GDNNetworkDriver.sendDummyTraffic = sendDummyTraffic;
-        gdnNetworkDriver= new GameObject().AddComponent<GDNNetworkDriver>();
+        
+        GDNNetworkDriverBinary.overrideIsServer = true;
+        GDNNetworkDriverBinary.overrideIsServerValue = isServer;
+        GDNNetworkDriverBinary.isSocketPingOn = isSocketPingOn;
+        GDNNetworkDriverBinary.isStatsOn = isStatsOn;
+        GDNNetworkDriverBinary.sendDummyTraffic = sendDummyTraffic;
+        gdnNetworkDriver= new GameObject().AddComponent<GDNNetworkDriverBinary>();
 
         MonoBehaviour.DontDestroyOnLoad(gdnNetworkDriver.gameObject);
         gdnNetworkDriver.port = port;
 
-        m_IdToConnection = new GDNNetworkDriver.GDNConnection[maxConnections];
+        m_IdToConnection = new GDNNetworkDriverBinary.GDNConnection[maxConnections];
         //Does GDNNetworkDriver need maxConnections connection to refuse later connections
         LogFrequency.AddLogFreq("OnData",1, "onData: ", 2 );
         LogFrequency.AddLogFreq("SendData",1, "oSendData: ", 2 );
@@ -124,22 +103,22 @@ public class GDNTransport :  INetworkTransport {
         var driverTransportEvent = gdnNetworkDriver.PopEventQueue();
         var ev = driverTransportEvent.type;
 
-        if (ev == GDNNetworkDriver.DriverTransportEvent.Type.Empty)
+        if (ev == GDNNetworkDriverBinary.DriverTransportEvent.Type.Empty)
             return false;
         e.data = new byte[8192];
         switch (ev) {
-            case GDNNetworkDriver.DriverTransportEvent.Type.Data:
+            case GDNNetworkDriverBinary.DriverTransportEvent.Type.Data:
                 e.type = TransportEvent.Type.Data; 
                 Array.Copy(driverTransportEvent.data, e.data, driverTransportEvent.dataSize);
                 e.dataSize = driverTransportEvent.dataSize;
                 e.connectionId = driverTransportEvent.connectionId;
                 LogFrequency.IncrPrintByteA("OnData",e.data,e.dataSize);
                 break;
-            case GDNNetworkDriver.DriverTransportEvent.Type.Connect:
+            case GDNNetworkDriverBinary.DriverTransportEvent.Type.Connect:
                 e.type = TransportEvent.Type.Connect;
                 e.connectionId = driverTransportEvent.connectionId;
                 break;
-            case GDNNetworkDriver.DriverTransportEvent.Type.Disconnect:
+            case GDNNetworkDriverBinary.DriverTransportEvent.Type.Disconnect:
                 e.type = TransportEvent.Type.Disconnect;
                 e.connectionId = driverTransportEvent.connectionId;
                 break;

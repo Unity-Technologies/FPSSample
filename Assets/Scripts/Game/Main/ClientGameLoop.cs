@@ -531,10 +531,12 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         m_GameWorld = new GameWorld("ClientWorld");
         
         //m_NetworkTransport = new SocketTransport();
-        var isServer = false;
-        GDNTransport.isPingOn = false;
-        m_NetworkTransport =  new GDNTransport(isServer,7932, 16);
         
+        GDNTransport.isSocketPingOn = false;
+        GDNTransport.sendDummyTraffic = false;//probably not need but safer
+        m_NetworkTransport = GDNTransport.Instance;
+       
+
         m_NetworkClient = new NetworkClient(m_NetworkTransport);
 
         if (Application.isEditor || Game.game.buildId == "AutoBuild")
@@ -588,7 +590,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     {
         return m_clientWorld;
     }
-    
+
     public void OnConnect(int clientId) { }
     public void OnDisconnect(int clientId) { }
 
@@ -676,12 +678,18 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     int connectRetryCount;
     void EnterConnectingState()
     {
+        //GameDebug.Log("clientGameLoop EnterConnectingState ");
+
         GameDebug.Assert(m_ClientState == ClientState.Browsing, "Expected ClientState to be browsing");
         GameDebug.Assert(m_clientWorld == null, "Expected ClientWorld to be null");
         GameDebug.Assert(m_NetworkClient.connectionState == NetworkClient.ConnectionState.Disconnected, "Expected network connectionState to be disconnected");
 
         m_ClientState = ClientState.Connecting;
         connectRetryCount = 0;
+        if (!GDNTransport.connectionStarted) {
+            var isServer = false;
+            m_NetworkTransport.Connect(isServer, 7932, 8);
+        }
     }
 
     void UpdateConnectingState()
@@ -692,6 +700,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
                 m_GameMessage = "Waiting for map info";
                 break;
             case NetworkClient.ConnectionState.Connecting:
+                //GameDebug.Log("clientGameLoop UpdateConnectingState NetworkClient.ConnectionState.Connecting ");
                 // Do nothing; just wait for either success or failure
                 break;
             case NetworkClient.ConnectionState.Disconnected:

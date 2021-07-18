@@ -10,6 +10,8 @@ public class JoinMenu : MonoBehaviour
     [ConfigVar(Name = "serverlist", Description = "Comma seperated list of commonly used servers", DefaultValue = "localhost", Flags = ConfigVar.Flags.Save)]
     public static ConfigVar serverlist;
 
+    public MainMenu mainMenu;
+
     public ScrollRect servers;
     public TMPro.TextMeshProUGUI connectButtonText;
     public Button connectButton;
@@ -18,6 +20,16 @@ public class JoinMenu : MonoBehaviour
     public TMPro.TMP_InputField playername;
     public RectTransform serverListContentRect;
 
+    public TMPro.TMP_InputField createGameGDNStreamName;
+    public TMPro.TMP_InputField gdnStreamName;
+    public TMPro.TMP_InputField gdnFederationURL;
+    public TMPro.TMP_InputField gdnTenant;
+    public TMPro.TMP_InputField gdnFabric;
+    public Toggle isGlobal;
+    public TMPro.TMP_InputField gdnAPIKey;
+    
+    
+    
     public void Awake()
     {
         serverListEntryTemplateHeight = ((RectTransform)serverListEntryTemplate.transform).rect.height + 10.0f;
@@ -28,10 +40,12 @@ public class JoinMenu : MonoBehaviour
         }
         RepositionItems();
         SetSelectedServer(-1);
+        UpdateGdnFields();
     }
 
-    public void UpdateMenu()
-    {
+    public void UpdateMenu() {
+        UpdateGdnFields();
+
         // Unless typing, fill in field from configvar
         if (!playername.isFocused)
             playername.text = ClientGameLoop.clientPlayerName.Value;
@@ -49,6 +63,37 @@ public class JoinMenu : MonoBehaviour
         }
     }
 
+    public void UpdateGdnFields() {
+        var gdnConfig = RwConfig.ReadConfig();
+        UpdateGDNTextField(gdnStreamName, gdnConfig.gameName);
+        UpdateGDNTextField(createGameGDNStreamName, gdnConfig.gameName);
+        UpdateGDNTextField(gdnFederationURL, gdnConfig.gdnData.federationURL);
+        UpdateGDNTextField(gdnFabric, gdnConfig.gdnData.fabric);
+        UpdateGDNTextField(gdnTenant, gdnConfig.gdnData.tenant);
+        UpdateGDNTextField(gdnAPIKey, gdnConfig.gdnData.apiKey);
+    }
+
+    public void SaveCreateGameToGDNConfig() {
+        var gdnConfig = RwConfig.ReadConfig();
+        gdnConfig.gameName =createGameGDNStreamName.text;
+        RwConfig.WriteConfig(gdnConfig);
+    }
+    
+    public void SaveToGDNConfig() {
+        var gdnConfig = RwConfig.ReadConfig();
+        gdnConfig.gameName = gdnStreamName.text;
+        gdnConfig.gdnData.federationURL = gdnFederationURL.text;
+        gdnConfig.gdnData.fabric = gdnFabric.text;
+        gdnConfig.gdnData.tenant = gdnTenant.text;
+        gdnConfig.gdnData.apiKey = gdnAPIKey.text;
+        RwConfig.WriteConfig(gdnConfig);
+    }
+    
+    public void UpdateGDNTextField(TMPro.TMP_InputField field, string value) {
+        if (!field.isFocused)
+            field.text =value;
+    }
+    
     public void OnServerItemPointerClick(BaseEventData e)
     {
         var ped = (PointerEventData)e;
@@ -64,11 +109,14 @@ public class JoinMenu : MonoBehaviour
         }
     }
 
-    public void OnJoinGame()
-    {
-        Console.EnqueueCommandNoHistory("connect " + "localhost");
+    public void OnJoinGame() {
+        Console.EnqueueCommandNoHistory("connect localhost");
+        Debug.Log("JoinMenu OnJoinGame()");
+        //Console.EnqueueCommandNoHistory("connect " +" -- ");
+        mainMenu.ShowSubMenu(mainMenu.introMenu);
     }
 
+    
     public void OnAddServer()
     {
         AddServer(serverAddress.text);
@@ -102,6 +150,13 @@ public class JoinMenu : MonoBehaviour
         Console.EnqueueCommandNoHistory("client.playername \"" + playername.text + '"');
     }
 
+    public void OnGDNStreamNameChanged(string value)
+    {
+        var gdnConfig = RwConfig.ReadConfig();
+        gdnConfig.gameName = value;
+        RwConfig.WriteConfig(gdnConfig);
+    }
+    
     public void OnFindMatch()
     {
         Console.EnqueueCommandNoHistory("matchmake");

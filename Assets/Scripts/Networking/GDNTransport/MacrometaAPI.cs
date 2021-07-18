@@ -122,7 +122,9 @@ namespace Macrometa {
         Data,
         Disconnect,
         Ping,
-        Pong
+        Pong,
+        Internal, //used to send stats or other internal driver information
+        Dummy     //used to simulate traffic
     }
     
     [Serializable]
@@ -140,16 +142,19 @@ namespace Macrometa {
         public int redeliveryCount;
     }
 
+    //to reduce json size these fields are 1 character
     [Serializable]
     public class MessageProperties {
-        public string source;
-        public string desitination;
-        public int port;
-        public VirtualMsgType msgType;
-        public int pingId;
-        public bool serverPing;
-        public int payloadByteSize;
-
+        public string s; //source
+        public string d;//desitination
+        public int p;//port  used for connection ID
+        public VirtualMsgType t;//msgType
+        public int i;//pingId
+        public int z;//payloadByteSize
+        // these are only used in TranportPing/Pong
+        public int r;// last ping time consumer i.e. remote ping time
+        public int o;// last ping time producer i.e. remote ping time
+        public string n;// node i.e. remote ping time
     }
     
     [Serializable]
@@ -171,6 +176,7 @@ namespace Macrometa {
         public static IEnumerator CreateStream(GDNData gdnData, string streamName,
             Action<UnityWebRequest> callback) {
             List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
+            GameDebug.Log("stream url: "+ gdnData.CreateStreamURL(streamName));
             UnityWebRequest www = UnityWebRequest.Post(gdnData.CreateStreamURL(streamName), formData);
             www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
             yield return www.SendWebRequest();
@@ -255,6 +261,17 @@ namespace Macrometa {
                 "LIVE producer "+ streamName);
         }
         
+        public static IEnumerator ProducerMulti(GDNData gdnData, string streamName, int id, Action<WebSocket, string, int> callback) {
+            List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
+            OTPResult otp = new OTPResult();
+            using (UnityWebRequest www = UnityWebRequest.Post(gdnData.GetOTPURL(), formData)) {
+                www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+                yield return www.SendWebRequest();
+                otp = JsonUtility.FromJson<OTPResult>(www.downloadHandler.text);
+            }
+            callback(new WebSocket(new Uri(gdnData.ProducerURL(streamName) + "?otp=" + otp.otp)),
+                "LIVE producer "+ streamName, id);
+        }
     }
 
 

@@ -324,8 +324,10 @@ public class ThinClient : INetworkCallbacks, INetworkClientCallbacks
 
         //m_Transport = new SocketTransport();
         var isServer = false;
-        GDNTransport.isPingOn = false;
-        m_Transport =  new GDNTransport(isServer,7932, 16);
+        GDNTransport.isSocketPingOn = false;
+        GDNTransport.sendDummyTraffic = false;//probably not need but safer
+        m_Transport =  GDNTransport.Instance;
+        m_Transport.Connect(isServer,7932, 8);
 
         m_NetworkClient = new NetworkClient(m_Transport);
 

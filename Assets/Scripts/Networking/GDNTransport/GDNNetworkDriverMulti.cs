@@ -13,10 +13,14 @@ using UnityEngine.Serialization;
 
 //need to finish Connection distinary at bottom
 // need event queue
-public class GDNNetworkDriver : MonoBehaviour {
+public class GDNNetworkDriverMulti : MonoBehaviour {
+
+    private const string streamPostFix = "_Multi";
     
     public static bool overrideIsServer = false;
     public static bool overrideIsServerValue = false;
+    public static int maxNumberOfClients = 4; // change to 16 for live
+    
     public static bool isSocketPingOn= false; // must be set before webSocket is opened
     public static bool isStatsOn= false; //off by default for compatibility 
     public static bool sendDummyTraffic = false; //off by default for compatibility
@@ -24,12 +28,15 @@ public class GDNNetworkDriver : MonoBehaviour {
     public GDNData baseGDNData;
     public string gameName = "FPSGameXX";
     public bool isServer = false;
+    public int testId;
 
     public ListStream listStream;
     public WebSocket consumer1;
     public WebSocket producer1;
+    public WebSocket[] serverProducers = new WebSocket[maxNumberOfClients];
     public StreamStats consumer1Stats;
-    public StreamStats producer1Stats;
+    public StreamStats producer1Stats;// for use by client
+    public StreamStats[] producer1StatsArray = new StreamStats[maxNumberOfClients];
     public string consumerName = "Server";
     public string serverName;
     public int ttl = 1;
@@ -69,9 +76,9 @@ public class GDNNetworkDriver : MonoBehaviour {
         }
     }
 
-    public float pauseNetworkError = 1f;
     public float basePauseNetworkError = 1f;
     public float pauseNetworkErrorMultiplier = 2f;
+    public float pauseNetworkError = 1f;
     public float pauseNetworkErrorUntil = 0f;
     public bool isNetworkErrorPause = false;
 
@@ -82,6 +89,7 @@ public class GDNNetworkDriver : MonoBehaviour {
     public bool serverInStreamExists = false;
     public bool serverOutStreamExists = false;
     public bool producerExists = false;
+    public bool[] serverProducerExists = new bool[maxNumberOfClients];
     public bool consumerExists = false;
     public bool sendConnect = true;
     public bool setupComplete = false;
@@ -101,20 +109,21 @@ public class GDNNetworkDriver : MonoBehaviour {
     public int dummySize = 50; // FPSSample standard is under 2000 bytes per second
     public string nodeId = "";
 
-    public PingStatsGroup pingStatsGroup = new PingStatsGroup();
+    public PingStatsGroup[] pingStatsGroups = new PingStatsGroup[maxNumberOfClients];
     public int statsGroupSize;
     public int dummyTrafficQuantity;
     
     public void Awake() {
         
-        BestHTTP.HTTPManager.Setup();
-        BestHTTP.HTTPManager.MaxConnectionPerServer = 64;
+    BestHTTP.HTTPManager.Setup();
+    BestHTTP.HTTPManager.MaxConnectionPerServer = 64;
         //var configGDNjson = Resources.Load<TextAsset>("configGDN");
         var defaultConfig = RwConfig.ReadConfig();
         RwConfig.WriteConfig( defaultConfig);
         baseGDNData = defaultConfig.gdnData;
         gameName = defaultConfig.gameName; 
         statsGroupSize = defaultConfig.statsGroupSize;
+        testId = defaultConfig.testId;
         if (statsGroupSize < 1) {
             statsGroupSize = 900; //15 minutes
         }
@@ -122,8 +131,13 @@ public class GDNNetworkDriver : MonoBehaviour {
         if (dummyTrafficQuantity < 0) {
             dummyTrafficQuantity = 0; 
         }
+        //increased traffic should be simulated using multiple streams not increased traffic quantity
+        if (dummyTrafficQuantity > 1) {
+            dummyTrafficQuantity = 1; 
+        }
+        GameDebug.Log("multi dummyTrafficQuantity: " + dummyTrafficQuantity);
         nodeId = PingStatsGroup.NodeFromGDNData(baseGDNData);
-        GameDebug.Log("Setup: " + nodeId);
+        GameDebug.Log("multi Setup: " + nodeId);
         if (overrideIsServer) {
             isServer = overrideIsServerValue;
         }
@@ -131,22 +145,23 @@ public class GDNNetworkDriver : MonoBehaviour {
             isServer = defaultConfig.isServer;
         }
 
-        serverInStreamName = gameName + "_InStream";
-        serverOutStreamName = gameName + "_OutStream";
+        serverInStreamName = gameName + streamPostFix + "_InStream";
+        serverOutStreamName = gameName + streamPostFix + "_OutStream_" ;
         serverName = consumerName;
        
         if (isServer) {
             consumerStreamName = serverInStreamName;
-            producerStreamName = serverOutStreamName;
+            // will have an array out outStreams & names
+            producerStreamName = serverOutStreamName; 
         }
         else {
-            consumerStreamName = serverOutStreamName;
+            consumerStreamName = serverOutStreamName +testId ;
             producerStreamName = serverInStreamName;
             setRandomClientName();
         }
         
-        LogFrequency.AddLogFreq("consumer1.OnMessage",1,"consumer1.OnMessage data: ",3);
-        LogFrequency.AddLogFreq("ProducerSend Data",1,"ProducerSend Data: ",3);
+        LogFrequency.AddLogFreq("consumer1.OnMessage",1," multi consumer1.OnMessage data: ",3);
+        LogFrequency.AddLogFreq("ProducerSend Data",1,"multi ProducerSend Data: ",3);
 
         isStatsOn &= isSocketPingOn && isServer;
     }
@@ -161,16 +176,22 @@ public class GDNNetworkDriver : MonoBehaviour {
     }
 
     public void SetupLoopBody() {
-        
-        
-       
         if (pauseNetworkErrorUntil > Time.time) return;
         if (currentNetworkErrors >= increasePauseConnectionError) {
             pauseNetworkError *= pauseNetworkErrorMultiplier;
             
             return;
         }
-
+        /*
+        if (isNetworkErrorPause) return;
+        if (pauseNetworkErrorUntil > Time.time) return;
+        if (currentNetworkErrors >= maxConnectionError) {
+            isNetworkErrorPause = true;
+            //Debug.LogError("Network problem Game Paused");
+            //AddText("Sorry Network there are problems try restarting\n");
+            return;
+        }
+*/
         if (isWaiting) return;
 /*
         if (!clearAllBacklogsDone) {
@@ -198,23 +219,38 @@ public class GDNNetworkDriver : MonoBehaviour {
             return;
         }
 
-        if (!producerExists) {
-            CreateProducer(producerStreamName);
-            return;
+        if (isServer) {
+            for (int i = 0; i < maxNumberOfClients; i++) {
+                if (!serverProducerExists[i]) {
+                    producerExists = false;
+                   
+                    CreateProducerServer(producerStreamName,i);
+                    return;
+                }
+            }
+            
         }
-
+        else {
+            if (!producerExists) {
+                CreateProducer(producerStreamName);
+                return;
+            }
+        }
+        
         if (!consumerExists) {
             CreateConsumer(consumerStreamName, consumerName);
             return;
         }
 
+            
+
         if (!setupComplete) {
-            GameDebug.Log("Set up Complete as " + gameName + " : " + consumerName);
+            GameDebug.Log("multi Set up Complete as " + gameName + " : " + consumerName);
             setupComplete = true;
             GDNTransport.setupComplete = true;
         }
         if (!sendConnect && !isServer) {
-            GameDebug.Log("Connect after complete " + gameName + " : " + consumerName);
+            GameDebug.Log("multi Connect after complete " + gameName + " : " + consumerName);
             Connect();
             sendConnect = true;
             
@@ -224,9 +260,11 @@ public class GDNNetworkDriver : MonoBehaviour {
             if (isStatsOn) {
                 PingStatsGroup.Init(Application.dataPath, "LatencyStats",statsGroupSize);
                 InitPingStatsGroup();
-                GameDebug.Log("isSocketPingOn: " + PingStatsGroup.latencyGroupSize);
+                GameDebug.Log("Multi isSocketPingOn: " + PingStatsGroup.latencyGroupSize);
+                StartCoroutine(RepeatTransportPing());
+                
             }
-            StartCoroutine(RepeatTransportPing());
+            
         }
         
     }
@@ -319,6 +357,7 @@ public class GDNNetworkDriver : MonoBehaviour {
         serverInStreamExists = listStream.result.Any(item => item.topic == gsListName);
         if (!serverInStreamExists) {
             isWaiting = true; ;
+            GameDebug.Log("Try create: " + serverInStreamName);
             //Debug.Log("creating server in stream: " + baseGDNData.CreateStreamURL(serverInStreamName));
             StartCoroutine(MacrometaAPI.CreateStream(baseGDNData, serverInStreamName, CreateServerInStreamCallback));
         }
@@ -341,7 +380,6 @@ public class GDNNetworkDriver : MonoBehaviour {
             }
             else {
                 GameDebug.Log("create ServerIn stream ");
-                serverInStreamExists = true;
                 currentNetworkErrors = 0;
             }
         }
@@ -349,11 +387,15 @@ public class GDNNetworkDriver : MonoBehaviour {
 
     
     public void CreatServerOutStream() {
-        var gsListName = baseGDNData.StreamListName(serverOutStreamName);
-        serverOutStreamExists = listStream.result.Any(item => item.topic == gsListName);
-        if (!serverOutStreamExists) {
-            isWaiting = true;
-            StartCoroutine(MacrometaAPI.CreateStream(baseGDNData, serverOutStreamName, CreateServerOutStreamCallback));
+        for (int i = 0; i < maxNumberOfClients; i++) {
+            var gsListName = baseGDNData.StreamListName(serverOutStreamName+i);
+            serverOutStreamExists = listStream.result.Any(item => item.topic == gsListName);
+            if (!serverOutStreamExists) {
+                isWaiting = true;
+                GameDebug.Log("Try create: " + serverOutStreamName + i);
+                StartCoroutine(MacrometaAPI.CreateStream(baseGDNData, serverOutStreamName+i,
+                    CreateServerOutStreamCallback));
+            }
         }
     }
 
@@ -374,7 +416,6 @@ public class GDNNetworkDriver : MonoBehaviour {
             }
             else {
                 GameDebug.Log("CreateServerOutStream ");
-                serverOutStreamExists = true;
                 currentNetworkErrors = 0;
             }
         }
@@ -386,15 +427,28 @@ public class GDNNetworkDriver : MonoBehaviour {
         producer1Stats = new StreamStats() {
             dataType = DataType.JSON,
             streamName = streamName,
-            streamType = StreamType.Shared
+            streamType = StreamType.Exclusive
         } ;
         StartCoroutine(MacrometaAPI.Producer(baseGDNData, streamName, SetProducer));
     }
 
+    public void CreateProducerServer(string streamName, int id) {
+        isWaiting = true;
+        producer1StatsArray[id] = new StreamStats() {
+            dataType = DataType.JSON,
+            streamName = streamName + id,
+            streamType = StreamType.Exclusive
+        };
+        StartCoroutine(MacrometaAPI.ProducerMulti(baseGDNData,
+            streamName + id, id, SetProducerMulti));
+        
+    }
+    
     public void SetProducer(WebSocket ws, string debug = "") {
         producer1 = ws;
         if (isSocketPingOn) {
             ws.StartPingThread = true;
+            ws.CloseAfterNoMessage = TimeSpan.FromSeconds(10);
         }
         producer1.OnOpen += (o) => {
             isWaiting = false;
@@ -422,6 +476,36 @@ public class GDNNetworkDriver : MonoBehaviour {
         producer1.Open();
     }
     
+    public void SetProducerMulti(WebSocket ws, string debug = "",int id= 0) {
+        serverProducers[id] = ws;
+        if (isSocketPingOn) {
+            ws.StartPingThread = true;
+        }
+        serverProducers[id].OnOpen += (o) => {
+            isWaiting = false;
+            serverProducerExists[id] = true;
+            GameDebug.Log("Open " + debug);
+        };
+
+        serverProducers[id].OnError += (sender, e) => {
+            GameDebug.Log("WebSocket Error" + debug + " : " + e);
+            if (serverProducers[id] != null && serverProducers[id].IsOpen) {
+                serverProducers[id].Close();
+            }
+            else {
+                GameDebug.Log("WebSocket " + debug);
+                serverProducerExists[id] = false;
+                isWaiting = false;
+            }
+        };
+
+        serverProducers[id].OnClosed += (socket, code, message) => {
+            serverProducerExists[id] = false;
+            isWaiting = false;
+            GameDebug.Log("Produce closed: " + code + " : " + message);
+        };
+        serverProducers[id].Open();
+    }
     public void ProducerSend(int id, VirtualMsgType msgType, byte[] payload,
         int pingId = 0, int pingTimeR = 0, int pingTimeO = 0, string aNodeId = "") {
         if (!gdnConnections.ContainsKey(id)) {
@@ -452,9 +536,21 @@ public class GDNNetworkDriver : MonoBehaviour {
                 message.payload.Length,
             payload.Length,0
                 );}
-        producer1.Send(msgJSON);
+
+        if (isServer) {
+            serverProducers[gdnConnections[id].port].Send(msgJSON);
+        }
+        else {
+            producer1.Send(msgJSON);
+        }
+
         if (isStatsOn) {
-            producer1Stats.IncrementCounts(msgJSON.Length);
+            if (isServer) {
+                producer1StatsArray[id].IncrementCounts(msgJSON.Length);
+            }
+            else {
+                producer1Stats.IncrementCounts(msgJSON.Length);
+            }
         }
     }
     
@@ -640,7 +736,7 @@ public class GDNNetworkDriver : MonoBehaviour {
          var connection = new GDNConnection() {
              source = consumerName,
              destination = serverName,
-             port = 443 
+             port = testId 
          };
 
          var id = AddOrGetConnectionId(connection);
@@ -753,10 +849,13 @@ public class GDNNetworkDriver : MonoBehaviour {
      #region Latency & bandwidth testing
 
      public void InitPingStatsGroup() {
-         
-         pingStatsGroup.InitStatsFromGDNDate(baseGDNData);
-         pingStatsGroup.SetStreamStats(consumer1Stats,true);
-         pingStatsGroup.SetStreamStats(producer1Stats,false);
+         for (int i = 0; i < maxNumberOfClients; i++) {
+             pingStatsGroups[i] = new PingStatsGroup();
+             pingStatsGroups[i].InitStatsFromGDNDate(baseGDNData);
+             pingStatsGroups[i].SetStreamStats(consumer1Stats, true);
+             pingStatsGroups[i].SetStreamStats(producer1StatsArray[i], false);
+             pingStatsGroups[i].connectionID = i;
+         }
      }
      
      
@@ -770,9 +869,9 @@ public class GDNNetworkDriver : MonoBehaviour {
      
      public void ReceiveTransportPong(ReceivedMessage receivedMessage) {
          var transportPing = TransportPings.Remove(receivedMessage.properties.i);
-          if (isStatsOn) {
-             pingStatsGroup.AddRtt( transportPing.elapsedTime,
-                 producer1.Latency, consumer1.Latency,
+         if (isStatsOn) {
+             pingStatsGroups[transportPing.destinationId].AddRtt( transportPing.elapsedTime,
+                 serverProducers[transportPing.destinationId].Latency, consumer1.Latency,
                  receivedMessage.properties.o, receivedMessage.properties.r,
                  receivedMessage.properties.n);
          }
@@ -782,10 +881,13 @@ public class GDNNetworkDriver : MonoBehaviour {
          if(gdnConnections.Count==0){
              return;
          }
-         int desitnationId = gdnConnections.Keys.First();
-         var pingId = TransportPings.Add(desitnationId , Time.realtimeSinceStartup, 0);
-         ProducerSend(desitnationId, VirtualMsgType.Ping, new byte[0],pingId);
-          }
+
+         foreach (var desitnationId in gdnConnections.Keys) {
+             var pingId = TransportPings.Add(desitnationId, Time.realtimeSinceStartup, 0);
+             ProducerSend(desitnationId, VirtualMsgType.Ping, new byte[0], pingId);
+             //GameDebug.Log("SendTransportPing: " + desitnationId + " : " + pingId);
+         }
+     }
      public void SendTransportPong(ReceivedMessage receivedMessage) {
          var connection = new GDNConnection() {
              source = receivedMessage.properties.d,
@@ -799,6 +901,8 @@ public class GDNNetworkDriver : MonoBehaviour {
              //              + receivedMessage.properties.source);
              return;
          }
+         //GameDebug.Log("SendTransportPong: " +id + " : "+ receivedMessage.properties.i);
+         
          ProducerSend(id, VirtualMsgType.Pong, new byte[0], receivedMessage.properties.i,
              producer1.Latency,consumer1.Latency,nodeId);
      }

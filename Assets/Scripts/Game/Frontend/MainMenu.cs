@@ -22,6 +22,8 @@ public class MainMenu : MonoBehaviour
     }
 
     public UIBinding uiBinding;
+   
+    public GameObject introMenu;
     public JoinMenu joinMenu;
     public OptionsMenu optionMenu;
 
@@ -53,6 +55,7 @@ public class MainMenu : MonoBehaviour
 
     public void Awake()
     {
+        joinMenu.UpdateGdnFields();
         m_CanvasGroup = GetComponent<CanvasGroup>();
 
         uiBinding.gamemode.options.Clear();
@@ -173,6 +176,8 @@ public class MainMenu : MonoBehaviour
             if (process.Start())
             {
                 Console.EnqueueCommand("connect localhost");
+                Debug.Log("mainMenu OnCreateGame connect localhost");
+                ShowSubMenu(introMenu);
             }
         }
         else
