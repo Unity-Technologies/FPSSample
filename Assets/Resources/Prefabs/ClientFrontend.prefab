@@ -776,7 +776,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 20.00003}
+  m_AnchoredPosition: {x: 0, y: 20.000015}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &114635037818496874
@@ -831,7 +831,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &224228686822707078
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5676,7 +5676,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &224830870595798084
 RectTransform:
   m_ObjectHideFlags: 0
@@ -16232,7 +16232,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: QUIT GAME
+  m_text: EXIT GAME
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: fad1e628092afee439f9d0640a3ace4a, type: 2}
   m_sharedMaterial: {fileID: 21037965732074340, guid: fad1e628092afee439f9d0640a3ace4a,
@@ -24111,7 +24111,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'Are you sure you
 
-    want to quit?'
+    want to exit?'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: fad1e628092afee439f9d0640a3ace4a, type: 2}
   m_sharedMaterial: {fileID: 21037965732074340, guid: fad1e628092afee439f9d0640a3ace4a,

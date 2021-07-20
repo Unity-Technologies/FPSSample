@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -59,8 +60,8 @@ public class MainMenu : MonoBehaviour
         m_CanvasGroup = GetComponent<CanvasGroup>();
 
         uiBinding.gamemode.options.Clear();
-        uiBinding.gamemode.options.Add(new TMPro.TMP_Dropdown.OptionData("Assault"));
         uiBinding.gamemode.options.Add(new TMPro.TMP_Dropdown.OptionData("Deathmatch"));
+        uiBinding.gamemode.options.Add(new TMPro.TMP_Dropdown.OptionData("Assault"));
         uiBinding.gamemode.RefreshShownValue();
 
         uiBinding.levelname.options.Clear();
@@ -178,8 +179,7 @@ public class MainMenu : MonoBehaviour
                                           " +servername \"" + servername + "\"";
             if (process.Start())
             {
-                Console.EnqueueCommand("connect localhost");
-                Debug.Log("mainMenu OnCreateGame connect localhost");
+                StartCoroutine(SendConnect(10));
                 ShowSubMenu(introMenu);
             }
         }
@@ -191,6 +191,15 @@ public class MainMenu : MonoBehaviour
         
     }
 
+    IEnumerator SendConnect(float delay)
+    {
+        Debug.Log("mainMenu OnCreateGame waiting: " + delay);
+        //yield on a new YieldInstruction that waits for delay seconds.
+        yield return new WaitForSeconds(delay);
+        Console.EnqueueCommand("connect localhost");
+        Debug.Log("mainMenu OnCreateGame SendConnect connect localhost");
+    }
+    
     static readonly string k_AutoBuildPath = "AutoBuild";
     static readonly string k_AutoBuildExe = "AutoBuild.exe";
 

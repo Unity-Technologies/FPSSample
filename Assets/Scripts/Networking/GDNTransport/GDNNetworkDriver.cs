@@ -21,6 +21,8 @@ public class GDNNetworkDriver : MonoBehaviour {
     public static bool isStatsOn= false; //off by default for compatibility 
     public static bool sendDummyTraffic = false; //off by default for compatibility
 
+    public static int WebSocketPing = 0;
+    
     public GDNData baseGDNData;
     public string gameName = "FPSGameXX";
     public bool isServer = false;
@@ -32,7 +34,7 @@ public class GDNNetworkDriver : MonoBehaviour {
     public StreamStats producer1Stats;
     public string consumerName = "Server";
     public string serverName;
-    public int ttl = 1;
+    public int ttl = 3600;
     public double discardMinutes = -2;// discard messages more than X minutes old should be a negative number 
     public int port;
     
@@ -227,6 +229,10 @@ public class GDNNetworkDriver : MonoBehaviour {
                 GameDebug.Log("isSocketPingOn: " + PingStatsGroup.latencyGroupSize);
             }
             StartCoroutine(RepeatTransportPing());
+        }
+
+        if (isSocketPingOn) {
+            WebSocketPing = consumer1.Latency;
         }
         
     }
@@ -490,7 +496,7 @@ public class GDNNetworkDriver : MonoBehaviour {
 
             if (receivedMessage.properties != null && 
                 receivedMessage.properties.d == consumerName 
-                && DateTime.Now.AddMinutes(discardMinutes) < DateTime.Parse(receivedMessage.publishTime)  
+               // && DateTime.Now.AddMinutes(discardMinutes) < DateTime.Parse(receivedMessage.publishTime)  
                 ) {
                 //GameDebug.Log("Consumer1.OnMessage 2");
                 switch (receivedMessage.properties.t) {

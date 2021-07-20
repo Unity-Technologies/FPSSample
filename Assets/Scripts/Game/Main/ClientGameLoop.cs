@@ -76,6 +76,7 @@ public class ClientGameWorld
 
     public void Shutdown()
     {
+        GameDebug.Log(" ClientGameWorld Shutdown" );
         m_CharacterModule.Shutdown();
         m_ProjectileModule.Shutdown();
         m_HitCollisionModule.Shutdown();
@@ -532,10 +533,10 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         
         //m_NetworkTransport = new SocketTransport();
         
-        GDNTransport.isSocketPingOn = false;
+        GDNTransport.isSocketPingOn = true;
         GDNTransport.sendDummyTraffic = false;//probably not need but safer
         m_NetworkTransport = GDNTransport.Instance;
-       
+        GameDebug.Log("GDNTransport instanciated ");
 
         m_NetworkClient = new NetworkClient(m_NetworkTransport);
 
@@ -546,7 +547,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         m_NetworkStatistics = new NetworkStatisticsClient(m_NetworkClient);
         m_ChatSystem = new ChatSystemClient(m_NetworkClient);
 
-        GameDebug.Log("Network client initialized");
+        GameDebug.Log("NetworkClient initialized ");
 
         m_requestedPlayerSettings.playerName = clientPlayerName.Value;
         m_requestedPlayerSettings.teamId = -1;
@@ -564,9 +565,12 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         {
             targetServer = args[0];
             m_StateMachine.SwitchTo(ClientState.Connecting);
+            GameDebug.Log("Client Connecting after init");
         }
-        else
+        else {
             m_StateMachine.SwitchTo(ClientState.Browsing);
+            GameDebug.Log("Client Browsing after init");
+        }
 
         GameDebug.Log("Client initialized");
 
@@ -686,7 +690,9 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
         m_ClientState = ClientState.Connecting;
         connectRetryCount = 0;
+        GameDebug.Log("Client  EnterConnectingState");
         if (!GDNTransport.connectionStarted) {
+            GameDebug.Log("GDNTransport Connect");
             var isServer = false;
             m_NetworkTransport.Connect(isServer, 7932, 8);
         }
