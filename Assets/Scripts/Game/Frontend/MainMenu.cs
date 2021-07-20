@@ -95,6 +95,9 @@ public class MainMenu : MonoBehaviour
     // Called from the Menu/Button_* UI.Buttons
     public void ShowSubMenu(GameObject ShowMenu)
     {
+        if (ShowMenu == uiBinding.menus[activeSubmenuNumber]) {
+            ShowMenu = introMenu;
+        }
         activeSubmenuNumber = 0;
         for(int i = 0; i < uiBinding.menus.Length; i++)
         {

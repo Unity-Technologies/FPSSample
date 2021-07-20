@@ -6,8 +6,8 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif
 
-public class DebugOverlay : MonoBehaviour
-{
+public class DebugOverlay : MonoBehaviour {
+    static private Vector2 rescale = Vector2.one * 2;
     [Header("Overlay size")]
     [SerializeField]
     int width = 320;
@@ -140,8 +140,8 @@ public class DebugOverlay : MonoBehaviour
     {
         if (instance == null)
             return;
-        float scalex = (float)instance.width / Screen.width;
-        float scaley = (float)instance.height / Screen.height;
+        float scalex = (float)instance.width / (Screen.width/rescale.x);
+        float scaley = (float)instance.height / (Screen.height/rescale.y);
         x *= scalex;
         y *= scaley;
         float sizex = scalex * size;
@@ -154,14 +154,14 @@ public class DebugOverlay : MonoBehaviour
     {
         if (instance == null)
             return;
-        float scalex = (float)instance.width / Screen.width;
-        float scaley = (float)instance.height / Screen.height;
+        float scalex = (float)instance.width / (Screen.width/rescale.x);
+        float scaley = (float)instance.height /(Screen.height/rescale.y);
         x *= scalex;
         y *= scaley;
         width *= scalex;
         height *= scaley;
         instance.AddQuad(x, y, width, height, c, col);
-    }
+    } 
 
     public static void Write(float x, float y, string format)
     {

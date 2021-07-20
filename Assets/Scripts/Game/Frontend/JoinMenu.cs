@@ -71,6 +71,7 @@ public class JoinMenu : MonoBehaviour
         UpdateGDNTextField(gdnFabric, gdnConfig.gdnData.fabric);
         UpdateGDNTextField(gdnTenant, gdnConfig.gdnData.tenant);
         UpdateGDNTextField(gdnAPIKey, gdnConfig.gdnData.apiKey);
+        isGlobal.isOn = gdnConfig.gdnData.isGlobal;
     }
 
     public void SaveCreateGameToGDNConfig() {
@@ -86,6 +87,7 @@ public class JoinMenu : MonoBehaviour
         gdnConfig.gdnData.fabric = gdnFabric.text;
         gdnConfig.gdnData.tenant = gdnTenant.text;
         gdnConfig.gdnData.apiKey = gdnAPIKey.text;
+        gdnConfig.gdnData.isGlobal = isGlobal.isOn;
         RwConfig.WriteConfig(gdnConfig);
     }
     
@@ -93,7 +95,11 @@ public class JoinMenu : MonoBehaviour
         if (!field.isFocused)
             field.text =value;
     }
-    
+
+
+    public void SaveConfig() {
+        Console.EnqueueCommandNoHistory("saveconfig");
+    }
     public void OnServerItemPointerClick(BaseEventData e)
     {
         var ped = (PointerEventData)e;
@@ -148,6 +154,12 @@ public class JoinMenu : MonoBehaviour
     public void OnNameChanged()
     {
         Console.EnqueueCommandNoHistory("client.playername \"" + playername.text + '"');
+        Console.EnqueueCommandNoHistory("saveconfig");
+
+    }
+
+    public void OnDisable() {
+        Console.EnqueueCommandNoHistory("saveconfig");
     }
 
     public void OnGDNStreamNameChanged(string value)
