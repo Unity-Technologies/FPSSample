@@ -107,7 +107,7 @@ public class GDNNetworkDriverBinary : MonoBehaviour {
     BestHTTP.HTTPManager.Setup();
         //var configGDNjson = Resources.Load<TextAsset>("configGDN");
         var defaultConfig = RwConfig.ReadConfig();
-        RwConfig.WriteConfig( defaultConfig);
+        RwConfig.Flush();
         baseGDNData = defaultConfig.gdnData;
         gameName = defaultConfig.gameName; 
         statsGroupSize = defaultConfig.statsGroupSize;

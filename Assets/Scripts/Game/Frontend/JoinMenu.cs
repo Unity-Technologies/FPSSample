@@ -76,21 +76,55 @@ public class JoinMenu : MonoBehaviour
 
     public void SaveCreateGameToGDNConfig() {
         var gdnConfig = RwConfig.ReadConfig();
-        gdnConfig.gameName =createGameGDNStreamName.text;
-        RwConfig.WriteConfig(gdnConfig);
+        if (gdnConfig.gameName != createGameGDNStreamName.text) {
+            gdnConfig.gameName = createGameGDNStreamName.text;
+            RwConfig.Change(gdnConfig);
+            RwConfig.Flush();
+        }
     }
     
     public void SaveToGDNConfig() {
+        bool dirty = false;
         var gdnConfig = RwConfig.ReadConfig();
-        gdnConfig.gameName = gdnStreamName.text;
-        gdnConfig.gdnData.federationURL = gdnFederationURL.text;
-        gdnConfig.gdnData.fabric = gdnFabric.text;
-        gdnConfig.gdnData.tenant = gdnTenant.text;
-        gdnConfig.gdnData.apiKey = gdnAPIKey.text;
-        gdnConfig.gdnData.isGlobal = isGlobal.isOn;
-        RwConfig.WriteConfig(gdnConfig);
+        if (gdnConfig.gameName != gdnStreamName.text) {
+            gdnConfig.gameName = gdnStreamName.text;
+            dirty = true;
+            GameDebug.Log("Dirty:gdnStreamName" );
+        }
+        if (gdnConfig.gdnData.federationURL != gdnFederationURL.text) {
+            gdnConfig.gdnData.federationURL = gdnFederationURL.text;
+            dirty = true;
+            GameDebug.Log("Dirty:  gdnFederationURL" );
+        }
+        if (gdnConfig.gdnData.fabric != gdnFabric.text) {
+            gdnConfig.gdnData.fabric = gdnFabric.text;
+            dirty = true;
+            GameDebug.Log("Dirty:  gdnFabric" );
+        }
+        if (gdnConfig.gdnData.tenant != gdnTenant.text) {
+            gdnConfig.gdnData.tenant = gdnTenant.text;
+            dirty = true;
+            GameDebug.Log("Dirty:   gdnTenant" );
+        }
+        if (gdnConfig.gdnData.apiKey != gdnAPIKey.text) {
+            gdnConfig.gdnData.apiKey = gdnAPIKey.text;
+            dirty = true;
+            GameDebug.Log("Dirty: gdnAPIKey" );
+        }
+        if (gdnConfig.gdnData.isGlobal != isGlobal.isOn) {
+            gdnConfig.gdnData.isGlobal = isGlobal.isOn;
+            dirty = true;
+            GameDebug.Log("Dirty:  isGlobal" );
+        }
+        if (dirty) {
+            RwConfig.Change(gdnConfig);
+        }
     }
-    
+
+    private void Update() {
+      RwConfig.Flush();
+    }
+
     public void UpdateGDNTextField(TMPro.TMP_InputField field, string value) {
         if (!field.isFocused)
             field.text =value;
@@ -159,14 +193,9 @@ public class JoinMenu : MonoBehaviour
     }
 
     public void OnDisable() {
+        SaveToGDNConfig();
+        RwConfig.Flush();
         Console.EnqueueCommandNoHistory("saveconfig");
-    }
-
-    public void OnGDNStreamNameChanged(string value)
-    {
-        var gdnConfig = RwConfig.ReadConfig();
-        gdnConfig.gameName = value;
-        RwConfig.WriteConfig(gdnConfig);
     }
     
     public void OnFindMatch()
