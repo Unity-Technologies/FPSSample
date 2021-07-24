@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour 
@@ -23,10 +24,13 @@ public class MainMenu : MonoBehaviour
     }
 
     public UIBinding uiBinding;
-   
+
+    [FormerlySerializedAs("mainMenu")] public GameObject mainMenuGO;
     public GameObject introMenu;
     public JoinMenu joinMenu;
     public OptionsMenu optionMenu;
+    public GameObject disconnectedMenu;
+    public bool isDisconnected = false;
 
     // Currently active submenu, used by menu backdrop to track what is going on
     public int activeSubmenuNumber;
@@ -79,6 +83,13 @@ public class MainMenu : MonoBehaviour
         uiBinding.buildId.text = Game.game.buildId;
     }
 
+    void OnEnable() {
+        if (isDisconnected) {
+            mainMenuGO.SetActive(false);
+            disconnectedMenu.SetActive(true);
+        } 
+    }
+    
     public void UpdateMenus()
     {
         if(joinMenu.gameObject.activeInHierarchy)

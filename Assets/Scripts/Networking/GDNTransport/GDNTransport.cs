@@ -113,7 +113,7 @@ public class GDNTransport :  INetworkTransport {
     /// <param name="connectionId"></param>
    
     public void Disconnect(int connectionId) {
-        //gdnNetworkDriver.ProducerSend(connectionId, Macrometa.VirtualMsgType.Disconnect, new byte[0]); 
+        gdnNetworkDriver.ProducerSend(connectionId, Macrometa.VirtualMsgType.Disconnect, new byte[0]); 
     }
 
     public bool NextEvent(ref TransportEvent e) {

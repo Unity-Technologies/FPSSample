@@ -293,6 +293,7 @@ public class NetworkClient
             m_Connection.Reset();
             m_Connection = null;
         }
+        Game.game.clientFrontend.mainMenu.isDisconnected = true;
     }
 
     void OnData(int connectionId, byte[] data, int size, INetworkClientCallbacks networkClientConsumer, ISnapshotConsumer snapshotConsumer)

@@ -10,6 +10,7 @@ using System.Linq;
 using Random = UnityEngine.Random;
 using System.Diagnostics;
 using UnityEngine.Serialization;
+using Debug = UnityEngine.Debug;
 
 //need to finish Connection distinary at bottom
 // need event queue
@@ -536,9 +537,12 @@ public class GDNNetworkDriver : MonoBehaviour {
 
                         break;
                     case VirtualMsgType.Disconnect:
-                        //GameDebug.Log("Consumer1.OnMessage Disonnect: " + receivedMessage.properties.s);
-                        if (isServer) {
-                           //need disconnect 
+                        GameDebug.Log("Consumer1.OnMessage Disonnect: " + receivedMessage.properties.s);
+                        if (isServer) { 
+                            DisconnectFromClient(receivedMessage);
+                        }
+                        else { 
+                            DisconnectFromServer(receivedMessage);
                         }
 
                         break;
@@ -597,7 +601,9 @@ public class GDNNetworkDriver : MonoBehaviour {
         consumer1.Open();
 
     }
-     
+
+    
+
      public void ConnectClient(ReceivedMessage receivedMessage) {
          var connection = new GDNConnection() {
              source = receivedMessage.properties.d,
@@ -617,19 +623,24 @@ public class GDNNetworkDriver : MonoBehaviour {
              StartCoroutine(RepeatDummyMsg()); 
              GameDebug.Log("dummy size:"+ dummySize + " freq: " + dummyFrequency);
          }
-         GameDebug.Log("ConnectClient id: " + id + " Q: " + driverTransportEvents.Count);
+         GameDebug.Log("ConnectClient id: " + id + " count: " + gdnConnections.Count);
          
      }
      
-     public void DisconnectClient(ReceivedMessage receivedMessage) {
+     public void DisconnectFromClient(ReceivedMessage receivedMessage) {
+         GameDebug.Log("DisconnectFromClient id called   count: " + gdnConnections.Count);
          var connection = new GDNConnection() {
              source = receivedMessage.properties.d,
              destination = receivedMessage.properties.s,
              port = receivedMessage.properties.p 
          };
 
-         var id = AddOrGetConnectionId(connection);
-         RemoveConnectionId(id);
+         var id = GetConnectionId(connection);
+         if (id != -1) {
+             RemoveConnectionId(id);
+             GameDebug.Log("DisconnectFromClient A id: " + id + " : " +  GetConnectionId(connection));
+         }
+
          var driverTransportEvent = new DriverTransportEvent() {
              connectionId = id,
              data = new byte[0],
@@ -638,9 +649,42 @@ public class GDNNetworkDriver : MonoBehaviour {
          };
          
          PushEventQueue(driverTransportEvent);
-         GameDebug.Log("DisconnectClient id: " + id + " Q: " + driverTransportEvents.Count);
+         GameDebug.Log("DisconnectFromClient B id: " + id + " count: " + gdnConnections.Count);
      }
 
+     
+     /// <summary>
+     /// called when server refuses connection due to max client number
+     /// not coded
+     /// should shutdown driver and transport
+     /// and tell game to go back to browse
+     /// also maybe called when leave game
+     /// </summary>
+     /// <param name="receivedMessage"></param>
+     public void DisconnectFromServer(ReceivedMessage receivedMessage) {
+         GameDebug.Log("DisconnectFromServer ");
+         return;
+         
+         var connection = new GDNConnection() {
+             source = receivedMessage.properties.d,
+             destination = receivedMessage.properties.s,
+             port = receivedMessage.properties.p 
+         };
+
+         var id = GetConnectionId(connection);
+         if(id == -1)
+             RemoveConnectionId(id);
+         var driverTransportEvent = new DriverTransportEvent() {
+             connectionId = id,
+             data = new byte[0],
+             dataSize = 0,
+             type = DriverTransportEvent.Type.Disconnect
+         };
+         
+         PushEventQueue(driverTransportEvent);
+         GameDebug.Log("DisconnectFromClient C id: " + id + " Q: " + driverTransportEvents.Count);
+     }
+     
      public void Connect() {
          if (isServer) return; 
          var connection = new GDNConnection() {

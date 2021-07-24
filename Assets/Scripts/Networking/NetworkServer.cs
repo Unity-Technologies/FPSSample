@@ -369,6 +369,7 @@ unsafe public class NetworkServer
             {
                 case TransportEvent.Type.Connect:
                     OnConnect(e.connectionId, loop);
+                    
                     break;
                 case TransportEvent.Type.Disconnect:
                     OnDisconnect(e.connectionId, loop);
@@ -438,7 +439,7 @@ unsafe public class NetworkServer
     void OnConnect(int connectionId, INetworkCallbacks loop)
     {
         GameDebug.Assert(!m_Connections.ContainsKey(connectionId));
-
+        GameDebug.Log(" OnConnect: "+m_Connections.Count + "  ServerGameLoop.serverMaxClients "+ ServerGameLoop.serverMaxClients.IntValue);
         if (m_Connections.Count >= ServerGameLoop.serverMaxClients.IntValue)
         {
             GameDebug.Log("Refusing incoming connection " + connectionId + " due to server.maxclients");

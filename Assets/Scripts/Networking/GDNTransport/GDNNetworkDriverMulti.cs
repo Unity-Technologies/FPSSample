@@ -728,7 +728,7 @@ public class GDNNetworkDriverMulti : MonoBehaviour {
          };
          
          PushEventQueue(driverTransportEvent);
-         GameDebug.Log("DisconnectClient id: " + id + " Q: " + driverTransportEvents.Count);
+         GameDebug.Log("DisconnectFromClient id: " + id + " Q: " + driverTransportEvents.Count);
      }
 
      public void Connect() {
