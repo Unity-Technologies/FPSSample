@@ -218,7 +218,7 @@ public class GDNNetworkDriver : MonoBehaviour {
         }
         if (!sendConnect && !isServer) {
             GameDebug.Log("Connect after complete " + gameName + " : " + consumerName);
-            Connect();
+            Connect(); // called on main thread so this is OK
             sendConnect = true;
             
         }
@@ -235,7 +235,8 @@ public class GDNNetworkDriver : MonoBehaviour {
         if (isSocketPingOn) {
             WebSocketPing = consumer1.Latency;
         }
-        
+
+        ExecuteCommands();
     }
 
     public void SetTTL(int ttl = 3) {
@@ -500,6 +501,7 @@ public class GDNNetworkDriver : MonoBehaviour {
                // && DateTime.Now.AddMinutes(discardMinutes) < DateTime.Parse(receivedMessage.publishTime)  
                 ) {
                 //GameDebug.Log("Consumer1.OnMessage 2");
+                Command command;
                 switch (receivedMessage.properties.t) {
                     case VirtualMsgType.Data:
                    
@@ -532,38 +534,74 @@ public class GDNNetworkDriver : MonoBehaviour {
                     case VirtualMsgType.Connect:
                         //GameDebug.Log("Consumer1.OnMessage Connect: " + receivedMessage.properties.s);
                         if (isServer) {
-                            ConnectClient(receivedMessage);
+                            command = new Command() {
+                                command = QueueCommand.ConnectClient,
+                                receivedMessage = receivedMessage
+                            };
+                            AddCommand(command);
+                            //ConnectClient(receivedMessage);
                         }
 
                         break;
                     case VirtualMsgType.Disconnect:
                         GameDebug.Log("Consumer1.OnMessage Disonnect: " + receivedMessage.properties.s);
                         if (isServer) { 
-                            DisconnectFromClient(receivedMessage);
+                            command = new Command() {
+                                command = QueueCommand.DisconnectFromClient,
+                                receivedMessage = receivedMessage
+                            };
+                            AddCommand(command);
+                            //DisconnectFromClient(receivedMessage);
                         }
                         else { 
-                            DisconnectFromServer(receivedMessage);
+                            command = new Command() {
+                                command = QueueCommand.DisconnectFromServer,
+                                receivedMessage = receivedMessage
+                            };
+                            AddCommand(command);
+                            //DisconnectFromServer(receivedMessage);
                         }
 
                         break;
                     case VirtualMsgType.Ping :
                         //GameDebug.Log("Consumer1.OnMessage Ping ");
-                        SendTransportPong(receivedMessage);
+                        command = new Command() {
+                            command = QueueCommand.SendTransportPong,
+                            receivedMessage = receivedMessage
+                        };
+                        AddCommand(command);
+                        //SendTransportPong(receivedMessage);
                         break;
                     
                     case VirtualMsgType.Pong :
                         //GameDebug.Log("Consumer1.OnMessage Pong ");
-                        ReceiveTransportPong(receivedMessage);
+                        command = new Command() {
+                            command = QueueCommand.ReceiveTransportPong,
+                            receivedMessage = receivedMessage
+                        };
+                        AddCommand(command);
+                        //ReceiveTransportPong(receivedMessage);
                         break;
                     
                     case VirtualMsgType.Internal:
                         //GameDebug.Log("Consumer1.OnMessage internal ");
-                        ReceiveInternal(receivedMessage);
+                        command = new Command() {
+                            command = QueueCommand.ReceiveInternal,
+                            receivedMessage = receivedMessage
+                        };
+                        AddCommand(command);
+                        //ReceiveInternal(receivedMessage);
                         break;
                     
                     case VirtualMsgType.Dummy:
                         //GameDebug.Log("Consumer1.OnMessage dummy ");
-                        ReceiveDummy(receivedMessage);
+                        command = new Command() {
+                            command = QueueCommand.ReceiveDummy,
+                            receivedMessage = receivedMessage
+                        };
+                        AddCommand(command);
+                       // ReceiveDummy(receivedMessage);
+                        
                         break;
                 }
             }
@@ -837,7 +875,7 @@ public class GDNNetworkDriver : MonoBehaviour {
                  var pingId = TransportPings.Add(destinationId, Time.realtimeSinceStartup, 0);
                  ProducerSend(destinationId, VirtualMsgType.Ping, new byte[0], pingId);
 
-
+                /*
                  var disocnnects = TransportPings.HeartbeatCheck(missedPingDisconnect);
                  foreach (var id in disocnnects) {
                      var driverTransportEvent = new DriverTransportEvent() {
@@ -849,9 +887,10 @@ public class GDNNetworkDriver : MonoBehaviour {
                      PushEventQueue(driverTransportEvent);
                      GameDebug.Log("lost connection id: " + id);
                  }
-             } else if (!TransportPings.firstPingTimes.ContainsKey(destinationId)) {
-                 TransportPings.firstPingTimes[destinationId] = Time.time + initialPingDelay;
-             }
+                 */
+             }// else if (!TransportPings.firstPingTimes.ContainsKey(destinationId)) {
+               //  TransportPings.firstPingTimes[destinationId] = Time.time + initialPingDelay;
+             //}
          }
      }
      public void SendTransportPong(ReceivedMessage receivedMessage) {
@@ -905,4 +944,79 @@ public class GDNNetworkDriver : MonoBehaviour {
      }
      #endregion
      
+     //these these are methods that were being called asynchronously
+     // and access concurrent collections
+     // putting a command queue that runs on the mand thread 
+     // means only the main thread trys to update the collections.
+     private enum QueueCommand {
+         ConnectClient, //(ReceivedMessage receivedMessage)
+         DisconnectFromClient, //(receivedMessage);
+         DisconnectFromServer, //(receivedMessage);
+         SendTransportPong, //(receivedMessage);
+         ReceiveTransportPong, //(receivedMessage);
+         ReceiveInternal, //(receivedMessage);
+         ReceiveDummy, //(receivedMessage);
+         Connect, //()
+         SendTransportPing,//()
+     }
+
+     private class Command {
+         public QueueCommand command;
+         public ReceivedMessage receivedMessage;
+     }
+     
+     private  ConcurrentQueue<Command> queue = new ConcurrentQueue<Command>();
+
+     private  void AddCommand(Command command) {
+         queue.Enqueue(command);
+     }
+
+     //execute commands in queue
+     //no guarantee that all commands will be executed in a single call
+     public  void ExecuteCommands() {
+         Command command;
+         while (queue.TryDequeue(out command)) {
+             Execute(command);
+         }
+     }
+
+     private void Execute(Command command) {
+         switch (command.command) {
+             case QueueCommand.Connect:
+                 Connect();
+                 break;
+             case QueueCommand.ConnectClient:
+                 ConnectClient(command.receivedMessage);
+                 break;
+             case QueueCommand.ReceiveInternal:
+                 ReceiveInternal(command.receivedMessage);
+                 break;
+             case QueueCommand.ReceiveDummy:
+                 ReceiveDummy(command.receivedMessage);
+                 break;
+             case QueueCommand.DisconnectFromClient:
+                 DisconnectFromClient(command.receivedMessage);
+                 break;
+             case QueueCommand.DisconnectFromServer:
+                 DisconnectFromServer(command.receivedMessage);
+                 break;
+             case QueueCommand.ReceiveTransportPong:
+                 ReceiveTransportPong(command.receivedMessage);
+                 break;
+             case QueueCommand.SendTransportPing:
+                 SendTransportPing();
+                 break;
+             case QueueCommand.SendTransportPong:
+                 SendTransportPong(command.receivedMessage);
+                 break;
+             default:
+                 break;
+
+         }
+     }
+
+
+
+
+
 }

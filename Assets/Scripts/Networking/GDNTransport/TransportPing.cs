@@ -60,14 +60,17 @@ namespace Macrometa {
                     counts[transportPing.destinationId] = 1;
                 }
             }
-
             foreach (var kvp in counts) {
                 if (kvp.Value > pingLimit) {
                     result.Add(kvp.Key);
                 }
             }
-            
             return result;
+        }
+
+        public static void RemoveDestinationId(int destinationID) {
+            firstPingTimes.Remove(destinationID);
+           // pings.TryRemove()
         }
         
         public static TransportPing Remove(int id) {
