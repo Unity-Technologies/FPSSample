@@ -7,11 +7,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using BestHTTP;
+using Debug = UnityEngine.Debug;
 
 namespace Macrometa {
     
     public class TransportPings {
-        public static ConcurrentDictionary<int, TransportPing> pings = new ConcurrentDictionary<int, TransportPing>();
+        /// <summary>
+        /// All pings access should be main thread only.
+        /// </summary>
+        public static Dictionary<int, TransportPing> pings = new Dictionary<int, TransportPing>();
         /// <summary>
         /// store time (unity Time.time) to sens first ping for an id
         /// </summary>
@@ -38,10 +42,7 @@ namespace Macrometa {
                 destinationId = destinationId,
                 stopwatch = stopwatch,
             };
-            if (!pings.TryAdd(id, transportPing)) {
-                GameDebug.LogError("did not add Ping: " + id);
-            }
-                
+            pings.Add(id, transportPing);
             return id;
         }
 
@@ -70,13 +71,25 @@ namespace Macrometa {
 
         public static void RemoveDestinationId(int destinationID) {
             firstPingTimes.Remove(destinationID);
-           // pings.TryRemove()
+            var ids = new List<int>();
+            foreach (var kvp in pings) {
+                if (kvp.Value.destinationId == destinationID) {
+                    ids.Add(kvp.Key);
+                }
+            }
+            foreach (int id in ids) {
+                pings.Remove(id);
+                Debug.Log("pings id: "+ id + "  destinationID: "+ destinationID );
+            }
         }
+        
         
         public static TransportPing Remove(int id) {
             TransportPing result;
-            result = new TransportPing {id = -1, elapsedTime = -1,stopwatch = null};
-            if (!pings.TryRemove(id, out result)) {
+            if (pings.ContainsKey(id)) {
+                result = pings[id];
+                pings.Remove(id);
+            } else {
                 GameDebug.LogError("Could not find ping: " + id);
                 return new TransportPing {id = -1, elapsedTime = -1, stopwatch = null};
             }

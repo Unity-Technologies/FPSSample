@@ -870,12 +870,11 @@ public class GDNNetworkDriver : MonoBehaviour {
          foreach (var destinationId in gdnConnections.Keys) {
              if (TransportPings.firstPingTimes.ContainsKey(destinationId) &&
                  Time.time > TransportPings.firstPingTimes[destinationId] ) {
-
-
+                 
                  var pingId = TransportPings.Add(destinationId, Time.realtimeSinceStartup, 0);
                  ProducerSend(destinationId, VirtualMsgType.Ping, new byte[0], pingId);
 
-                /*
+                
                  var disocnnects = TransportPings.HeartbeatCheck(missedPingDisconnect);
                  foreach (var id in disocnnects) {
                      var driverTransportEvent = new DriverTransportEvent() {
@@ -885,12 +884,14 @@ public class GDNNetworkDriver : MonoBehaviour {
                          type = DriverTransportEvent.Type.Disconnect
                      };
                      PushEventQueue(driverTransportEvent);
+                     TransportPings.RemoveDestinationId(id);
+                     RemoveConnectionId(id);
                      GameDebug.Log("lost connection id: " + id);
                  }
-                 */
-             }// else if (!TransportPings.firstPingTimes.ContainsKey(destinationId)) {
-               //  TransportPings.firstPingTimes[destinationId] = Time.time + initialPingDelay;
-             //}
+                 
+             } else if (!TransportPings.firstPingTimes.ContainsKey(destinationId)) {
+                TransportPings.firstPingTimes[destinationId] = Time.time + initialPingDelay;
+             }
          }
      }
      public void SendTransportPong(ReceivedMessage receivedMessage) {
