@@ -12,8 +12,11 @@ namespace Macrometa {
     
     public class TransportPings {
         public static ConcurrentDictionary<int, TransportPing> pings = new ConcurrentDictionary<int, TransportPing>();
-        public static int nextId = 0;
-
+        /// <summary>
+        /// store time (unity Time.time) to sens first ping for an id
+        /// </summary>
+        public static Dictionary<int, float> firstPingTimes = new Dictionary<int, float>();
+        
         public static SimplePool<Stopwatch> stopWatchPool =
             new SimplePool<Stopwatch>(()=>Stopwatch.StartNew());
         
@@ -42,6 +45,31 @@ namespace Macrometa {
             return id;
         }
 
+        /// <summary>
+        /// count all pings by desitnationId
+        /// if count > pinLimit 
+        /// </summary>
+        public static List<int> HeartbeatCheck(int pingLimit) {
+            var counts = new Dictionary<int, int>();
+            var result = new List<int>();
+            foreach( var transportPing in pings.Values) {
+                if (counts.ContainsKey(transportPing.destinationId)) {
+                    counts[transportPing.destinationId]++;
+                }
+                else {
+                    counts[transportPing.destinationId] = 1;
+                }
+            }
+
+            foreach (var kvp in counts) {
+                if (kvp.Value > pingLimit) {
+                    result.Add(kvp.Key);
+                }
+            }
+            
+            return result;
+        }
+        
         public static TransportPing Remove(int id) {
             TransportPing result;
             result = new TransportPing {id = -1, elapsedTime = -1,stopwatch = null};

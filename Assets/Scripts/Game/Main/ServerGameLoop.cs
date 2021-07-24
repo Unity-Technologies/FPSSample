@@ -317,7 +317,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         m_StateMachine.SwitchTo(ServerState.Idle); 
         //m_NetworkTransport = new SocketTransport(NetworkConfig.serverPort.IntValue, serverMaxClients.IntValue);
         var isServer = true;
-        GDNTransport.isSocketPingOn = false;
+        GDNTransport.isSocketPingOn = true;
         GDNTransport.sendDummyTraffic = false;//probably not need but safer
         m_NetworkTransport =  GDNTransport.Instance;
         m_NetworkTransport.Connect(isServer,7932, 8);

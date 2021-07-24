@@ -21,6 +21,8 @@ public class GDNNetworkDriver : MonoBehaviour {
     public static bool isSocketPingOn= false; // must be set before webSocket is opened
     public static bool isStatsOn= false; //off by default for compatibility 
     public static bool sendDummyTraffic = false; //off by default for compatibility
+    public static int missedPingDisconnect = 3;
+    public static float initialPingDelay = 30; // wait period before first ping is sent after connect
 
     public static int WebSocketPing = 0;
     
@@ -95,10 +97,8 @@ public class GDNNetworkDriver : MonoBehaviour {
     protected string consumerStreamName;
     protected string producerStreamName;
 
-    // for latency & bandwidth testing
-    public float pingFrequency = 1; // should not be less than 1 since it
-                                    // only handles a sing ping at a time
-                                    // need more stop watches for more pings
+    // for latency & data rate testing
+    public float pingFrequency = 1; 
                                     
     public float dummyFrequency = 0.05f; // FPSSample standard is 20 messages per second
     public int dummySize = 50; // FPSSample standard is under 2000 bytes per second
@@ -180,12 +180,12 @@ public class GDNNetworkDriver : MonoBehaviour {
             ClearAllBacklogs();
             return;
         }
-*/
+
         if (!setTTLDone) {
             SetTTL(ttl);
             return;
         }
-        
+    */    
         if (!streamListDone) {
             GetListStream();
             return;
@@ -827,15 +827,33 @@ public class GDNNetworkDriver : MonoBehaviour {
                  receivedMessage.properties.n);
          }
      }
-     
+
      public void SendTransportPing() {
-         if(gdnConnections.Count==0){
-             return;
+         foreach (var destinationId in gdnConnections.Keys) {
+             if (TransportPings.firstPingTimes.ContainsKey(destinationId) &&
+                 Time.time > TransportPings.firstPingTimes[destinationId] ) {
+
+
+                 var pingId = TransportPings.Add(destinationId, Time.realtimeSinceStartup, 0);
+                 ProducerSend(destinationId, VirtualMsgType.Ping, new byte[0], pingId);
+
+
+                 var disocnnects = TransportPings.HeartbeatCheck(missedPingDisconnect);
+                 foreach (var id in disocnnects) {
+                     var driverTransportEvent = new DriverTransportEvent() {
+                         connectionId = id,
+                         data = new byte[0],
+                         dataSize = 0,
+                         type = DriverTransportEvent.Type.Disconnect
+                     };
+                     PushEventQueue(driverTransportEvent);
+                     GameDebug.Log("lost connection id: " + id);
+                 }
+             } else if (!TransportPings.firstPingTimes.ContainsKey(destinationId)) {
+                 TransportPings.firstPingTimes[destinationId] = Time.time + initialPingDelay;
+             }
          }
-         int desitnationId = gdnConnections.Keys.First();
-         var pingId = TransportPings.Add(desitnationId , Time.realtimeSinceStartup, 0);
-         ProducerSend(desitnationId, VirtualMsgType.Ping, new byte[0],pingId);
-          }
+     }
      public void SendTransportPong(ReceivedMessage receivedMessage) {
          var connection = new GDNConnection() {
              source = receivedMessage.properties.d,
