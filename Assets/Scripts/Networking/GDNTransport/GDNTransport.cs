@@ -14,20 +14,12 @@ public class GDNTransport :  INetworkTransport {
     
     public GDNNetworkDriver gdnNetworkDriver;
     private GDNNetworkDriver.GDNConnection[] m_IdToConnection;
-   
-
+    
     private static GDNTransport instance=null;
-
-    private GDNTransport()
-    {
-    }
-
-    public static GDNTransport Instance
-    {
-        get
-        {
-            if (instance==null)
-            {
+    
+    public static GDNTransport Instance {
+        get {
+            if (instance==null) {
                 instance = new GDNTransport();
             }
             return instance;
@@ -46,13 +38,12 @@ public class GDNTransport :  INetworkTransport {
         connectionStarted = true;
         GDNNetworkDriver.overrideIsServer = true;
         GDNNetworkDriver.overrideIsServerValue = isServer;
-        GDNNetworkDriver.isSocketPingOn = isSocketPingOn;
-        GDNNetworkDriver.isStatsOn = isStatsOn;
-        GDNNetworkDriver.sendDummyTraffic = sendDummyTraffic;
+        GDNStreamDriver.isSocketPingOn = isSocketPingOn;
+        GDNStreamDriver.isStatsOn = isStatsOn;
+        GDNStreamDriver.sendDummyTraffic = sendDummyTraffic;
         gdnNetworkDriver= new GameObject().AddComponent<GDNNetworkDriver>();
 
         MonoBehaviour.DontDestroyOnLoad(gdnNetworkDriver.gameObject);
-        gdnNetworkDriver.port = port;
 
         m_IdToConnection = new GDNNetworkDriver.GDNConnection[maxConnections];
         //Does GDNNetworkDriver need maxConnections connection to refuse later connections
@@ -67,14 +58,14 @@ public class GDNTransport :  INetworkTransport {
     /// </summary>
     /// <returns>returns -3 if consumer1 does not exist</returns>
     public int GetLatency() {
-        if (gdnNetworkDriver != null && gdnNetworkDriver.consumer1 != null) {
-            if (gdnNetworkDriver.consumer1.IsOpen == false) {
+        if (gdnNetworkDriver != null && gdnNetworkDriver.gdnStreamDriver.consumer1 != null) {
+            if (gdnNetworkDriver.gdnStreamDriver.consumer1.IsOpen == false) {
                 return -1;
             }
-            if (gdnNetworkDriver.consumer1.StartPingThread == false) {
+            if (gdnNetworkDriver.gdnStreamDriver.consumer1.StartPingThread == false) {
                 return -2;
             }
-            return gdnNetworkDriver.consumer1.Latency;
+            return gdnNetworkDriver.gdnStreamDriver.consumer1.Latency;
         }
         else {
             return -3;
@@ -93,11 +84,11 @@ public class GDNTransport :  INetworkTransport {
     /// <returns></returns>
     public int Connect(string ip, int port) {
         // if server setup is not complete delay this till it is complete
-        if (!gdnNetworkDriver.setupComplete) {
-            gdnNetworkDriver.sendConnect = false; //set that send connect has not been done yet
+        if (!gdnNetworkDriver.gdnStreamDriver.setupComplete) {
+            gdnNetworkDriver.gdnStreamDriver.sendConnect = false; //set that send connect has not been done yet
         }
         else {
-            gdnNetworkDriver.Connect();
+            gdnNetworkDriver.gdnStreamDriver.Connect();
         }
 
         return 0;
@@ -113,15 +104,15 @@ public class GDNTransport :  INetworkTransport {
     /// <param name="connectionId"></param>
    
     public void Disconnect(int connectionId) {
-        gdnNetworkDriver.ProducerSend(connectionId, Macrometa.VirtualMsgType.Disconnect, new byte[0]); 
+        gdnNetworkDriver.gdnStreamDriver.ProducerSend(connectionId, Macrometa.VirtualMsgType.Disconnect, new byte[0]); 
     }
 
     public bool NextEvent(ref TransportEvent e) {
 
-        if (gdnNetworkDriver == null || !gdnNetworkDriver.setupComplete) {
+        if (gdnNetworkDriver == null || !gdnNetworkDriver.gdnStreamDriver.setupComplete) {
             return false;
         }
-        var driverTransportEvent = gdnNetworkDriver.PopEventQueue();
+        var driverTransportEvent = gdnNetworkDriver.gdnStreamDriver.PopEventQueue();
         var ev = driverTransportEvent.type;
 
         if (ev == GDNNetworkDriver.DriverTransportEvent.Type.Empty)
@@ -152,7 +143,7 @@ public class GDNTransport :  INetworkTransport {
     public void SendData(int connectionId, byte[] data, int sendSize) {
         byte[] sendData = new byte[sendSize];
         Array.Copy(data, sendData, sendSize);
-        gdnNetworkDriver.ProducerSend(connectionId, Macrometa.VirtualMsgType.Data, sendData);
+        gdnNetworkDriver.gdnStreamDriver.ProducerSend(connectionId, Macrometa.VirtualMsgType.Data, sendData);
         LogFrequency.IncrPrintByteA("SendData",sendData,sendSize);
     }
 

@@ -156,12 +156,6 @@ public class GameStatistics
             c = StringFormatter.Write(ref buf, 0, "RTT:---");
         DebugOverlay.WriteAbsolute(64, 2, 8.0f, buf, c);
         DebugOverlay.AddQuadAbsolute(124, 0, 60, 14, '\0', new Vector4(1.0f, 1.0f, 0.0f, 0.2f));
-        int ping = GDNNetworkDriver.WebSocketPing;
-        if (ping > 0)
-            c = StringFormatter.Write(ref buf, 0, "Ping:{0}", ping);
-        else
-            c = StringFormatter.Write(ref buf, 0, "Ping:---");
-        DebugOverlay.WriteAbsolute(124, 2, 8.0f, buf, c);
     }
 
     void DrawFPS()

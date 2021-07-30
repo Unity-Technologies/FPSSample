@@ -57,9 +57,6 @@ namespace Macrometa {
                    fabric+ "/" + region+"s."+streamName ;
         }
         
-        public string ConsumerURLDebug(string streamName, string consumerName ) {
-            return "wss://" + requestURL + "/_ws/ws/v2/consumer/persistent/";
-        }
         public string GetOTPURL() {
             return "https://" + requestURL + "/apid/otp";
         }
@@ -71,19 +68,101 @@ namespace Macrometa {
         public string StreamListName(string streamName) {
             return region + "s." + streamName;
         }
+        
+        /*
+        Create key value collection
+        POST 
+        https://api-beta.eng.macrometa.io/_fabric/_system/_api/kv/testFPSGames?expiration=true
+        200 good
+        409 already exists
+        */
+        public string CreateKVURL(string name, bool isExpire) {
+            return "https://" + requestURL + "/_fabric/" + fabric + "/_api/kv/" + name + "?expiration=" + isExpire;
+        }
+        
+        /*
+        List collections
+        GET
+        https://api-beta.eng.macrometa.io/_fabric/_system/_api/kv
+        {
+          "error": false,
+          "code": 200,
+          "result": [
+            {
+              "name": "testFPSGames",
+              "expiration": true
+            },
+            {
+              "name": "TestCollections",
+              "expiration": false
+            }
+          ]
+        }
+        */
+        public string ListKVCollectionsURL() {
+            return "https://" + requestURL + "/_fabric/"+fabric+ "/kv";
+        }
+        
+        /*
+        Get values
+        POST
+        https://api-beta.eng.macrometa.io/_fabric/_system/_api/kv/testFPSGames/values?offset=0&limit=100
+        Value of post
+         [
+          "gdn5","gdn6"
+        ]
+        reply
+        {
+          "error": false,
+          "code": 200,
+          "result": [
+            {
+              "_key": "gdn5",
+              "value": "some json",
+              "expireAt": 1627271993
+            },
+            {
+              "_key": "gdn6",
+              "value": "json fun",
+              "expireAt": 1627266653
+            }
+          ]
+        }
+
+        */
+        public string GetKVValuesURL(string name, int offset = 0, int limit = 100) {
+            return "https://" + requestURL + "/_fabric/" + fabric + "/_api/kv/"
+                   + name + "/values?offset=" + offset + "&limit="+ limit ;
+        }
+        
+        /*
+        Add kvp
+        PUT
+        https://api-beta.eng.macrometa.io/_fabric/_system/_api/kv/testFPSGames/value
+        Value
+        [
+          {
+            "_key": "GDN7",
+            "value": "JSON come back",
+            "expireAt": 1627266233
+          }
+        ]
+        Reply
+        [
+          {
+            "_id": "testFPSGames/GDN7",
+            "_key": "GDN7",
+            "_rev": "_csAYdda--_"
+          }
+        ]
+        */
+        public string PutKVValueURL(string name) {
+            return "https://" + requestURL + "/_fabric/" + fabric + "/kv/"
+                   + name + "/value";
+        }
+        
     }
-/*
- {
-      "_key": "c8globals.UnityTest2_TYPE4",
-      "_id": "_unknown/c8globals.UnityTest2_TYPE4",
-      "_rev": "_cc6pVLK--B",
-      "db": "unity_fps_macrometa.io._system",
-      "local": false,
-      "tenant": "unity_fps_macrometa.io",
-      "topic": "c8globals.UnityTest2",
-      "type": 4
-    },
- */
+
     [Serializable]
     public struct OTPResult {
         public string otp;
@@ -110,6 +189,35 @@ namespace Macrometa {
     }
 
     [Serializable]
+    public struct ListKVCollection{
+        public bool error;
+        public int code;
+        public List<KVCollection> result;
+    }
+
+    [Serializable]
+    public struct KVCollection {
+        public string name;
+        public bool expiration;
+    }
+    
+    [Serializable]
+    public struct ListKVValue{
+        public bool error;
+        public int code;
+        public List<KVValue> result;
+    }
+
+    [Serializable]
+    public struct KVValue {
+        public string _key;
+        public string value;
+        public int expireAt; // unix timestamp
+    }
+    
+    
+    
+    [Serializable]
     public struct BaseHtttpReply {
         public bool error;
         public int code;
@@ -130,6 +238,12 @@ namespace Macrometa {
     [Serializable]
     public struct SendMessage {
         public MessageProperties properties;
+        public string payload;
+    }
+    
+    [Serializable]
+    public struct StatsSendMessage {
+        public StatsMessageProperties properties;
         public string payload;
     }
     
@@ -155,6 +269,14 @@ namespace Macrometa {
         public int r;// last ping time consumer i.e. remote ping time
         public int o;// last ping time producer i.e. remote ping time
         public string n;// node i.e. remote ping time
+    }
+    
+    [Serializable]
+    public class StatsMessageProperties {
+        public string type = "NetworkStats";
+        public string version = "0.1";
+        public string app = "NetworkTester";
+        public PingStatsGroup.NetworkStatsData NetworkStatsData;
     }
     
     [Serializable]
@@ -272,6 +394,46 @@ namespace Macrometa {
             callback(new WebSocket(new Uri(gdnData.ProducerURL(streamName) + "?otp=" + otp.otp)),
                 "LIVE producer "+ streamName, id);
         }
+
+        #region KVCollection
+
+        public static IEnumerator ListKVCollections(GDNData gdnData, Action<UnityWebRequest> callback) {
+            
+            UnityWebRequest www = UnityWebRequest.Get(gdnData.ListKVCollectionsURL());
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            yield return www.SendWebRequest();
+            if (callback != null)
+                callback(www);
+        }
+
+      
+        public static IEnumerator CreateKVCollection(GDNData gdnData, string collectionName,
+            Action<UnityWebRequest> callback) {
+            List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
+            GameDebug.Log("KV url: "+ gdnData.CreateStreamURL(collectionName));
+            UnityWebRequest www = UnityWebRequest.Post(gdnData.CreateKVURL(collectionName,true), formData);
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            yield return www.SendWebRequest();
+            
+            if (callback != null)
+                callback(www);
+        }
+        
+        public static IEnumerator GetKVValues(GDNData gdnData, string collectionName,
+            Action<UnityWebRequest> callback) {
+            List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
+            var url = gdnData.GetKVValuesURL(collectionName);
+            GameDebug.Log("KV url: "+ url);
+            UnityWebRequest www = UnityWebRequest.Post(url, formData);
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            yield return www.SendWebRequest();
+            
+            if (callback != null)
+                callback(www);
+        }
+        
+        
+        #endregion
     }
 
 

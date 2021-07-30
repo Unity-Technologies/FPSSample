@@ -119,52 +119,54 @@ namespace Macrometa {
         }
     }
 
+    
+
     public class PingStatsGroup {
-        public static  int latencyGroupSize = 900; //900 = 15 minutes
-        
+        public static int latencyGroupSize = 10; //10 seconds 
+
         static System.IO.StreamWriter logFile = null;
-        
+
         public StreamStats outStreamStats;
         public StreamStats inStreamStats;
-        
+
         public string localNodeId; // node Id
         public string remoteNodeId; // node Id
         public string localId; // localLocation Id 
         public string remoteId; // remoteLocation Ide.g. Grant Tokyo
 
-        public int connectionID;
+        public int connectionId;
         public string streamOutName;
         public StreamType streamOutType;
         public DataType streamOutData;
         public string streamInName;
         public StreamType streamInType;
         public DataType streamInData;
-        
+
         public int latencyCurrentCount = 0;
-        
+
         public float streamOutLocalPingAverage;
         public float streamOutRemotePingAverage;
         public float streamInLocalPingAverage;
         public float streamInRemotePingAverage;
-        
+
         public TotalStat streamOutMessages = new TotalStat();
-        public TotalStat streamOutBytes= new TotalStat();
-        public TotalStat streamInMessages= new TotalStat();
-        public TotalStat streamInBytes= new TotalStat();
-        
+        public TotalStat streamOutBytes = new TotalStat();
+        public TotalStat streamInMessages = new TotalStat();
+        public TotalStat streamInBytes = new TotalStat();
+
         public float streamOutLocalPingTotal;
         public float streamOutRemotePingTotal;
         public float streamInLocalPingTotal;
         public float streamInRemotePingTotal;
-        
+
         public float rttTotal = 0;
         public float rttAverage;
         public float totalPingAverage; // half of the total of the  4 ping stream averages
         public float extraAverage; // rttAverage - totalPingAverage
         public DateTime dateTime;
 
-        
-        public static void Init(string logfilePath, string logBaseName, int aLatencyGroupSize ) {
+
+        public static void Init(string logfilePath, string logBaseName, int aLatencyGroupSize) {
 
             // Try creating logName; attempt a number of suffixes
             string name = "";
@@ -184,15 +186,15 @@ namespace Macrometa {
             latencyGroupSize = aLatencyGroupSize;
             GameDebug.Log("Stats logging initialized. Logging to " + logfilePath + "/" + name);
         }
-        
+
         /// <summary>
         /// extras information GDNData for including in logs
         /// 
         /// </summary>
         public void InitStatsFromGDNDate(GDNData gdnData) {
-           localNodeId =  NodeFromGDNData(gdnData);
+            localNodeId = NodeFromGDNData(gdnData);
         }
-        
+
         /// <summary>
         /// extract node from GDNData.federationURL
         /// </summary>
@@ -209,13 +211,13 @@ namespace Macrometa {
                 return "";
             }
         }
-        
-        
+
+
         static void Log(string message) {
             if (logFile != null)
-                logFile.WriteLine( message + "\n");
+                logFile.WriteLine(message + "\n");
         }
-        
+
         public void SetStreamStats(StreamStats streamStats, bool isInStream) {
             if (isInStream) {
                 inStreamStats = streamStats;
@@ -230,18 +232,18 @@ namespace Macrometa {
                 streamOutData = streamStats.dataType;
             }
         }
-        
+
         public static string csvHeader = "dateTime, localNodeId,remoteNodeId, localId ,remoteId ," +
-                                  "connectionID , streamOutName, streamOutType, streamOutData  ," +
-                                  " streamInName , streamInType, streamInData," +
-                                  "rttAverage  , totalPingAverage  ,extraAverage ," +
-                                  "streamOutLocalPingAverage ,streamOutRemotePingAverage ," +
-                                  "streamInLocalPingAverage ,streamInRemotePingAverage  , streamOutMessages," +
-                                  " streamOutBytes, streamInMessages , streamInBytes , latencyGroupSize";
+                                         "connectionId , streamOutName, streamOutType, streamOutData  ," +
+                                         " streamInName , streamInType, streamInData," +
+                                         "rttAverage  , totalPingAverage  ,extraAverage ," +
+                                         "streamOutLocalPingAverage ,streamOutRemotePingAverage ," +
+                                         "streamInLocalPingAverage ,streamInRemotePingAverage  , streamOutMessages," +
+                                         " streamOutBytes, streamInMessages , streamInBytes , latencyGroupSize";
 
         public string ToCSVLine() {
-            return ""+ dateTime + ","  + localNodeId + "," + remoteNodeId+ "," + localId + "," + remoteId + "," +
-                   connectionID + "," + streamOutName + "," + streamOutType + "," + streamOutData + "," +
+            return "" + dateTime + "," + localNodeId + "," + remoteNodeId + "," + localId + "," + remoteId + "," +
+                   connectionId + "," + streamOutName + "," + streamOutType + "," + streamOutData + "," +
                    streamInName + "," + streamInType + "," + streamInData + "," +
                    rttAverage + "," + totalPingAverage + "," + extraAverage + "," +
                    streamOutLocalPingAverage + "," + streamOutRemotePingAverage + "," +
@@ -249,8 +251,56 @@ namespace Macrometa {
                    + "," + streamOutBytes + "," + streamInMessages + "," + streamInBytes + "," + latencyGroupSize;
         }
 
-        public void AddRtt(float rtt, float outLocalPing, float inLocalPing, 
+        public NetworkStatsData CurrentNetWorkStats() {
+            return new NetworkStatsData() {
+                dateTime = dateTime,
+                localNodeId = localNodeId,
+                localId = localId,
+                remoteId = remoteId,
+                connectionId = connectionId,
+                streamOutName = streamOutName,
+                streamInName = streamInName,
+                rttAverage = rttAverage,
+                streamOutLocalPingAverage = streamOutLocalPingAverage,
+                streamOutRemotePingAverage = streamOutRemotePingAverage,
+                streamInLocalPingAverage = streamInLocalPingAverage,
+                streamInRemotePingAverage = streamInRemotePingAverage,
+                streamOutMessages = (int) streamOutMessages.total,
+                streamInMessages = (int) streamInMessages.total,
+                streamOutBytes = (int) streamOutBytes.total,
+                streamInBytes = (int) streamInBytes.total,
+                secondsInGroup = latencyGroupSize
+            };
+        }
+        public class NetworkStatsData {
+            public float rttAverage;
+            public int streamOutMessages; //number of messages sent in time period
+            public int streamInMessages;  //number of messages recieved in time period
+            public int streamOutBytes;    //number of bytes sent in time period
+            public int streamInBytes;     //number of bytes recieved in time period
+            public int secondsInGroup; 
+            public float streamOutLocalPingAverage;
+            public float streamOutRemotePingAverage;
+            public float streamInLocalPingAverage;
+            public float streamInRemotePingAverage;
+            public DateTime dateTime;  // string but unix time stamp would be better
+            public string localNodeId; // not full domain name missing macrometa.io
+            public string localId;     
+            public string remoteId;
+            public int connectionId;   // used to identify clients by int
+            public string streamOutName; 
+            public string streamInName;
+            
+
+               // number of seconds in time period
+        }
+
+
+    
+        
+        public NetworkStatsData AddRtt(float rtt, float outLocalPing, float inLocalPing,
             float outRemotePing,float inRemotePing, string aNodeId) {
+            NetworkStatsData result= null;
             rttTotal += rtt;
             streamOutLocalPingTotal += outLocalPing;
             streamInLocalPingTotal += inLocalPing;
@@ -259,17 +309,16 @@ namespace Macrometa {
             remoteNodeId = aNodeId;
             latencyCurrentCount++;
             if (latencyCurrentCount == latencyGroupSize) {
-                GenerateStatsNow();
+                result =GenerateStatsNow();
                 GameDebug.Log(SimpleStats());
                 GameDebug.Log(SimpleStats2());
 
             }
-            
+            return result;
         }
         
-        public void GenerateStatsNow() {
+        public NetworkStatsData GenerateStatsNow() {
             dateTime = DateTime.Now;
-            
             streamOutBytes.total = outStreamStats.bytesSent;
             streamOutMessages.total = outStreamStats.messageCount;
             streamInBytes.total = inStreamStats.bytesSent;
@@ -312,6 +361,7 @@ namespace Macrometa {
             
             
             Log(ToCSVLine());
+            return CurrentNetWorkStats();
         }
 
         public class TotalStat {
@@ -338,7 +388,7 @@ namespace Macrometa {
         }
         
         public string SimpleStats() {
-            return "id: "+ connectionID + " rtt: " + rttAverage + " ping: " + totalPingAverage / 2.0f + " remain: " + extraAverage;
+            return "id: "+ connectionId + " rtt: " + rttAverage + " ping: " + totalPingAverage / 2.0f + " remain: " + extraAverage;
         }
 
         public string SimpleStats2() {
@@ -346,6 +396,7 @@ namespace Macrometa {
                    " Stream msgs: " + streamOutMessages + " Stream msgs: " + streamInMessages +
                    " " + dateTime.ToString();
         }
+        
     }
     
     public enum StreamType {
@@ -358,8 +409,6 @@ namespace Macrometa {
         Byte
     }
 
-    
-    
     public class StreamStats {
         public string streamName;
         public StreamType streamType;

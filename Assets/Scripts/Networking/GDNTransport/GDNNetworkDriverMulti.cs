@@ -854,7 +854,7 @@ public class GDNNetworkDriverMulti : MonoBehaviour {
              pingStatsGroups[i].InitStatsFromGDNDate(baseGDNData);
              pingStatsGroups[i].SetStreamStats(consumer1Stats, true);
              pingStatsGroups[i].SetStreamStats(producer1StatsArray[i], false);
-             pingStatsGroups[i].connectionID = i;
+             pingStatsGroups[i].connectionId = i;
          }
      }
      
