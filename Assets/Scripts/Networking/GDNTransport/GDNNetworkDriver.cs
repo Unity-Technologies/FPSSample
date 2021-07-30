@@ -873,8 +873,7 @@ public class GDNNetworkDriver : MonoBehaviour {
                  
                  var pingId = TransportPings.Add(destinationId, Time.realtimeSinceStartup, 0);
                  ProducerSend(destinationId, VirtualMsgType.Ping, new byte[0], pingId);
-
-                
+                 
                  var disocnnects = TransportPings.HeartbeatCheck(missedPingDisconnect);
                  foreach (var id in disocnnects) {
                      var driverTransportEvent = new DriverTransportEvent() {
