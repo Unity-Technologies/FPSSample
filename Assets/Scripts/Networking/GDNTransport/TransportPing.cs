@@ -260,19 +260,21 @@ namespace Macrometa {
                 connectionId = connectionId,
                 streamOutName = streamOutName,
                 streamInName = streamInName,
-                rttAverage = rttAverage,
-                streamOutLocalPingAverage = streamOutLocalPingAverage,
-                streamOutRemotePingAverage = streamOutRemotePingAverage,
-                streamInLocalPingAverage = streamInLocalPingAverage,
-                streamInRemotePingAverage = streamInRemotePingAverage,
-                streamOutMessages = (int) streamOutMessages.total,
-                streamInMessages = (int) streamInMessages.total,
-                streamOutBytes = (int) streamOutBytes.total,
-                streamInBytes = (int) streamInBytes.total,
+                rttAverage = Mathf.Round(rttAverage*100)/100f,
+                streamOutLocalPingAverage = Mathf.Round(streamOutLocalPingAverage*100)/100f,
+                streamOutRemotePingAverage =  Mathf.Round(streamOutRemotePingAverage*100)/100f,
+                streamInLocalPingAverage =  Mathf.Round(streamInLocalPingAverage*100)/100f,
+                streamInRemotePingAverage = Mathf.Round( streamInRemotePingAverage*100)/100f,
+                streamOutMessages = (int) streamOutMessages.val,
+                streamInMessages = (int) streamInMessages.val,
+                streamOutBytes = (int) streamOutBytes.val,
+                streamInBytes = (int) streamInBytes.val,
                 secondsInGroup = latencyGroupSize
             };
         }
         public class NetworkStatsData {
+            public string version = "0.1";
+            public string appType = "Latency";
             public float rttAverage;
             public int streamOutMessages; //number of messages sent in time period
             public int streamInMessages;  //number of messages recieved in time period

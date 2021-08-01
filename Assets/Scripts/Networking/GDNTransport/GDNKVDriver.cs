@@ -1,131 +1,198 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Macrometa {
+    
+     
+    
+    public class GameRecord {
+        public string _key; //base string name
+        public  string value;
+        public long expireAt; //unix timestamp
+
+        static public long UnixTSNow(long offset) {
+            return (long)(DateTime.UtcNow.
+                Subtract(new DateTime(1970, 1, 1))).TotalSeconds+ offset;
+        }
+        
+        public enum Status {
+            init,
+            waiting,
+            playing
+        }
+
+        public static GameRecord GetInit(string clientID, string baseStreamName, long ttl) {
+            var val = new GameRecordValue() {
+                clientId = clientID,
+                status = Status.init.ToString()
+            };
+
+            return new GameRecord() {
+                _key = baseStreamName,
+                value = JsonUtility.ToJson(val),
+                expireAt = UnixTSNow(ttl)
+            };
+        }
+    }
+
+    [Serializable]
+    public class GameRecordValue {
+        public string clientId;
+        public int maxPlayers;
+        public int currPlayers;
+        public string status; //Initilizing, Waiting ( to start), inGame
+        public long statusChangeTime; // unixTimeStamp --  Gamestart or GameEnd
+    }
+    
     /// <summary>
     /// Key value methods
     /// client browser mode check game list 
     /// </summary>
-   public class GDNKVHandler {
-    private MonoBehaviour _monoBehaviour;
-    private GDNData _gdnData;
-    private GDNErrorhandler _gdnErrorHandler;
-    public ListKVCollection listKVCollection;
-    public ListKVCollection listKVValues;
-    public bool kvCollectionListDone = false;
-    public bool gamesKVCollectionExists;
-    public  string gamesKVCollectionName = "test_Games_collection";
-    public bool kvValueListDone;
+    public class GDNKVDriver {
+        private MonoBehaviour _monoBehaviour;
+        private GDNData _gdnData;
+        private GDNErrorhandler _gdnErrorHandler;
+        public ListKVCollection listKVCollection;
+        public ListKVValue listKVValues ;
+        public bool kvCollectionListDone = false;
+        public bool gamesKVCollectionExists;
+        public string gamesKVCollectionName = "FPSGames_collection";
+        public bool kvValueListDone;
+        public bool putKVValueDone;
 
-    
-    /// <summary>
-    /// passing in a monobehaviour to be able use StartCoroutine
-    /// happens because of automatic refactoring
-    /// probably can hand cleaned
-    /// </summary>
-    /// <param name="gdnData"></param>
-    /// <param name="gdnErrorhandler"></param>
-    /// <param name="monoBehaviour"></param>
-    public GDNKVHandler(GDNNetworkDriver gdnNetworkDriver) {
-        
-        _gdnData = gdnNetworkDriver.baseGDNData;
-        _monoBehaviour =gdnNetworkDriver;
-        _gdnErrorHandler = gdnNetworkDriver._gdnErrorHandler;
-    }
+   
+        /// <summary>
+        /// passing in a monobehaviour to be able use StartCoroutine
+        /// happens because of automatic refactoring
+        /// probably can hand cleaned
+        /// </summary>
+        /// <param name="gdnData"></param>
+        /// <param name="gdnErrorhandler"></param>
+        /// <param name="monoBehaviour"></param>
+        public GDNKVDriver(GDNNetworkDriver gdnNetworkDriver) {
 
-    public void CreateGamesKVCollection() {
-         
-        gamesKVCollectionExists = listKVCollection.result.Any
-            (item => item.name == gamesKVCollectionName);
-        if (!gamesKVCollectionExists ) {
-            _gdnErrorHandler.isWaiting = true; ;
-            //Debug.Log("creating server in stream: " + baseGDNData.CreateStreamURL(serverInStreamName));
-            _monoBehaviour.StartCoroutine(MacrometaAPI.CreateKVCollection(_gdnData, gamesKVCollectionName,
-                CreateKVCollectionCallback));
+            _gdnData = gdnNetworkDriver.baseGDNData;
+            _monoBehaviour = gdnNetworkDriver;
+            _gdnErrorHandler = gdnNetworkDriver.gdnErrorHandler;
         }
-    }
 
-    public void CreateKVCollectionCallback(UnityWebRequest www) {
-        _gdnErrorHandler.isWaiting = false;
-        if (www.isHttpError || www.isNetworkError) {
-            GameDebug.Log("CreateServerInStream : " + www.error);
-            _gdnErrorHandler.currentNetworkErrors++;
-            kvCollectionListDone = false;
+        public void CreateGamesKVCollection() {
+
+            gamesKVCollectionExists = listKVCollection.result.Any
+                (item => item.name == gamesKVCollectionName);
+            if (!gamesKVCollectionExists) {
+                _gdnErrorHandler.isWaiting = true;
+                ;
+                //Debug.Log("creating server in stream: " + baseGDNData.CreateStreamURL(serverInStreamName));
+                _monoBehaviour.StartCoroutine(MacrometaAPI.CreateKVCollection(_gdnData, gamesKVCollectionName,
+                    CreateKVCollectionCallback));
+            }
         }
-        else {
-            var baseHttpReply = JsonUtility.FromJson<BaseHtttpReply>(www.downloadHandler.text);
-            if (baseHttpReply.error == true) {
-                GameDebug.Log("create KV Collection failed:" + baseHttpReply.code);
+
+        public void CreateKVCollectionCallback(UnityWebRequest www) {
+            _gdnErrorHandler.isWaiting = false;
+            if (www.isHttpError || www.isNetworkError) {
+                GameDebug.Log("CreateServerInStream : " + www.error);
                 _gdnErrorHandler.currentNetworkErrors++;
                 kvCollectionListDone = false;
             }
             else {
-                GameDebug.Log("Create KV Collection  ");
-                gamesKVCollectionExists = true;
-                _gdnErrorHandler.currentNetworkErrors = 0;
+                var baseHttpReply = JsonUtility.FromJson<BaseHtttpReply>(www.downloadHandler.text);
+                if (baseHttpReply.error == true) {
+                    GameDebug.Log("create KV Collection failed:" + baseHttpReply.code);
+                    _gdnErrorHandler.currentNetworkErrors++;
+                    kvCollectionListDone = false;
+                }
+                else {
+                    GameDebug.Log("Create KV Collection  ");
+                    gamesKVCollectionExists = true;
+                    _gdnErrorHandler.currentNetworkErrors = 0;
+                }
             }
         }
-    }
 
-    public void GetListKVColecions() {
-        _gdnErrorHandler.isWaiting = true;
-        _monoBehaviour.StartCoroutine(MacrometaAPI.ListKVCollections(_gdnData, ListKVCollectionsCallback));
-    }
-
-    public void ListKVCollectionsCallback(UnityWebRequest www) {
-        _gdnErrorHandler.isWaiting = false;
-        if (www.isHttpError || www.isNetworkError) {
-            _gdnErrorHandler.currentNetworkErrors++;
-            GameDebug.Log("List KV Collections: " + www.error);
+        public void GetListKVColecions() {
+            _gdnErrorHandler.isWaiting = true;
+            _monoBehaviour.StartCoroutine(MacrometaAPI.ListKVCollections(_gdnData, ListKVCollectionsCallback));
         }
-        else {
 
-            //overwrite does not assign toplevel fields
-            //JsonUtility.FromJsonOverwrite(www.downloadHandler.text, listStream);
-            listKVCollection = JsonUtility.FromJson<ListKVCollection>(www.downloadHandler.text);
-            if (listKVCollection.error == true) {
-                GameDebug.Log("List KV Collection failed:" + listKVCollection.code);
-                //Debug.LogWarning("ListStream failed reply:" + www.downloadHandler.text);
+        public void ListKVCollectionsCallback(UnityWebRequest www) {
+            _gdnErrorHandler.isWaiting = false;
+            if (www.isHttpError || www.isNetworkError) {
                 _gdnErrorHandler.currentNetworkErrors++;
+                GameDebug.Log("List KV Collections: " + www.error);
+            }
+            else {
+
+                //overwrite does not assign toplevel fields
+                //JsonUtility.FromJsonOverwrite(www.downloadHandler.text, listStream);
+                listKVCollection = JsonUtility.FromJson<ListKVCollection>(www.downloadHandler.text);
+                if (listKVCollection.error == true) {
+                    GameDebug.Log("List KV Collection failed:" + listKVCollection.code);
+                    //Debug.LogWarning("ListStream failed reply:" + www.downloadHandler.text);
+                    _gdnErrorHandler.currentNetworkErrors++;
+                }
+                else {
+                    GameDebug.Log("List KV Collection succeed ");
+                    kvCollectionListDone = true;
+                    _gdnErrorHandler.currentNetworkErrors = 0;
+                }
+            }
+        }
+
+        public void GetListKVValues() {
+            _gdnErrorHandler.isWaiting = true;
+            _monoBehaviour.StartCoroutine(MacrometaAPI.GetKVValues(_gdnData, gamesKVCollectionName,
+                ListKVValuesCallback));
+        }
+
+        public void ListKVValuesCallback(UnityWebRequest www) {
+            _gdnErrorHandler.isWaiting = false;
+            if (www.isHttpError || www.isNetworkError) {
+                _gdnErrorHandler.currentNetworkErrors++;
+                GameDebug.Log("List KV Collections: " + www.error);
+            }
+            else {
+
+                //overwrite does not assign toplevel fields
+                //JsonUtility.FromJsonOverwrite(www.downloadHandler.text, listStream);
+                listKVValues = JsonUtility.FromJson<ListKVValue>(www.downloadHandler.text);
+                if (listKVValues.error == true) {
+                    GameDebug.Log("List KV Collection failed:" + listKVValues.code);
+                    //Debug.LogWarning("ListStream failed reply:" + www.downloadHandler.text);
+                    _gdnErrorHandler.currentNetworkErrors++;
+                }
+                else {
+                    GameDebug.Log("List KV Collection succeed ");
+                    kvValueListDone = true;
+                    _gdnErrorHandler.currentNetworkErrors = 0;
+                }
+            }
+        }
+
+        public void PutKVValue(GameRecord kvRecord) {
+            string data = "[" +JsonUtility.ToJson(kvRecord)+"]"; // JsonUtility can not handle bare values
+            _gdnErrorHandler.isWaiting = true;
+            _monoBehaviour.StartCoroutine(MacrometaAPI.PutKVValue(_gdnData, gamesKVCollectionName,
+                data, PutKVValueCallback));
+        }
+
+        public void PutKVValueCallback(UnityWebRequest www) {
+            _gdnErrorHandler.isWaiting = false;
+            putKVValueDone = false;
+            if (www.isHttpError || www.isNetworkError) {
+                _gdnErrorHandler.currentNetworkErrors++;
+                GameDebug.Log("Put KV value: " + www.error);
             }
             else {
                 GameDebug.Log("List KV Collection succeed ");
-                kvCollectionListDone = true;
+                putKVValueDone = true;
                 _gdnErrorHandler.currentNetworkErrors = 0;
             }
         }
     }
 
-    public void GetListKVValues() {
-        _gdnErrorHandler.isWaiting = true;
-        _monoBehaviour.StartCoroutine(MacrometaAPI. GetKVValues(_gdnData,gamesKVCollectionName,
-            ListKVValuesCallback));
-    }
-
-    public void ListKVValuesCallback(UnityWebRequest www) {
-        _gdnErrorHandler.isWaiting = false;
-        if (www.isHttpError || www.isNetworkError) {
-            _gdnErrorHandler.currentNetworkErrors++;
-            GameDebug.Log("List KV Collections: " + www.error);
-        }
-        else {
-
-            //overwrite does not assign toplevel fields
-            //JsonUtility.FromJsonOverwrite(www.downloadHandler.text, listStream);
-            listKVValues = JsonUtility.FromJson<ListKVCollection>(www.downloadHandler.text);
-            if (listKVValues.error == true) {
-                GameDebug.Log("List KV Collection failed:" + listKVValues.code);
-                //Debug.LogWarning("ListStream failed reply:" + www.downloadHandler.text);
-                _gdnErrorHandler.currentNetworkErrors++;
-            }
-            else {
-                GameDebug.Log("List KV Collection succeed ");
-                kvValueListDone = true;
-                _gdnErrorHandler.currentNetworkErrors = 0;
-            }
-        }
-    }
 }
 
-}

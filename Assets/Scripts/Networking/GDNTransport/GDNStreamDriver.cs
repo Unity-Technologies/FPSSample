@@ -58,7 +58,7 @@ public class GDNStreamDriver {
 
     public GDNStreamDriver(GDNNetworkDriver gdnNetworkDriver) {
         _monobehaviour = gdnNetworkDriver;
-        _gdnErrorHandler = gdnNetworkDriver._gdnErrorHandler;
+        _gdnErrorHandler = gdnNetworkDriver.gdnErrorHandler;
         _gdnData = gdnNetworkDriver.baseGDNData;
        // _gdnNetworkDriver = gdnNetworkDriver;
         _isServer = gdnNetworkDriver.isServer;
@@ -577,8 +577,9 @@ public class GDNStreamDriver {
     /// <param name="receivedMessage"></param>
     public void DisconnectFromServer(ReceivedMessage receivedMessage) {
         GameDebug.Log("DisconnectFromServer ");
-        return;
-         
+        
+        // this works as is 
+        /*
         var connection = new GDNNetworkDriver.GDNConnection() {
             source = receivedMessage.properties.d,
             destination = receivedMessage.properties.s,
@@ -597,6 +598,7 @@ public class GDNStreamDriver {
          
         PushEventQueue(driverTransportEvent);
         GameDebug.Log("DisconnectFromClient C id: " + id + " Q: " + driverTransportEvents.Count);
+        */
     }
 
     public void Connect() {

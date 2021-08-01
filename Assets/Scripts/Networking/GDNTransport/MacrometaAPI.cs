@@ -69,93 +69,21 @@ namespace Macrometa {
             return region + "s." + streamName;
         }
         
-        /*
-        Create key value collection
-        POST 
-        https://api-beta.eng.macrometa.io/_fabric/_system/_api/kv/testFPSGames?expiration=true
-        200 good
-        409 already exists
-        */
         public string CreateKVURL(string name, bool isExpire) {
             return "https://" + requestURL + "/_fabric/" + fabric + "/_api/kv/" + name + "?expiration=" + isExpire;
         }
         
-        /*
-        List collections
-        GET
-        https://api-beta.eng.macrometa.io/_fabric/_system/_api/kv
-        {
-          "error": false,
-          "code": 200,
-          "result": [
-            {
-              "name": "testFPSGames",
-              "expiration": true
-            },
-            {
-              "name": "TestCollections",
-              "expiration": false
-            }
-          ]
-        }
-        */
+        
         public string ListKVCollectionsURL() {
             return "https://" + requestURL + "/_fabric/"+fabric+ "/kv";
         }
         
-        /*
-        Get values
-        POST
-        https://api-beta.eng.macrometa.io/_fabric/_system/_api/kv/testFPSGames/values?offset=0&limit=100
-        Value of post
-         [
-          "gdn5","gdn6"
-        ]
-        reply
-        {
-          "error": false,
-          "code": 200,
-          "result": [
-            {
-              "_key": "gdn5",
-              "value": "some json",
-              "expireAt": 1627271993
-            },
-            {
-              "_key": "gdn6",
-              "value": "json fun",
-              "expireAt": 1627266653
-            }
-          ]
-        }
-
-        */
+      
         public string GetKVValuesURL(string name, int offset = 0, int limit = 100) {
             return "https://" + requestURL + "/_fabric/" + fabric + "/_api/kv/"
                    + name + "/values?offset=" + offset + "&limit="+ limit ;
         }
         
-        /*
-        Add kvp
-        PUT
-        https://api-beta.eng.macrometa.io/_fabric/_system/_api/kv/testFPSGames/value
-        Value
-        [
-          {
-            "_key": "GDN7",
-            "value": "JSON come back",
-            "expireAt": 1627266233
-          }
-        ]
-        Reply
-        [
-          {
-            "_id": "testFPSGames/GDN7",
-            "_key": "GDN7",
-            "_rev": "_csAYdda--_"
-          }
-        ]
-        */
         public string PutKVValueURL(string name) {
             return "https://" + requestURL + "/_fabric/" + fabric + "/kv/"
                    + name + "/value";
@@ -209,7 +137,7 @@ namespace Macrometa {
     }
 
     [Serializable]
-    public struct KVValue {
+    public class KVValue {
         public string _key;
         public string value;
         public int expireAt; // unix timestamp
@@ -431,6 +359,20 @@ namespace Macrometa {
             if (callback != null)
                 callback(www);
         }
+        public static IEnumerator PutKVValue(GDNData gdnData, string collectionName, string kvRecord,
+            Action<UnityWebRequest> callback) {
+            byte[] putData = System.Text.Encoding.UTF8.GetBytes(kvRecord);
+            var url = gdnData.PutKVValueURL(collectionName);
+            GameDebug.Log("put URL: " + url);
+            UnityWebRequest www = UnityWebRequest.Put(url, putData);
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            yield return www.SendWebRequest();
+            
+            if (callback != null)
+                callback(www);
+        }
+        
+       
         
         
         #endregion

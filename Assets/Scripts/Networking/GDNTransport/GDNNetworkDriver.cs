@@ -22,10 +22,11 @@ public class GDNNetworkDriver : MonoBehaviour {
     public bool isServer = false;
 
     public GDNStreamDriver gdnStreamDriver;
+    public GDNErrorhandler gdnErrorHandler;
+    public GDNKVDriver gdnKVDriver;
 
-
-    public void Awake() {
-        _gdnErrorHandler = new GDNErrorhandler();
+    public virtual void Awake() {
+        gdnErrorHandler = new GDNErrorhandler();
        
         BestHTTP.HTTPManager.Setup();
         BestHTTP.HTTPManager.MaxConnectionPerServer = 64;
@@ -42,7 +43,7 @@ public class GDNNetworkDriver : MonoBehaviour {
         }
         // error handler and baseGDNData need to assigned before creating other handlers
        // _gdnkvHandler = new GDNKVHandler(this);
-       gdnStreamDriver = new GDNStreamDriver(this);
+        gdnStreamDriver = new GDNStreamDriver(this);
         gdnStreamDriver.statsGroupSize = defaultConfig.statsGroupSize;
         if (gdnStreamDriver.statsGroupSize < 1) {
             gdnStreamDriver.statsGroupSize = 10; //seconds
@@ -80,34 +81,34 @@ public class GDNNetworkDriver : MonoBehaviour {
     }
     
     
-    void Update() {
+    public virtual void Update() {
         SetupLoopBody();
     }
 
     public void SetupLoopBody() {
         
-        if (_gdnErrorHandler.pauseNetworkErrorUntil > Time.time) return;
-        if (_gdnErrorHandler.currentNetworkErrors >= _gdnErrorHandler.increasePauseConnectionError) {
-            _gdnErrorHandler.pauseNetworkError *= _gdnErrorHandler.pauseNetworkErrorMultiplier;
+        if (gdnErrorHandler.pauseNetworkErrorUntil > Time.time) return;
+        if (gdnErrorHandler.currentNetworkErrors >= gdnErrorHandler.increasePauseConnectionError) {
+            gdnErrorHandler.pauseNetworkError *= gdnErrorHandler.pauseNetworkErrorMultiplier;
             
             return;
         }
 
-        if (_gdnErrorHandler.isWaiting) return;
-        /*
-        if (!_gdnkvHandler.kvCollectionListDone) {
+        if (gdnErrorHandler.isWaiting) return;
+        
+        if (!gdnKVDriver.kvCollectionListDone) {
             GameDebug.Log("kvCollectionListDone not done");
-            _gdnkvHandler.GetListKVColecions();
+            gdnKVDriver.GetListKVColecions();
             return;
         }
-
-        if (!_gdnkvHandler.gamesKVCollectionExists) {
-            _gdnkvHandler.CreateGamesKVCollection();
+/*
+        if (!_gdnkvDriver.gamesKVCollectionExists) {
+            _gdnkvDriver.CreateGamesKVCollection();
             return;
         }
         
-        if (!kvValueListDone) {
-            GetListKVValues();
+        if (!_gdnkvDriver.kvValueListDone) {
+            _gdnkvDriver.GetListKVValues();
         }
         */
         // more complex loop with delays
@@ -194,43 +195,6 @@ public class GDNNetworkDriver : MonoBehaviour {
         public int dataSize;
     }
 
-    public  GDNErrorhandler _gdnErrorHandler;
-    
-#region Streamdriver
-
-//init progress
-
-
-// for latency & data rate testing
-
-#endregion   
-     
-     #region Latency & bandwidth testing
-
-     #endregion
-     
-     //these these are methods that were being called asynchronously
-     // and access concurrent collections
-     // putting a command queue that runs on the mand thread 
-     // means only the main thread trys to update the collections.
-
-     #region CommandQueue
-
-     //execute commands in queue
-     //no guarantee that all commands will be executed in a single call
-
-     #endregion
-   
-     #region Collections
-
-     private GDNKVHandler _gdnkvHandler;
-     
-
-     public GDNNetworkDriver() {
-         
-     }
-
-     #endregion
 
 
 
