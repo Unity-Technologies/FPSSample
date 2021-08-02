@@ -253,18 +253,19 @@ namespace Macrometa {
 
         public NetworkStatsData CurrentNetWorkStats() {
             return new NetworkStatsData() {
-                dateTime = dateTime,
+                dateTime =(long)(dateTime.
+                    Subtract(new DateTime(1970, 1, 1))).TotalSeconds,
                 localNodeId = localNodeId,
                 localId = localId,
                 remoteId = remoteId,
                 connectionId = connectionId,
                 streamOutName = streamOutName,
                 streamInName = streamInName,
-                rttAverage = Mathf.Round(rttAverage*100)/100f,
-                streamOutLocalPingAverage = Mathf.Round(streamOutLocalPingAverage*100)/100f,
-                streamOutRemotePingAverage =  Mathf.Round(streamOutRemotePingAverage*100)/100f,
-                streamInLocalPingAverage =  Mathf.Round(streamInLocalPingAverage*100)/100f,
-                streamInRemotePingAverage = Mathf.Round( streamInRemotePingAverage*100)/100f,
+                rttAverage =  (int)rttAverage,
+                streamOutLocalPingAverage = (int) streamOutLocalPingAverage,
+                streamOutRemotePingAverage =  (int)streamOutRemotePingAverage,
+                streamInLocalPingAverage = (int)streamInLocalPingAverage,
+                streamInRemotePingAverage = (int)streamInRemotePingAverage,
                 streamOutMessages = (int) streamOutMessages.val,
                 streamInMessages = (int) streamInMessages.val,
                 streamOutBytes = (int) streamOutBytes.val,
@@ -274,27 +275,26 @@ namespace Macrometa {
         }
         public class NetworkStatsData {
             public string version = "0.1";
-            public string appType = "Latency";
-            public float rttAverage;
+            public string appType = "Monitor";
+            public int rttAverage; // in milliseconds 2 decimalplaces
             public int streamOutMessages; //number of messages sent in time period
             public int streamInMessages;  //number of messages recieved in time period
             public int streamOutBytes;    //number of bytes sent in time period
             public int streamInBytes;     //number of bytes recieved in time period
-            public int secondsInGroup; 
-            public float streamOutLocalPingAverage;
-            public float streamOutRemotePingAverage;
-            public float streamInLocalPingAverage;
-            public float streamInRemotePingAverage;
-            public DateTime dateTime;  // string but unix time stamp would be better
+            public int secondsInGroup;   //length of time period in seconds
+            public int streamOutLocalPingAverage; // in milliseconds 2 decimalplaces
+            public int streamOutRemotePingAverage; // in milliseconds 2 decimalplaces
+            public int streamInLocalPingAverage; // in milliseconds 2 decimalplaces
+            public int streamInRemotePingAverage; // in milliseconds 2 decimalplaces
+            public long dateTime;  // unix time stamp 
             public string localNodeId; // not full domain name missing macrometa.io
-            public string localId;     
-            public string remoteId;
+            public string localId;     //servername
+            public string remoteId;     // player name 
             public int connectionId;   // used to identify clients by int
-            public string streamOutName; 
-            public string streamInName;
-            
+            public string sessionID;   // unique ID for each session of latency monitoring
+            public string streamOutName; //stream server sends on
+            public string streamInName;   //server stream receives on
 
-               // number of seconds in time period
         }
 
 
