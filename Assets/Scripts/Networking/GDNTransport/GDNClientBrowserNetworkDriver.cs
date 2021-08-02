@@ -19,8 +19,8 @@ namespace Macrometa {
         public int maxConfirmInit = 3;
         public int currentConfirmInit = 3;
 
-        public List<GameRecordValue> kvvs = new List<GameRecordValue>();
-        public ListKVValue debugListKvValue;
+        public List<GameRecordValue> gameList = new List<GameRecordValue>();
+       
         
         public override void Awake() {
             gdnErrorHandler = new GDNErrorhandler();
@@ -92,7 +92,7 @@ namespace Macrometa {
                 gdnKVDriver.GetListKVValues();
                 return;
             }
-
+            /*
             if (gdnKVDriver.listKVValues.result != null) {
                 //GameDebug.Log("Setup  debug  B 2");
                 kvvs.Clear();
@@ -100,7 +100,7 @@ namespace Macrometa {
                     kvvs.Add( JsonUtility.FromJson<GameRecordValue>(kvValue.value));
                 }
             }
-
+            */
             if (tryKVInitB) {
                 GameDebug.Log("Setup  tryKVInit C: " + gameName);
                 initTrying = true;
@@ -130,7 +130,7 @@ namespace Macrometa {
             }
             
             if ( initTrying) {
-                debugListKvValue = gdnKVDriver.listKVValues;
+               
                 GameDebug.Log("Setup  initTrying D");
                 var foundRecord =  gdnKVDriver.listKVValues.result.SingleOrDefault(l => l._key == gameName);
                if (foundRecord == null ) {
@@ -154,7 +154,7 @@ namespace Macrometa {
                    currentConfirmInit++;
                    return;
                }
-               GameDebug.Log("Setup  initTrying H");
+               GameDebug.Log("Setup  initTrying H succeed");
                gdnKVDriver.putKVValueDone = false;
                initTrying = false; 
                initSucceeded = true;

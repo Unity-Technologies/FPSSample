@@ -1,11 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Macrometa {
-    
-     
     
     public class GameRecord {
         public string _key; //base string name
@@ -35,15 +34,36 @@ namespace Macrometa {
                 expireAt = UnixTSNow(ttl)
             };
         }
+
+       
     }
 
     [Serializable]
     public class GameRecordValue {
+        public string streamName; // only used locally
         public string clientId;
         public int maxPlayers;
         public int currPlayers;
-        public string status; //Initilizing, Waiting ( to start), inGame
+        public string status; //init, waiting ( to start), playing
         public long statusChangeTime; // unixTimeStamp --  Gamestart or GameEnd
+        public float ping; // only used locally not use in kv db
+        
+        public static GameRecordValue FromKVValue(KVValue kvValue) {
+            GameRecordValue result = JsonUtility.FromJson<GameRecordValue>(kvValue.value);
+            result.clientId = kvValue._key;
+            return result;
+        }
+
+        public static void UpdateFrom(List<GameRecordValue> currRecords,List<GameRecordValue> newRecords) {
+           foreach(var grv in newRecords) {
+               var oldRecord = currRecords.SingleOrDefault();
+               if (oldRecord != null) {
+                   grv.ping = oldRecord.ping;
+               }
+           }
+           currRecords.Clear();
+           currRecords.AddRange(newRecords);
+        }
     }
     
     /// <summary>
@@ -61,6 +81,7 @@ namespace Macrometa {
         public string gamesKVCollectionName = "FPSGames_collection";
         public bool kvValueListDone;
         public bool putKVValueDone;
+        public List<GameRecordValue> currGameList;
 
    
         /// <summary>
@@ -159,6 +180,9 @@ namespace Macrometa {
                 //overwrite does not assign toplevel fields
                 //JsonUtility.FromJsonOverwrite(www.downloadHandler.text, listStream);
                 listKVValues = JsonUtility.FromJson<ListKVValue>(www.downloadHandler.text);
+                
+                   
+                
                 if (listKVValues.error == true) {
                     GameDebug.Log("List KV Collection failed:" + listKVValues.code);
                     //Debug.LogWarning("ListStream failed reply:" + www.downloadHandler.text);
@@ -168,6 +192,11 @@ namespace Macrometa {
                     GameDebug.Log("List KV Collection succeed ");
                     kvValueListDone = true;
                     _gdnErrorHandler.currentNetworkErrors = 0;
+                    var newGamesList = new List<GameRecordValue>();
+                    foreach (KVValue kvv in listKVValues.result) {
+                        newGamesList.Add(GameRecordValue.FromKVValue(kvv));
+                    }
+                    GameRecordValue.UpdateFrom(currGameList,newGamesList);
                 }
             }
         }

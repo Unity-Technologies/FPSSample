@@ -26,6 +26,7 @@ public class GDNNetworkDriver : MonoBehaviour {
     public GDNKVDriver gdnKVDriver;
 
     public virtual void Awake() {
+        GameDebug.Log("  GDNNetworkDriver Awake");
         gdnErrorHandler = new GDNErrorhandler();
        
         BestHTTP.HTTPManager.Setup();
@@ -42,7 +43,7 @@ public class GDNNetworkDriver : MonoBehaviour {
             isServer = defaultConfig.isServer;
         }
         // error handler and baseGDNData need to assigned before creating other handlers
-       // _gdnkvHandler = new GDNKVHandler(this);
+        gdnKVDriver = new GDNKVDriver(this);
         gdnStreamDriver = new GDNStreamDriver(this);
         gdnStreamDriver.statsGroupSize = defaultConfig.statsGroupSize;
         if (gdnStreamDriver.statsGroupSize < 1) {
@@ -78,6 +79,7 @@ public class GDNNetworkDriver : MonoBehaviour {
         LogFrequency.AddLogFreq("ProducerSend Data",1,"ProducerSend Data: ",3);
 
         GDNStreamDriver.isStatsOn &= GDNStreamDriver.isSocketPingOn && isServer;
+        GameDebug.Log("  GDNNetworkDriver Awake end");
     }
     
     

@@ -2877,6 +2877,7 @@ MonoBehaviour:
   optionMenu: {fileID: 5334619849375555672}
   disconnectedMenu: {fileID: 7136327633426453273}
   isDisconnected: 0
+  gdnClientBrowserNetworkDriver: {fileID: 741321822879021968}
   activeSubmenuNumber: 0
 --- !u!225 &225308890434892864
 CanvasGroup:
@@ -5681,7 +5682,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &224830870595798084
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6773,7 +6774,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &9067854213980753758
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8190,9 +8191,9 @@ RectTransform:
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -17, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &8914086461713677156
 MonoBehaviour:
@@ -12809,7 +12810,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 8841684530773784548}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999998
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -17725,7 +17726,7 @@ MonoBehaviour:
     isGlobal: 0
   gameName: FPSGameX8
   isServer: 0
-  debugKVTryInit: 1
+  debugKVTryInit: 0
   tryKVInit: 0
   tryKVInitB: 0
   canNotInit: 0
@@ -23534,7 +23535,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000091552734}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &7682642984743684416
@@ -25173,7 +25174,7 @@ RectTransform:
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}

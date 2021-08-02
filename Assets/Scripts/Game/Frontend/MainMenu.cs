@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Macrometa;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
@@ -31,6 +32,7 @@ public class MainMenu : MonoBehaviour
     public OptionsMenu optionMenu;
     public GameObject disconnectedMenu;
     public bool isDisconnected = false;
+    public GDNClientBrowserNetworkDriver gdnClientBrowserNetworkDriver;
 
     // Currently active submenu, used by menu backdrop to track what is going on
     public int activeSubmenuNumber;
@@ -82,7 +84,14 @@ public class MainMenu : MonoBehaviour
 
         uiBinding.buildId.text = Game.game.buildId;
     }
-
+    
+    void Update() {
+        if (gdnClientBrowserNetworkDriver.initSucceeded) {
+            CreateGame();
+            gdnClientBrowserNetworkDriver.initSucceeded= false;
+            ShowSubMenu(joinMenu.gameObject);
+        }
+    }
     void OnEnable() {
         if (isDisconnected) {
             mainMenuGO.SetActive(false);
@@ -138,10 +147,11 @@ public class MainMenu : MonoBehaviour
         Console.EnqueueCommand("disconnect");
     }
 
-    public void OnCreateGame()
-    {
-        
-        
+    public void OnCreateGame() {
+        gdnClientBrowserNetworkDriver.tryKVInit = true;
+    }
+    
+    public void CreateGame(){   
         var servername = uiBinding.servername.text;
 
         var levelname = uiBinding.levelname.options[uiBinding.levelname.value].text;
@@ -188,11 +198,14 @@ public class MainMenu : MonoBehaviour
             process.StartInfo.Arguments = " -batchmode -nographics -noboot -consolerestorefocus" +
                                           " +serve " + levelname + " +game.modename " + gamemode.ToLower() +
                                           " +servername \"" + servername + "\"";
-            if (process.Start())
-            {
-                StartCoroutine(SendConnect(10));
+           
+            
+            if (process.Start()){
+                GameDebug.Log("game process started");
+                //StartCoroutine(SendConnect(10));
                 ShowSubMenu(introMenu);
             }
+            
         }
         else
         {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Macrometa;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -27,7 +28,7 @@ public class JoinMenu : MonoBehaviour
     public TMPro.TMP_InputField gdnFabric;
     public Toggle isGlobal;
     public TMPro.TMP_InputField gdnAPIKey;
-    
+    public List<GameRecordValue> gameList;
     
     
     public void Awake()
@@ -43,6 +44,9 @@ public class JoinMenu : MonoBehaviour
         UpdateGdnFields();
     }
 
+    public void Start() {
+        gameList = mainMenu.gdnClientBrowserNetworkDriver.gdnKVDriver.currGameList;
+    }
     public void UpdateMenu() {
         UpdateGdnFields();
 
@@ -157,11 +161,17 @@ public class JoinMenu : MonoBehaviour
     }
 
     
+    
+    /// <summary>
+    /// change ui buttons select server instead
+    /// </summary>
     public void OnAddServer()
     {
+        
         AddServer(serverAddress.text);
         RepositionItems();
-        SaveServerlist();
+        //SaveServerlist();
+        
     }
 
     List<string> m_HostnameList = new List<string>();
@@ -174,6 +184,10 @@ public class JoinMenu : MonoBehaviour
         Console.EnqueueCommandNoHistory("saveconfig");
     }
 
+    
+    /// <summary>
+    /// change ui buttons select server instead?
+    /// </summary>
     public void OnRemoveServer()
     {
         if (m_SelectedServer == -1)
@@ -220,6 +234,17 @@ public class JoinMenu : MonoBehaviour
         serverListContentRect.sizeDelta = sd;
     }
 
+    void RepositionGameItems()
+    {
+        for (int i = 0; i < gameList.Count; i++) {
+            PositionItem(m_Servers[i].listItem.gameObject, i);
+        }
+
+        var sd = serverListContentRect.sizeDelta;
+        sd.y = m_Servers.Count * serverListEntryTemplateHeight;
+        serverListContentRect.sizeDelta = sd;
+    }
+    
     void AddServer(string hostname)
     {
         for (int i = 0; i < m_Servers.Count; ++i)
