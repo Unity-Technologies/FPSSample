@@ -28,24 +28,25 @@ public class JoinMenu : MonoBehaviour
     public TMPro.TMP_InputField gdnFabric;
     public Toggle isGlobal;
     public TMPro.TMP_InputField gdnAPIKey;
-    public List<GameRecordValue> gameList;
-    
-    
-    public void Awake()
-    {
+    public GameList gameList;
+
+    public void Awake() {
         serverListEntryTemplateHeight = ((RectTransform)serverListEntryTemplate.transform).rect.height + 10.0f;
-        foreach (var s in serverlist.Value.Split(','))
-        {
+        /*
+        foreach (var s in serverlist.Value.Split(',')) {
             if(s != "")
                 AddServer(s);
         }
         RepositionItems();
         SetSelectedServer(-1);
+        */
+       
         UpdateGdnFields();
+       
     }
 
     public void Start() {
-        gameList = mainMenu.gdnClientBrowserNetworkDriver.gdnKVDriver.currGameList;
+        gameList = mainMenu.gdnClientBrowserNetworkDriver.gameList;
     }
     public void UpdateMenu() {
         UpdateGdnFields();
@@ -54,6 +55,17 @@ public class JoinMenu : MonoBehaviour
         if (!playername.isFocused)
             playername.text = ClientGameLoop.clientPlayerName.Value;
 
+        if (gameList != null) {
+            if (gameList.isDirty) {
+                GameDebug.Log("  UpdateMenu() gameList.isDirty");
+                UpdateFromGameList();
+                gameList.isDirty = false;
+            }
+        }
+        else {
+            gameList = mainMenu.gdnClientBrowserNetworkDriver.gameList;
+        }
+        /*
         // Update all servers in our list
         foreach (var server in m_Servers)
         {
@@ -62,9 +74,11 @@ public class JoinMenu : MonoBehaviour
             if (Time.time > server.nextUpdate && server.sqpQuery.m_State == SQP.SQPClient.SQPClientState.Idle)
             {
                 Game.game.sqpClient.StartInfoQuery(server.sqpQuery);
+               
                 server.nextUpdate = Time.time + 5.0f + UnityEngine.Random.Range(0.0f, 1.0f);
             }
         }
+        */
     }
 
     public void UpdateGdnFields() {
@@ -225,6 +239,8 @@ public class JoinMenu : MonoBehaviour
         RepositionItems();
     }
 
+   
+    
     void RepositionItems()
     {
         for (int i = 0; i < m_Servers.Count; i++)
@@ -236,7 +252,7 @@ public class JoinMenu : MonoBehaviour
 
     void RepositionGameItems()
     {
-        for (int i = 0; i < gameList.Count; i++) {
+        for (int i = 0; i < gameList.games.Count; i++) {
             PositionItem(m_Servers[i].listItem.gameObject, i);
         }
 
@@ -298,6 +314,36 @@ public class JoinMenu : MonoBehaviour
         }
     }
 
+    void UpdateFromGameList() {
+        ClearGameDisplay();
+        m_Servers.Clear();
+        AddServersFromGameList();
+        RepositionItems();
+    }
+
+    void AddServersFromGameList() {
+        foreach (var grv in gameList.games) {
+            AddItemFromGameRecordValue(grv);
+        }
+    }
+    void AddItemFromGameRecordValue(GameRecordValue grv){ 
+        var server = new ServerListItemData();
+        server.listItem = GameObject.Instantiate<ServerListEntry>(serverListEntryTemplate, servers.content);
+        server.listItem.gameObject.SetActive(true);
+        server.listItem.serverName.text =grv.clientId;
+        server.listItem.gameMode.text = "--";
+        server.listItem.numPlayers.text = "-/-";
+        server.listItem.pingTime.text = "--";
+        server.listItem.mapName.text = "--";
+        m_Servers.Add(server);
+    }
+    
+    void ClearGameDisplay() {
+        foreach (var s in m_Servers) {
+            Destroy(s.listItem.gameObject);
+        }
+    }
+    
     void SetSelectedServer(int index)
     {
         if (m_SelectedServer == index)

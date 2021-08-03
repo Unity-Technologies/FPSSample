@@ -19,8 +19,8 @@ namespace Macrometa {
         public int maxConfirmInit = 3;
         public int currentConfirmInit = 3;
 
-        public List<GameRecordValue> gameList = new List<GameRecordValue>();
-       
+        public GameList gameList = new GameList();
+        
         
         public override void Awake() {
             gdnErrorHandler = new GDNErrorhandler();
@@ -39,6 +39,8 @@ namespace Macrometa {
             gdnStreamDriver.nodeId = PingStatsGroup.NodeFromGDNData(baseGDNData);
             GameDebug.Log("Setup  GDNClientBrowserNetworkDriver: " + gdnStreamDriver.nodeId);
             setRandomClientName();
+            gameList = gdnKVDriver.gameList;
+            gameList.isDirty = true;
         }
 
         public void OnDisable() {

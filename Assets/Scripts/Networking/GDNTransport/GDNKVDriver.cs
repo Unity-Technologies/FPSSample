@@ -34,14 +34,14 @@ namespace Macrometa {
                 expireAt = UnixTSNow(ttl)
             };
         }
-
-       
     }
 
     [Serializable]
     public class GameRecordValue {
         public string streamName; // only used locally
         public string clientId;
+        public string gameMode;
+        public string mapName;
         public int maxPlayers;
         public int currPlayers;
         public string status; //init, waiting ( to start), playing
@@ -63,8 +63,14 @@ namespace Macrometa {
            }
            currRecords.Clear();
            currRecords.AddRange(newRecords);
+           
         }
     }
+    public class GameList {
+        public List<GameRecordValue> games = new List<GameRecordValue>();
+        public bool isDirty = false;
+    }
+    
     
     /// <summary>
     /// Key value methods
@@ -81,9 +87,12 @@ namespace Macrometa {
         public string gamesKVCollectionName = "FPSGames_collection";
         public bool kvValueListDone;
         public bool putKVValueDone;
-        public List<GameRecordValue> currGameList;
-
+        public GameList gameList = new GameList();
+        
+       
    
+        
+        
         /// <summary>
         /// passing in a monobehaviour to be able use StartCoroutine
         /// happens because of automatic refactoring
@@ -196,7 +205,8 @@ namespace Macrometa {
                     foreach (KVValue kvv in listKVValues.result) {
                         newGamesList.Add(GameRecordValue.FromKVValue(kvv));
                     }
-                    GameRecordValue.UpdateFrom(currGameList,newGamesList);
+                    GameRecordValue.UpdateFrom(gameList.games,newGamesList);
+                    gameList.isDirty = true;
                 }
             }
         }
