@@ -332,10 +332,15 @@ public class JoinMenu : MonoBehaviour
         server.listItem.gameObject.SetActive(true);
         server.listItem.serverName.text =grv.clientId;
         server.listItem.status.text = grv.status;
-        server.listItem.gameMode.text = "--";
-        server.listItem.numPlayers.text = "-/-";
-        server.listItem.pingTime.text = "--";
-        server.listItem.mapName.text = "--";
+        server.listItem.gameMode.text = grv.gameMode;
+        server.listItem.numPlayers.text = grv.currPlayers.ToString() + "/"+  grv.maxPlayers;
+        server.listItem.mapName.text =grv.mapName;
+        if (grv.status != "Active") {
+            server.listItem.background.color = server.listItem.red;
+        }
+        else {
+            server.listItem.background.color = server.listItem.amber;
+        }
         m_Servers.Add(server);
     }
     

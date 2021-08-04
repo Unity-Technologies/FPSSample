@@ -320,8 +320,8 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         GDNTransport.isSocketPingOn = true;
         GDNTransport.sendDummyTraffic = false;//probably not need but safer
         m_NetworkTransport =  GDNTransport.Instance;
-        m_NetworkTransport.Connect(isServer,7932, 8);
-
+        // not sure serverMaxClients.IntValue is right
+        m_NetworkTransport.Connect(isServer,7932, serverMaxClients.IntValue);
         var listenAddresses = NetworkUtils.GetLocalInterfaceAddresses();
         if (listenAddresses.Count > 0)
             Console.SetPrompt(listenAddresses[0] + ":" + NetworkConfig.serverPort.Value + "> ");
@@ -398,7 +398,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         
          
         m_NetworkTransport.UpdateGameRecord( GameModeSystemServer.modeName.Value ,
-            "not implemented", m_MaxClients,m_Clients.Count,
+            Game.game.levelManager.currentLevel.name,serverMaxClients.IntValue,m_Clients.Count,
             m_StateMachine.CurrentState().ToString(),0
             );
         

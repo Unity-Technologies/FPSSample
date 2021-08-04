@@ -89,22 +89,14 @@ namespace Macrometa {
                 gdnKVDriver.kvValueListDone = false;
             }
             
-            // may have to set= false every 10 seconds to force list update
+           
             if (!gdnKVDriver.kvValueListDone  ||  nextKVValueGet < Time.time) {
                 GameDebug.Log("Setup  kvValueListDone ");
                 nextKVValueGet = Time.time + nextKVValueGetIncr;
                 gdnKVDriver.GetListKVValues();
                 return;
             }
-            /*
-            if (gdnKVDriver.listKVValues.result != null) {
-                //GameDebug.Log("Setup  debug  B 2");
-                kvvs.Clear();
-                foreach (var kvValue in gdnKVDriver.listKVValues.result) {
-                    kvvs.Add( JsonUtility.FromJson<GameRecordValue>(kvValue.value));
-                }
-            }
-            */
+            
             if (tryKVInitB) {
                 GameDebug.Log("Setup  tryKVInit C: " + RwConfig.ReadConfig().gameName);
                 initTrying = true;
