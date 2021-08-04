@@ -22,10 +22,33 @@ namespace Macrometa {
             playing
         }
 
+        public static GameRecord GetFromGRV(GameRecordValue grv, long ttl) {
+            return new GameRecord() {
+                _key = grv.streamName,
+                value = JsonUtility.ToJson(grv),
+                expireAt = UnixTSNow(ttl)
+            };
+        }
+        
         public static GameRecord GetInit(string clientID, string baseStreamName, long ttl) {
             var val = new GameRecordValue() {
                 clientId = clientID,
+                streamName = baseStreamName,
                 status = Status.init.ToString()
+            };
+            return GetFromGRV(val, ttl);
+            /*
+            return new GameRecord() {
+                _key = baseStreamName,
+                value = JsonUtility.ToJson(val),
+                expireAt = UnixTSNow(ttl)
+            };
+            */
+        }
+        public static GameRecord GetRecordTest(string baseStreamName, long ttl) {
+            var val = new GameRecordValue() {
+                clientId = "",
+                status = Status.waiting.ToString()
             };
 
             return new GameRecord() {
@@ -38,7 +61,7 @@ namespace Macrometa {
 
     [Serializable]
     public class GameRecordValue {
-        public string streamName; // only used locally
+        public string streamName; // only used locally is also _key
         public string clientId;
         public string gameMode;
         public string mapName;
@@ -47,7 +70,20 @@ namespace Macrometa {
         public string status; //init, waiting ( to start), playing
         public long statusChangeTime; // unixTimeStamp --  Gamestart or GameEnd
         public float ping; // only used locally not use in kv db
-        
+
+        public override string ToString() {
+            return " GameRecordValue  streamName: " + streamName +
+                   " clientId: " + clientId +
+                   " gameMode: " + gameMode +
+                   " mapName: " + mapName +
+                   " maxPlayers: " + maxPlayers +
+                   " currPlayers: " + currPlayers +
+                   " status:" + status +
+                   " statusChangeTime: " + statusChangeTime +
+                   " ping: " + ping;
+            
+        }
+
         public static GameRecordValue FromKVValue(KVValue kvValue) {
             GameRecordValue result = JsonUtility.FromJson<GameRecordValue>(kvValue.value);
             result.clientId = kvValue._key;
@@ -189,9 +225,6 @@ namespace Macrometa {
                 //overwrite does not assign toplevel fields
                 //JsonUtility.FromJsonOverwrite(www.downloadHandler.text, listStream);
                 listKVValues = JsonUtility.FromJson<ListKVValue>(www.downloadHandler.text);
-                
-                   
-                
                 if (listKVValues.error == true) {
                     GameDebug.Log("List KV Collection failed:" + listKVValues.code);
                     //Debug.LogWarning("ListStream failed reply:" + www.downloadHandler.text);
@@ -226,7 +259,7 @@ namespace Macrometa {
                 GameDebug.Log("Put KV value: " + www.error);
             }
             else {
-                GameDebug.Log("List KV Collection succeed ");
+                GameDebug.Log("put KV Collection succeed ");
                 putKVValueDone = true;
                 _gdnErrorHandler.currentNetworkErrors = 0;
             }

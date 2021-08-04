@@ -363,7 +363,7 @@ namespace Macrometa {
             Action<UnityWebRequest> callback) {
             byte[] putData = System.Text.Encoding.UTF8.GetBytes(kvRecord);
             var url = gdnData.PutKVValueURL(collectionName);
-            GameDebug.Log("put URL: " + url);
+           // GameDebug.Log("put URL: " + url);
             UnityWebRequest www = UnityWebRequest.Put(url, putData);
             www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
             yield return www.SendWebRequest();

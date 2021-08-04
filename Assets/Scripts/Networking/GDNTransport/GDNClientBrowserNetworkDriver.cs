@@ -20,14 +20,15 @@ namespace Macrometa {
         public int currentConfirmInit = 3;
 
         public GameList gameList = new GameList();
-        
+        private float nextKVValueGet = 0;
+        public float nextKVValueGetIncr = 5;
         
         public override void Awake() {
             gdnErrorHandler = new GDNErrorhandler();
             var defaultConfig = RwConfig.ReadConfig();
             RwConfig.Flush();
             baseGDNData = defaultConfig.gdnData;
-            gameName = defaultConfig.gameName;
+            //gameName = defaultConfig.gameName;
             BestHTTP.HTTPManager.Setup();
             BestHTTP.HTTPManager.MaxConnectionPerServer = 64;
             gdnStreamDriver = new GDNStreamDriver(this);
@@ -89,8 +90,9 @@ namespace Macrometa {
             }
             
             // may have to set= false every 10 seconds to force list update
-            if (!gdnKVDriver.kvValueListDone) {
-                GameDebug.Log("Setup  kvValueListDone B");
+            if (!gdnKVDriver.kvValueListDone  ||  nextKVValueGet < Time.time) {
+                GameDebug.Log("Setup  kvValueListDone ");
+                nextKVValueGet = Time.time + nextKVValueGetIncr;
                 gdnKVDriver.GetListKVValues();
                 return;
             }
@@ -104,11 +106,12 @@ namespace Macrometa {
             }
             */
             if (tryKVInitB) {
-                GameDebug.Log("Setup  tryKVInit C: " + gameName);
+                GameDebug.Log("Setup  tryKVInit C: " + RwConfig.ReadConfig().gameName);
                 initTrying = true;
                 tryKVInitB = false;
                
-               var foundRecord =  gdnKVDriver.listKVValues.result.SingleOrDefault(l => l._key == gameName);
+               var foundRecord =  gdnKVDriver.listKVValues.result.
+                   SingleOrDefault(l => l._key == RwConfig.ReadConfig().gameName);
 
                if (foundRecord != null) {
                    canNotInit = true;
@@ -117,7 +120,7 @@ namespace Macrometa {
                    GameDebug.Log("Setup  tryKVInit C fail");
                }
                else {
-                   var record = GameRecord.GetInit(clientId, gameName, 60);
+                   var record = GameRecord.GetInit(clientId, RwConfig.ReadConfig().gameName, 60);
                    gdnKVDriver.putKVValueDone = false;
                    gdnKVDriver.PutKVValue(record);
                    currentConfirmInit = 0;
@@ -134,7 +137,8 @@ namespace Macrometa {
             if ( initTrying) {
                
                 GameDebug.Log("Setup  initTrying D");
-                var foundRecord =  gdnKVDriver.listKVValues.result.SingleOrDefault(l => l._key == gameName);
+                var foundRecord =  gdnKVDriver.listKVValues.result.
+                    SingleOrDefault(l => l._key == RwConfig.ReadConfig().gameName);
                if (foundRecord == null ) {
                    GameDebug.Log("Setup  initTrying E put record in put not found");
                     initFail = true;

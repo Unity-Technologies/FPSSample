@@ -393,8 +393,15 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         m_GameWorld = null;
     }
 
-    public void Update()
-    {
+    public void Update() {
+       
+        
+         
+        m_NetworkTransport.UpdateGameRecord( GameModeSystemServer.modeName.Value ,
+            "not implemented", m_MaxClients,m_Clients.Count,
+            m_StateMachine.CurrentState().ToString(),0
+            );
+        
         if (serverRecycleInterval.FloatValue > 0.0f)
         {
             // Recycle server if time is up and no clients connected

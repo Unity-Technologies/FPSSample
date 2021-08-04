@@ -10,6 +10,7 @@ public class GDNTransport :  INetworkTransport {
     public static bool isSocketPingOn = false; //off by default for compatibility
     public static bool isStatsOn= false; //off by default for compatibility
     public static bool sendDummyTraffic= false; //off by default for compatibility
+    public static bool isMonitor = false;  // is monitor not game
     public static bool connectionStarted = false;
     
     public GDNNetworkDriver gdnNetworkDriver;
@@ -38,6 +39,7 @@ public class GDNTransport :  INetworkTransport {
         connectionStarted = true;
         GDNNetworkDriver.overrideIsServer = true;
         GDNNetworkDriver.overrideIsServerValue = isServer;
+        GDNNetworkDriver.isMonitor = isMonitor;
         GDNStreamDriver.isSocketPingOn = isSocketPingOn;
         GDNStreamDriver.isStatsOn = isStatsOn;
         GDNStreamDriver.sendDummyTraffic = sendDummyTraffic;
@@ -52,6 +54,16 @@ public class GDNTransport :  INetworkTransport {
         LogFrequency.AddLogFreq("SendDataB",1, "oSendDataB: ", 2 );
 
     }
+
+    public void UpdateGameRecord(string gameMode, string mapName, int maxPlayers,
+        int currPlayers, string status, long statusChangeTime) {
+        if (gdnNetworkDriver != null) {
+            gdnNetworkDriver.UpdateGameRecord(gameMode, mapName, maxPlayers,
+                currPlayers, status, statusChangeTime);
+        }
+    }
+    
+    
     
     /// <summary>
     ///  get latency on consumer1

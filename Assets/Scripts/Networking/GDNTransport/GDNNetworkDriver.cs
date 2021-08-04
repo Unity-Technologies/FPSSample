@@ -18,12 +18,17 @@ public class GDNNetworkDriver : MonoBehaviour {
    
     
     public GDNData baseGDNData;
-    public string gameName = "FPSGameX8";
+    //public string gameName = "FPSGameX8";
     public bool isServer = false;
-
+    public static bool isMonitor= false; //is running in network monitor not game
+    
     public GDNStreamDriver gdnStreamDriver;
     public GDNErrorhandler gdnErrorHandler;
     public GDNKVDriver gdnKVDriver;
+    public static GameRecordValue gameRecordValue;
+    private static float nextKVValuePut = 0;
+    public float nextKVValuePutIncr = 5;
+    public long kvValueTTL = 15;
 
     public virtual void Awake() {
         GameDebug.Log("  GDNNetworkDriver Awake");
@@ -35,7 +40,7 @@ public class GDNNetworkDriver : MonoBehaviour {
         var defaultConfig = RwConfig.ReadConfig();
         RwConfig.Flush();
         baseGDNData = defaultConfig.gdnData;
-        gameName = defaultConfig.gameName;
+        //gameName = defaultConfig.gameName;
         if (overrideIsServer) {
             isServer = overrideIsServerValue;
         }
@@ -43,7 +48,9 @@ public class GDNNetworkDriver : MonoBehaviour {
             isServer = defaultConfig.isServer;
         }
         // error handler and baseGDNData need to assigned before creating other handlers
-        gdnKVDriver = new GDNKVDriver(this);
+        if (!isMonitor && isServer) {
+            gdnKVDriver = new GDNKVDriver(this);
+        }
         gdnStreamDriver = new GDNStreamDriver(this);
         gdnStreamDriver.statsGroupSize = defaultConfig.statsGroupSize;
         if (gdnStreamDriver.statsGroupSize < 1) {
@@ -57,12 +64,10 @@ public class GDNNetworkDriver : MonoBehaviour {
 
         gdnStreamDriver.nodeId = PingStatsGroup.NodeFromGDNData(baseGDNData);
         GameDebug.Log("Setup: " + gdnStreamDriver.nodeId);
-       
-       
         
-        gdnStreamDriver.serverInStreamName = gameName + "_InStream";
-        gdnStreamDriver.serverOutStreamName = gameName + "_OutStream";
-        gdnStreamDriver.serverStatsStreamName =  gameName + "_StatsStream";
+        gdnStreamDriver.serverInStreamName = RwConfig.ReadConfig().gameName + "_InStream";
+        gdnStreamDriver.serverOutStreamName = RwConfig.ReadConfig().gameName + "_OutStream";
+        gdnStreamDriver.serverStatsStreamName =  "Uninty" + "_StatsStream";
         gdnStreamDriver.serverName = gdnStreamDriver.consumerName;
        
         if (isServer) {
@@ -74,7 +79,19 @@ public class GDNNetworkDriver : MonoBehaviour {
             gdnStreamDriver.producerStreamName = gdnStreamDriver.serverInStreamName;
             gdnStreamDriver.setRandomClientName();
         }
-        
+
+        if (!isMonitor && isServer) {
+            gameRecordValue = new GameRecordValue() {
+                gameMode = "",
+                mapName = "",
+                maxPlayers = 0,
+                currPlayers = 0,
+                status = GameRecord.Status.waiting.ToString(),
+                statusChangeTime = 0,
+                streamName = RwConfig.ReadConfig().gameName,
+            };
+        }
+
         LogFrequency.AddLogFreq("consumer1.OnMessage",1,"consumer1.OnMessage data: ",3);
         LogFrequency.AddLogFreq("ProducerSend Data",1,"ProducerSend Data: ",3);
 
@@ -89,6 +106,8 @@ public class GDNNetworkDriver : MonoBehaviour {
 
     public void SetupLoopBody() {
         
+        
+        gdnStreamDriver.ExecuteCommands();
         if (gdnErrorHandler.pauseNetworkErrorUntil > Time.time) return;
         if (gdnErrorHandler.currentNetworkErrors >= gdnErrorHandler.increasePauseConnectionError) {
             gdnErrorHandler.pauseNetworkError *= gdnErrorHandler.pauseNetworkErrorMultiplier;
@@ -97,27 +116,20 @@ public class GDNNetworkDriver : MonoBehaviour {
         }
 
         if (gdnErrorHandler.isWaiting) return;
-        
-        if (!gdnKVDriver.kvCollectionListDone) {
-            GameDebug.Log("kvCollectionListDone not done");
-            gdnKVDriver.GetListKVColecions();
-            return;
+        if (!isMonitor && isServer) {
+            if (!gdnKVDriver.kvCollectionListDone) {
+                GameDebug.Log("kvCollectionListDone not done");
+                gdnKVDriver.GetListKVColecions();
+                return;
+            }
+
+            if (!gdnKVDriver.gamesKVCollectionExists) {
+                GameDebug.Log("Setup  gamesKVCollectionExists  A");
+                gdnKVDriver.CreateGamesKVCollection();
+                return;
+            }
         }
-/*
-        if (!_gdnkvDriver.gamesKVCollectionExists) {
-            _gdnkvDriver.CreateGamesKVCollection();
-            return;
-        }
-        
-        if (!_gdnkvDriver.kvValueListDone) {
-            _gdnkvDriver.GetListKVValues();
-        }
-        */
-        // more complex loop with delays
-        //  check for matching values in list
-        // 
-        
-        
+
         if (!gdnStreamDriver.streamListDone) {
             gdnStreamDriver.GetListStream();
             return;
@@ -154,12 +166,12 @@ public class GDNNetworkDriver : MonoBehaviour {
         }
 
         if (!gdnStreamDriver.setupComplete) {
-            GameDebug.Log("Set up Complete as " + gameName + " : " + gdnStreamDriver.consumerName);
+            GameDebug.Log("Set up Complete as " + RwConfig.ReadConfig().gameName + " : " + gdnStreamDriver.consumerName);
             gdnStreamDriver.setupComplete = true;
             GDNTransport.setupComplete = true;
         }
         if (!gdnStreamDriver.sendConnect && !isServer) {
-            GameDebug.Log("Connect after complete " + gameName + " : " + gdnStreamDriver.consumerName);
+            GameDebug.Log("Connect after complete " + RwConfig.ReadConfig().gameName + " : " + gdnStreamDriver.consumerName);
             gdnStreamDriver.Connect(); // called on main thread so this is OK
             gdnStreamDriver.sendConnect = true;
             
@@ -174,8 +186,50 @@ public class GDNNetworkDriver : MonoBehaviour {
             StartCoroutine(gdnStreamDriver.RepeatTransportPing());
         }
 
-        gdnStreamDriver.ExecuteCommands();
+       
+        if (!isMonitor && isServer) {
+            if (nextKVValuePut < Time.time) {
+               //GameDebug.Log("loop kvValuePut");
+                nextKVValuePut = Time.time + nextKVValuePutIncr;
+                gdnKVDriver.putKVValueDone = false;
+                var gameRecord = new GameRecord() {
+                    _key = RwConfig.ReadConfig().gameName,
+                    value = JsonUtility.ToJson(gameRecordValue),
+                    expireAt = GameRecord.UnixTSNow(kvValueTTL)
+                };
+                gdnKVDriver.PutKVValue(gameRecord);
+                return;
+            }
+        }
     }
+
+    public  void UpdateGameRecord( string gameMode,  string mapName,  int maxPlayers, 
+        int currPlayers, string status, long statusChangeTime ) {
+        if ( gameRecordValue.gameMode != gameMode ||
+             gameRecordValue.mapName != mapName ||
+             gameRecordValue.maxPlayers != maxPlayers ||
+             gameRecordValue.currPlayers != currPlayers ||
+             gameRecordValue.status != status ||
+             gameRecordValue.statusChangeTime != statusChangeTime ||
+             gameRecordValue.streamName != RwConfig.ReadConfig().gameName
+        ) {
+           
+            gameRecordValue = new GameRecordValue() {
+                gameMode = gameMode,
+                mapName = mapName,
+                maxPlayers = maxPlayers,
+                currPlayers = currPlayers,
+                status = status,
+                statusChangeTime = statusChangeTime,
+                streamName = RwConfig.ReadConfig().gameName,
+            };
+            nextKVValuePut = 0;
+            GameDebug.Log("UpdateGameRecord: " +gameRecordValue.ToString());
+        }
+
+    }
+    
+    
     
     public struct GDNConnection {
         public string source;

@@ -294,7 +294,7 @@ public class JoinMenu : MonoBehaviour
 
     void UpdateItem(ServerListItemData option)
     {
-        option.listItem.hostName.text = option.hostname;
+        option.listItem.status.text = option.hostname;
         if (option.sqpQuery.validResult)
         {
             var sid = option.sqpQuery.m_ServerInfo.ServerInfoData;
@@ -331,6 +331,7 @@ public class JoinMenu : MonoBehaviour
         server.listItem = GameObject.Instantiate<ServerListEntry>(serverListEntryTemplate, servers.content);
         server.listItem.gameObject.SetActive(true);
         server.listItem.serverName.text =grv.clientId;
+        server.listItem.status.text = grv.status;
         server.listItem.gameMode.text = "--";
         server.listItem.numPlayers.text = "-/-";
         server.listItem.pingTime.text = "--";
