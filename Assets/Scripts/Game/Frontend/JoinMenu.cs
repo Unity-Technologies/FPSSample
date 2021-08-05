@@ -12,7 +12,8 @@ public class JoinMenu : MonoBehaviour
     public static ConfigVar serverlist;
 
     public MainMenu mainMenu;
-
+    public ClientFrontend clientFrontend;
+    
     public ScrollRect servers;
     public TMPro.TextMeshProUGUI connectButtonText;
     public Button connectButton;
@@ -156,24 +157,16 @@ public class JoinMenu : MonoBehaviour
     {
        
         var ped = (PointerEventData)e;
-        for (int i = 0; i < m_Servers.Count; ++i)
-        {
-            if (m_Servers[i].listItem.gameObject == ped.pointerPress)
-            {
-                SetSelectedServer(i);
-                GameDebug.Log("OnServerItemPointerClick " + i);
-               
-                if (ped.clickCount == 2) {
-                    var data = RwConfig.ReadConfig();
-                    data.gameName = m_Servers[i].listItem.serverName.text;
-                    RwConfig.Change(data);
-                    RwConfig.Flush();
-                    UpdateGdnFields();
-                   // data = RwConfig.ReadConfig();
-                    //GameDebug.Log("OnServerItemPointerClick " + data.gameName + " * " + m_Servers[i].listItem.serverName.text );
-                    OnJoinGame();
-                }
-
+        for (int i = 0; i < m_Servers.Count; ++i) {
+            if (m_Servers[i].listItem.isJoinable &&
+                m_Servers[i].listItem.gameObject == ped.pointerPress) {
+                clientFrontend.OnSelect();
+                var data = RwConfig.ReadConfig();
+                data.gameName = m_Servers[i].listItem.serverName.text;
+                RwConfig.Change(data);
+                RwConfig.Flush();
+                UpdateGdnFields();
+                OnJoinGame();
                 return;
             }
         }
@@ -350,21 +343,17 @@ public class JoinMenu : MonoBehaviour
         server.listItem.mapName.text =grv.mapName;
         if (grv.status != "Active"  ||  grv.currPlayers >=  grv.maxPlayers) {
             server.listItem.background.color = server.listItem.red;
-           // server.listItem.button.interactable = false;
+            server.listItem.isJoinable = false;
         }
         else {
             server.listItem.background.color = server.listItem.amber; 
+            server.listItem.isJoinable = true;
             //server.listItem.button.interactable = true;
             //server.listItem.button.onClick.AddListener(
           //      delegate{ButtonHandler(grv.clientId + " : "+ grv.streamName);});
         }
         m_Servers.Add(server);
     }
-
-    public void ButtonHandler(string streamName) {
-        GameDebug.Log("ButtonHandler: " + streamName);
-    }
-    
     void ClearGameDisplay() {
         foreach (var s in m_Servers) {
             Destroy(s.listItem.gameObject);

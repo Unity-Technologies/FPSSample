@@ -15,4 +15,5 @@ public class ServerListEntry : MonoBehaviour {
     public TMPro.TextMeshProUGUI mapName;
     public TMPro.TextMeshProUGUI numPlayers;
     public TMPro.TextMeshProUGUI pingTime;
+    public bool isJoinable = false;
 }

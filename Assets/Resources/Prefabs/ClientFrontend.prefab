@@ -776,7 +776,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 20.000008}
+  m_AnchoredPosition: {x: 0, y: 20.000053}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &114635037818496874
@@ -5734,6 +5734,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainMenu: {fileID: 114389141726862200}
+  clientFrontend: {fileID: 114465761460212510}
   servers: {fileID: 2483321678157138130}
   connectButtonText: {fileID: 6510229226904279861}
   connectButton: {fileID: 2799799869298246042}
@@ -20528,6 +20529,7 @@ MonoBehaviour:
   mapName: {fileID: 1464843482639676218}
   numPlayers: {fileID: 4153861014709632124}
   pingTime: {fileID: 2706720842750725165}
+  isJoinable: 0
 --- !u!114 &8681053936762719014
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25578,7 +25580,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00008010864}
+  m_AnchoredPosition: {x: 0, y: 0.00006484985}
   m_SizeDelta: {x: 0, y: 60}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &8602362993629991754
