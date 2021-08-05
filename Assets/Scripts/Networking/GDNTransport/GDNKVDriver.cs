@@ -218,7 +218,7 @@ namespace Macrometa {
             _gdnErrorHandler.isWaiting = false;
             if (www.isHttpError || www.isNetworkError) {
                 _gdnErrorHandler.currentNetworkErrors++;
-                GameDebug.Log("List KV Collections: " + www.error);
+                GameDebug.Log("List KVvalues: " + www.error);
             }
             else {
 
@@ -226,12 +226,12 @@ namespace Macrometa {
                 //JsonUtility.FromJsonOverwrite(www.downloadHandler.text, listStream);
                 listKVValues = JsonUtility.FromJson<ListKVValue>(www.downloadHandler.text);
                 if (listKVValues.error == true) {
-                    GameDebug.Log("List KV Collection failed:" + listKVValues.code);
+                    GameDebug.Log("List KV values failed:" + listKVValues.code);
                     //Debug.LogWarning("ListStream failed reply:" + www.downloadHandler.text);
                     _gdnErrorHandler.currentNetworkErrors++;
                 }
                 else {
-                    GameDebug.Log("List KV Collection succeed ");
+                    GameDebug.Log("List KV values succeed ");
                     kvValueListDone = true;
                     _gdnErrorHandler.currentNetworkErrors = 0;
                     var newGamesList = new List<GameRecordValue>();
@@ -259,7 +259,7 @@ namespace Macrometa {
                 GameDebug.Log("Put KV value: " + www.error);
             }
             else {
-                GameDebug.Log("put KV Collection succeed ");
+                GameDebug.Log("put KV value succeed ");
                 putKVValueDone = true;
                 _gdnErrorHandler.currentNetworkErrors = 0;
             }

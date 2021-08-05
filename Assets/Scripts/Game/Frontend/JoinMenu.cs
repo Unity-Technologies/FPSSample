@@ -154,14 +154,26 @@ public class JoinMenu : MonoBehaviour
     }
     public void OnServerItemPointerClick(BaseEventData e)
     {
+       
         var ped = (PointerEventData)e;
         for (int i = 0; i < m_Servers.Count; ++i)
         {
             if (m_Servers[i].listItem.gameObject == ped.pointerPress)
             {
                 SetSelectedServer(i);
-                if (ped.clickCount == 2)
+                GameDebug.Log("OnServerItemPointerClick " + i);
+               
+                if (ped.clickCount == 2) {
+                    var data = RwConfig.ReadConfig();
+                    data.gameName = m_Servers[i].listItem.serverName.text;
+                    RwConfig.Change(data);
+                    RwConfig.Flush();
+                    UpdateGdnFields();
+                   // data = RwConfig.ReadConfig();
+                    //GameDebug.Log("OnServerItemPointerClick " + data.gameName + " * " + m_Servers[i].listItem.serverName.text );
                     OnJoinGame();
+                }
+
                 return;
             }
         }
@@ -169,13 +181,13 @@ public class JoinMenu : MonoBehaviour
 
     public void OnJoinGame() {
         Console.EnqueueCommandNoHistory("connect localhost");
-        Debug.Log("JoinMenu OnJoinGame()");
+        Debug.Log("JoinMenu OnJoinGame()" );
         //Console.EnqueueCommandNoHistory("connect " +" -- ");
         mainMenu.ShowSubMenu(mainMenu.introMenu);
     }
 
     
-    
+ /*   
     /// <summary>
     /// change ui buttons select server instead
     /// </summary>
@@ -187,7 +199,7 @@ public class JoinMenu : MonoBehaviour
         //SaveServerlist();
         
     }
-
+*/
     List<string> m_HostnameList = new List<string>();
     void SaveServerlist()
     {
@@ -198,7 +210,7 @@ public class JoinMenu : MonoBehaviour
         Console.EnqueueCommandNoHistory("saveconfig");
     }
 
-    
+/*    
     /// <summary>
     /// change ui buttons select server instead?
     /// </summary>
@@ -212,7 +224,7 @@ public class JoinMenu : MonoBehaviour
         RepositionItems();
         SaveServerlist();
     }
-
+*/
     public void OnNameChanged()
     {
         Console.EnqueueCommandNoHistory("client.playername \"" + playername.text + '"');
@@ -260,7 +272,7 @@ public class JoinMenu : MonoBehaviour
         sd.y = m_Servers.Count * serverListEntryTemplateHeight;
         serverListContentRect.sizeDelta = sd;
     }
-    
+/*    
     void AddServer(string hostname)
     {
         for (int i = 0; i < m_Servers.Count; ++i)
@@ -291,7 +303,8 @@ public class JoinMenu : MonoBehaviour
         m_Servers.Add(server);
         SetSelectedServer(m_Servers.Count - 1);
     }
-
+*/
+/*
     void UpdateItem(ServerListItemData option)
     {
         option.listItem.status.text = option.hostname;
@@ -313,7 +326,7 @@ public class JoinMenu : MonoBehaviour
             option.listItem.mapName.text = "--";
         }
     }
-
+*/
     void UpdateFromGameList() {
         ClearGameDisplay();
         m_Servers.Clear();
@@ -330,18 +343,26 @@ public class JoinMenu : MonoBehaviour
         var server = new ServerListItemData();
         server.listItem = GameObject.Instantiate<ServerListEntry>(serverListEntryTemplate, servers.content);
         server.listItem.gameObject.SetActive(true);
-        server.listItem.serverName.text =grv.clientId;
+        server.listItem.serverName.text = grv.streamName;
         server.listItem.status.text = grv.status;
         server.listItem.gameMode.text = grv.gameMode;
         server.listItem.numPlayers.text = grv.currPlayers.ToString() + "/"+  grv.maxPlayers;
         server.listItem.mapName.text =grv.mapName;
-        if (grv.status != "Active") {
+        if (grv.status != "Active"  ||  grv.currPlayers >=  grv.maxPlayers) {
             server.listItem.background.color = server.listItem.red;
+           // server.listItem.button.interactable = false;
         }
         else {
-            server.listItem.background.color = server.listItem.amber;
+            server.listItem.background.color = server.listItem.amber; 
+            //server.listItem.button.interactable = true;
+            //server.listItem.button.onClick.AddListener(
+          //      delegate{ButtonHandler(grv.clientId + " : "+ grv.streamName);});
         }
         m_Servers.Add(server);
+    }
+
+    public void ButtonHandler(string streamName) {
+        GameDebug.Log("ButtonHandler: " + streamName);
     }
     
     void ClearGameDisplay() {

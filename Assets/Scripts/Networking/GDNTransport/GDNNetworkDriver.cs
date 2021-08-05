@@ -39,6 +39,7 @@ public class GDNNetworkDriver : MonoBehaviour {
         //var configGDNjson = Resources.Load<TextAsset>("configGDN");
         var defaultConfig = RwConfig.ReadConfig();
         RwConfig.Flush();
+        GameDebug.Log("  GDNNetworkDriver Awake gamename: " + defaultConfig.gameName);
         baseGDNData = defaultConfig.gdnData;
         //gameName = defaultConfig.gameName;
         if (overrideIsServer) {
