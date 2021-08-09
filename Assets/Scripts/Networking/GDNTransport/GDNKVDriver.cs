@@ -90,15 +90,18 @@ namespace Macrometa {
             return result;
         }
 
-        public static void UpdateFrom(List<GameRecordValue> currRecords,List<GameRecordValue> newRecords) {
-           foreach(var grv in newRecords) {
-               var oldRecord = currRecords.SingleOrDefault();
+        public static void UpdateFrom(List<GameRecordValue> currRecords,List<GameRecordValue> newRecords) { 
+          
+            foreach(var grv in newRecords) {
+               var oldRecord = currRecords.SingleOrDefault(x=>x.streamName == grv.streamName);
                if (oldRecord != null) {
                    grv.ping = oldRecord.ping;
                }
-           }
-           currRecords.Clear();
-           currRecords.AddRange(newRecords);
+              
+            }
+            currRecords.Clear();
+           
+            currRecords.AddRange(newRecords);
            
         }
     }
@@ -201,7 +204,6 @@ namespace Macrometa {
                     _gdnErrorHandler.currentNetworkErrors++;
                 }
                 else {
-                    GameDebug.Log("List KV Collection succeed ");
                     kvCollectionListDone = true;
                     _gdnErrorHandler.currentNetworkErrors = 0;
                 }
@@ -231,7 +233,7 @@ namespace Macrometa {
                     _gdnErrorHandler.currentNetworkErrors++;
                 }
                 else {
-                    GameDebug.Log("List KV values succeed ");
+                    
                     kvValueListDone = true;
                     _gdnErrorHandler.currentNetworkErrors = 0;
                     var newGamesList = new List<GameRecordValue>();

@@ -27,6 +27,8 @@ public class MainMenu : MonoBehaviour
     public UIBinding uiBinding;
 
     [FormerlySerializedAs("mainMenu")] public GameObject mainMenuGO;
+    public GameObject createGameMenu;
+    public GameObject createFailMsg;
     public GameObject introMenu;
     public JoinMenu joinMenu;
     public OptionsMenu optionMenu;
@@ -90,6 +92,9 @@ public class MainMenu : MonoBehaviour
             CreateGame();
             gdnClientBrowserNetworkDriver.initSucceeded= false;
             ShowSubMenu(joinMenu.gameObject);
+        } else if (gdnClientBrowserNetworkDriver.initFail) {
+            createFailMsg.SetActive(true);
+            gdnClientBrowserNetworkDriver.initFail = false;
         }
     }
     void OnEnable() {
@@ -127,6 +132,11 @@ public class MainMenu : MonoBehaviour
             {
                 menu.SetActive(true);
                 activeSubmenuNumber = i;
+               // GameDebug.Log("Menu name: " +  menu.name);
+                if (menu == createGameMenu) {
+                   // GameDebug.Log("Menu name: " +  menu.name + " setting false");
+                    createFailMsg.SetActive(false);
+                }
             }
             else if (menu.activeSelf)
                 menu.SetActive(false);
