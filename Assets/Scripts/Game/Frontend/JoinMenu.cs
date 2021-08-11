@@ -341,16 +341,19 @@ public class JoinMenu : MonoBehaviour
         server.listItem.gameMode.text = grv.gameMode;
         server.listItem.numPlayers.text = grv.currPlayers.ToString() + "/"+  8;
         server.listItem.mapName.text =grv.mapName;
-        if (grv.status != "Active"  ||  grv.currPlayers >=  8) {
+        server.listItem.pingTime.text =grv.ping.ToString() + "ms";
+        if (grv.status != "Active"  ||  grv.currPlayers >=  8 ||
+            grv.ping == 0 ||   grv.ping > 300) {
             server.listItem.background.color = server.listItem.red;
             server.listItem.isJoinable = false;
         }
-        else {
+        else if (   grv.ping < 200) {
             server.listItem.background.color = server.listItem.green; 
             server.listItem.isJoinable = true;
-            //server.listItem.button.interactable = true;
-            //server.listItem.button.onClick.AddListener(
-          //      delegate{ButtonHandler(grv.clientId + " : "+ grv.streamName);});
+           
+        } else {
+            server.listItem.background.color = server.listItem.amber; 
+            server.listItem.isJoinable = true;
         }
         m_Servers.Add(server);
     }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using BestHTTP.WebSocket;
 using Random = UnityEngine.Random;
 
 namespace Macrometa {
@@ -18,12 +19,20 @@ namespace Macrometa {
         public string clientId;
         public int maxConfirmInit = 3;
         public int currentConfirmInit = 3;
+        
 
         public GameList gameList = new GameList();
         private float nextKVValueGet = 0;
         public float nextKVValueGetIncr = 5;
         
+        protected PingData transportPingData;
+        public bool sendTransportPing = false;
+        public PingData debugPingData;
+        public bool waitStreamClearing = false;
+        public float streamClearTime = 0;
+        
         public override void Awake() {
+            GDNStreamDriver.isClientBrowser = true;
             gdnErrorHandler = new GDNErrorhandler();
             var defaultConfig = RwConfig.ReadConfig();
             RwConfig.Flush();
@@ -38,12 +47,30 @@ namespace Macrometa {
                 gdnStreamDriver.statsGroupSize = 10; //seconds
             }
             gdnStreamDriver.nodeId = PingStatsGroup.NodeFromGDNData(baseGDNData);
-            GameDebug.Log("Setup  GDNClientBrowserNetworkDriver: " + gdnStreamDriver.nodeId);
-            setRandomClientName();
+            GameDebug.Log("Setup GDNClientBrowserNetworkDriver: " + gdnStreamDriver.nodeId);
+            setRandomClientName(); 
             gameList = gdnKVDriver.gameList;
             gameList.isDirty = true;
+            MakeGDNConnection(null); //servers are all using defualt name server.
         }
 
+        public void MakeGDNConnection(GameRecordValue grv) {
+            var destination = "Server";
+            if (grv != null) {
+                destination = grv.clientId;
+            }
+                
+            gdnStreamDriver.setRandomClientName();
+            var connection = new GDNNetworkDriver.GDNConnection() {
+                source = gdnStreamDriver.consumerName,
+                destination = destination,
+                port = 443
+            };
+
+            var id =gdnStreamDriver.AddOrGetConnectionId(connection);
+            
+        }
+        
         public void OnDisable() {
             GameDebug.Log("GDNClientBrowserNetworkDriver OnDisable");
         }
@@ -91,7 +118,7 @@ namespace Macrometa {
             
            
             if (!gdnKVDriver.kvValueListDone  ||  nextKVValueGet < Time.time) {
-                GameDebug.Log("Setup  kvValueListDone ");
+                //GameDebug.Log("Setup  kvValueListDone ");
                 nextKVValueGet = Time.time + nextKVValueGetIncr;
                 gdnKVDriver.GetListKVValues();
                 return;
@@ -104,15 +131,19 @@ namespace Macrometa {
                
                var foundRecord =  gdnKVDriver.listKVValues.result.
                    SingleOrDefault(l => l._key == RwConfig.ReadConfig().gameName);
+               
 
                if (foundRecord != null) {
+                   //GameDebug.Log("gameName: " + RwConfig.ReadConfig().gameName);
                    canNotInit = true;
                    initTrying = false;
                    initFail = true;
                    GameDebug.Log("Setup  tryKVInit C fail");
                }
                else {
+                   //var record = GameRecord.GetInit(clientId, RwConfig.ReadConfig().gameName, 60);
                    var record = GameRecord.GetInit(clientId, RwConfig.ReadConfig().gameName, 60);
+                   //GameDebug.Log(record.value);
                    gdnKVDriver.putKVValueDone = false;
                    gdnKVDriver.PutKVValue(record);
                    currentConfirmInit = 0;
@@ -130,7 +161,7 @@ namespace Macrometa {
                
                 GameDebug.Log("Setup  initTrying D");
                 var foundRecord =  gdnKVDriver.listKVValues.result.
-                    SingleOrDefault(l => l._key == RwConfig.ReadConfig().gameName);
+                    FirstOrDefault(l => l._key == RwConfig.ReadConfig().gameName);
                if (foundRecord == null ) {
                    GameDebug.Log("Setup  initTrying E put record in put not found");
                     initFail = true;
@@ -157,7 +188,102 @@ namespace Macrometa {
                initTrying = false; 
                initSucceeded = true;
             }
+
+            if (StreamsBodyLoop()) {
+               // debugPingData = transportPingData.Copy();
+                return;
+            }
+
+        }
+
+        /// <summary>
+        /// returns true if containing loop should return
+        /// </summary>
+        /// <returns></returns>
+        public bool  StreamsBodyLoop() {
+            if (waitStreamClearing) {
+                if (Time.time > streamClearTime) {
+                    FinishClearStreams();
+                }
+                return false; // none streams action OK
+            }
+
+            SetPings();
+            if (transportPingData == null) {
+                return false;
+            }
+            
+            if (!gdnStreamDriver.producerExists) {
+                gdnStreamDriver.CreateProducer(gdnStreamDriver.producerStreamName);
+                return true;
+            }
+
+            if (!gdnStreamDriver.consumerExists) {
+                gdnStreamDriver.CreateConsumerPongOnly(gdnStreamDriver.consumerStreamName, gdnStreamDriver.consumerName);
+                return false;
+            }
+
+            if (sendTransportPing) {
+                GameDebug.Log(" PingBodyLoop() sendTransportPing");
+                gdnStreamDriver.SendSimpleTransportPing();
+                sendTransportPing = false;
+            }
+            
+            if (gdnStreamDriver.receivedPongOnly) {
+                gdnStreamDriver.receivedPongOnly = false;
+                transportPingData.pingCount++;
+                if (transportPingData.pingCount > 3) {
+                    GameDebug.Log("pingCount set "+ gameRecordValue.streamName + " : "+ gdnStreamDriver.pongOnlyRtt) ;
+                    gameRecordValue.ping = gdnStreamDriver.pongOnlyRtt;
+                    StartClearStreams();
+                    transportPingData = null;
+                }
+                else {
+                    sendTransportPing = true;
+                }
+            }
+            return false;
+        }
+
+        public void SetPings() {
+            if (transportPingData == null) {
+                var grv = gameList.UnpingedGame();
+                if (grv != null) {
+                    transportPingData = new PingData() {
+                        grv = grv
+                    };
+                    //ClearStreams();
+                    gdnStreamDriver.producerStreamName = grv.streamName + "_InStream";
+                    gdnStreamDriver.consumerStreamName  = grv.streamName + "_OutStream";
+                    sendTransportPing = true;
+                    gameRecordValue = grv;
+                }
+            }
             
         }
+
+        public void StartClearStreams() {
+            GameDebug.Log("ClearStreams");
+            if (gdnStreamDriver.consumer1 != null) {
+                gdnStreamDriver.consumer1.Close();
+            }
+            if (gdnStreamDriver.producer1 != null) {
+                gdnStreamDriver.producer1.Close();
+            }
+
+            waitStreamClearing = true;
+            streamClearTime = Time.time + 0.5f;
+        }
+
+        public void FinishClearStreams() {
+            gdnStreamDriver.consumer1 = null;
+            gdnStreamDriver.producer1  = null;
+            
+            gdnStreamDriver.producerExists = false;
+            gdnStreamDriver.consumerExists = false;
+            
+            waitStreamClearing = false;
+        }
+        
     }
 }

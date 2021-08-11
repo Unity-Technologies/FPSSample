@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BestHTTP.WebSocket;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Analytics;
 using UnityEngine.Networking;
 
 namespace Macrometa {
@@ -37,14 +40,9 @@ namespace Macrometa {
                 status = Status.init.ToString()
             };
             return GetFromGRV(val, ttl);
-            /*
-            return new GameRecord() {
-                _key = baseStreamName,
-                value = JsonUtility.ToJson(val),
-                expireAt = UnixTSNow(ttl)
-            };
-            */
+           
         }
+        
         public static GameRecord GetRecordTest(string baseStreamName, long ttl) {
             var val = new GameRecordValue() {
                 clientId = "",
@@ -81,19 +79,19 @@ namespace Macrometa {
                    " status:" + status +
                    " statusChangeTime: " + statusChangeTime +
                    " ping: " + ping;
-            
         }
 
         public static GameRecordValue FromKVValue(KVValue kvValue) {
             GameRecordValue result = JsonUtility.FromJson<GameRecordValue>(kvValue.value);
-            result.clientId = kvValue._key;
+            result.streamName = kvValue._key;
             return result;
         }
 
         public static void UpdateFrom(List<GameRecordValue> currRecords,List<GameRecordValue> newRecords) { 
           
             foreach(var grv in newRecords) {
-               var oldRecord = currRecords.SingleOrDefault(x=>x.streamName == grv.streamName);
+                //Debug.Log( "grv.streamName:  " + grv.streamName);
+                var oldRecord = currRecords.FirstOrDefault(x=>x.streamName == grv.streamName);
                if (oldRecord != null) {
                    grv.ping = oldRecord.ping;
                }
@@ -105,9 +103,34 @@ namespace Macrometa {
            
         }
     }
+    [Serializable]
     public class GameList {
         public List<GameRecordValue> games = new List<GameRecordValue>();
         public bool isDirty = false;
+        
+        /// <summary>
+        /// change "Active" to ????
+        /// </summary>
+        /// <returns></returns>
+        public GameRecordValue UnpingedGame() {
+           return games.FirstOrDefault(grv => grv.ping == 0 && grv.status == "Active");
+        }
+    }
+    
+    [Serializable]
+    public class PingData {
+        public GameRecordValue grv;
+        public int pingCount;
+
+        public PingData Copy() {
+           return  new PingData() {
+                grv = new GameRecordValue() {
+                    streamName = grv.streamName,
+                    status = grv.status
+                },
+                pingCount = pingCount
+           };
+        }
     }
     
     
@@ -127,10 +150,6 @@ namespace Macrometa {
         public bool kvValueListDone;
         public bool putKVValueDone;
         public GameList gameList = new GameList();
-        
-       
-   
-        
         
         /// <summary>
         /// passing in a monobehaviour to be able use StartCoroutine
@@ -242,6 +261,7 @@ namespace Macrometa {
                     }
                     GameRecordValue.UpdateFrom(gameList.games,newGamesList);
                     gameList.isDirty = true;
+                    //GameDebug.Log("List KV values succeed" );
                 }
             }
         }

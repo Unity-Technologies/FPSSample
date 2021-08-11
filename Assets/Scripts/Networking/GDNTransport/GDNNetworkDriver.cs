@@ -12,13 +12,11 @@ using Random = UnityEngine.Random;
 
 public class GDNNetworkDriver : MonoBehaviour {
     
-  
     public static bool overrideIsServer = false;
     public static bool overrideIsServerValue = false;
-   
-    
+
     public GDNData baseGDNData;
-    //public string gameName = "FPSGameX8";
+    
     public bool isServer = false;
     public static bool isMonitor= false; //is running in network monitor not game
     
@@ -90,6 +88,7 @@ public class GDNNetworkDriver : MonoBehaviour {
                 status = GameRecord.Status.waiting.ToString(),
                 statusChangeTime = 0,
                 streamName = RwConfig.ReadConfig().gameName,
+                clientId = gdnStreamDriver.consumerName
             };
         }
 
@@ -229,8 +228,6 @@ public class GDNNetworkDriver : MonoBehaviour {
         }
 
     }
-    
-    
     
     public struct GDNConnection {
         public string source;

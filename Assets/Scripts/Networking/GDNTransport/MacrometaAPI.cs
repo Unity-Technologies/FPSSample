@@ -351,7 +351,7 @@ namespace Macrometa {
             Action<UnityWebRequest> callback) {
             List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
             var url = gdnData.GetKVValuesURL(collectionName);
-            GameDebug.Log("KV url: "+ url);
+            //GameDebug.Log("KV url: "+ url);
             UnityWebRequest www = UnityWebRequest.Post(url, formData);
             www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
             yield return www.SendWebRequest();
