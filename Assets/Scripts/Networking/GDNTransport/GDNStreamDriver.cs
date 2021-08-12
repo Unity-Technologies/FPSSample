@@ -392,7 +392,7 @@ namespace Macrometa {
 
             consumer1.OnMessage += (sender, e) => {
                 var receivedMessage = JsonUtility.FromJson<ReceivedMessage>(e);
-                GameDebug.Log("Consumer1.OnMessage type: "+ receivedMessage.properties.t );
+                //GameDebug.Log("Consumer1.OnMessage type: "+ receivedMessage.properties.t );
                 //Debug.Log("low time: " + DateTime.Now.AddMinutes(discardMinutes));
                 //Debug.Log("published: " + DateTime.Parse(receivedMessage.publishTime));
                 //GameDebug.Log("recieved msg: " + e);
@@ -870,7 +870,7 @@ namespace Macrometa {
                 destination = receivedMessage.properties.s,
                 port = receivedMessage.properties.p
             };
-            GameDebug.Log("send pong : "+ receivedMessage.properties.s);
+            //GameDebug.Log("send pong : "+ receivedMessage.properties.s);
             ProducerSend(connection, VirtualMsgType.Pong, new byte[0], receivedMessage.properties.i,
                 producer1.Latency, consumer1.Latency, nodeId);
         }

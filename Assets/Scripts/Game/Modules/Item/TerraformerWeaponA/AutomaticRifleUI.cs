@@ -26,6 +26,10 @@ public class AutomaticRifleUI : AbilityUI
             m_ClipSize = settings.clipSize;
             m_ClipSizeText.text = "/ " + m_ClipSize.ToString();
         }
+
+        if (m_AmmoInClip == (m_ClipSize - 1)) {
+            Debug.Log(" AutomaticRifleUI " + m_AmmoInClip);
+        }
     }
 
     [SerializeField] TMPro.TextMeshProUGUI m_AmmoInClipText;

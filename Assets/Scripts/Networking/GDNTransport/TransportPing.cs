@@ -79,7 +79,7 @@ namespace Macrometa {
             }
             foreach (int id in ids) {
                 pings.Remove(id);
-                Debug.Log("pings id: "+ id + "  destinationID: "+ destinationID );
+                //Debug.Log("pings id: "+ id + "  destinationID: "+ destinationID );
             }
         }
         

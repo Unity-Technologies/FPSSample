@@ -776,7 +776,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 20.000046}
+  m_AnchoredPosition: {x: 0, y: 20}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &114635037818496874
@@ -5752,6 +5752,9 @@ MonoBehaviour:
   gdnFabric: {fileID: 3729980325203366155}
   isGlobal: {fileID: 790238398820027369}
   gdnAPIKey: {fileID: 7010224720324819704}
+  gameList:
+    games: []
+    isDirty: 0
 --- !u!1 &1932532006077610
 GameObject:
   m_ObjectHideFlags: 0
@@ -16049,7 +16052,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1178417094389634235}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99999994
+  m_Size: 0.8799999
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -17958,6 +17961,36 @@ MonoBehaviour:
     fabric: 
     isGlobal: 0
   isServer: 0
+  gdnStreamDriver:
+    listStream:
+      error: 0
+      code: 0
+      result: []
+    consumerName: 
+    serverName: 
+    streamListDone: 0
+    serverInStreamExists: 0
+    serverOutStreamExists: 0
+    serverStatsStreamExists: 0
+    producerExists: 0
+    consumerExists: 0
+    producerStatsExists: 0
+    sendConnect: 0
+    setupComplete: 0
+    pingStarted: 0
+    serverInStreamName: 
+    serverOutStreamName: 
+    serverStatsStreamName: 
+    consumerStreamName: 
+    producerStreamName: 
+    pingFrequency: 0
+    dummyFrequency: 0
+    dummySize: 0
+    nodeId: 
+    statsGroupSize: 0
+    dummyTrafficQuantity: 0
+    receivedPongOnly: 0
+    pongOnlyRtt: 0
   nextKVValuePutIncr: 5
   kvValueTTL: 15
   debugKVTryInit: 0
@@ -17970,7 +18003,25 @@ MonoBehaviour:
   clientId: 
   maxConfirmInit: 3
   currentConfirmInit: 3
+  gameList:
+    games: []
+    isDirty: 0
   nextKVValueGetIncr: 5
+  sendTransportPing: 0
+  debugPingData:
+    grv:
+      streamName: 
+      clientId: 
+      gameMode: 
+      mapName: 
+      maxPlayers: 0
+      currPlayers: 0
+      status: 
+      statusChangeTime: 0
+      ping: 0
+    pingCount: 0
+  waitStreamClearing: 0
+  streamClearTime: 0
 --- !u!1 &5065156258355536749
 GameObject:
   m_ObjectHideFlags: 0
@@ -25812,7 +25863,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00009536743}
+  m_AnchoredPosition: {x: 0, y: -0.0000076293945}
   m_SizeDelta: {x: 0, y: 60}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &8602362993629991754
