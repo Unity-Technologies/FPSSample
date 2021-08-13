@@ -95,8 +95,8 @@ namespace Macrometa {
                if (oldRecord != null) {
                    grv.ping = oldRecord.ping;
                }
-              
             }
+            newRecords.RemoveAll(x => x.ping <0);
             currRecords.Clear();
            
             currRecords.AddRange(newRecords);

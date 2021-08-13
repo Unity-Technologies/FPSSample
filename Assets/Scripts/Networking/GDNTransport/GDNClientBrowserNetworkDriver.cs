@@ -228,7 +228,20 @@ namespace Macrometa {
                 gdnStreamDriver.SendSimpleTransportPing();
                 sendTransportPing = false;
             }
+
             
+            if (TransportPings.PingTime() > 10000) {
+                
+                // what shoud gdnStreamDriver.receivedPongOnly
+                // be set to?
+                gameRecordValue.ping = -1;
+                StartClearStreams();
+                transportPingData = null;
+                TransportPings.Clear();
+                sendTransportPing = false;
+                
+            }
+
             if (gdnStreamDriver.receivedPongOnly) {
                 gdnStreamDriver.receivedPongOnly = false;
                 transportPingData.pingCount++;

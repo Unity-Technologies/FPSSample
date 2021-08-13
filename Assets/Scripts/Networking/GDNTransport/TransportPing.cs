@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -48,7 +49,7 @@ namespace Macrometa {
 
         /// <summary>
         /// count all pings by desitnationId
-        /// if count > pinLimit 
+        /// reurn list of ping Ids where count > pinLimit
         /// </summary>
         public static List<int> HeartbeatCheck(int pingLimit) {
             var counts = new Dictionary<int, int>();
@@ -102,8 +103,30 @@ namespace Macrometa {
             result.stopwatch = null;
             return result;
         }
+
+        /// <summary>
+        /// used whne shutting down all streams 
+        /// </summary>
+        /// <returns></returns>
+        public static void  Clear() {
+            foreach (var ping in pings) {
+                stopWatchPool.Return(ping.Value.stopwatch);
+            }
+            pings.Clear();
+        }
+
+        /// <summary>
+        /// return elapsed time on frirst ping or 0 if no pings
+        /// </summary>
+        /// <returns></returns>
+        public static  float PingTime() {
+            if (pings.Count == 0) {
+                return 0;
+            }
+            var ping = pings.First().Value;
+            return ping.stopwatch.ElapsedMilliseconds;
+        }
     }
-    
     
     /// <summary>
     /// Track GDN Return Trip time message
@@ -118,9 +141,7 @@ namespace Macrometa {
             return destinationId + " : " +elapsedTime.ToString();
         }
     }
-
     
-
     public class PingStatsGroup {
         public static int latencyGroupSize = 10; //10 seconds 
 
@@ -164,8 +185,7 @@ namespace Macrometa {
         public float totalPingAverage; // half of the total of the  4 ping stream averages
         public float extraAverage; // rttAverage - totalPingAverage
         public DateTime dateTime;
-
-
+        
         public static void Init(string logfilePath, string logBaseName, int aLatencyGroupSize) {
 
             // Try creating logName; attempt a number of suffixes
