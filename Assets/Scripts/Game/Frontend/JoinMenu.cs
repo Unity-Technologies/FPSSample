@@ -332,7 +332,8 @@ public class JoinMenu : MonoBehaviour
             AddItemFromGameRecordValue(grv);
         }
     }
-    void AddItemFromGameRecordValue(GameRecordValue grv){ 
+    void AddItemFromGameRecordValue(GameRecordValue grv) {
+        if (grv.ping == -1) return;
         var server = new ServerListItemData();
         server.listItem = GameObject.Instantiate<ServerListEntry>(serverListEntryTemplate, servers.content);
         server.listItem.gameObject.SetActive(true);

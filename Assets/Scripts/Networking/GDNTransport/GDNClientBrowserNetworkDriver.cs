@@ -230,7 +230,7 @@ namespace Macrometa {
             }
 
             
-            if (TransportPings.PingTime() > 10000) {
+            if (TransportPings.PingTime() > 15000) {
                 
                 // what shoud gdnStreamDriver.receivedPongOnly
                 // be set to?
@@ -239,7 +239,7 @@ namespace Macrometa {
                 transportPingData = null;
                 TransportPings.Clear();
                 sendTransportPing = false;
-                
+                gdnStreamDriver.receivedPongOnly = false;
             }
 
             if (gdnStreamDriver.receivedPongOnly) {
