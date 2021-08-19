@@ -19,7 +19,7 @@ public class GDNNetworkDriver : MonoBehaviour {
     
     public bool isServer = false;
     public static bool isMonitor= false; //is running in network monitor not game
-    
+
     public GDNStreamDriver gdnStreamDriver;
     public GDNErrorhandler gdnErrorHandler;
     public GDNKVDriver gdnKVDriver;

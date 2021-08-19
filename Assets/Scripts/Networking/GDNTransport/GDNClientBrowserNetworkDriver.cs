@@ -48,10 +48,12 @@ namespace Macrometa {
             }
             gdnStreamDriver.nodeId = PingStatsGroup.NodeFromGDNData(baseGDNData);
             GameDebug.Log("Setup GDNClientBrowserNetworkDriver: " + gdnStreamDriver.nodeId);
-            setRandomClientName(); 
+            setRandomClientName();
+            gdnStreamDriver.chatStreamName = "FPSChat";
+            gdnStreamDriver.chatChannelId = "_Lobby";
             gameList = gdnKVDriver.gameList;
             gameList.isDirty = true;
-            MakeGDNConnection(null); //servers are all using defualt name server.
+            MakeGDNConnection(null); //servers are all using default name server.
         }
 
         public void MakeGDNConnection(GameRecordValue grv) {
@@ -105,6 +107,27 @@ namespace Macrometa {
                 return;
             }
 
+            if (!gdnStreamDriver.streamListDone) {
+                gdnStreamDriver.GetListStream();
+                return;
+            }
+            
+            if (!gdnStreamDriver.chatStreamExists) {
+                gdnStreamDriver.CreateChatStream();
+                return;
+            }
+            
+            if (!gdnStreamDriver.chatProducerExists) {
+                gdnStreamDriver.CreateChatProducer(gdnStreamDriver.chatStreamName);
+                return;
+            }
+
+            if (!gdnStreamDriver.chatConsumerExists) {
+                gdnStreamDriver.CreateChatConsumer(gdnStreamDriver.chatStreamName, gdnStreamDriver.consumerName);
+                return;
+            }
+            
+            
             if (debugKVTryInit) {
                 debugKVTryInit = false;
                 tryKVInit = true;
@@ -229,9 +252,8 @@ namespace Macrometa {
                 sendTransportPing = false;
             }
 
-            
             if (TransportPings.PingTime() > 15000) {
-                
+
                 // what shoud gdnStreamDriver.receivedPongOnly
                 // be set to?
                 gameRecordValue.ping = -1;

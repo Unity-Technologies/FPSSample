@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using BestHTTP.WebSocket;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -22,17 +25,23 @@ namespace Macrometa {
         public ListStream listStream;
         public WebSocket consumer1;
         public WebSocket producer1;
+        public WebSocket chatConsumer1;
+        public WebSocket chatProducer1;
         public WebSocket producerStats;
         public StreamStats consumer1Stats;
         public StreamStats producer1Stats;
         public string consumerName = "Server";
         public string serverName;
+        public string chatChannelId;
         public bool streamListDone = false;
         public bool serverInStreamExists = false;
         public bool serverOutStreamExists = false;
         public bool serverStatsStreamExists = false;
+        public bool chatStreamExists = false;
         public bool producerExists = false;
         public bool consumerExists = false;
+        public bool chatProducerExists = false;
+        public bool chatConsumerExists = false;
         public bool producerStatsExists = false;
         public bool sendConnect = true;
         public bool setupComplete = false;
@@ -42,6 +51,7 @@ namespace Macrometa {
         public string serverStatsStreamName;
         public string consumerStreamName;
         public string producerStreamName;
+        public string chatStreamName ;
         public float pingFrequency = 1;
         public float dummyFrequency = 0.05f; // FPSSample standard is 20 messages per second
         public int dummySize = 50; // FPSSample standard is under 2000 bytes per second
@@ -55,7 +65,8 @@ namespace Macrometa {
 
         public Queue<GDNNetworkDriver.DriverTransportEvent> driverTransportEvents =
             new Queue<GDNNetworkDriver.DriverTransportEvent>();
-
+        
+        public Queue<string> chatMessages = new Queue<string>();
         private ConcurrentQueue<GDNStreamDriver.Command> queue = new ConcurrentQueue<GDNStreamDriver.Command>();
         private GDNErrorhandler _gdnErrorHandler;
         private GDNData _gdnData;
@@ -64,6 +75,19 @@ namespace Macrometa {
         public bool receivedPongOnly = false;
         public float pongOnlyRtt = 0;
 
+        public class ChatBuffer {
+            public static Queue<ReceivedMessage> chatReceivedMessages = new Queue<ReceivedMessage>();
+            public static void Add(ReceivedMessage receivedMessage) {
+                chatReceivedMessages.Enqueue(receivedMessage);
+                if (chatReceivedMessages.Count > 100) {
+                    chatReceivedMessages.Dequeue();
+                }
+            }
+            
+            public static ReceivedMessage[] Dump() {
+                return chatReceivedMessages.ToArray();
+            }
+        }
 
         public GDNStreamDriver(GDNNetworkDriver gdnNetworkDriver) {
             _monobehaviour = gdnNetworkDriver;
@@ -159,6 +183,42 @@ namespace Macrometa {
             }
         }
 
+        public void CreateChatStream() {
+            var gsListName = _gdnData.StreamListName(chatStreamName);
+            chatStreamExists = listStream.result.Any(item => item.topic == gsListName);
+            if (!chatStreamExists) {
+                _gdnErrorHandler.isWaiting = true;
+                ;
+                //Debug.Log("creating server in stream: " + baseGDNData.CreateStreamURL(serverInStreamName));
+                _monobehaviour.StartCoroutine(MacrometaAPI.CreateStream(_gdnData, chatStreamName,
+                    CreateChatStreamCallback));
+            }
+        }
+
+        public void CreateChatStreamCallback(UnityWebRequest www) {
+            _gdnErrorHandler.isWaiting = false;
+            if (www.isHttpError || www.isNetworkError) {
+                GameDebug.Log("CreateChatStream : " + www.error);
+                _gdnErrorHandler.currentNetworkErrors++;
+                streamListDone = false;
+            }
+            else {
+
+                var baseHtttpReply = JsonUtility.FromJson<BaseHtttpReply>(www.downloadHandler.text);
+                if (baseHtttpReply.error == true) {
+                    GameDebug.Log("create Chat stream failed:" + baseHtttpReply.code);
+                    _gdnErrorHandler.currentNetworkErrors++;
+                    streamListDone = false;
+                }
+                else {
+                    GameDebug.Log("create chat stream ");
+                    chatStreamExists = true;
+                    _gdnErrorHandler.currentNetworkErrors = 0;
+                }
+            }
+        }
+
+        
         public void CreatServerOutStream() {
             var gsListName = _gdnData.StreamListName(serverOutStreamName);
             serverOutStreamExists = listStream.result.Any(item => item.topic == gsListName);
@@ -267,6 +327,41 @@ namespace Macrometa {
             producer1.Open();
         }
 
+        public void CreateChatProducer(string streamName) {
+            _gdnErrorHandler.isWaiting = true;
+            _monobehaviour.StartCoroutine(MacrometaAPI.Producer(_gdnData, streamName, SetChatProducer));
+        }
+
+        public void SetChatProducer(WebSocket ws, string debug = "") {
+            chatProducer1 = ws;
+            
+            chatProducer1.OnOpen += (o) => {
+                _gdnErrorHandler.isWaiting = false;
+                chatProducerExists = true;
+                GameDebug.Log("Open chatProducer1" + debug);
+            };
+
+            chatProducer1.OnError += (sender, e) => {
+                GameDebug.Log("WebSocket chatProducer1 Error" + debug + " : " + e);
+                if (producer1 != null && producer1.IsOpen) {
+                    producer1.Close();
+                }
+                else {
+                    GameDebug.Log("WebSocket chatProducer1 " + debug);
+                    chatProducerExists  = false;
+                    _gdnErrorHandler.isWaiting = false;
+                }
+            };
+
+            chatProducer1.OnClosed += (socket, code, message) => {
+                chatProducerExists  = false;
+                _gdnErrorHandler.isWaiting = false;
+                GameDebug.Log("chatProducer1 closed: " + code + " : " + message);
+            };
+            chatProducer1.Open();
+        }
+
+        
         public void CreateStatsProducer(string streamName) {
             _gdnErrorHandler.isWaiting = true;
             GameDebug.Log("CreateStatsProducer: " + streamName);
@@ -354,6 +449,7 @@ namespace Macrometa {
             }
         }
 
+        
         public void ProducerStatsSend(PingStatsGroup.NetworkStatsData data) {
             GameDebug.Log("ProducerStatsSend ");
             var properties = new StatsMessageProperties {
@@ -611,11 +707,80 @@ namespace Macrometa {
                 consumerExists = false;
                 _gdnErrorHandler.isWaiting = false;
             };
-
             consumer1.Open();
+        }
+        
+        public void CreateChatConsumer(string streamName, string consumerName) {
+            _gdnErrorHandler.isWaiting = true;
+           
+            _monobehaviour.StartCoroutine(
+                MacrometaAPI.Consumer(_gdnData, streamName, consumerName, SetChatConsumer));
+        }
+        
+        public void ChatSend(string channelId,  string msg) {
+            var properties = new MessageProperties() {
+                d = channelId,
+            };
+            var message = new SendMessage() {
+                properties = properties,
+                payload = Convert.ToBase64String(Encoding.UTF8.GetBytes(msg))
+            };
+            string msgJSON = JsonUtility.ToJson(message);
+            chatProducer1.Send(msgJSON);
+        }
+
+        public void SetChatConsumer(WebSocket ws, string debug = "") {
+
+            chatConsumer1 = ws;
+            
+            chatConsumer1.OnOpen += (o) => {
+                GameDebug.Log("Stream driver Open " + debug + " chatConsumer1: " );
+                chatConsumerExists = true;
+                _gdnErrorHandler.isWaiting = false;
+            };
+
+            chatConsumer1.OnMessage += (sender, e) => {
+                GameDebug.Log(" chatConsumer1.OnMessage"  );
+                var receivedMessage = JsonUtility.FromJson<ReceivedMessage>(e);
+                GameDebug.Log(" chatConsumer1.OnMessage channelid: "  +receivedMessage.properties.d );
+                if (receivedMessage.properties != null &&
+                    receivedMessage.properties.d == chatChannelId
+                ) {
+                   chatMessages.Enqueue( Encoding.UTF8.GetString(Convert.FromBase64String(receivedMessage.payload)));
+                   // do I need to decode this?
+                   //string inputStr = Encoding.UTF8.GetString(Convert.FromBase64String(encodedStr));
+                }
+                ChatBuffer.Add(receivedMessage);
+                var ackMessage = new AckMessage() {
+                    messageId = receivedMessage.messageId
+                };
+                var msgString = JsonUtility.ToJson(ackMessage);
+                chatConsumer1.Send(msgString);
+            };
+            chatConsumer1.OnError += (sender, e) => {
+                GameDebug.Log("WebSocket Error" + debug + " : " + e);
+
+                //Debug.Log("producer1: " + producer1);
+                //Debug.Log("IsOpen: " + producer1?.IsOpen.ToString());
+                if (producer1 != null && producer1.IsOpen) {
+                    producer1.Close();
+                }
+                else {
+                    consumerExists = false;
+                    _gdnErrorHandler.isWaiting = false;
+                }
+            };
+
+            chatConsumer1.OnClosed += (socket, code, message) => {
+                consumerExists = false;
+                _gdnErrorHandler.isWaiting = false;
+            };
+
+            chatConsumer1.Open();
 
         }
 
+        
         public void ConnectClient(ReceivedMessage receivedMessage) {
             var connection = new GDNNetworkDriver.GDNConnection() {
                 source = receivedMessage.properties.d,

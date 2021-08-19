@@ -106,6 +106,8 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
                 l = StringFormatter.Write(ref _msgBuf, 0, "{0} is now known as {1}", player.playerName, settings.playerName);
             m_ChatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
             player.playerName = settings.playerName;
+            
+
         }
 
         var playerEntity = player.gameObject.GetComponent<GameObjectEntity>().Entity;
@@ -445,6 +447,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         var client = new ClientInfo();
         client.id = id;
         m_Clients.Add(id, client);
+        GameDebug.Log("ServergameLoop line 459   OnConnect" + client.playerSettings.playerName);
 
         if (m_serverGameWorld != null)
             m_serverGameWorld.HandleClientConnect(client);
@@ -475,10 +478,13 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
                 case GameNetworkEvents.EventType.PlayerReady:
                     m_NetworkServer.MapReady(clientId); // TODO (petera) hacky
                     client.isReady = true;
+                    GameDebug.Log("ServerGameLoop line 481 PlayerReady " +client.playerSettings.playerName );
+
                     break;
 
                 case GameNetworkEvents.EventType.PlayerSetup:
                     client.playerSettings.Deserialize(ref reader);
+                    GameDebug.Log("ServerGameloop line 487    Create player " + client.playerSettings.playerName);
                     if (client.player != null)
                         m_serverGameWorld.HandlePlayerSetupEvent(client.player, client.playerSettings);
                     break;
