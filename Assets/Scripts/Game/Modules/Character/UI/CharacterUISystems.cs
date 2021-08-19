@@ -121,6 +121,7 @@ public class UpdateCharacterUI : BaseComponentSystem
             {
                 characterControl.lastDamageInflictedTick = damageHistory.inflictedDamage.tick;
                 characterControl.hud.ShowHitMarker(damageHistory.inflictedDamage.lethal == 1);
+                
             }
 
             var charAnimState =

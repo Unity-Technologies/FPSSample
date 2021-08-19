@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Macrometa;
 using UnityEngine;
 using Unity.Entities;
 
@@ -93,23 +94,38 @@ public class GameModeDeathmatch : IGameMode
                                 .SetComponentData(playerState.controlledEntity, healthState);
                         }
                         playerState.displayGameResult = true;
-                        if (winTeam == -1)
+                        if (winTeam == -1) {
                             playerState.gameResult = "TIE";
-                        else
+                            PlayStats.AddPlayerMatchResultStat(playerState.playerName, "deathmatch",
+                                PlayStats.MatchResult.Tie, playerState.score);
+                        }
+                        else {
                             playerState.gameResult = (playerState.teamIndex == winTeam) ? "VICTORY" : "DEFEAT";
+                            var matchResult = (playerState.teamIndex == winTeam) ?
+                                PlayStats.MatchResult.Win : PlayStats.MatchResult.Lose;
+                            PlayStats.AddPlayerMatchResultStat(playerState.playerName, "deathmatch",
+                                matchResult, playerState.score);
+                        }
+
                         playerState.displayScoreBoard = false;
                         playerState.displayGoal = false;
                     }
-
+                    PlayStats.UpdateNumPlayers( players.Length);
                     m_Phase = Phase.Ended;
                     m_GameModeSystemServer.SetRespawnEnabled(false);
                     m_GameModeSystemServer.StartGameTimer(postMatchTime, "PostMatch");
                     var l = 0;
-                    if (winTeam > -1)
-                        l = StringFormatter.Write(ref _msgBuf, 0, "Match over. {0} wins!", m_GameModeSystemServer.teams[winTeam].name);
-                    else
+                    if (winTeam > -1) {
+                        l = StringFormatter.Write(ref _msgBuf, 0, "Match over. {0} wins!",
+                            m_GameModeSystemServer.teams[winTeam].name);
+                       
+                    }
+                    else{
                         l = StringFormatter.Write(ref _msgBuf, 0, "Match over. Its a tie!");
+                        
+                    }
                     m_GameModeSystemServer.chatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
+                    
                 }
                 break;
             case Phase.Ended:

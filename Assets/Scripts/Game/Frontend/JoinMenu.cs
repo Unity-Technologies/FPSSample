@@ -5,6 +5,7 @@ using Macrometa;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class JoinMenu : MonoBehaviour
 {
@@ -33,15 +34,7 @@ public class JoinMenu : MonoBehaviour
 
     public void Awake() {
         serverListEntryTemplateHeight = ((RectTransform)serverListEntryTemplate.transform).rect.height + 10.0f;
-        /*
-        foreach (var s in serverlist.Value.Split(',')) {
-            if(s != "")
-                AddServer(s);
-        }
-        RepositionItems();
-        SetSelectedServer(-1);
-        */
-       
+        
         UpdateGdnFields();
        
     }
@@ -55,6 +48,11 @@ public class JoinMenu : MonoBehaviour
         // Unless typing, fill in field from configvar
         if (!playername.isFocused)
             playername.text = ClientGameLoop.clientPlayerName.Value;
+        if (playername.text == "Noname") {
+            playername.text = MakePlayerName();
+            OnNameChanged();
+        }
+
 
         if (gameList != null) {
             if (gameList.isDirty) {
@@ -66,20 +64,15 @@ public class JoinMenu : MonoBehaviour
         else {
             gameList = mainMenu.gdnClientBrowserNetworkDriver.gameList;
         }
-        /*
-        // Update all servers in our list
-        foreach (var server in m_Servers)
-        {
-            // Update server list with any new results
-            UpdateItem(server);
-            if (Time.time > server.nextUpdate && server.sqpQuery.m_State == SQP.SQPClient.SQPClientState.Idle)
-            {
-                Game.game.sqpClient.StartInfoQuery(server.sqpQuery);
-               
-                server.nextUpdate = Time.time + 5.0f + UnityEngine.Random.Range(0.0f, 1.0f);
-            }
-        }
-        */
+       
+    }
+
+    string MakePlayerName()
+    {
+
+        var f = new string[] { "Ultimate", "Furry", "Quick", "Laggy", "Hot", "Curious", "Flappy", "Sneaky", "Nested", "Deep", "Blue", "Hipster", "Artificial" };
+        var l = new string[] { "Soldier", "Pioneer", "Killer", "Maniac", "Sniper", "Private", "Marine", "Camper", "Dodger", "Robot", "Dolphin" };
+        return f[Random.Range(0, f.Length)] + " " + l[Random.Range(0, l.Length)];
     }
 
     public void UpdateGdnFields() {

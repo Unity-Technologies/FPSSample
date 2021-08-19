@@ -806,7 +806,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
             Console.Write(string.Format("   {0:00} {1,-15}", client.id, client.playerSettings.playerName));
         }
         Console.Write("-------------------");
-        Console.Write(string.Format("Total: {0}/{0} players connected", m_Clients.Count, serverMaxClients.IntValue));
+        Console.Write(string.Format("Total: {0}/{1} players connected", m_Clients.Count, serverMaxClients.IntValue));
     }
 
     string MakeServername()
