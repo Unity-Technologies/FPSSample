@@ -3,13 +3,39 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
-using System.Net;
 
 using BestHTTP.WebSocket;
+using Macrometa.Lobby;
 using Object = System.Object;
+using Random = UnityEngine.Random;
 
 namespace Macrometa {
 
+    ///documents
+///_fabric/{fabric}/_api/document/{collection} Removes multiple documents delete
+///_fabric/{fabric}/_api/document/{collection} Update documents  patch
+
+
+/// /_fabric/{fabric}/_api/document/{collection}/{key} remove single document delete
+
+/// /_fabric/{fabric}/_api/document/{collection}/{key} can be used for checking doc _rev Head
+///_fabric/{fabric}/_api/document/{collection}/{key} Removes single document delete
+///_fabric/{fabric}/_api/document/{collection}/{key} Update single document  patch
+
+
+///_fabric/{fabric}/_api/index/ttl
+/*
+ A JSON object with these properties is required:
+
+fields (string): an array with exactly one attribute path.
+type: must be equal to "ttl".
+expireAfter: The time (in seconds) after a document's creation after which the documents count as "expired".
+ */
+
+
+    /// Query
+    /// /_fabric/{fabric}/_api/cursor create cursor see web page
+    /// /_fabric/{fabric}/_api/cursor/{cursor-identifier}  get next cursor
 
     [Serializable]
     public struct GDNData {
@@ -23,8 +49,60 @@ namespace Macrometa {
 
         public string requestURL => "api-" + federationURL;
 
+        #region Query
+
+        /// /_fabric/{fabric}/_api/cursor create cursor see web page
+        public string PostQueryURL() {
+            return "https://" + requestURL+ "/_fabric/"+fabric+ "/_api/cursor";
+        }
+
+        #endregion Query
         
-        ///_fabric/{fabric}/_api/streams/clearbacklog
+        #region Collection
+        public string GetCollectionsURL() {
+            return "https://" + requestURL + "/_fabric/"+fabric+ "/_api/collection?excludeSystem=true";
+        }
+        
+        public string PostCreateCollectionsURL() {
+            return "https://" + requestURL+ "/_fabric/"+fabric+ "/_api/collection";
+        }
+        #endregion Collection
+        
+        #region Indexes
+        public string GetIndexesURL(string collection) {
+            return "https://" + requestURL + "/_fabric/"+fabric+ "/_api/index?collection="+collection;
+        }
+        
+        public string PostPersistentIndexURL(string collection) {
+            return "https://" + requestURL + "/_fabric/"+fabric+ "/_api/index/persistent?collection="+collection;
+        }
+        
+        public string PostTTLIndexURL(string collection) {
+            return "https://" + requestURL + "/_fabric/"+fabric+ "/_api/index/ttl?collection="+collection;
+        }
+        #endregion Indexes
+        
+        #region Document URLS
+
+        //   409 key violation
+        public string PostInsertDocumentURL(string collection, bool replace) {
+            var replaceString = "";
+           /* if (replace) {
+                replaceString = "&overwrite=true";
+            */
+            return "https://" + requestURL + "/_fabric/" + fabric + "/_api/document/" + collection +"?silent=false" + replaceString;
+        }
+        public string GetDocumentURL(string collection, string key) {
+            return "https://" + requestURL + "/_fabric/" + fabric + "/_api/document/" + collection +"/"+ key;
+        }
+        //https://api-beta-ap-south.eng.macrometa.io/_fabric/_system/_api/document/FPSGames_Lobbies_Documents/ZVvAhrvQTyORACQgr1bT8g?ignoreRevs=true&returnOld=false&returnNew=false&silent=false
+        public string PutReplaceDocumentURL(string collection, string key) {
+            return "https://" + requestURL + "/_fabric/" + fabric + "/_api/document/" + collection +"/"+ key;
+        }
+        
+        #endregion Document URLS
+    
+        #region Stream URLS
         public string ClearAllBacklogs() {
             return "https://" + requestURL + "/_fabric/"+fabric+ "/_api/streams/clearbacklog";
         }
@@ -48,7 +126,7 @@ namespace Macrometa {
         //const consumerUrl = `wss://${requestURL}/_ws/ws/v2/consumer/persistent/${tenant}/${region}._system/${region}s.${STREAM_NAME}/${CONSUMER_NAME}`;
         public string ConsumerURL(string streamName, string consumerName ) {
             return "wss://" + requestURL + "/_ws/ws/v2/consumer/persistent/" + tenant + "/" + region+"."+
-                fabric+ "/" + region+"s."+streamName+"/"+consumerName ;
+                fabric+ "/" + region+"s."+streamName+"/"+consumerName + ( Random.Range(1, 89999999)).ToString();;
         }
         
         //const producerUrl = `wss://${requestURL}/_ws/ws/v2/producer/persistent/${tenant}/${region}._system/${region}s.${STREAM_NAME}`;
@@ -56,19 +134,42 @@ namespace Macrometa {
             return "wss://" + requestURL + "/_ws/ws/v2/producer/persistent/" + tenant + "/" + region+"."+
                    fabric+ "/" + region+"s."+streamName ;
         }
+         //wss://api-beta-us-east.eng.macrometa.io/_ws/ws/v2/reader/persistent/unity_fps_macrometa.io/c8local._system/FPSGames_Lobbies_Documents
+        
+         
+         
+         /// <summary>
+         /// copying from Dashboard example
+         /// </summary>
+         /// <param name="streamName"></param>
+         /// <param name="consumerName"></param>
+         /// <returns></returns>
+         public string StreamReaderURL(string streamName, string consumerName ) {
+             return "wss://" + requestURL + "/_ws/ws/v2/reader/persistent/" + tenant + "/c8local._system/" 
+                    +streamName ;
+             //     "wss://" + requestURL + "/_ws/ws/v2/reader/persistent/unity_fps_macrometa.io/c8local._system/FPSGames_Lobbies_Documents";
+
+         }
+         
+         
+        #endregion stream URLS
+        
+        #region Autorization
+        public string GetRegionURL() {
+            return "https://" + requestURL + "/datacenter/local";
+        }
         
         public string GetOTPURL() {
             return "https://" + requestURL + "/apid/otp";
         }
-
+        
         public void Authorize(UnityWebRequest www) {
             www.SetRequestHeader("Authorization", "apikey " + apiKey);
         }
 
-        public string StreamListName(string streamName) {
-            return region + "s." + streamName;
-        }
-        
+        #endregion Autorization
+
+        #region KV URLS
         public string CreateKVURL(string name, bool isExpire) {
             return "https://" + requestURL + "/_fabric/" + fabric + "/_api/kv/" + name + "?expiration=" + isExpire;
         }
@@ -88,7 +189,11 @@ namespace Macrometa {
             return "https://" + requestURL + "/_fabric/" + fabric + "/kv/"
                    + name + "/value";
         }
+        #endregion KV URLS
         
+        public string StreamListName(string streamName) {
+            return region + "s." + streamName;
+        }
     }
 
     [Serializable]
@@ -117,6 +222,110 @@ namespace Macrometa {
     }
 
     [Serializable]
+    public struct ListCollection{
+        public bool error;
+        public int code;
+        public List<Collection> result;
+    }
+
+    [Serializable]
+    public struct InsertResponse{
+        public string _id;
+        public string _key;
+        public string _rev;
+        public bool error;
+        public bool errorMessage;
+        public int code;
+    }
+
+    [Serializable]
+    public struct Collection {
+        public string id;
+        public string name;
+        public int status;
+        public int type;
+        public string collectionModel;
+        public bool isSpot;
+        public bool isLocal;
+        public bool hasStream;
+        public bool isSystem;
+        public string globallyUniqueId;
+        public bool searchEnabled;
+    }
+
+    [Serializable]
+    public struct IndexParams {
+    public List<string> fields;
+    public bool sparse;
+    public string type;
+    public bool unique;
+    public int expireAfter;
+    }
+
+    
+    [Serializable]
+    public struct ListIndexes{
+        public bool error;
+        public int code;
+        public List<Index> indexes;
+    }
+
+    
+    [Serializable]
+    public struct Index {
+        public string id;
+        public string name;
+        public int selectivityEstimate;
+        public string[] fields;
+        public string type;
+        public bool sparse;
+        public bool unique;
+    }
+    
+    
+    [Serializable]
+    public struct Region {
+        public string _key;
+        public string host;
+        public bool local;
+        public string name;
+        public int port;
+        public bool spot_region;
+        public int status;
+        // tags not implemnented locally 
+        public LocationInfo locationInfo;
+
+        public string DisplayLocation() {
+            return locationInfo.city + "," + locationInfo.countrycode;
+        }
+    }
+
+    [Serializable]
+    public struct LocationInfo {
+        public string city;
+        public string countrycode;
+        public string countryname;
+        public float latitude;
+        public float longitude;
+        public string url;
+    }
+    
+    #region query
+    [Serializable]
+    public struct MaxSerialResult{
+        public bool error;
+        public int code;
+        public List<int> result;
+    }
+    
+    public struct LobbyListResult{
+        public bool error;
+        public int code;
+        public List<LobbyValue> result;
+    }
+    #endregion query
+    
+    [Serializable]
     public struct ListKVCollection{
         public bool error;
         public int code;
@@ -143,11 +352,10 @@ namespace Macrometa {
         public int expireAt; // unix timestamp
     }
     
-    
-    
     [Serializable]
     public struct BaseHtttpReply {
         public bool error;
+        public string errorMessage;
         public int code;
         public Object result;
     }
@@ -196,7 +404,12 @@ namespace Macrometa {
         // these are only used in TranportPing/Pong
         public int r;// last ping time consumer i.e. remote ping time
         public int o;// last ping time producer i.e. remote ping time
-        public string n;// node i.e. remote ping time
+        public string localId;// node i.e. remote ping time
+        public string host; // datacenter host from region
+        public string city;
+        public string countrycode;
+        //public LocationInfo locationInfo; // data center info from region
+
     }
     
     [Serializable]
@@ -213,6 +426,24 @@ namespace Macrometa {
     }
     
     public class MacrometaAPI {
+        public static UnityWebRequest WebPost(string url, string data,GDNData gdnData) {
+            UnityWebRequest www = new UnityWebRequest(url, "POST");
+            byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(data);
+            www.uploadHandler = (UploadHandler) new UploadHandlerRaw(jsonToSend);
+            www.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            return www;
+        }
+        public static UnityWebRequest WebPut(string url, string data,GDNData gdnData) {
+            UnityWebRequest www = new UnityWebRequest(url, "PUT");
+            byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(data);
+            www.uploadHandler = (UploadHandler) new UploadHandlerRaw(jsonToSend);
+            www.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            return www;
+        }
         
         public static string Base64Encode(string plainText) {
             var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
@@ -237,6 +468,14 @@ namespace Macrometa {
         public static IEnumerator ClearAllBacklogs(GDNData gdnData, Action<UnityWebRequest> callback) {
             List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
             UnityWebRequest www = UnityWebRequest.Post(gdnData.ClearAllBacklogs(), formData);
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            yield return www.SendWebRequest();
+            if (callback != null)
+                callback(www);
+        }
+
+        public static IEnumerator GetRegion(GDNData gdnData, Action<UnityWebRequest> callback) {
+            UnityWebRequest www = UnityWebRequest.Get(gdnData.GetRegionURL());
             www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
             yield return www.SendWebRequest();
             if (callback != null)
@@ -284,29 +523,55 @@ namespace Macrometa {
         }
         
         public static IEnumerator Consumer(GDNData gdnData, string streamName, string consumerName,
-            Action<WebSocket, string> callback) {
+            Action<WebSocket, string> callback,GDNErrorhandler gdnE) {
             List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
             OTPResult otp = new OTPResult();
             using (UnityWebRequest www = UnityWebRequest.Post(gdnData.GetOTPURL(), formData)) {
                 www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
                 yield return www.SendWebRequest();
-                
+                if (www.error != null) {
+                    gdnE.isWaiting = false;
+                    yield break;
+                }
                 otp = JsonUtility.FromJson<OTPResult>(www.downloadHandler.text);
             }
-
+            GameDebug.Log( "consumerURL " +gdnData.ConsumerURL(streamName, consumerName) + "?otp=" + otp.otp);
             callback(new WebSocket(new Uri(gdnData.ConsumerURL(streamName, consumerName) + "?otp=" + otp.otp)),
                 "LIVE consumer "+ streamName);
             //callback(new WebSocket(gdnData.ConsumerURLDebug(streamName, consumerName) ), "LIVE");
         }
         
-        public static IEnumerator Producer(GDNData gdnData, string streamName, Action<WebSocket, string> callback) {
+        public static IEnumerator DocumentReader(GDNData gdnData, string streamName, string consumerName,
+            Action<WebSocket, string> callback,GDNErrorhandler gdnE) {
             List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
             OTPResult otp = new OTPResult();
             using (UnityWebRequest www = UnityWebRequest.Post(gdnData.GetOTPURL(), formData)) {
                 www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
                 yield return www.SendWebRequest();
+                if (www.error != null) {
+                    gdnE.isWaiting = false;
+                    yield break;
+                }
                 otp = JsonUtility.FromJson<OTPResult>(www.downloadHandler.text);
             }
+            callback(new WebSocket(new Uri(gdnData.StreamReaderURL(streamName, consumerName) + "?otp=" + otp.otp)),
+                "Document Reader: "+ streamName);
+        }
+        
+        public static IEnumerator Producer(GDNData gdnData, string streamName, Action<WebSocket, string> callback,GDNErrorhandler gdnE) {
+            List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
+            OTPResult otp = new OTPResult();
+            using (UnityWebRequest www = UnityWebRequest.Post(gdnData.GetOTPURL(), formData)) {
+                www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+                yield return www.SendWebRequest();
+                if (www.error != null) {
+                    gdnE.isWaiting = false;
+                    GameDebug.Log("OTP Authorization error" + www.error);
+                    yield break;
+                }
+                otp = JsonUtility.FromJson<OTPResult>(www.downloadHandler.text);
+            }
+            Debug.Log( "LIVE producer url :"+gdnData.ProducerURL(streamName));
             callback(new WebSocket(new Uri(gdnData.ProducerURL(streamName) + "?otp=" + otp.otp)),
                 "LIVE producer "+ streamName);
         }
@@ -371,8 +636,123 @@ namespace Macrometa {
             if (callback != null)
                 callback(www);
         }
+        #endregion
+        #region DocumentCollection
+
+        public static IEnumerator ListDocumentCollections(GDNData gdnData, Action<UnityWebRequest> callback) {
+            
+            UnityWebRequest www = UnityWebRequest.Get(gdnData.GetCollectionsURL());
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            yield return www.SendWebRequest();
+            if (callback != null)
+                callback(www);
+        }
+
+      
+        public static IEnumerator ListIndexes(GDNData gdnData, string collection, Action<UnityWebRequest> callback) {
+
+            UnityWebRequest www = UnityWebRequest.Get(gdnData.GetIndexesURL(collection));
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            yield return www.SendWebRequest();
+            if (callback != null)
+                callback(www);
+        }
+
+        public static IEnumerator PostCreateIndex(GDNData gdnData, string collectionName, IndexParams indexParams, int indexId,
+            Action<UnityWebRequest,int> callback) {
+            ;
+            var data= JsonUtility.ToJson(indexParams);
+            var www = WebPost(gdnData.PostPersistentIndexURL(collectionName), data, gdnData);
+            yield return www.SendWebRequest();
+            
+            if (callback != null)
+                callback(www, indexId);
+        }
         
-       
+        public static IEnumerator PostCreateTTLIndex(GDNData gdnData, string collectionName, IndexParams indexParams,
+            Action<UnityWebRequest> callback) {
+            ;
+            var data= JsonUtility.ToJson(indexParams);
+            var www = WebPost(gdnData.PostTTLIndexURL(collectionName), data, gdnData);
+            Debug.Log("TTLIndex URL: "+gdnData.PostTTLIndexURL(collectionName) );
+            Debug.Log("TTLIndex Data: "+ data);
+            
+            
+            yield return www.SendWebRequest();
+            
+            if (callback != null)
+                callback(www);
+        }
+        
+        public static IEnumerator CreateCollection(GDNData gdnData, string collectionName,
+            Action<UnityWebRequest> callback) {
+           // var data= "{ \"name\": \" "+collectionName+"\" }";
+            var data= "{ \"name\": \""+collectionName +"\",\"stream\": true }";
+            var www = WebPost(gdnData.PostCreateCollectionsURL(), data, gdnData);
+            yield return www.SendWebRequest();
+            
+            if (callback != null)
+                callback(www);
+        }
+        
+        public static IEnumerator PostQuery(GDNData gdnData, string data,
+            Action<UnityWebRequest> callback) {
+            var www = WebPost(gdnData.PostQueryURL(), data, gdnData);
+            yield return www.SendWebRequest();
+            
+            if (callback != null)
+                callback(www);
+        }
+        
+        public static IEnumerator PostInsertReplaceDocument(GDNData gdnData,string collection, string data, bool replace,
+            Action<UnityWebRequest> callback) {
+            GameDebug.Log("Post Lobby Document: "+ gdnData.PostInsertDocumentURL(collection,replace));
+            var www = WebPost(gdnData.PostInsertDocumentURL(collection,replace), data, gdnData);
+            yield return www.SendWebRequest();
+            
+            if (callback != null)
+                callback(www);
+        }
+
+        public static IEnumerator PutReplaceDocument(GDNData gdnData, string collection, string data,
+            string key,
+            Action<UnityWebRequest> callback) {
+            var www = WebPut(gdnData.PutReplaceDocumentURL(collection, key), data, gdnData);
+            yield return www.SendWebRequest();
+
+            if (callback != null)
+                callback(www);
+        }
+
+
+
+        /*
+        public static IEnumerator GetKVValues(GDNData gdnData, string collectionName,
+            Action<UnityWebRequest> callback) {
+            List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
+            var url = gdnData.GetKVValuesURL(collectionName);
+            //GameDebug.Log("KV url: "+ url);
+            UnityWebRequest www = UnityWebRequest.Post(url, formData);
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            yield return www.SendWebRequest();
+            
+            if (callback != null)
+                callback(www);
+        }
+        public static IEnumerator PutKVValue(GDNData gdnData, string collectionName, string kvRecord,
+            Action<UnityWebRequest> callback) {
+            byte[] putData = System.Text.Encoding.UTF8.GetBytes(kvRecord);
+            var url = gdnData.PutKVValueURL(collectionName);
+           // GameDebug.Log("put URL: " + url);
+            UnityWebRequest www = UnityWebRequest.Put(url, putData);
+            www.SetRequestHeader("Authorization", "apikey " + gdnData.apiKey);
+            yield return www.SendWebRequest();
+            
+            if (callback != null)
+                callback(www);
+        }
+        
+       */
         
         
         #endregion

@@ -276,8 +276,8 @@ public class GameModeSystemServer : ComponentSystem
                             chatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
                             GameDebug.Log("CharacterUISystems.cs line 274 "+  killerPlayer.playerName + " killed "
                                           + player.playerName );
-                            PlayStats.AddPlayerStat( player.playerName,killerPlayer.playerName ,"", m_CurrentGameModeName);
-                            PlayStats.AddPlayerStat( killerPlayer.playerName,"", player.playerName, m_CurrentGameModeName);
+                            PlayStats.AddPlayerStat( player.playerName,killerPlayer.playerName);
+                           
                         }
                         
                         else
@@ -287,7 +287,7 @@ public class GameModeSystemServer : ComponentSystem
                             chatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
                             GameDebug.Log("CharacterUISystems.cs line 281 "+  player.playerName +
                                           "self killed " +  player.playerName);
-                            PlayStats.AddPlayerStat( player.playerName,"",killerPlayer.playerName , m_CurrentGameModeName);
+                            PlayStats.AddPlayerStat( player.playerName,killerPlayer.playerName );
                         }
                         m_GameMode.OnPlayerKilled(player, killerPlayer);
                     }
@@ -318,7 +318,7 @@ public class GameModeSystemServer : ComponentSystem
         chatSystem.SendChatMessage(player.playerId, "Switched to: " + heroTypeRegistry.entries[c.requestedCharacterType].name);
     }
 
-    public void CreateTeam(string name)
+    public void  CreateTeam(string name)
     {
         var team = new Team();
         team.name = name;
@@ -357,7 +357,7 @@ public class GameModeSystemServer : ComponentSystem
 
         // Join 
         player.teamIndex = joinIndex < 0 ? 0 : joinIndex;
-        GameDebug.Log("Assigned team " + joinIndex + " to player " + player.playerName);
+        GameDebug.Log("Assigned team " + joinIndex + " to player " + player.playerName );
     }
 
     int FindPlayerControlling(ref ComponentArray<PlayerState> players, Entity entity)

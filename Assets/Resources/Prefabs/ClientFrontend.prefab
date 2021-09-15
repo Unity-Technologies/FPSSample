@@ -11599,7 +11599,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 318008911069314333}
   m_HandleRect: {fileID: 4146616146296342882}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 0.9999998
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -13275,8 +13275,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 618397691084722893}
   m_HandleRect: {fileID: 8841684530773784548}
   m_Direction: 2
-  m_Value: 0
-  m_Size: 0.99999964
+  m_Value: 1
+  m_Size: 0.9999998
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -16261,7 +16261,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6638392394496816882}
   m_HandleRect: {fileID: 4111423720167939573}
   m_Direction: 0
-  m_Value: 1
+  m_Value: 0
   m_Size: 0.99999994
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -18820,13 +18820,31 @@ MonoBehaviour:
     isGlobal: 0
   isServer: 0
   gdnStreamDriver:
+    nodeId: 
     listStream:
       error: 0
       code: 0
       result: []
+    region:
+      _key: 
+      host: 
+      local: 0
+      name: 
+      port: 0
+      spot_region: 0
+      status: 0
+      locationInfo:
+        city: 
+        countrycode: 
+        countryname: 
+        latitude: 0
+        longitude: 0
+        url: 
     consumerName: 
     serverName: 
     chatChannelId: 
+    chatLobbyId: 
+    regionIsDone: 0
     streamListDone: 0
     serverInStreamExists: 0
     serverOutStreamExists: 0
@@ -18837,6 +18855,55 @@ MonoBehaviour:
     chatProducerExists: 0
     chatConsumerExists: 0
     producerStatsExists: 0
+    lobbyDocumentReaderExists: 0
+    lobbyUpdateAvail: 0
+    lobbyRtt: 0
+    lobbyURttAvail: 0
+    lobbyUpdate:
+      clientId: 
+      baseName: 
+      serialNumber: 0
+      gameMode: 
+      mapName: 
+      maxPlayers: 0
+      status: 
+      ping: 0
+      streamName: 
+      adminName: 
+      region:
+        _key: 
+        host: 
+        local: 0
+        name: 
+        port: 0
+        spot_region: 0
+        status: 0
+        locationInfo:
+          city: 
+          countrycode: 
+          countryname: 
+          latitude: 0
+          longitude: 0
+          url: 
+      team0:
+        name: 
+        maxSize: 4
+        slots: []
+      team1:
+        name: 
+        maxSize: 4
+        slots: []
+      unassigned:
+        name: 
+        maxSize: 0
+        slots: []
+      frozen: 0
+      serverClientChosen: 0
+      closeLobbyNow: 0
+      showGameInitNow: 0
+      joinGameNow: 0
+      rttTarget: 
+      serverAllowed: 
     sendConnect: 0
     setupComplete: 0
     pingStarted: 0
@@ -18849,7 +18916,6 @@ MonoBehaviour:
     pingFrequency: 0
     dummyFrequency: 0
     dummySize: 0
-    nodeId: 
     statsGroupSize: 0
     dummyTrafficQuantity: 0
     receivedPongOnly: 0
@@ -18857,6 +18923,7 @@ MonoBehaviour:
   nextKVValuePutIncr: 5
   kvValueTTL: 15
   debugKVTryInit: 0
+  localId: 
   tryKVInit: 0
   tryKVInitB: 0
   canNotInit: 0
@@ -23341,7 +23408,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.000210534, y: 0.000020187877}
+  m_AnchoredPosition: {x: 0.0003151008, y: 0.000015858139}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!33 &4931950643415678406
@@ -25135,7 +25202,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000091552734}
+  m_AnchoredPosition: {x: 0, y: -0.00015258789}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &7682642984743684416

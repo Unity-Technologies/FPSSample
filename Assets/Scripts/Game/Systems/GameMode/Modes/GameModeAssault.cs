@@ -131,7 +131,7 @@ public class GameModeAssault : IGameMode
                                 .SetComponentData(p.controlledEntity,healthState);
                         }
                     }
-                    PlayStats.UpdateNumPlayers( players.Length);
+                    //PlayStats.UpdateNumPlayers( players.Length);
                     m_Phase = Phase.PostGame;
                     m_GameModeSystemServer.SetRespawnEnabled(false);
                     m_GameModeSystemServer.StartGameTimer(postMatchTime, "PostMatch");

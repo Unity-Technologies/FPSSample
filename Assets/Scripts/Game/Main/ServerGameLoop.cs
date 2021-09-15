@@ -322,6 +322,9 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         GDNTransport.isSocketPingOn = true;
         GDNTransport.sendDummyTraffic = false;//probably not need but safer
         m_NetworkTransport =  GDNTransport.Instance;
+        gdnStats = GDNStats.Instance;
+        gdnStats.Start(true);
+        GameDebug.Log(" gdnStats.Start ");
         // not sure serverMaxClients.IntValue is right
         m_NetworkTransport.Connect(isServer,7932, serverMaxClients.IntValue);
         var listenAddresses = NetworkUtils.GetLocalInterfaceAddresses();
@@ -478,13 +481,13 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
                 case GameNetworkEvents.EventType.PlayerReady:
                     m_NetworkServer.MapReady(clientId); // TODO (petera) hacky
                     client.isReady = true;
-                    GameDebug.Log("ServerGameLoop line 481 PlayerReady " +client.playerSettings.playerName );
-
+                    GameDebug.Log("ServerGameLoop line 484 PlayerReady " +client.playerSettings.playerName );
+                   
                     break;
 
                 case GameNetworkEvents.EventType.PlayerSetup:
                     client.playerSettings.Deserialize(ref reader);
-                    GameDebug.Log("ServerGameloop line 487    Create player " + client.playerSettings.playerName);
+                    GameDebug.Log("ServerGameloop line 490    Create player " + client.playerSettings.playerName);
                     if (client.player != null)
                         m_serverGameWorld.HandlePlayerSetupEvent(client.player, client.playerSettings);
                     break;
@@ -870,6 +873,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
     //SocketTransport m_NetworkTransport;
     GDNTransport  m_NetworkTransport;
+    GDNStats gdnStats;
     BundledResourceManager m_resourceSystem;
     ChatSystemServer m_ChatSystem;
     Dictionary<int, ClientInfo> m_Clients = new Dictionary<int, ClientInfo>();

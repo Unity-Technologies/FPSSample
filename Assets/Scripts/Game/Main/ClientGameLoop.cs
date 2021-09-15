@@ -536,7 +536,10 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         GDNTransport.isSocketPingOn = true;
         GDNTransport.sendDummyTraffic = false;//probably not need but safer
         m_NetworkTransport = GDNTransport.Instance;
-        GameDebug.Log("GDNTransport instanciated ");
+        GameDebug.Log("GDNTransport instanciated 2");
+        gdnStats = GDNStats.Instance;
+        GameDebug.Log("GDNStats instanceated 2");
+        gdnStats.Start(true);
 
         m_NetworkClient = new NetworkClient(m_NetworkTransport);
 
@@ -550,6 +553,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         GameDebug.Log("NetworkClient initialized ");
 
         m_requestedPlayerSettings.playerName = clientPlayerName.Value;
+        
         m_requestedPlayerSettings.teamId = -1;
         
         Console.AddCommand("disconnect", CmdDisconnect, "Disconnect from server if connected", this.GetHashCode());
@@ -646,12 +650,14 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
             clientPlayerName.Value = clientPlayerName.Value.Substring(0, Mathf.Min(clientPlayerName.Value.Length, 16));
             m_requestedPlayerSettings.playerName = clientPlayerName.Value;
             m_playerSettingsUpdated = true;
+            GDNStats.SetPlayerName(m_requestedPlayerSettings.playerName);
         }
 
         if(m_NetworkClient.isConnected && m_playerSettingsUpdated)
         {
             m_playerSettingsUpdated = false;
             SendPlayerSettings();
+            GDNStats.SetPlayerName(m_requestedPlayerSettings.playerName);
         }
 
         if(m_clientWorld != null)
@@ -1095,6 +1101,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
     //SocketTransport m_NetworkTransport;
     GDNTransport m_NetworkTransport;
+    GDNStats gdnStats;
 
     NetworkClient m_NetworkClient;
     

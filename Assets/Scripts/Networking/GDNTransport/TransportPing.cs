@@ -3,12 +3,13 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+
 using System.Linq;
-using System.Text;
+
 using System.Text.RegularExpressions;
 using System.Threading;
 using BestHTTP;
-using Debug = UnityEngine.Debug;
+
 
 namespace Macrometa {
     
@@ -86,10 +87,12 @@ namespace Macrometa {
         
         
         public static TransportPing Remove(int id) {
+            //GameDebug.Log("Ping Remove count: "+ pings.Count);
             TransportPing result;
             if (pings.ContainsKey(id)) {
                 result = pings[id];
                 pings.Remove(id);
+                
             } else {
                 GameDebug.LogError("Could not find ping: " + id);
                 return new TransportPing {id = -1, elapsedTime = -1, stopwatch = null};
@@ -99,6 +102,7 @@ namespace Macrometa {
                 GameDebug.LogError("missing stopwatch ping: " + id);
             }
             result.elapsedTime = result.stopwatch.ElapsedMilliseconds;
+            //GameDebug.Log("Ping Removed OK: "+ id + " : " + result.elapsedTime);
             stopWatchPool.Return(result.stopwatch);
             result.stopwatch = null;
             return result;
@@ -150,8 +154,17 @@ namespace Macrometa {
         public StreamStats outStreamStats;
         public StreamStats inStreamStats;
 
+        public string appType;
         public string localNodeId; // node Id
         public string remoteNodeId; // node Id
+        
+        public string localHost;  //datacenter ip
+        public string localCity;
+        public string localCountrycode;
+        public string remoteHost;  //datacenter ip
+        public string remoteCity;
+        public string remoteCountrycode;
+        
         public string localId; // localLocation Id 
         public string remoteId; // remoteLocation Ide.g. Grant Tokyo
 
@@ -208,6 +221,16 @@ namespace Macrometa {
         }
 
         /// <summary>
+        /// extras information Region for including in logs
+        /// 
+        /// </summary>
+        public void InitStatsFromRegion(Region region) {
+            localHost = region.host;
+            localCity = region.locationInfo.city;
+            localCountrycode = region.locationInfo.countrycode;
+        }
+        
+        /// <summary>
         /// extras information GDNData for including in logs
         /// 
         /// </summary>
@@ -253,7 +276,10 @@ namespace Macrometa {
             }
         }
 
-        public static string csvHeader = "dateTime, localNodeId,remoteNodeId, localId ,remoteId ," +
+        public static string csvHeader = "dateTime, localNodeId, " +
+                                         "localHost,localCity,localCountrycode," +
+                                         "remoteNodeId,remoteHost,remoteCity,remoteCountrycode," +
+                                         " localId ,remoteId ," +
                                          "connectionId , streamOutName, streamOutType, streamOutData  ," +
                                          " streamInName , streamInType, streamInData," +
                                          "rttAverage  , totalPingAverage  ,extraAverage ," +
@@ -262,7 +288,9 @@ namespace Macrometa {
                                          " streamOutBytes, streamInMessages , streamInBytes , latencyGroupSize";
 
         public string ToCSVLine() {
-            return "" + dateTime + "," + localNodeId + "," + remoteNodeId + "," + localId + "," + remoteId + "," +
+            return "" + dateTime + "," + localNodeId + "," + localHost + "," + localCity + "," + localCountrycode+ "," 
+                   + remoteNodeId + "," + remoteHost + "," + remoteCity + "," + remoteCountrycode + "," 
+                   + localId + "," + remoteId + "," +
                    connectionId + "," + streamOutName + "," + streamOutType + "," + streamOutData + "," +
                    streamInName + "," + streamInType + "," + streamInData + "," +
                    rttAverage + "," + totalPingAverage + "," + extraAverage + "," +
@@ -275,7 +303,14 @@ namespace Macrometa {
             return new NetworkStatsData() {
                 dateTime =(long)(dateTime.
                     Subtract(new DateTime(1970, 1, 1))).TotalSeconds,
+                appType = appType,
                 localNodeId = localNodeId,
+                localHost = localHost,  //datacenter ip
+                localCity = localCity,
+                localCountrycode = localCountrycode,
+                remoteHost = remoteHost,  //datacenter ip
+                remoteCity = remoteCity, 
+                remoteCountrycode = remoteCountrycode,
                 localId = localId,
                 remoteId = remoteId,
                 connectionId = connectionId,
@@ -294,9 +329,9 @@ namespace Macrometa {
             };
         }
         public class NetworkStatsData {
-            public string version = "0.1";
-            public string appType = "Monitor";
-            public int rttAverage; // in milliseconds 2 decimalplaces
+            public string version = "0.2";
+            public string appType = "FPS";
+            public int rttAverage; // in milliseconds 
             public int streamOutMessages; //number of messages sent in time period
             public int streamInMessages;  //number of messages recieved in time period
             public int streamOutBytes;    //number of bytes sent in time period
@@ -306,29 +341,37 @@ namespace Macrometa {
             public int streamOutRemotePingAverage; // in milliseconds 2 decimalplaces
             public int streamInLocalPingAverage; // in milliseconds 2 decimalplaces
             public int streamInRemotePingAverage; // in milliseconds 2 decimalplaces
-            public long dateTime;  // unix time stamp 
+            public long dateTime;  // unix time stamp  UTC +0
             public string localNodeId; // not full domain name missing macrometa.io
+            public string localHost;  //datacenter ip
+            public string localCity;  //datacenter  city name
+            public string localCountrycode; // datacenter country 2 characters
+            public string remoteHost;  //datacenter ip for client end of connection
+            public string remoteCity;
+            public string remoteCountrycode; 
             public string localId;     //servername
-            public string remoteId;     // player name 
+            public string remoteId;     // client name 
             public int connectionId;   // used to identify clients by int
             public string sessionID;   // unique ID for each session of latency monitoring
             public string streamOutName; //stream server sends on
             public string streamInName;   //server stream receives on
-
         }
 
 
     
         
         public NetworkStatsData AddRtt(float rtt, float outLocalPing, float inLocalPing,
-            float outRemotePing,float inRemotePing, string aNodeId) {
+            float outRemotePing,float inRemotePing, string localId, string host, string city, string countrycode) {
             NetworkStatsData result= null;
             rttTotal += rtt;
             streamOutLocalPingTotal += outLocalPing;
             streamInLocalPingTotal += inLocalPing;
             streamOutRemotePingTotal += outRemotePing;
             streamInRemotePingTotal += inRemotePing;
-            remoteNodeId = aNodeId;
+            remoteId = localId;
+            remoteHost = host;
+            remoteCity = city;
+            remoteCountrycode = countrycode;
             latencyCurrentCount++;
             if (latencyCurrentCount == latencyGroupSize) {
                 result =GenerateStatsNow();

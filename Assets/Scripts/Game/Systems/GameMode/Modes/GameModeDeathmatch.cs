@@ -17,14 +17,15 @@ public class GameModeDeathmatch : IGameMode
     [ConfigVar(Name = "game.dm.roundlength", DefaultValue = "420", Description = "Deathmatch round length (seconds)")]
     public static ConfigVar roundLength;
 
+    
     public void Initialize(GameWorld world, GameModeSystemServer gameModeSystemServer)
     {
         m_world = world;
         m_GameModeSystemServer = gameModeSystemServer;
 
         // Create teams
-        m_GameModeSystemServer.CreateTeam("Team 1");
-        m_GameModeSystemServer.CreateTeam("Team 2");
+        m_GameModeSystemServer.CreateTeam("A Team");
+        m_GameModeSystemServer.CreateTeam("B Team");
 
         Console.Write("Deathmatch game mode initialized");
     }
@@ -35,6 +36,7 @@ public class GameModeDeathmatch : IGameMode
             t.score = 0;
         m_Phase = Phase.Countdown;
         m_GameModeSystemServer.StartGameTimer(preMatchTime, "PreMatch");
+       
     }
 
     public void Shutdown()
@@ -51,9 +53,14 @@ public class GameModeDeathmatch : IGameMode
         switch (m_Phase)
         {
             case Phase.Countdown:
-                if (m_GameModeSystemServer.GetGameTimer() == 0)
-                {
-                    if (players.Length < minPlayers.IntValue)
+                if (m_GameModeSystemServer.GetGameTimer() == 0) {
+                    bool ready = true;
+                    for (int i = 0; i < players.Length; i++) {
+                        if (players[i].playerName == "") {
+                            ready = false;
+                        }
+                    }
+                    if (players.Length < minPlayers.IntValue || !ready)
                     {
                         m_GameModeSystemServer.chatSystem.SendChatAnnouncement("Waiting for more players.");
                         m_GameModeSystemServer.StartGameTimer(preMatchTime, "PreMatch");
@@ -63,6 +70,18 @@ public class GameModeDeathmatch : IGameMode
                         m_GameModeSystemServer.StartGameTimer(roundLength, "");
                         m_Phase = Phase.Active;
                         m_GameModeSystemServer.chatSystem.SendChatAnnouncement("Match started!");
+                        GDNStats.ResetTeams();
+                        for (var i = 0; i < players.Length; i++) {
+                            var player = players[i];
+                            GDNStats.AddPlayer(player.teamIndex,player.playerName);
+                            GameDebug.Log("Assigned team " + player.teamIndex +
+                                          " to player " + player.playerName + " : " +
+                                          gameModeState.teamName0 + " : +" +
+                                          gameModeState.teamName1);
+                        }
+                        GDNStats.SendStats(GDNStats.baseGameStats);
+                        GameDebug.Log(GDNStats.baseGameStats.ToString());
+                        
                     }
                 }
                 break;
@@ -110,7 +129,7 @@ public class GameModeDeathmatch : IGameMode
                         playerState.displayScoreBoard = false;
                         playerState.displayGoal = false;
                     }
-                    PlayStats.UpdateNumPlayers( players.Length);
+                    //PlayStats.UpdateNumPlayers( players.Length);
                     m_Phase = Phase.Ended;
                     m_GameModeSystemServer.SetRespawnEnabled(false);
                     m_GameModeSystemServer.StartGameTimer(postMatchTime, "PostMatch");

@@ -130,6 +130,11 @@ public class GDNNetworkDriver : MonoBehaviour {
             }
         }
 
+        
+        if (!gdnStreamDriver.regionIsDone) {
+            gdnStreamDriver.GetRegion();
+        }
+        
         if (!gdnStreamDriver.streamListDone) {
             gdnStreamDriver.GetListStream();
             return;
