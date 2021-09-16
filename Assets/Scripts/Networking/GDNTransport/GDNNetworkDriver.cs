@@ -154,7 +154,12 @@ public class GDNNetworkDriver : MonoBehaviour {
             gdnStreamDriver.CreatServerStatsStream();
             return;
         }
-        
+        /*
+        if (!gdnStreamDriver.gameStatsStreamExists) {
+            gdnStreamDriver.CreatGameStatsStream();
+            return;
+        }
+        */
         if (!gdnStreamDriver.producerExists) {
             gdnStreamDriver.CreateProducer(gdnStreamDriver.producerStreamName);
             return;
@@ -167,9 +172,18 @@ public class GDNNetworkDriver : MonoBehaviour {
 
         if (!gdnStreamDriver.producerStatsExists) {
             gdnStreamDriver.CreateStatsProducer(gdnStreamDriver.serverStatsStreamName);
+            GameDebug.Log("try producerStatsExists");
             return;
+            
         }
 
+       /*
+        if (!gdnStreamDriver.producerGameStatsExists) {
+            gdnStreamDriver.CreateGameStatsProducer(gdnStreamDriver.gameStatsStreamName);
+            GameDebug.Log("try producerGameStatsExists");
+            return;
+        }
+        */
         if (!gdnStreamDriver.setupComplete) {
             GameDebug.Log("Set up Complete as " + RwConfig.ReadConfig().gameName + " : " + gdnStreamDriver.consumerName);
             gdnStreamDriver.setupComplete = true;
@@ -181,6 +195,11 @@ public class GDNNetworkDriver : MonoBehaviour {
             gdnStreamDriver.sendConnect = true;
             
         }
+        /*
+        if (GDNStreamDriver.isPlayStatsClientOn) {
+            PingStatsGroup.Init(Application.dataPath, "LatencyStats", gdnStreamDriver.statsGroupSize); 
+        }
+        */
         if (GDNStreamDriver.isSocketPingOn && !gdnStreamDriver.pingStarted ) {
             gdnStreamDriver.pingStarted = true;
             if (GDNStreamDriver.isStatsOn) {

@@ -10,7 +10,7 @@ public class GDNStats {
     // must be set before websockets are opened.
 
 
-    public static GameStats baseGameStats;
+    public static GameStats2 baseGameStats;
     public TestPlayStatsDriver testPlayStatsDriver;
     public static GDNStats instance=null;
     public TeamInfo team0;
@@ -35,11 +35,11 @@ public class GDNStats {
     }
     
     static public void SendKills(string killed, string killedBy) {
-        var gameStats = baseGameStats.CopyOf();
-        gameStats.playerName = killed;
-        gameStats.killed = killed;
-        gameStats.killedBy = killedBy;
-        TestPlayStatsDriver.SendStats(gameStats);
+        var gameStats2 = baseGameStats.CopyOf();
+        gameStats2.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        gameStats2.killed = killed;
+        gameStats2.killedBy = killedBy;
+        TestPlayStatsDriver.SendStats(gameStats2);
     }
     
     /// <summary>
@@ -77,7 +77,7 @@ public class GDNStats {
             teamName = "B Team"
         };
         instance.gameName = "QuickKill";
-        baseGameStats = new GameStats() {
+        baseGameStats = new GameStats2() {
             gameName = instance.gameName,
             team0 = instance.team0,
             team1 = instance.team1
@@ -95,14 +95,14 @@ public class GDNStats {
             teamName = team1Name
         };
 
-        baseGameStats = new GameStats() {
+        baseGameStats = new GameStats2() {
             gameName = gameName,
             team0 = team0,
             team1 = team1
         };
     }
 
-    static public void SendStats(GameStats gs) {
+    static public void SendStats(GameStats2 gs) {
         TestPlayStatsDriver.SendStats(gs);
     }
     

@@ -459,7 +459,7 @@ namespace Macrometa {
         public string SimpleStats2() {
             return " Stream out: " + streamOutBytes + " Stream In: " + streamInBytes +
                    " Stream msgs: " + streamOutMessages + " Stream msgs: " + streamInMessages +
-                   " " + dateTime.ToString();
+                   " " + dateTime.ToString() + " remoteId:" + remoteId;
         }
         
     }
@@ -473,7 +473,9 @@ namespace Macrometa {
         JSON,
         Byte
     }
+    
 
+    
     public class StreamStats {
         public string streamName;
         public StreamType streamType;

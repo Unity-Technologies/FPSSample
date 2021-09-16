@@ -287,7 +287,7 @@ public class GameModeSystemServer : ComponentSystem
                             chatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
                             GameDebug.Log("CharacterUISystems.cs line 281 "+  player.playerName +
                                           "self killed " +  player.playerName);
-                            PlayStats.AddPlayerStat( player.playerName,killerPlayer.playerName );
+                            PlayStats.AddPlayerStat( player.playerName,player.playerName );
                         }
                         m_GameMode.OnPlayerKilled(player, killerPlayer);
                     }

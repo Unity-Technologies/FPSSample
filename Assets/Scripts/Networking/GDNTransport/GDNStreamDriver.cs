@@ -8,11 +8,14 @@ using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Pkix;
 using BestHTTP.WebSocket;
+using JetBrains.Annotations;
 using Macrometa.Lobby;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.Networking;
+using Object = System.Object;
 using Random = UnityEngine.Random;
 
 namespace Macrometa {
@@ -20,6 +23,10 @@ namespace Macrometa {
     [Serializable]
     public class GDNStreamDriver {
         private MonoBehaviour _monobehaviour;
+        public bool  isPlayStatsServerOn = true; //Used to SendMessage data start stats sts stream
+        
+        // used to collect throughput, shots fired , health , maybe position
+        public static bool  isPlayStatsClientOn = false; 
         public static bool isSocketPingOn = false; // must be set before webSocket is opened
         public static bool isStatsOn = false; //off by default for compatibility 
         public static bool sendDummyTraffic = false; //off by default for compatibility
@@ -39,6 +46,9 @@ namespace Macrometa {
         public WebSocket chatConsumer1;
         public WebSocket chatProducer1;
         public WebSocket producerStats;
+        public WebSocket producerGameStats;
+        
+        
         public StreamStats consumer1Stats;
         public StreamStats producer1Stats;
         public WebSocket lobbyDocumentReader; // lobby collection stream
@@ -52,6 +62,8 @@ namespace Macrometa {
         public bool serverInStreamExists = false;
         public bool serverOutStreamExists = false;
         public bool serverStatsStreamExists = false;
+        public bool gameStatsStreamExists = false;
+
         public bool chatStreamExists = false;
         public bool producerExists = false;
         public bool consumerExists = false;
@@ -59,6 +71,8 @@ namespace Macrometa {
         public bool chatConsumerExists = false;
         public bool producerStatsExists = false;
         public bool lobbyDocumentReaderExists = false;
+        public bool producerGameStatsExists = false ;
+        
         public bool lobbyUpdateAvail = false;
         public int lobbyRtt;
         public bool lobbyURttAvail;
@@ -71,7 +85,9 @@ namespace Macrometa {
         public string serverStatsStreamName;
         public string consumerStreamName;
         public string producerStreamName;
-        public string chatStreamName ;
+        public string chatStreamName;
+        public string gameStatsStreamName = "FPSGame_GameStats" ;
+        
         public float pingFrequency = 1;
         public float dummyFrequency = 0.05f; // FPSSample standard is 20 messages per second
         public int dummySize = 50; // FPSSample standard is under 2000 bytes per second
@@ -327,6 +343,39 @@ namespace Macrometa {
             }
         }
 
+        public void CreatGameStatsStream() {
+            var gsListName = _gdnData.StreamListName(gameStatsStreamName);
+            gameStatsStreamExists = listStream.result.Any(item => item.topic == gsListName);
+            if (!serverStatsStreamExists) {
+                _gdnErrorHandler.isWaiting = true;
+                _monobehaviour.StartCoroutine(MacrometaAPI.CreateStream(_gdnData, gameStatsStreamName,
+                    CreateGameStatsStreamCallback));
+            }
+        }
+
+        public void CreateGameStatsStreamCallback(UnityWebRequest www) {
+            _gdnErrorHandler.isWaiting = false;
+            if (www.isHttpError || www.isNetworkError) {
+                GameDebug.Log("Create Game StatsStream error: " + www.error);
+                _gdnErrorHandler.currentNetworkErrors++;
+                streamListDone = false;
+            }
+            else {
+
+                var baseHttpReply = JsonUtility.FromJson<BaseHtttpReply>(www.downloadHandler.text);
+                if (baseHttpReply.error == true) {
+                    GameDebug.Log("create Game Stats stream failed:" + baseHttpReply.code);
+                    _gdnErrorHandler.currentNetworkErrors++;
+                    streamListDone = false;
+                }
+                else {
+                    GameDebug.Log("Create Game StatsStream ");
+                    gameStatsStreamExists = true;
+                    _gdnErrorHandler.currentNetworkErrors = 0;
+                }
+            }
+        }
+        
         public void CreateProducer(string streamName) {
             _gdnErrorHandler.isWaiting = true;
             producer1Stats = new StreamStats() {
@@ -439,6 +488,41 @@ namespace Macrometa {
             };
             ws.Open();
         }
+        
+        public void CreateGameStatsProducer(string streamName) {
+            _gdnErrorHandler.isWaiting = true;
+            GameDebug.Log("Create Game StatsProducer: " + streamName);
+            _monobehaviour.StartCoroutine(MacrometaAPI.Producer(_gdnData, streamName, SetGameStatsProducer,_gdnErrorHandler));
+        }
+
+        public void SetGameStatsProducer(WebSocket ws, string debug = "") {
+            producerGameStats = ws;
+            ws.OnOpen += (o) => {
+                _gdnErrorHandler.isWaiting = false;
+                producerGameStatsExists = true;
+                GameDebug.Log("Open " + debug);
+            };
+
+            ws.OnError += (sender, e) => {
+                GameDebug.Log("WebSocket Error" + debug + " : " + e);
+                if (ws != null && ws.IsOpen) {
+                    ws.Close();
+                }
+                else {
+                    GameDebug.Log("WebSocket " + debug);
+                    producerGameStatsExists = false;
+                    _gdnErrorHandler.isWaiting = false;
+                }
+            };
+
+            ws.OnClosed += (socket, code, message) => {
+                producerGameStatsExists = false;
+                _gdnErrorHandler.isWaiting = false;
+                GameDebug.Log("Produce closed: " + debug + " : " + code + " : " + message);
+            };
+            ws.Open();
+        }
+        
 
         public void ProducerSend(int id, VirtualMsgType msgType, byte[] payload,
             int pingId = 0, int pingTimeR = 0, int pingTimeO = 0, string localId = "") {
@@ -486,7 +570,7 @@ namespace Macrometa {
             }
 
             producer1.Send(msgJSON);
-            if (isStatsOn) {
+            if (isStatsOn || isPlayStatsClientOn) {
                 producer1Stats.IncrementCounts(msgJSON.Length);
             }
         }
@@ -508,6 +592,19 @@ namespace Macrometa {
 
         }
 
+        public void ProducerGameStatsSend(Object data) {
+            GameDebug.Log("Producer Game StatsSend ");
+            
+            var json = JsonUtility.ToJson(data);
+            string payload = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json));
+            var message = new StatsSendMessage() {
+                payload = payload
+            };
+            string msgJSON = JsonUtility.ToJson(message);
+            producerGameStats.Send(msgJSON);
+
+        }
+        
         public void CreateConsumer(string streamName, string consumerName) {
             _gdnErrorHandler.isWaiting = true;
             consumer1Stats = new StreamStats() {
@@ -1188,17 +1285,29 @@ namespace Macrometa {
         public void ReceiveTransportPong(ReceivedMessage receivedMessage) {
             var transportPing = TransportPings.Remove(receivedMessage.properties.i);
             pongOnlyRtt = transportPing.elapsedTime;
+
+
             if (isStatsOn) {
                 var networkStatsData = pingStatsGroup.AddRtt(transportPing.elapsedTime,
                     producer1.Latency, consumer1.Latency,
                     receivedMessage.properties.o, receivedMessage.properties.r,
                     receivedMessage.properties.localId,
-                    receivedMessage.properties.host,receivedMessage.properties.city, receivedMessage.properties.countrycode);
+                    receivedMessage.properties.host, receivedMessage.properties.city,
+                    receivedMessage.properties.countrycode);
                 if (networkStatsData != null) {
-                    ProducerStatsSend(networkStatsData);
+                    if (isPlayStatsServerOn) {
+                        var gameStats2 = PlayStats.GenerataPeriodicGameStats2(networkStatsData);
+                        ProducerGameStatsSend(networkStatsData);
+                        GameDebug.Log("GameStats: " + gameStats2);
+                    }
+                    else {
+                        ProducerStatsSend(networkStatsData);
+                    }
                 }
             }
         }
+
+
 
         public void ReceiveChatTransportPong(string rttClientId) {
 

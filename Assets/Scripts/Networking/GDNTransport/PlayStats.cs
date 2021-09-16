@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Macrometa.Lobby;
 using UnityEngine;
+using UnityEngine.Experimental.UIElements;
+using Random = UnityEngine.Random;
 
 namespace Macrometa {
     public class PlayStats {
@@ -12,27 +14,24 @@ namespace Macrometa {
             Tie,
             Win
         }
-
-        static public GameStats baseGameStats;
         
-        static public GameStats BaseGameStats() {
+        static public GameStats2 BaseGameStats() {
             return GDNStats.baseGameStats.CopyOf();
         }
-/*
-        static public GameStats BaseGameStats() {
-            var result = new GameStats() {
-                gameName = lobbyValue.GameName(),
-                team0 = lobbyValue.team0.ToTeamInfo(),
-                team1 = lobbyValue.team1.ToTeamInfo()
-            };
-            return result;
+
+        static public ShotsFired rifleShotsFired;
+        static public ShotsFired gernadeShotsFired;
+
+        static public void UpdateRifleShots(int aClipSize, int anAmmoInClip) {
+            rifleShotsFired.Update(aClipSize,anAmmoInClip);
         }
-        */
-
-
+        
+        static public void UpdategernadeShots(int aClipSize, int anAmmoInClip) {
+            gernadeShotsFired.Update(aClipSize,anAmmoInClip);
+        }
         public static void AddPlayerStat(string killed, string killedBy) {
             var ps = BaseGameStats();
-            ps.playerName = killed;
+            ps.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             ps.killed = killed;
             ps.killedBy = killedBy;
             SendPlayerStats(ps);
@@ -50,7 +49,7 @@ namespace Macrometa {
             SendPlayerStats(ps);
         }
 
-        public static void SendPlayerStats(GameStats ps) {
+        public static void SendPlayerStats(GameStats2 ps) {
             GDNStats.SendStats(ps);
         }
 
@@ -68,8 +67,132 @@ namespace Macrometa {
         public static void SendGameStats() {
             // GameDebug.Log(gameStats.ToString());
         }
+        
+        public static GameStats2 GenerataPeriodicGameStats2(PingStatsGroup.NetworkStatsData networkStatsData) {
+            var ps = BaseGameStats();
+            ps.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            ps.playerName = networkStatsData.remoteId;
+            ps.gdnCity = networkStatsData.remoteCity;
+            ps.gdnCountry = networkStatsData.remoteCountrycode;
+            ps.rtt = networkStatsData.rttAverage;
+            ps.throughput = networkStatsData.streamOutBytes; // ??? needs to change but useful as dummy data
+            //ps.health = networkStatsData.
+            //ps.fps = networkStatsData.
+            ps.rifleShotsShots = rifleShotsFired.GetAndClear();
+            ps.grenadeShots = gernadeShotsFired.GetAndClear();
+            //ps.posX = ???
+            //ps.posY =  ???
+            //ps.posZ = ???
+            //ps.orientation = ???
+
+            return ps;
+        }
+        
+
     }
 }
+
+
+[Serializable]
+public class GameStats2 {
+    public string gameName;
+    public string gameId = (long)(DateTime.Now.
+        Subtract(new DateTime(1970, 1, 1))).TotalSeconds+ "R"+Random.Range(1,1000000);
+    public long timeStamp;
+    public string playerName;
+    public int health;
+    public string matchType; //DeathMatch, Assault
+    public string matchResult; //Lose , Tie ,  Win
+
+    public string teamName;
+    
+    public TeamInfo team0;
+    public TeamInfo team1;
+    public int rtt;
+    public string gdnCity;
+    public string gdnCountry;
+    public int rifleShotsShots;
+    public int grenadeShots;
+    public string killed;
+    public string killedBy;
+    public float posX;
+    public float posY;
+    public float posZ;
+    public float orientation; //degrees XZ plane?
+    public float throughput; //bytes/second?
+    public float fps; // frames per second
+
+    public string LongToString() {
+        return gameName + ":"+gameId + ":"+ timeStamp + ":"+ playerName  + ":"+ health + ":"+ matchResult + " rtt:"+ rtt +":" +
+            fps +":" + throughput
+            +":" + gdnCity + ":" + gdnCountry + ":" + rifleShotsShots + ":" + grenadeShots + " posX:" + posX + ":" +
+            orientation;
+    }
+
+    public override string ToString() {
+        return LongToString();
+    }
+
+    public GameStats2 CopyOf() {
+        var result = new GameStats2() {
+            gameName = gameName,
+            gameId = gameId,
+            timeStamp = timeStamp,
+            playerName = playerName,
+            health = health,
+            matchType = matchType,
+            matchResult = matchResult,
+            teamName = teamName,
+            team0 = team0.CopyOf(),
+            team1 = team1.CopyOf(),
+            rtt = rtt,
+            gdnCity = gdnCity,
+            gdnCountry = gdnCountry,
+            rifleShotsShots = rifleShotsShots,
+            grenadeShots = grenadeShots,
+            killed = killed,
+            killedBy = killedBy,
+            posX = posX,
+            posY = posY,
+            posZ = posZ,
+            orientation = orientation,
+            throughput = throughput,
+            fps = fps,
+        };
+        
+        return result;
+    }
+}
+
+/*
+ {
+ X   "gameName": "test Game2", 
+ X   "playerName": "P5",
+NO	“playerIP”: 24.24.24.24,
+X	“playerHealth”: 35, // 0-100
+X	“timeStamp”: unix,
+X	“gameID”: 875248, // random number for each game
+ X   "matchType": "DeathMatch",
+ X   "matchResult": "Lose",
+  X  "teamName": "B Team",
+ X   "team0": { "teamName": "A Team", "players": ["P1", "P2", "P3", "P4"] },
+ X   "team1": { "teamName": "B Team", "players": ["P5", "P6", "P7", "P8"] },
+ X   "rtt": 0, // sent from player, but we should try to push it through the server
+ X   "GDNcity": "Tokyo",
+ X   "GDNcountry": "Jp",
+    "rifleShots": 6,
+    "granadeShots": 0,
+    "killed": "",
+    "killedBy": "",
+    "PosX": "",
+    "PosY": "", // vertical
+    "PosZ": "",
+    "Orientation": "35", // degrees on flat plane
+    "Throughput": "", // bytes/sec
+    "FPS": 60 // sent from player, but we should try to push it through the server
+  }
+
+ */
 
 
 [Serializable]
@@ -195,7 +318,31 @@ public class InGameStats {
         GameDebug.Log("GDNStats.instance.team0[0] C: "+ GDNStats.instance.team0.players[0]);
     }
 }
+public class ShotsFired {
+    public int clipSize;
+    public int ammoInClip;
+    public int shotsFired;
 
+    public void Update(int aClipSize, int anAmmoInClip) {
+        clipSize = aClipSize;
+        if (anAmmoInClip != ammoInClip) {
+            if (anAmmoInClip > ammoInClip) {
+                shotsFired += ammoInClip +clipSize - anAmmoInClip;
+                   
+            }
+            else {
+                shotsFired += ammoInClip - anAmmoInClip;
+            }
+            ammoInClip = anAmmoInClip;
+        }
+    }
+
+    public int GetAndClear() {
+        var result =  shotsFired;
+        shotsFired = 0;
+        return result;
+    }
+}
 [Serializable]
 public class KillRecordList {
     public List<global::KillRecord> krl;

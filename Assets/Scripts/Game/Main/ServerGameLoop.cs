@@ -320,6 +320,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         //m_NetworkTransport = new SocketTransport(NetworkConfig.serverPort.IntValue, serverMaxClients.IntValue);
         var isServer = true;
         GDNTransport.isSocketPingOn = true;
+        GDNTransport.isStatsOn = true;
         GDNTransport.sendDummyTraffic = false;//probably not need but safer
         m_NetworkTransport =  GDNTransport.Instance;
         gdnStats = GDNStats.Instance;

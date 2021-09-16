@@ -164,17 +164,17 @@ namespace Macrometa {
           
                 if ( gdnStreamStatsDriver?.inGameStats != null){
                     //&& gameName == GDNStats.instance.gameName) {
-                    // GameDebug.Log("testplay are A ");
+                    GameDebug.Log("testplay are A ");
                     inGameStats2 = gdnStreamStatsDriver.inGameStats;
                     //GameDebug.Log("testplay are b ");
                     killStats = new KillStats(GDNStats.instance.playerName, GDNStats.instance.team0, GDNStats.instance.team1, inGameStats2);
                     //GDNStats.Instance.InGameStats = inGameStats2;
-                   // GameDebug.Log("  killStats: "+  killStats.opponents[0]);
+                   GameDebug.Log("  killStats: "+  killStats.opponents[0]);
                 }
             
         }
 
-        public static void SendStats(GameStats gameStats) {
+        public static void SendStats(GameStats2 gameStats) {
             var msg = JsonUtility.ToJson(gameStats);
             _inst.gdnStreamStatsDriver.ProducerSend(msg);
         }
