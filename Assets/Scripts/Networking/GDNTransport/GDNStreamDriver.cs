@@ -346,7 +346,7 @@ namespace Macrometa {
         public void CreatGameStatsStream() {
             var gsListName = _gdnData.StreamListName(gameStatsStreamName);
             gameStatsStreamExists = listStream.result.Any(item => item.topic == gsListName);
-            if (!serverStatsStreamExists) {
+            if (!gameStatsStreamExists) {
                 _gdnErrorHandler.isWaiting = true;
                 _monobehaviour.StartCoroutine(MacrometaAPI.CreateStream(_gdnData, gameStatsStreamName,
                     CreateGameStatsStreamCallback));
