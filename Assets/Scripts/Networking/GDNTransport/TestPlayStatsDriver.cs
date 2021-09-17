@@ -24,7 +24,7 @@ namespace Macrometa {
         public TeamInfo team0;
         public TeamInfo team1;
         public List<GameStats> gameStats;
-        public InGameStats inGameStats2;
+        //public InGameStats inGameStats2;
         public string playStatsStreamName = "FPSGame_PlayStats" ;
         public string InGameStatsStreamName = "FPSGame_InGameStats_New" ;
         //public string InGameStatsStreamName = "FPSGame_InGameStats_New" ;
@@ -164,12 +164,12 @@ namespace Macrometa {
           
                 if ( gdnStreamStatsDriver?.inGameStats != null){
                     //&& gameName == GDNStats.instance.gameName) {
-                    GameDebug.Log("testplay are A ");
-                    inGameStats2 = gdnStreamStatsDriver.inGameStats;
+                   // GameDebug.Log("testplay are A ");
+                    //inGameStats2 = gdnStreamStatsDriver.inGameStats;
                     //GameDebug.Log("testplay are b ");
-                    killStats = new KillStats(GDNStats.instance.playerName, GDNStats.instance.team0, GDNStats.instance.team1, inGameStats2);
+                    //killStats = new KillStats(GDNStats.instance.playerName, GDNStats.instance.team0, GDNStats.instance.team1, inGameStats2);
                     //GDNStats.Instance.InGameStats = inGameStats2;
-                   GameDebug.Log("  killStats: "+  killStats.opponents[0]);
+                   //GameDebug.Log("  killStats: "+  killStats.opponents[0]);
                 }
             
         }
@@ -178,9 +178,10 @@ namespace Macrometa {
             var msg = JsonUtility.ToJson(gameStats);
             _inst.gdnStreamStatsDriver.ProducerSend(msg);
         }
-
+/*
         public static KillStats GetKillStats(string playerName, string gameName) {
             return new KillStats(playerName, _inst.lobby, _inst.inGameStats2);
         }
+        */
     }
 }

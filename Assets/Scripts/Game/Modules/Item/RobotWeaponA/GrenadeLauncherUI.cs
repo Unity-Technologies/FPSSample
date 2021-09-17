@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using Macrometa;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,6 +21,7 @@ public class GrenadeLauncherUI : AbilityUI
         activeIcon.enabled = state.phase == Ability_GrenadeLauncher.Phase.Active;
 
         bool showCooldown = state.phase == Ability_GrenadeLauncher.Phase.Cooldown;
+        PlayStats.UpdateGrenade(showCooldown);
         cooldownText.gameObject.SetActive(showCooldown);
         disabledOverlay.SetActive(showCooldown);
         if (showCooldown)

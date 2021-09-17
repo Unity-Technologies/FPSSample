@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Macrometa;
 using UnityEngine;
 using Unity.Entities;
 using UnityEngine.Profiling;
@@ -244,7 +245,7 @@ public class ClientGameWorld
             {
                 var healthState = m_GameWorld.GetEntityManager()
                     .GetComponentData<HealthStateData>(m_localPlayer.playerState.controlledEntity);
-            
+                PlayStats.SetHealth((int)healthState.health);
                 // Only show score board when alive
                 showScorePanel = healthState.health <= 0;
             }
@@ -535,6 +536,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         
         GDNTransport.isSocketPingOn = true;
         GDNTransport.sendDummyTraffic = false;//probably not need but safer
+        GDNTransport.isPlayStatsClientOn = true;
         m_NetworkTransport = GDNTransport.Instance;
         GameDebug.Log("GDNTransport instanciated 2");
         gdnStats = GDNStats.Instance;

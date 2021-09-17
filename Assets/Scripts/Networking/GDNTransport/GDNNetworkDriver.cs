@@ -14,6 +14,7 @@ public class GDNNetworkDriver : MonoBehaviour {
     
     public static bool overrideIsServer = false;
     public static bool overrideIsServerValue = false;
+    public static bool isPlayStatsClientOn = false;
 
     public GDNData baseGDNData;
     
@@ -50,12 +51,15 @@ public class GDNNetworkDriver : MonoBehaviour {
         if (!isMonitor && isServer) {
             gdnKVDriver = new GDNKVDriver(this);
         }
+
+        GDNStreamDriver.isPlayStatsClientOn = isPlayStatsClientOn;
         gdnStreamDriver = new GDNStreamDriver(this);
         gdnStreamDriver.statsGroupSize = defaultConfig.statsGroupSize;
         if (gdnStreamDriver.statsGroupSize < 1) {
             gdnStreamDriver.statsGroupSize = 10; //seconds
         }
 
+        gdnStreamDriver.statsGroupSize = 1;// hard coded for rifleShots
         gdnStreamDriver.dummyTrafficQuantity = defaultConfig.dummyTrafficQuantity;
         if (gdnStreamDriver.dummyTrafficQuantity < 0) {
             gdnStreamDriver.dummyTrafficQuantity = 0; 
@@ -186,6 +190,9 @@ public class GDNNetworkDriver : MonoBehaviour {
         }
         
         if (!gdnStreamDriver.setupComplete) {
+            if (GDNStreamDriver.isPlayStatsClientOn) {
+                PingStatsGroup.Init(Application.dataPath, "LatencyStats", gdnStreamDriver.statsGroupSize); 
+            }
             GameDebug.Log("Set up Complete as " + RwConfig.ReadConfig().gameName + " : " + gdnStreamDriver.consumerName);
             gdnStreamDriver.setupComplete = true;
             GDNTransport.setupComplete = true;
@@ -197,9 +204,7 @@ public class GDNNetworkDriver : MonoBehaviour {
             
         }
         
-        if (GDNStreamDriver.isPlayStatsClientOn) {
-            PingStatsGroup.Init(Application.dataPath, "LatencyStats", gdnStreamDriver.statsGroupSize); 
-        }
+        
         
         if (GDNStreamDriver.isSocketPingOn && !gdnStreamDriver.pingStarted ) {
             gdnStreamDriver.pingStarted = true;

@@ -13,10 +13,10 @@ public class GDNStats {
     public static GameStats2 baseGameStats;
     public TestPlayStatsDriver testPlayStatsDriver;
     public static GDNStats instance=null;
-    public TeamInfo team0;
-    public TeamInfo team1;
-    public string gameName;
-    public string playerName;
+    public static TeamInfo team0;
+    public static TeamInfo team1;
+    public static string gameName;
+    public static string playerName;
     public InGameStats InGameStats;
     
 
@@ -30,13 +30,14 @@ public class GDNStats {
     }
 
     public static void SetPlayerName(string playerName) {
-        instance.playerName = playerName;
+        GDNStats.playerName = playerName;
         GameDebug.Log("SetPlayerName: " + playerName);
     }
     
     static public void SendKills(string killed, string killedBy) {
+       // GameDebug.Log("SendKills A");
         var gameStats2 = baseGameStats.CopyOf();
-        gameStats2.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        //gameStats2.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         gameStats2.killed = killed;
         gameStats2.killedBy = killedBy;
         TestPlayStatsDriver.SendStats(gameStats2);
@@ -60,27 +61,27 @@ public class GDNStats {
     /// </summary>
     static public void AddPlayer(int teamIndex, string playerName) {
         if (teamIndex == 0) {
-            instance.team0.players.Add(playerName);
+            team0.players.Add(playerName);
         }
         else {
-            instance.team1.players.Add(playerName);
+            team1.players.Add(playerName);
         }
     }
 
     static public void ResetTeams() {
-        instance.team0 = new TeamInfo() {
+        team0 = new TeamInfo() {
             players =new List<string>(),
             teamName = "A Team"
         };
-        instance.team1 = new TeamInfo() {
+        team1 = new TeamInfo() {
             players = new List<string>(),
             teamName = "B Team"
         };
-        instance.gameName = "QuickKill";
+        gameName = "QuickKill";
         baseGameStats = new GameStats2() {
-            gameName = instance.gameName,
-            team0 = instance.team0,
-            team1 = instance.team1
+            gameName = gameName,
+            team0 = team0,
+            team1 = team1
         };
     }
     
@@ -103,6 +104,8 @@ public class GDNStats {
     }
 
     static public void SendStats(GameStats2 gs) {
+        gs.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+
         TestPlayStatsDriver.SendStats(gs);
     }
     

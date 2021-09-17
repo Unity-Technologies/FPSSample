@@ -9,6 +9,7 @@ public class GDNTransport :  INetworkTransport {
     // must be set before websockets are opened.
     public static bool isSocketPingOn = false; //off by default for compatibility
     public static bool isStatsOn= false; //off by default for compatibility
+    public static bool isPlayStatsClientOn;
     public static bool sendDummyTraffic= false; //off by default for compatibility
     public static bool isMonitor = false;  // is monitor not game
     public static bool connectionStarted = false;
@@ -43,6 +44,7 @@ public class GDNTransport :  INetworkTransport {
         connectionStarted = true;
         GDNNetworkDriver.overrideIsServer = true;
         GDNNetworkDriver.overrideIsServerValue = isServer;
+        GDNNetworkDriver.isPlayStatsClientOn = isPlayStatsClientOn;
         GDNNetworkDriver.isMonitor = isMonitor;
         GDNStreamDriver.isSocketPingOn = isSocketPingOn;
         GDNStreamDriver.isStatsOn = isStatsOn;

@@ -88,7 +88,7 @@ namespace Macrometa {
         public string chatStreamName;
         public string gameStatsStreamName = "FPSGame_GameStats" ;
         
-        public float pingFrequency = 1;
+        public float pingFrequency = 10; //hard coded here
         public float dummyFrequency = 0.05f; // FPSSample standard is 20 messages per second
         public int dummySize = 50; // FPSSample standard is under 2000 bytes per second
         
@@ -546,14 +546,30 @@ namespace Macrometa {
                 s = gdnConnection.source,
                 z = payload.Length
             };
-            if (msgType == VirtualMsgType.Ping || msgType == VirtualMsgType.Pong) {
+            if (msgType == VirtualMsgType.Ping ) {
                 properties.i = pingId;
                 properties.r = pingTimeR;
                 properties.o = pingTimeO;
-                properties.localId = localId;
+                properties.localId = GDNStats.playerName;
                 properties.host = region.host;
                 properties.city = region.locationInfo.city;
                 properties.countrycode = region.locationInfo.countrycode;
+               
+            }
+            
+            if ( msgType == VirtualMsgType.Pong) {
+                properties.i = pingId;
+                properties.r = pingTimeR;
+                properties.o = pingTimeO;
+                properties.localId = GDNStats.playerName;
+                properties.host = region.host;
+                properties.city = region.locationInfo.city;
+                properties.countrycode = region.locationInfo.countrycode;
+                properties.rifleShots = PlayStats.GetAndClearRifle();
+                properties.grenadeShots =   PlayStats.GetAndClearGrenade();
+                properties.fps = PlayStats.FPS;
+                properties.health = PlayStats.Health;
+                GameDebug.Log("pong to: "+ gdnConnection.destination + " rifle: " +properties.rifleShots );
             }
 
             var message = new SendMessage() {
@@ -1288,16 +1304,21 @@ namespace Macrometa {
 
 
             if (isStatsOn) {
+               
                 var networkStatsData = pingStatsGroup.AddRtt(transportPing.elapsedTime,
                     producer1.Latency, consumer1.Latency,
                     receivedMessage.properties.o, receivedMessage.properties.r,
                     receivedMessage.properties.localId,
                     receivedMessage.properties.host, receivedMessage.properties.city,
                     receivedMessage.properties.countrycode);
+                
                 if (networkStatsData != null) {
+                   // GameDebug.Log("ReceiveTransportPong C");
                     if (isPlayStatsServerOn) {
-                        var gameStats2 = PlayStats.GenerataPeriodicGameStats2(networkStatsData);
-                        ProducerGameStatsSend(networkStatsData);
+                        //GameDebug.Log("ReceiveTransportPong D ");
+                        var gameStats2 = PlayStats.GenerataPeriodicGameStats2(networkStatsData,receivedMessage);
+                        GameDebug.Log("ReceiveTransportPong E ");
+                        ProducerGameStatsSend(gameStats2);
                         GameDebug.Log("GameStats: " + gameStats2);
                     }
                     else {
@@ -1366,9 +1387,9 @@ namespace Macrometa {
                 destination = receivedMessage.properties.s,
                 port = receivedMessage.properties.p
             };
-            //GameDebug.Log("send pong : "+ receivedMessage.properties.s);
+            GameDebug.Log("send pong : "+ receivedMessage.properties.s);
             ProducerSend(connection, VirtualMsgType.Pong, new byte[0], receivedMessage.properties.i,
-                producer1.Latency, consumer1.Latency, localId);
+                producer1.Latency, consumer1.Latency,GDNStats.playerName);
         }
         
         public void SendChatTransportPing() {

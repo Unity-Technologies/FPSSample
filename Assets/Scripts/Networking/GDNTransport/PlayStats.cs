@@ -15,23 +15,56 @@ namespace Macrometa {
             Win
         }
         
-        static public GameStats2 BaseGameStats() {
-            return GDNStats.baseGameStats.CopyOf();
+        static public ShotsFired rifleShotsFired =new ShotsFired();
+        
+        static public int FPS;
+        static public int Health;
+        static public bool prevCooldown = false;
+        static public int grenadeShots;
+        
+        static public void SetFPS(int val) {
+            PlayStats.FPS = val;
         }
 
-        static public ShotsFired rifleShotsFired;
-        static public ShotsFired gernadeShotsFired;
-
+        static public void SetHealth(int val) {
+            PlayStats.Health= val;
+        }
         static public void UpdateRifleShots(int aClipSize, int anAmmoInClip) {
             rifleShotsFired.Update(aClipSize,anAmmoInClip);
+           // Debug.Log("UpdateRifleShots clipsize:" +aClipSize + " ammoInClip: " +
+           //           anAmmoInClip +" shots " +
+            //          "fired: "+  rifleShotsFired.shotsFired);
         }
         
-        static public void UpdategernadeShots(int aClipSize, int anAmmoInClip) {
-            gernadeShotsFired.Update(aClipSize,anAmmoInClip);
+        static public int GetAndClearRifle() {
+            //Debug.Log("GetAndClearRifle :" + rifleShotsFired.shotsFired);
+            return rifleShotsFired.GetAndClear();
         }
+
+        
+        
+        
+        //use when avatar dies.
+        static public void ResetRifleShots() {
+            rifleShotsFired.Reset();
+        }
+        static public void UpdateGrenade(bool cooldown) {
+            if (!prevCooldown && cooldown) {
+                Debug.Log("update incr :" + grenadeShots);
+                grenadeShots++;}
+            prevCooldown = cooldown;
+        }
+        static public int GetAndClearGrenade() {
+            Debug.Log("GetAndClearGrenade :" + grenadeShots);
+            var result = grenadeShots;
+            grenadeShots = 0;
+            return result; ;
+        }
+       
         public static void AddPlayerStat(string killed, string killedBy) {
-            var ps = BaseGameStats();
-            ps.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            GameDebug.Log("AddPlayerStat A");
+            var ps = GDNStats.baseGameStats.CopyOf();
+            //ps.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             ps.killed = killed;
             ps.killedBy = killedBy;
             SendPlayerStats(ps);
@@ -39,8 +72,8 @@ namespace Macrometa {
 
         public static void AddPlayerMatchResultStat(string playerName, string gameType,
             MatchResult matchResult, int score) {
-            var ps = BaseGameStats();
-
+            var ps = GDNStats.baseGameStats.CopyOf();
+            //ps.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             ps.playerName = playerName;
             ps.matchType = gameType;
             ps.matchResult = matchResult.ToString();
@@ -68,18 +101,22 @@ namespace Macrometa {
             // GameDebug.Log(gameStats.ToString());
         }
         
-        public static GameStats2 GenerataPeriodicGameStats2(PingStatsGroup.NetworkStatsData networkStatsData) {
-            var ps = BaseGameStats();
+        public static GameStats2 GenerataPeriodicGameStats2(PingStatsGroup.NetworkStatsData networkStatsData,
+            ReceivedMessage receivedMessage) {
+            //GameDebug.Log("GenerataPeriodicGameStats2 A");
+            var ps = GDNStats.baseGameStats.CopyOf();
+            //GameDebug.Log("GenerataPeriodicGameStats2 B");
             ps.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             ps.playerName = networkStatsData.remoteId;
             ps.gdnCity = networkStatsData.remoteCity;
             ps.gdnCountry = networkStatsData.remoteCountrycode;
             ps.rtt = networkStatsData.rttAverage;
             ps.throughput = networkStatsData.streamOutBytes; // ??? needs to change but useful as dummy data
-            //ps.health = networkStatsData.
-            //ps.fps = networkStatsData.
-            ps.rifleShotsShots = rifleShotsFired.GetAndClear();
-            ps.grenadeShots = gernadeShotsFired.GetAndClear();
+            ps.health = receivedMessage.properties.health;
+            ps.fps = receivedMessage.properties.fps;
+            ps.rifleShotsShots =receivedMessage.properties.rifleShots;
+            //GameDebug.Log("GenerataPeriodicGameStats2 rifle: " + ps.rifleShotsShots);
+            ps.grenadeShots = receivedMessage.properties.grenadeShots;
             //ps.posX = ???
             //ps.posY =  ???
             //ps.posZ = ???
@@ -294,7 +331,7 @@ public class InGameStats {
 
     public void Convert() {
         GameDebug.Log("opponents[0] A");
-        GameDebug.Log("player: "+ GDNStats.instance.playerName);
+        GameDebug.Log("player: "+ GDNStats.playerName);
         killRecordsList = JsonUtility.FromJson<KillRecordList>( "{\"krl\":" + killRecords + "}");
         
         GameDebug.Log("opponents[0] B");
@@ -302,7 +339,7 @@ public class InGameStats {
         
        
         GDNStats.Instance.testPlayStatsDriver.killStats =
-            new KillStats(GDNStats.instance.playerName, GDNStats.instance.team0, GDNStats.instance.team1, this);
+            new KillStats(GDNStats.playerName, GDNStats.team0, GDNStats.team1, this);
         GameDebug.Log("opponents[0] Z" + GDNStats.Instance.testPlayStatsDriver.killStats.opponents[0]);
         
         if (GDNStats.Instance?.testPlayStatsDriver?.killStats?.opponents != null) {
@@ -315,7 +352,7 @@ public class InGameStats {
             }
         }
         GameDebug.Log( "ZZ* " + killRecordsList.ToString());
-        GameDebug.Log("GDNStats.instance.team0[0] C: "+ GDNStats.instance.team0.players[0]);
+        GameDebug.Log("GDNStats.instance.team0[0] C: "+ GDNStats.team0.players[0]);
     }
 }
 public class ShotsFired {
@@ -337,6 +374,10 @@ public class ShotsFired {
         }
     }
 
+    public void Reset() {
+        ammoInClip = +clipSize;
+    }
+    
     public int GetAndClear() {
         var result =  shotsFired;
         shotsFired = 0;

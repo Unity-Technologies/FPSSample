@@ -408,6 +408,10 @@ expireAfter: The time (in seconds) after a document's creation after which the d
         public string host; // datacenter host from region
         public string city;
         public string countrycode;
+        public int rifleShots;
+        public int grenadeShots;
+        public int fps;
+        public int health;
         //public LocationInfo locationInfo; // data center info from region
 
     }

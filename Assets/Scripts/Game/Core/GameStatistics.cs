@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine.Profiling;
 using System;
 using System.Collections.Generic;
+using Macrometa;
 
 public class GameStatistics
 {
@@ -148,7 +149,7 @@ public class GameStatistics
         DebugOverlay.AddQuadAbsolute(0, 0, 60, 14, '\0', new Vector4(1.0f, 1.0f, 1.0f, 0.2f));
         var c = StringFormatter.Write(ref buf, 0, "FPS:{0}", Mathf.RoundToInt(1000.0f / m_FrameDurationMS));
         DebugOverlay.WriteAbsolute(2, 2, 8.0f, buf, c);
-
+        PlayStats.SetFPS(Mathf.RoundToInt(1000.0f / m_FrameDurationMS));
         DebugOverlay.AddQuadAbsolute(62, 0, 60, 14, '\0', new Vector4(1.0f, 1.0f, 0.0f, 0.2f));
         if (rtt > 0)
             c = StringFormatter.Write(ref buf, 0, "RTT:{0}", rtt);
