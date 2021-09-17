@@ -21,6 +21,8 @@ namespace Macrometa {
         static public int Health;
         static public bool prevCooldown = false;
         static public int grenadeShots;
+        static public Vector3 position;
+        static public Quaternion rotation;
         
         static public void SetFPS(int val) {
             PlayStats.FPS = val;
@@ -117,9 +119,9 @@ namespace Macrometa {
             ps.rifleShotsShots =receivedMessage.properties.rifleShots;
             //GameDebug.Log("GenerataPeriodicGameStats2 rifle: " + ps.rifleShotsShots);
             ps.grenadeShots = receivedMessage.properties.grenadeShots;
-            //ps.posX = ???
-            //ps.posY =  ???
-            //ps.posZ = ???
+            ps.posX = receivedMessage.properties.posX;
+            ps.posY = receivedMessage.properties.posY;
+            ps.posZ = receivedMessage.properties.posZ;
             //ps.orientation = ???
 
             return ps;

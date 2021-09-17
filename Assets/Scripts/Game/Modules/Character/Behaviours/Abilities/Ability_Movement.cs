@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Macrometa;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -147,7 +148,10 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             predictedState.locoState = newPhase;
             predictedState.locoStartTick = time.tick;
         }
-        
+
+
+        PlayStats.position = predictedState.position;
+        //PlayStats.rotation =  predictedState.
         if (debugCharacterMove.IntValue > 0)
         {
             // Only show for one player

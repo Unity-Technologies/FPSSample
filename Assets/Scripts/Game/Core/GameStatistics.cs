@@ -157,14 +157,14 @@ public class GameStatistics
             c = StringFormatter.Write(ref buf, 0, "RTT:---");
         DebugOverlay.WriteAbsolute(64, 2, 8.0f, buf, c);
         //DebugOverlay.AddQuadAbsolute(0, 16, 64, 14, '\0', new Vector4(1.0f, 1.0f, 0.0f, 0.2f));
-        DebugOverlay.AddQuadAbsolute(0, 32, 68, 14, '\0', new Vector4(1.0f, 1.0f, 1.0f, 0.2f));
-        c = StringFormatter.Write(ref buf, 0, "Kills ", Mathf.RoundToInt(1000.0f / m_FrameDurationMS));
-        DebugOverlay.WriteAbsolute(2, 34, 8.0f, buf, c);
-        DebugOverlay.AddQuadAbsolute(0, 48, 68, 14, '\0', new Vector4(1.0f, 1.0f, 1.0f, 0.2f));
-        c = StringFormatter.Write(ref buf, 0, "KilledBy", Mathf.RoundToInt(1000.0f / m_FrameDurationMS));
-        DebugOverlay.WriteAbsolute(2, 50, 8.0f, buf, c);
-        DrawKillsCol(0, "Hot Robot", 2, 5, 37);
-        DrawKillsCol(1, "Fuzzy Dolphin", 14, 3, 20);
+       // DebugOverlay.AddQuadAbsolute(0, 32, 68, 14, '\0', new Vector4(1.0f, 1.0f, 1.0f, 0.2f));
+       // c = StringFormatter.Write(ref buf, 0, "Kills ", Mathf.RoundToInt(1000.0f / m_FrameDurationMS));
+        //DebugOverlay.WriteAbsolute(2, 34, 8.0f, buf, c);
+       // DebugOverlay.AddQuadAbsolute(0, 48, 68, 14, '\0', new Vector4(1.0f, 1.0f, 1.0f, 0.2f));
+        //c = StringFormatter.Write(ref buf, 0, "KilledBy", Mathf.RoundToInt(1000.0f / m_FrameDurationMS));
+       // DebugOverlay.WriteAbsolute(2, 50, 8.0f, buf, c);
+        //DrawKillsCol(0, "Hot Robot", 2, 5, 37);
+       // DrawKillsCol(1, "Fuzzy Dolphin", 14, 3, 20);
 
 /*
         if (GDNStats.Instance?.testPlayStatsDriver?.killStats?.opponents != null) {

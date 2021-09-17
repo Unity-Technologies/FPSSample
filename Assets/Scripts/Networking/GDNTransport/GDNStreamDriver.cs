@@ -88,7 +88,7 @@ namespace Macrometa {
         public string chatStreamName;
         public string gameStatsStreamName = "FPSGame_GameStats" ;
         
-        public float pingFrequency = 10; //hard coded here
+        public float pingFrequency = 1; //hard coded here
         public float dummyFrequency = 0.05f; // FPSSample standard is 20 messages per second
         public int dummySize = 50; // FPSSample standard is under 2000 bytes per second
         
@@ -569,7 +569,11 @@ namespace Macrometa {
                 properties.grenadeShots =   PlayStats.GetAndClearGrenade();
                 properties.fps = PlayStats.FPS;
                 properties.health = PlayStats.Health;
-                GameDebug.Log("pong to: "+ gdnConnection.destination + " rifle: " +properties.rifleShots );
+                properties.posX = PlayStats.position.x;
+                properties.posY = PlayStats.position.y;
+                properties.posZ = PlayStats.position.z;
+
+                //GameDebug.Log("pong to: "+ gdnConnection.destination + " rifle: " +properties.rifleShots );
             }
 
             var message = new SendMessage() {
