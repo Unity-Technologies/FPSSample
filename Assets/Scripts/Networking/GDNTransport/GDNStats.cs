@@ -52,7 +52,7 @@ public class GDNStats {
     {
         testPlayStatsDriver= new GameObject().AddComponent<TestPlayStatsDriver>();
         MonoBehaviour.DontDestroyOnLoad(testPlayStatsDriver.gameObject);
-        ResetTeams();
+        ResetBaseGame();
     }
     
     
@@ -68,7 +68,7 @@ public class GDNStats {
         }
     }
 
-    static public void ResetTeams() {
+    static public void ResetBaseGame() {
         team0 = new TeamInfo() {
             players =new List<string>(),
             teamName = "A Team"
@@ -77,13 +77,14 @@ public class GDNStats {
             players = new List<string>(),
             teamName = "B Team"
         };
-        gameName = "QuickKill";
         baseGameStats = new GameStats2() {
             gameName = gameName,
             team0 = team0,
             team1 = team1
         };
     }
+
+    
     
     public void MakeBaseInfo(string gameName, string team0Name, string team1Name, List<string> team0Players,
         List<String> team1Players) {
@@ -104,7 +105,7 @@ public class GDNStats {
     }
 
     static public void SendStats(GameStats2 gs) {
-        gs.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        gs.timeStamp = (long) (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
 
         TestPlayStatsDriver.SendStats(gs);
     }

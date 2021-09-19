@@ -27,7 +27,7 @@ public class AutomaticRifleUI : AbilityUI
             m_ClipSize = settings.clipSize;
             m_ClipSizeText.text = "/ " + m_ClipSize.ToString();
         }
-        
+       
         PlayStats.UpdateRifleShots(m_ClipSize,m_AmmoInClip);
            
             

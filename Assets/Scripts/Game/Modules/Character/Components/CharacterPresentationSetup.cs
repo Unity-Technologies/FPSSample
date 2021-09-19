@@ -50,6 +50,9 @@ public class UpdatePresentationRootTransform : BaseComponentSystem<CharacterPres
         var animState = EntityManager.GetComponentData<CharacterInterpolatedData>(charPresentation.character);
         charPresentation.transform.position = animState.position;
         charPresentation.transform.rotation = Quaternion.Euler(0f, animState.rotation, 0f);
+        //GameDebug.Log("UpdatePresentationRootTransform: "
+        //              +  charPresentation.transform.rotation.eulerAngles +
+         //             " loc: " +charPresentation.transform.position);
     }
 }
 

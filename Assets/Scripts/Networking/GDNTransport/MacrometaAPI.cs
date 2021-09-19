@@ -415,7 +415,10 @@ expireAfter: The time (in seconds) after a document's creation after which the d
         public float posX;
         public float posY;
         public float posZ;
-        //public LocationInfo locationInfo; // data center info from region
+        public float orientation;
+        public string killedPlayerName;
+
+
 
     }
     

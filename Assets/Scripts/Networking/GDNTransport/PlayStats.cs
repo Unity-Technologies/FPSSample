@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Macrometa.Lobby;
 using UnityEngine;
+using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.Experimental.UIElements;
 using Random = UnityEngine.Random;
 
@@ -18,24 +19,60 @@ namespace Macrometa {
         static public ShotsFired rifleShotsFired =new ShotsFired();
         
         static public int FPS;
-        static public int Health;
+        static public int health;
         static public bool prevCooldown = false;
         static public int grenadeShots;
         static public Vector3 position;
-        static public Quaternion rotation;
+        static public float orientation;
+        static public string gameTimerMessage = "unset";
+
+
+        static public void PlayerKilled(string playerName) {
+            if(GDNStats.playerName == playerName) {
+                ReloadRifleShots();
+            }
+        }
+        
+        static public void CheckCameTimerMessage( string message) {
+            if (message == gameTimerMessage) return;
+            gameTimerMessage = message;
+            if ("PreMatch" == gameTimerMessage) {
+                PrematchStarted();
+            }
+            else {
+                MatchStarted();
+            }
+        }
+
+        public static void MatchStarted() {
+            ResetStats();
+        }
+
+        public static void PrematchStarted() {
+            ResetStats();
+        } 
         
         static public void SetFPS(int val) {
             PlayStats.FPS = val;
         }
-
+        static public void SetOrientation(Quaternion quaternion) {
+            PlayStats.orientation = quaternion.eulerAngles.y;
+        }
+        
         static public void SetHealth(int val) {
-            PlayStats.Health= val;
+            PlayStats.health= val;
+            Debug.Log("SetHealth :" + val);
+            if (health == 0) {
+                ReloadRifleShots();
+            }
+        }
+        //use when avatar dies.
+        static public void ReloadRifleShots() {
+            Debug.Log( "ReloadRifleShots()  :" + rifleShotsFired.shotsFired);
+            rifleShotsFired.Reload();
         }
         static public void UpdateRifleShots(int aClipSize, int anAmmoInClip) {
             rifleShotsFired.Update(aClipSize,anAmmoInClip);
-           // Debug.Log("UpdateRifleShots clipsize:" +aClipSize + " ammoInClip: " +
-           //           anAmmoInClip +" shots " +
-            //          "fired: "+  rifleShotsFired.shotsFired);
         }
         
         static public int GetAndClearRifle() {
@@ -43,13 +80,16 @@ namespace Macrometa {
             return rifleShotsFired.GetAndClear();
         }
 
-        
-        
-        
-        //use when avatar dies.
-        static public void ResetRifleShots() {
-            rifleShotsFired.Reset();
+        static public int GetRifle() {
+            //Debug.Log("GetAndClearRifle :" + rifleShotsFired.shotsFired);
+            return rifleShotsFired.Get();
         }
+        
+        static public void ClearRifle() {
+            Debug.Log("ClearRifle :" + rifleShotsFired.shotsFired);
+            rifleShotsFired.Clear();
+        }
+        
         static public void UpdateGrenade(bool cooldown) {
             if (!prevCooldown && cooldown) {
                 Debug.Log("update incr :" + grenadeShots);
@@ -57,14 +97,30 @@ namespace Macrometa {
             prevCooldown = cooldown;
         }
         static public int GetAndClearGrenade() {
-            Debug.Log("GetAndClearGrenade :" + grenadeShots);
+           // Debug.Log("GetAndClearGrenade :" + grenadeShots);
             var result = grenadeShots;
             grenadeShots = 0;
             return result; ;
         }
        
+        static public int GetGrenade() {
+            // Debug.Log("GetAndClearGrenade :" + grenadeShots);
+            return grenadeShots;
+        }
+        
+        static public void ClearGrenade() {
+            // Debug.Log("GetAndClearGrenade :" + grenadeShots);
+            grenadeShots = 0;
+        }
+
+        static public void ResetStats() {
+            GameDebug.Log("ResetStats()");
+            ClearRifle();
+            ClearGrenade();
+        }
+        
         public static void AddPlayerStat(string killed, string killedBy) {
-            GameDebug.Log("AddPlayerStat A");
+           
             var ps = GDNStats.baseGameStats.CopyOf();
             //ps.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             ps.killed = killed;
@@ -108,7 +164,7 @@ namespace Macrometa {
             //GameDebug.Log("GenerataPeriodicGameStats2 A");
             var ps = GDNStats.baseGameStats.CopyOf();
             //GameDebug.Log("GenerataPeriodicGameStats2 B");
-            ps.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            ps.timeStamp = (long) (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
             ps.playerName = networkStatsData.remoteId;
             ps.gdnCity = networkStatsData.remoteCity;
             ps.gdnCountry = networkStatsData.remoteCountrycode;
@@ -116,13 +172,13 @@ namespace Macrometa {
             ps.throughput = networkStatsData.streamOutBytes; // ??? needs to change but useful as dummy data
             ps.health = receivedMessage.properties.health;
             ps.fps = receivedMessage.properties.fps;
-            ps.rifleShotsShots =receivedMessage.properties.rifleShots;
+            ps.rifleShots =receivedMessage.properties.rifleShots;
             //GameDebug.Log("GenerataPeriodicGameStats2 rifle: " + ps.rifleShotsShots);
             ps.grenadeShots = receivedMessage.properties.grenadeShots;
             ps.posX = receivedMessage.properties.posX;
             ps.posY = receivedMessage.properties.posY;
             ps.posZ = receivedMessage.properties.posZ;
-            //ps.orientation = ???
+            ps.orientation = receivedMessage.properties.orientation;
 
             return ps;
         }
@@ -137,7 +193,7 @@ public class GameStats2 {
     public string gameName;
     public string gameId = (long)(DateTime.Now.
         Subtract(new DateTime(1970, 1, 1))).TotalSeconds+ "R"+Random.Range(1,1000000);
-    public long timeStamp;
+    public long   timeStamp;
     public string playerName;
     public int health;
     public string matchType; //DeathMatch, Assault
@@ -150,7 +206,7 @@ public class GameStats2 {
     public int rtt;
     public string gdnCity;
     public string gdnCountry;
-    public int rifleShotsShots;
+    public int rifleShots;
     public int grenadeShots;
     public string killed;
     public string killedBy;
@@ -164,7 +220,7 @@ public class GameStats2 {
     public string LongToString() {
         return gameName + ":"+gameId + ":"+ timeStamp + ":"+ playerName  + ":"+ health + ":"+ matchResult + " rtt:"+ rtt +":" +
             fps +":" + throughput
-            +":" + gdnCity + ":" + gdnCountry + ":" + rifleShotsShots + ":" + grenadeShots + " posX:" + posX + ":" +
+            +":" + gdnCity + ":" + gdnCountry + ":" + rifleShots + ":" + grenadeShots + " posX:" + posX + ":" +
             orientation;
     }
 
@@ -187,7 +243,7 @@ public class GameStats2 {
             rtt = rtt,
             gdnCity = gdnCity,
             gdnCountry = gdnCountry,
-            rifleShotsShots = rifleShotsShots,
+            rifleShots = rifleShots,
             grenadeShots = grenadeShots,
             killed = killed,
             killedBy = killedBy,
@@ -203,35 +259,9 @@ public class GameStats2 {
     }
 }
 
-/*
- {
- X   "gameName": "test Game2", 
- X   "playerName": "P5",
-NO	“playerIP”: 24.24.24.24,
-X	“playerHealth”: 35, // 0-100
-X	“timeStamp”: unix,
-X	“gameID”: 875248, // random number for each game
- X   "matchType": "DeathMatch",
- X   "matchResult": "Lose",
-  X  "teamName": "B Team",
- X   "team0": { "teamName": "A Team", "players": ["P1", "P2", "P3", "P4"] },
- X   "team1": { "teamName": "B Team", "players": ["P5", "P6", "P7", "P8"] },
- X   "rtt": 0, // sent from player, but we should try to push it through the server
- X   "GDNcity": "Tokyo",
- X   "GDNcountry": "Jp",
-    "rifleShots": 6,
-    "granadeShots": 0,
-    "killed": "",
-    "killedBy": "",
-    "PosX": "",
-    "PosY": "", // vertical
-    "PosZ": "",
-    "Orientation": "35", // degrees on flat plane
-    "Throughput": "", // bytes/sec
-    "FPS": 60 // sent from player, but we should try to push it through the server
-  }
 
- */
+
+ 
 
 
 [Serializable]
@@ -361,9 +391,19 @@ public class ShotsFired {
     public int clipSize;
     public int ammoInClip;
     public int shotsFired;
+    public bool paused;
 
     public void Update(int aClipSize, int anAmmoInClip) {
         clipSize = aClipSize;
+        if (paused) {
+            if (ammoInClip == anAmmoInClip) {
+                paused = false;
+                GameDebug.Log("Reload() unpause: "+ammoInClip+ " : "+  shotsFired);
+            }
+            else {
+                return;
+            }
+        }
         if (anAmmoInClip != ammoInClip) {
             if (anAmmoInClip > ammoInClip) {
                 shotsFired += ammoInClip +clipSize - anAmmoInClip;
@@ -376,8 +416,10 @@ public class ShotsFired {
         }
     }
 
-    public void Reset() {
-        ammoInClip = +clipSize;
+    public void Reload() {
+        GameDebug.Log("Reload() start: "+ammoInClip + " : "+  shotsFired);
+                        ammoInClip = clipSize;
+        paused = true;
     }
     
     public int GetAndClear() {
@@ -385,6 +427,15 @@ public class ShotsFired {
         shotsFired = 0;
         return result;
     }
+    
+    public int Get() {
+        return  shotsFired; ;
+    }
+    
+    public void Clear() {
+        shotsFired = 0;
+    }
+    
 }
 [Serializable]
 public class KillRecordList {

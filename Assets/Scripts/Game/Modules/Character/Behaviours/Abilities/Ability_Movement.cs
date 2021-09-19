@@ -151,7 +151,12 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
 
 
         PlayStats.position = predictedState.position;
-        //PlayStats.rotation =  predictedState.
+        /*
+        Vector2 vel = new Vector2(predictedState.velocity.x, predictedState.velocity.z);
+        if (vel.sqrMagnitude > 0.01) {
+            PlayStats.orientation = Vector3.Angle(vel, new Vector2(0, 1));
+        }
+        */
         if (debugCharacterMove.IntValue > 0)
         {
             // Only show for one player

@@ -523,6 +523,31 @@ namespace Macrometa {
             ws.Open();
         }
         
+        // send message to clients
+        // killed
+        //destination All
+        //message killed
+        //playername
+        public void ProducerSendKilled(string playerName) {
+            var properties = new MessageProperties() {
+                t =  VirtualMsgType.Internal,
+                p = 9,
+                d = "all",
+                s = consumerName,
+                z =0,
+                killedPlayerName =  playerName
+            };
+            var message = new SendMessage() {
+                properties = properties,
+                payload = Convert.ToBase64String(new byte[0])
+            };
+            string msgJSON = JsonUtility.ToJson(message);
+            producer1.Send(msgJSON);
+            if (isStatsOn || isPlayStatsClientOn) {
+                producer1Stats.IncrementCounts(msgJSON.Length);
+            }
+        }
+        
 
         public void ProducerSend(int id, VirtualMsgType msgType, byte[] payload,
             int pingId = 0, int pingTimeR = 0, int pingTimeO = 0, string localId = "") {
@@ -565,14 +590,14 @@ namespace Macrometa {
                 properties.host = region.host;
                 properties.city = region.locationInfo.city;
                 properties.countrycode = region.locationInfo.countrycode;
-                properties.rifleShots = PlayStats.GetAndClearRifle();
-                properties.grenadeShots =   PlayStats.GetAndClearGrenade();
+                properties.rifleShots = PlayStats.GetRifle();
+                properties.grenadeShots =   PlayStats.GetGrenade();
                 properties.fps = PlayStats.FPS;
-                properties.health = PlayStats.Health;
+                properties.health = PlayStats.health;
                 properties.posX = PlayStats.position.x;
                 properties.posY = PlayStats.position.y;
                 properties.posZ = PlayStats.position.z;
-
+                properties.orientation = PlayStats.orientation;
                 //GameDebug.Log("pong to: "+ gdnConnection.destination + " rifle: " +properties.rifleShots );
             }
 
@@ -656,6 +681,12 @@ namespace Macrometa {
                 if (isStatsOn) {
                     consumer1Stats.IncrementCounts(e.Length);
                     //GameDebug.Log("Consumer1.OnMessage");
+                }
+
+                if (receivedMessage.properties != null &&
+                    receivedMessage.properties.d == "all"
+                ) {
+                    PlayStats.PlayerKilled(receivedMessage.properties.killedPlayerName);
                 }
 
                 if (receivedMessage.properties != null &&
@@ -1321,9 +1352,9 @@ namespace Macrometa {
                     if (isPlayStatsServerOn) {
                         //GameDebug.Log("ReceiveTransportPong D ");
                         var gameStats2 = PlayStats.GenerataPeriodicGameStats2(networkStatsData,receivedMessage);
-                        GameDebug.Log("ReceiveTransportPong E ");
+                       // GameDebug.Log("ReceiveTransportPong E ");
                         ProducerGameStatsSend(gameStats2);
-                        GameDebug.Log("GameStats: " + gameStats2);
+                       // GameDebug.Log("GameStats: " + gameStats2);
                     }
                     else {
                         ProducerStatsSend(networkStatsData);
@@ -1337,7 +1368,7 @@ namespace Macrometa {
         public void ReceiveChatTransportPong(string rttClientId) {
 
             var rtt = (int) chatPingStopwatch.ElapsedMilliseconds;
-            GameDebug.Log("lRtt: " + rttClientId + " : " + rtt);
+            //GameDebug.Log("lRtt: " + rttClientId + " : " + rtt);
             ChatSendSetRttTime(rttClientId,rtt);
             
         }

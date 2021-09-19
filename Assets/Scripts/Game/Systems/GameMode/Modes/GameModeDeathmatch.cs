@@ -70,7 +70,7 @@ public class GameModeDeathmatch : IGameMode
                         m_GameModeSystemServer.StartGameTimer(roundLength, "");
                         m_Phase = Phase.Active;
                         m_GameModeSystemServer.chatSystem.SendChatAnnouncement("Match started!");
-                        GDNStats.ResetTeams();
+                        GDNStats.ResetBaseGame();
                         for (var i = 0; i < players.Length; i++) {
                             var player = players[i];
                             GDNStats.AddPlayer(player.teamIndex,player.playerName);
@@ -79,6 +79,7 @@ public class GameModeDeathmatch : IGameMode
                                           gameModeState.teamName0 + " : +" +
                                           gameModeState.teamName1);
                         }
+                        
                         GDNStats.SendStats(GDNStats.baseGameStats);
                         GameDebug.Log(GDNStats.baseGameStats.ToString());
                         
@@ -148,6 +149,7 @@ public class GameModeDeathmatch : IGameMode
                 }
                 break;
             case Phase.Ended:
+                GDNStats.ResetBaseGame();
                 if (m_GameModeSystemServer.GetGameTimer() == 0)
                 {
                     for (int i = 0, c = players.Length; i < c; i++)

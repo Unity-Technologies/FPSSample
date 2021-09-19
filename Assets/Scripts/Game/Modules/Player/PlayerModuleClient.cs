@@ -44,12 +44,14 @@ public class PlayerModuleClient
 
     public LocalPlayer RegisterLocalPlayer(int playerId, NetworkClient networkClient)
     {
+        
         var prefab = Resources.Load<LocalPlayer>("Prefabs/LocalPlayer");
         m_LocalPlayer = m_world.Spawn<LocalPlayer>(prefab.gameObject);
+        //Debug.Log( "RegisterLocalPlayer" );
         m_LocalPlayer.playerId = playerId;
         m_LocalPlayer.networkClient = networkClient;
         m_LocalPlayer.command.lookPitch = 90;
-        
+       
         m_ResolvePlayerReference.SetLocalPlayer(m_LocalPlayer);
         return m_LocalPlayer;
     }

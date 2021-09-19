@@ -199,7 +199,7 @@ public class GameModeSystemServer : ComponentSystem
             var player = playerStates[i];
             var controlledEntity = player.controlledEntity;
             var playerEntity = playerEntities[i];
-
+            
             
             player.actionString = player.enableCharacterSwitch ? "Press H to change character" : "";
 
@@ -248,6 +248,7 @@ public class GameModeSystemServer : ComponentSystem
 
                             CharacterDespawnRequest.Create(PostUpdateCommands, controlledEntity);
                             CharacterSpawnRequest.Create(PostUpdateCommands, charControl.characterType, predictedState.position, rotation, playerEntity);
+                            GameDebug.Log("server despawn/respawn  " + player.playerName + "rotation");
                         }
                         player.controlledEntity = Entity.Null;
                     }
@@ -274,8 +275,8 @@ public class GameModeSystemServer : ComponentSystem
                             var format = s_KillMessages[Random.Range(0, s_KillMessages.Length)];
                             var l = StringFormatter.Write(ref _msgBuf, 0, format, killerPlayer.playerName, player.playerName, m_TeamColors[killerPlayer.teamIndex], m_TeamColors[player.teamIndex]);
                             chatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
-                            GameDebug.Log("CharacterUISystems.cs line 274 "+  killerPlayer.playerName + " killed "
-                                          + player.playerName );
+                           // GameDebug.Log("CharacterUISystems.cs line 274 "+  killerPlayer.playerName + " killed "
+                           //               + player.playerName );
                             PlayStats.AddPlayerStat( player.playerName,killerPlayer.playerName);
                            
                         }
