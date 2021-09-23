@@ -7,6 +7,15 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
+[Serializable]
+public class GDNFields {
+    public TMPro.TMP_InputField gdnFederationURL;
+    public TMPro.TMP_InputField gdnTenant;
+    public TMPro.TMP_InputField gdnFabric;
+    public Toggle isGlobal;
+    public TMPro.TMP_InputField gdnAPIKey;
+}
+
 public class JoinMenu : MonoBehaviour
 {
     [ConfigVar(Name = "serverlist", Description = "Comma seperated list of commonly used servers", DefaultValue = "localhost", Flags = ConfigVar.Flags.Save)]
@@ -25,18 +34,23 @@ public class JoinMenu : MonoBehaviour
 
     public TMPro.TMP_InputField createGameGDNStreamName;
     public TMPro.TMP_InputField gdnStreamName;
-    public TMPro.TMP_InputField gdnFederationURL;
+    
+   /*
     public TMPro.TMP_InputField gdnTenant;
     public TMPro.TMP_InputField gdnFabric;
     public Toggle isGlobal;
-    public TMPro.TMP_InputField gdnAPIKey;
+    */
+   
+    //public TMPro.TMP_InputField gdnFederationURL;
+    //public TMPro.TMP_InputField gdnAPIKey;
+    
     public GameList gameList;
 
+    public GDNFields gdnFields;
+    
     public void Awake() {
         serverListEntryTemplateHeight = ((RectTransform)serverListEntryTemplate.transform).rect.height + 10.0f;
-        
         UpdateGdnFields();
-       
     }
 
     public void Start() {
@@ -79,11 +93,13 @@ public class JoinMenu : MonoBehaviour
         var gdnConfig = RwConfig.ReadConfig();
         UpdateGDNTextField(gdnStreamName, gdnConfig.gameName);
         UpdateGDNTextField(createGameGDNStreamName, gdnConfig.gameName);
-        UpdateGDNTextField(gdnFederationURL, gdnConfig.gdnData.federationURL);
+        UpdateGDNTextField(gdnFields.gdnFederationURL, gdnConfig.gdnData.federationURL);
+        UpdateGDNTextField(gdnFields.gdnAPIKey, gdnConfig.gdnData.apiKey);
+        /*
         UpdateGDNTextField(gdnFabric, gdnConfig.gdnData.fabric);
         UpdateGDNTextField(gdnTenant, gdnConfig.gdnData.tenant);
-        UpdateGDNTextField(gdnAPIKey, gdnConfig.gdnData.apiKey);
         isGlobal.isOn = gdnConfig.gdnData.isGlobal;
+        */
     }
 
     public void SaveCreateGameToGDNConfig() {
@@ -103,11 +119,19 @@ public class JoinMenu : MonoBehaviour
             dirty = true;
             GameDebug.Log("Dirty:gdnStreamName" );
         }
-        if (gdnConfig.gdnData.federationURL != gdnFederationURL.text) {
-            gdnConfig.gdnData.federationURL = gdnFederationURL.text;
+        if (gdnConfig.gdnData.federationURL != gdnFields.gdnFederationURL.text) {
+            gdnConfig.gdnData.federationURL = gdnFields.gdnFederationURL.text;
             dirty = true;
             GameDebug.Log("Dirty:  gdnFederationURL" );
         }
+        
+        if (gdnConfig.gdnData.apiKey != gdnFields.gdnAPIKey.text) {
+            gdnConfig.gdnData.apiKey = gdnFields.gdnAPIKey.text;
+            dirty = true;
+            GameDebug.Log("Dirty: gdnAPIKey" );
+        }
+        
+        /*
         if (gdnConfig.gdnData.fabric != gdnFabric.text) {
             gdnConfig.gdnData.fabric = gdnFabric.text;
             dirty = true;
@@ -118,18 +142,15 @@ public class JoinMenu : MonoBehaviour
             dirty = true;
             GameDebug.Log("Dirty:   gdnTenant" );
         }
-        if (gdnConfig.gdnData.apiKey != gdnAPIKey.text) {
-            gdnConfig.gdnData.apiKey = gdnAPIKey.text;
-            dirty = true;
-            GameDebug.Log("Dirty: gdnAPIKey" );
-        }
         if (gdnConfig.gdnData.isGlobal != isGlobal.isOn) {
             gdnConfig.gdnData.isGlobal = isGlobal.isOn;
             dirty = true;
             GameDebug.Log("Dirty:  isGlobal" );
         }
+        */
         if (dirty) {
             RwConfig.Change(gdnConfig);
+            RwConfig.Flush();
         }
     }
 
@@ -406,3 +427,4 @@ public class JoinMenu : MonoBehaviour
     List<ServerListItemData> m_Servers = new List<ServerListItemData>();
     float serverListEntryTemplateHeight;
 }
+

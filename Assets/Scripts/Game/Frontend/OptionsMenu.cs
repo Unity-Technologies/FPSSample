@@ -37,6 +37,15 @@ public class OptionsMenu : MonoBehaviour
 
     float height = 0.0f;
 
+    public GDNFields gdnFields;
+
+
+    void Awake() {
+        //var gdnConfig = RwConfig.ReadConfig();
+        //gdnFields.gdnFederationURL.text = gdnConfig.gdnData.federationURL;
+        UpdateGdnFields();
+    }
+    
     void AddOption(OptionUI o)
     {
         options.Add(o);
@@ -108,6 +117,7 @@ public class OptionsMenu : MonoBehaviour
 
     void Start()
     {
+        UpdateGdnFields();
         var resHash = new HashSet<string>();
         foreach (var r in Screen.resolutions)
             resHash.Add(r.width + "x" + r.height/* + "@" + r.refreshRate*/);
@@ -163,6 +173,7 @@ public class OptionsMenu : MonoBehaviour
             else
                 o.UpdateFromConfigVar();
         }
+        UpdateGdnFields();
     }
 
     public void OnGDRP()
@@ -184,5 +195,65 @@ public class OptionsMenu : MonoBehaviour
         Application.OpenURL(url);
     }
 #endif
+  
+    public void UpdateGdnFields() {
+        var gdnConfig = RwConfig.ReadConfig();
+       
+        UpdateGDNTextField(gdnFields.gdnFederationURL, gdnConfig.gdnData.federationURL);
+        UpdateGDNTextField(gdnFields.gdnAPIKey, gdnConfig.gdnData.apiKey);
+        /*
+        UpdateGDNTextField(gdnFabric, gdnConfig.gdnData.fabric);
+        UpdateGDNTextField(gdnTenant, gdnConfig.gdnData.tenant);
+        isGlobal.isOn = gdnConfig.gdnData.isGlobal;
+        */
+    }
+    
+    public void SaveToGDNConfig() {
+        bool dirty = false;
+        var gdnConfig = RwConfig.ReadConfig();
+       
+        if (gdnConfig.gdnData.federationURL != gdnFields.gdnFederationURL.text) {
+            gdnConfig.gdnData.federationURL = gdnFields.gdnFederationURL.text;
+            dirty = true;
+            GameDebug.Log("Dirty:  gdnFederationURL" );
+        }
+        
+        if (gdnConfig.gdnData.apiKey != gdnFields.gdnAPIKey.text) {
+            gdnConfig.gdnData.apiKey = gdnFields.gdnAPIKey.text;
+            dirty = true;
+            GameDebug.Log("Dirty: gdnAPIKey" );
+        }
+        
+        /*
+        if (gdnConfig.gdnData.fabric != gdnFabric.text) {
+            gdnConfig.gdnData.fabric = gdnFabric.text;
+            dirty = true;
+            GameDebug.Log("Dirty:  gdnFabric" );
+        }
+        if (gdnConfig.gdnData.tenant != gdnTenant.text) {
+            gdnConfig.gdnData.tenant = gdnTenant.text;
+            dirty = true;
+            GameDebug.Log("Dirty:   gdnTenant" );
+        }
+        if (gdnConfig.gdnData.isGlobal != isGlobal.isOn) {
+            gdnConfig.gdnData.isGlobal = isGlobal.isOn;
+            dirty = true;
+            GameDebug.Log("Dirty:  isGlobal" );
+        }
+        */
+        if (dirty) {
+            RwConfig.Change(gdnConfig);
+            RwConfig.Flush();
+        }
+    }
+/*
+    private void Update() {
+      RwConfig.Flush();
+    }
+*/
+    public void UpdateGDNTextField(TMPro.TMP_InputField field, string value) {
+        if (!field.isFocused)
+            field.text =value;
+    }
 
 }

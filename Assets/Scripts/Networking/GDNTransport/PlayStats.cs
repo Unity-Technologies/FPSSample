@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Macrometa;
 using Macrometa.Lobby;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
@@ -15,6 +16,18 @@ namespace Macrometa {
             Tie,
             Win
         }
+
+        [Serializable]
+        public class killCount {
+            public string killedBy;
+            public int count;
+        }
+        
+        [Serializable]
+        public class deathCount {
+            public string killed;
+            public int count;
+        }
         
         static public ShotsFired rifleShotsFired =new ShotsFired();
         
@@ -25,8 +38,35 @@ namespace Macrometa {
         static public Vector3 position;
         static public float orientation;
         static public string gameTimerMessage = "unset";
+        
+        static public List<killCount> killCounts = new List<killCount>();
+        static public List<deathCount> deathCounts = new List<deathCount>();
 
 
+        static public void AddKills(string killed, string killedBy) {
+           var dc = deathCounts.Find(rec => rec.killed == killed);
+           if (dc == null) {
+               deathCounts.Add(new deathCount(){killed = killed,count =1});
+           }
+           else {
+               dc.count++;
+           }
+           var kc = killCounts.Find(rec => rec.killedBy == killedBy);
+           if (kc == null) {
+               killCounts.Add(new killCount(){killedBy = killedBy,count =1});
+           }
+           else {
+               kc.count++;
+           }
+           GameDebug.Log(" killCounts: " +  killCounts.Count);
+           updateGDNStatsKills();
+        }
+
+        static public void updateGDNStatsKills() {
+            GDNStats.baseGameStats.killCounts = killCounts;
+            GDNStats.baseGameStats.deathCounts = deathCounts;
+        }
+        
         static public void PlayerKilled(string playerName) {
             if(GDNStats.playerName == playerName) {
                 ReloadRifleShots();
@@ -113,10 +153,14 @@ namespace Macrometa {
             grenadeShots = 0;
         }
 
+        // usually because a game started or ended
         static public void ResetStats() {
             GameDebug.Log("ResetStats()");
             ClearRifle();
             ClearGrenade();
+            killCounts.Clear();
+            deathCounts.Clear();
+            updateGDNStatsKills();
         }
         
         public static void AddPlayerStat(string killed, string killedBy) {
@@ -125,7 +169,9 @@ namespace Macrometa {
             //ps.timeStamp = (long) (DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             ps.killed = killed;
             ps.killedBy = killedBy;
+            AddKills(killed, killedBy);
             SendPlayerStats(ps);
+            
         }
 
         public static void AddPlayerMatchResultStat(string playerName, string gameType,
@@ -215,7 +261,10 @@ public class GameStats2 {
     public float posZ;
     public float orientation; //degrees XZ plane?
     public float throughput; //bytes/second?
-    public float fps; // frames per second
+    public float fps;// frames per second
+    public List<PlayStats.killCount> killCounts;
+    public List<PlayStats.deathCount> deathCounts;
+
 
     public string LongToString() {
         return gameName + ":"+gameId + ":"+ timeStamp + ":"+ playerName  + ":"+ health + ":"+ matchResult + " rtt:"+ rtt +":" +
@@ -253,6 +302,8 @@ public class GameStats2 {
             orientation = orientation,
             throughput = throughput,
             fps = fps,
+            deathCounts = deathCounts,
+            killCounts = killCounts
         };
         
         return result;
