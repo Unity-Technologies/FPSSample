@@ -71,11 +71,11 @@ namespace Macrometa.Lobby {
     }
     
     [Serializable]
-    public class LobbyActiveGame : LobbyDocument {
+    public class LobbyGameActive : LobbyDocument {
         public bool activeGae= true; //this is a tag always set true
         public long lastUpdate = UnixTSNow(0);// in milliseconds 
-        public static LobbyActiveGame GetFromLobbyValue(LobbyValue lobbyValue) {
-            return new LobbyActiveGame() {
+        public static LobbyGameActive GetFromLobbyValue(LobbyValue lobbyValue) {
+            return new LobbyGameActive() {
                 baseName = lobbyValue.streamName,
                 serialNumber = lobbyValue.serialNumber,
                 lobbyValue = lobbyValue
@@ -305,7 +305,7 @@ namespace Macrometa.Lobby {
         public bool isDirty = false;
         
         /// <summary>
-        /// cIs this needed for lobbies
+        /// Is this needed for lobbies - NO
         /// </summary>
         /// <returns></returns>
         public LobbyValue UnpingedLobby() {

@@ -417,7 +417,9 @@ expireAfter: The time (in seconds) after a document's creation after which the d
         public float posZ;
         public float orientation;
         public string killedPlayerName;
-
+        public string remotePlayerCity;
+        public string remotePlayerCountrycode;
+        public string remoteConnectin_Type;
 
 
     }

@@ -564,18 +564,22 @@ namespace Macrometa {
         private void ProducerSend(GDNNetworkDriver.GDNConnection gdnConnection, VirtualMsgType msgType,
             byte[] payload, int pingId, int pingTimeR, int pingTimeO,
             string localId ) {
+            if (msgType == VirtualMsgType.Connect) {
+                GameDebug.Log("ProducerSend connect: "+ GDNStats.playerName);
+            }
+
             var properties = new MessageProperties() {
                 t = msgType,
                 p = gdnConnection.port,
                 d = gdnConnection.destination,
                 s = gdnConnection.source,
-                z = payload.Length
+                z = payload.Length,
+                localId = GDNStats.playerName
             };
             if (msgType == VirtualMsgType.Ping ) {
                 properties.i = pingId;
                 properties.r = pingTimeR;
                 properties.o = pingTimeO;
-                properties.localId = GDNStats.playerName;
                 properties.host = region.host;
                 properties.city = region.locationInfo.city;
                 properties.countrycode = region.locationInfo.countrycode;
@@ -586,7 +590,6 @@ namespace Macrometa {
                 properties.i = pingId;
                 properties.r = pingTimeR;
                 properties.o = pingTimeO;
-                properties.localId = GDNStats.playerName;
                 properties.host = region.host;
                 properties.city = region.locationInfo.city;
                 properties.countrycode = region.locationInfo.countrycode;
@@ -598,6 +601,10 @@ namespace Macrometa {
                 properties.posY = PlayStats.position.y;
                 properties.posZ = PlayStats.position.z;
                 properties.orientation = PlayStats.orientation;
+                properties.remotePlayerCity = PlayStats.remotePlayerCity;
+                properties.remotePlayerCountrycode = PlayStats.remotePlayerCountry;
+                properties.remoteConnectin_Type = PlayStats.remoteConnectin_Type;
+                
                 //GameDebug.Log("pong to: "+ gdnConnection.destination + " rifle: " +properties.rifleShots );
             }
 
@@ -726,6 +733,7 @@ namespace Macrometa {
                             break;
                         case VirtualMsgType.Connect:
                             GameDebug.Log("Consumer1.OnMessage Connect: " + receivedMessage.properties.s);
+                            GameDebug.Log("Consumer1.OnMessage Connect: " + receivedMessage.properties.localId);
                             if (_isServer) {
                                 command = new GDNStreamDriver.Command() {
                                     command = QueueCommand.ConnectClient,
@@ -1137,7 +1145,8 @@ namespace Macrometa {
             var connection = new GDNNetworkDriver.GDNConnection() {
                 source = receivedMessage.properties.d,
                 destination = receivedMessage.properties.s,
-                port = receivedMessage.properties.p
+                port = receivedMessage.properties.p,
+                playerName =  receivedMessage.properties.localId,
             };
 
             var id = AddOrGetConnectionId(connection);
@@ -1221,6 +1230,7 @@ namespace Macrometa {
             var connection = new GDNNetworkDriver.GDNConnection() {
                 source = consumerName,
                 destination = serverName,
+                playerName = GDNStats.playerName,
                 port = 443
             };
 
@@ -1292,9 +1302,21 @@ namespace Macrometa {
 
         public void RemoveConnectionId(int connectionID) {
             if (gdnConnections.ContainsKey(connectionID)) {
+                GameDebug.Log(" Remove player: "+ gdnConnections[connectionID].playerName);
+                var aPlayerName = gdnConnections[connectionID].playerName;
+                DisconnectPlayer(aPlayerName);
                 gdnConnections.Remove(connectionID);
-                //GameDebug.Log("modifying connection collection remove");
+               
             }
+        }
+
+        public void DisconnectPlayer(string aPlayerName) {
+            var ps = GDNStats.baseGameStats.CopyOf();
+            //GameDebug.Log("GenerataPeriodicGameStats2 B");
+            ps.timeStamp = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
+            ps.playerName = aPlayerName;
+            ps.disconnect = true;
+            ProducerGameStatsSend(ps);
         }
 
         public void PushEventQueue(GDNNetworkDriver.DriverTransportEvent driverTransportEvent) {

@@ -7,14 +7,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-[Serializable]
-public class GDNFields {
-    public TMPro.TMP_InputField gdnFederationURL;
-    public TMPro.TMP_InputField gdnTenant;
-    public TMPro.TMP_InputField gdnFabric;
-    public Toggle isGlobal;
-    public TMPro.TMP_InputField gdnAPIKey;
-}
 
 public class JoinMenu : MonoBehaviour
 {
@@ -130,7 +122,19 @@ public class JoinMenu : MonoBehaviour
             dirty = true;
             GameDebug.Log("Dirty: gdnAPIKey" );
         }
+        /*
+        if (gdnConfig.userCity != gdnFields.city.text) {
+            gdnConfig.userCity = gdnFields.city.text;
+            dirty = true;
+            GameDebug.Log("Dirty:userCity" );
+        }
         
+        if (gdnConfig.userCountry != gdnFields.country.text) {
+            gdnConfig.userCountry = gdnFields.country.text;
+            dirty = true;
+            GameDebug.Log("Dirty:userCity" );
+        }
+        */
         /*
         if (gdnConfig.gdnData.fabric != gdnFabric.text) {
             gdnConfig.gdnData.fabric = gdnFabric.text;
@@ -236,7 +240,10 @@ public class JoinMenu : MonoBehaviour
     {
         Console.EnqueueCommandNoHistory("client.playername \"" + playername.text + '"');
         Console.EnqueueCommandNoHistory("saveconfig");
-
+        var configData = RwConfig.ReadConfig();
+        configData.playerName = playername.text;
+        RwConfig.Change(configData);
+        RwConfig.Flush();
     }
 
     public void OnDisable() {

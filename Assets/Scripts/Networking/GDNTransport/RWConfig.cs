@@ -12,7 +12,11 @@ public struct ConfigData {
     public int statsGroupSize; 
     public bool isServer;
     public string gameName;
+    public string playerName;
     public int testId;
+    public string userCity;
+    public string userCountry;
+    public string connectionType;
     public GDNData gdnData;
 }
 
@@ -27,8 +31,7 @@ public class RwConfig {
     private static string _path;
     private static bool _dirty = false;
     private static string _prevFileName = "";
-
-
+    
     public static void Change(ConfigData data) {
         _configData = data;
         _dirty = true;
@@ -59,12 +62,12 @@ public class RwConfig {
             fileName = DefualtFileName;
         } 
         _prevFileName = fileName;
-        
         return ReadConfig(fileName,Resources.Load<TextAsset>(TextAssetPath));
     }
     
     public static ConfigData ReadConfig(string fileName, TextAsset defaultConfig) {
         if (_read) {
+            GDNStats.playerName = _configData.playerName;
             return _configData;
         } else {
             string path = Application.dataPath + "/" + fileName;

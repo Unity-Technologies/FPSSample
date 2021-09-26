@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,7 +20,41 @@ abstract public class OptionUI : MonoBehaviour
         changed = true;
     }
 }
+[Serializable]
+public class GDNFields {
+    public TMPro.TMP_InputField gdnFederationURL;
+    public TMPro.TMP_InputField gdnTenant;
+    public TMPro.TMP_InputField gdnFabric;
+    public Toggle isGlobal;
+    public TMPro.TMP_InputField gdnAPIKey;
+    public Button saveAndReconnect;
+    public TMPro.TMP_Dropdown connectionType;
+    public TMPro.TMP_InputField city;
+    public TMPro.TMP_InputField country;
 
+    public List<string> connectionTypes = new List<string> {
+        "Other",
+        "5G",
+        "4G",
+        "Fixed Line",
+    };
+    
+    public static void PopulateDropDownWithList(TMPro.TMP_Dropdown dropdown,List<string> targetEnum)//You can populate any dropdown with any enum with this method
+    {
+       
+        List<TMPro.TMP_Dropdown.OptionData> newOptions = new List<TMPro.TMP_Dropdown.OptionData>();
+ 
+        for(int i = 0; i < targetEnum.Count; i++)//Populate new Options
+        {
+            newOptions.Add(new TMPro.TMP_Dropdown.OptionData(targetEnum[i]));
+        }
+        dropdown.ClearOptions();//Clear old options
+        dropdown.AddOptions(newOptions);//Add new options
+        dropdown.enabled = false;
+        dropdown.enabled = true;
+        dropdown.Show();
+    }
+}
 public class OptionsMenu : MonoBehaviour
 {
     public OptionToggle toggleTemplate;
@@ -38,9 +73,9 @@ public class OptionsMenu : MonoBehaviour
     float height = 0.0f;
 
     public GDNFields gdnFields;
-
-
+    
     void Awake() {
+        GDNFields.PopulateDropDownWithList(gdnFields.connectionType,gdnFields.connectionTypes);
         //var gdnConfig = RwConfig.ReadConfig();
         //gdnFields.gdnFederationURL.text = gdnConfig.gdnData.federationURL;
         UpdateGdnFields();
@@ -201,6 +236,9 @@ public class OptionsMenu : MonoBehaviour
        
         UpdateGDNTextField(gdnFields.gdnFederationURL, gdnConfig.gdnData.federationURL);
         UpdateGDNTextField(gdnFields.gdnAPIKey, gdnConfig.gdnData.apiKey);
+        UpdateGDNTextField(gdnFields.city, gdnConfig.userCity);
+        UpdateGDNTextField(gdnFields.country, gdnConfig.userCountry );
+        UpdateDropdown(gdnFields.connectionType, gdnConfig.connectionType, gdnFields.connectionTypes);
         /*
         UpdateGDNTextField(gdnFabric, gdnConfig.gdnData.fabric);
         UpdateGDNTextField(gdnTenant, gdnConfig.gdnData.tenant);
@@ -224,6 +262,24 @@ public class OptionsMenu : MonoBehaviour
             GameDebug.Log("Dirty: gdnAPIKey" );
         }
         
+        if (gdnConfig.userCity != gdnFields.city.text) {
+            gdnConfig.userCity = gdnFields.city.text;
+            dirty = true;
+            GameDebug.Log("Dirty: gdnAPIKey" );
+        }
+        
+        if (gdnConfig.userCountry != gdnFields.country.text) {
+            gdnConfig.userCountry = gdnFields.country.text;
+            dirty = true;
+            GameDebug.Log("Dirty: gdnAPIKey" );
+        }
+        
+        
+        if (gdnConfig.connectionType != gdnFields.connectionType.captionText.text) {
+            gdnConfig.connectionType =gdnFields.connectionType.captionText.text;
+            dirty = true;
+            GameDebug.Log("Dirty: connectionType" );
+        }
         /*
         if (gdnConfig.gdnData.fabric != gdnFabric.text) {
             gdnConfig.gdnData.fabric = gdnFabric.text;
@@ -256,4 +312,12 @@ public class OptionsMenu : MonoBehaviour
             field.text =value;
     }
 
+    public void UpdateDropdown(TMPro.TMP_Dropdown field, string value, List<string> optionsList) {
+       
+        var val = optionsList.FindIndex(x => x == value);
+        val = val == -1 ? 0 : val;
+        //GameDebug.Log("UpdateDropdown: "+ value + " : "+ val );
+        field.value = val;
+    }
+    
 }

@@ -41,7 +41,13 @@ namespace Macrometa {
         
         static public List<killCount> killCounts = new List<killCount>();
         static public List<deathCount> deathCounts = new List<deathCount>();
-
+        static public bool disconnected= false;
+        
+        // These are on local player data  is sent through Pong back to server
+        //should be somewhere else but where?
+        static public string remotePlayerCity ;
+        static public string remotePlayerCountry;
+        static public string remoteConnectin_Type;
 
         static public void AddKills(string killed, string killedBy) {
            var dc = deathCounts.Find(rec => rec.killed == killed);
@@ -101,7 +107,7 @@ namespace Macrometa {
         
         static public void SetHealth(int val) {
             PlayStats.health= val;
-            Debug.Log("SetHealth :" + val);
+            //Debug.Log("SetHealth :" + val);
             if (health == 0) {
                 ReloadRifleShots();
             }
@@ -214,7 +220,7 @@ namespace Macrometa {
             ps.playerName = networkStatsData.remoteId;
             ps.gdnCity = networkStatsData.remoteCity;
             ps.gdnCountry = networkStatsData.remoteCountrycode;
-            ps.rtt = networkStatsData.rttAverage;
+            ps.rtt = networkStatsData.rttAverage; 
             ps.throughput = networkStatsData.streamOutBytes; // ??? needs to change but useful as dummy data
             ps.health = receivedMessage.properties.health;
             ps.fps = receivedMessage.properties.fps;
@@ -225,7 +231,9 @@ namespace Macrometa {
             ps.posY = receivedMessage.properties.posY;
             ps.posZ = receivedMessage.properties.posZ;
             ps.orientation = receivedMessage.properties.orientation;
-
+            ps.playerCity = receivedMessage.properties.remotePlayerCity;
+            ps.playerCountry = receivedMessage.properties.remotePlayerCountrycode;
+            ps.connectionType = receivedMessage.properties.remoteConnectin_Type;
             return ps;
         }
         
@@ -264,6 +272,10 @@ public class GameStats2 {
     public float fps;// frames per second
     public List<PlayStats.killCount> killCounts;
     public List<PlayStats.deathCount> deathCounts;
+    public string playerCity;
+    public string playerCountry;
+    public string connectionType;
+    public bool disconnect;
 
 
     public string LongToString() {
@@ -303,7 +315,11 @@ public class GameStats2 {
             throughput = throughput,
             fps = fps,
             deathCounts = deathCounts,
-            killCounts = killCounts
+            killCounts = killCounts,
+            playerCity = playerCity,
+            playerCountry = playerCountry,
+            connectionType = connectionType,
+            disconnect = disconnect,
         };
         
         return result;

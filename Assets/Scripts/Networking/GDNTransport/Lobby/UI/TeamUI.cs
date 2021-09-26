@@ -36,7 +36,7 @@ public class TeamUI : MonoBehaviour {
             players[i].rttTargetButton.gameObject.SetActive(ServerButtons);
             players[i].serverAllowed.gameObject.SetActive(ServerButtons);
             team.slots[i].rttTarget = (rttPos == i);
-            team.slots[i].runGameServer = (startServerPos == i);
+            team.slots[i].runGameServer = (startServerPos == i &&startServerPos == pos );
             players[i].DisplayPlayer(team.slots[i],highlight);
          }
          else {

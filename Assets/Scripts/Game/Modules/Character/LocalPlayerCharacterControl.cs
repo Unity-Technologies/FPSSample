@@ -201,7 +201,7 @@ public class UpdateCharacterCamera : BaseComponentSystem<LocalPlayer,LocalPlayer
        
        
        
-        GameDebug.Log("UpdateCharacterCamera: "+lookRotation.eulerAngles );
+       // GameDebug.Log("UpdateCharacterCamera: "+lookRotation.eulerAngles );
         //PlayStats.SetOrientation(lookRotation);
         cameraSettings.isEnabled = true;
 

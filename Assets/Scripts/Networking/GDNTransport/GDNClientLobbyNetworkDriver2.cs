@@ -126,8 +126,8 @@ namespace Macrometa {
             gdnStreamDriver.ChatSendRoomRequest(2);
             closeLobbyInactiveTime = Time.time + closeLobbyInactiveDelay;
             closeLobbyInactive = true;
-
         }
+        
         public void LeaveLobby() {
             Debug.Log(" LeaveLobby()");
             
@@ -139,16 +139,13 @@ namespace Macrometa {
             lobbyValue = new LobbyValue();
             gdnStreamDriver.chatLobbyId = "_Lobby";
             gdnStreamDriver.chatChannelId = "_Lobby";
-            
-            
         }
 
         public void SetIsLobbyAdmin(bool val) {
             GDNStreamDriver.isLobbyAdmin = val;
             isLobbyAdmin = val;
         }
-
-
+        
         public void UpdateLocalLobby(LobbyValue lobbyUpdate) {
             GameDebug.Log("UpdateLocalLobby");
             lobbyValue = lobbyUpdate;
@@ -162,12 +159,10 @@ namespace Macrometa {
         }
         
         public void Bodyloop() {
-
             if (gdnStreamDriver.lobbyUpdateAvail) {
                 GameDebug.Log("gdnStreamDriver.lobbyUpdateAvail");
                 UpdateLocalLobby( gdnStreamDriver.lobbyUpdate);
                 gdnStreamDriver.lobbyUpdateAvail = false;
-
             }
 
             if (gdnErrorHandler.pauseNetworkErrorUntil > Time.time) return;

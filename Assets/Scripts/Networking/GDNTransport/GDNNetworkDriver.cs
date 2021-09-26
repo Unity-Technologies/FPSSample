@@ -31,6 +31,10 @@ public class GDNNetworkDriver : MonoBehaviour {
 
     public virtual void Awake() {
         GameDebug.Log("  GDNNetworkDriver Awake");
+        PlayStats.remotePlayerCity = RwConfig.ReadConfig().userCity;
+        PlayStats.remotePlayerCountry = RwConfig.ReadConfig().userCountry;
+        PlayStats.remoteConnectin_Type = RwConfig.ReadConfig().connectionType;
+
         gdnErrorHandler = new GDNErrorhandler();
        
         BestHTTP.HTTPManager.Setup();
@@ -180,10 +184,8 @@ public class GDNNetworkDriver : MonoBehaviour {
             gdnStreamDriver.CreateStatsProducer(gdnStreamDriver.serverStatsStreamName);
             GameDebug.Log("try producerStatsExists");
             return;
-            
         }
-
-       
+        
         if (!gdnStreamDriver.producerGameStatsExists) {
             gdnStreamDriver.CreateGameStatsProducer(gdnStreamDriver.gameStatsStreamName);
             GameDebug.Log("try producerGameStatsExists");
@@ -262,6 +264,7 @@ public class GDNNetworkDriver : MonoBehaviour {
         public string destination;
         public int port;
         public int id;
+        public string playerName;
     }
     
     public struct DriverTransportEvent {
