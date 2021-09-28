@@ -21,10 +21,15 @@ public class TeamUI : MonoBehaviour {
    // Macrometa.Lobby. is needed to stop FPSSample conflicts
    public void DisplayTeam(Macrometa.Lobby.Team team, string anOwnerId, string rttTarget, string startServer) {
       if (teamName != null) {
-         teamName.text = team.name;
+         if (!lobby.isAdmin || !teamName.isFocused) {
+            teamName.text = team.name;
+         }
+         teamName.placeholder.gameObject.SetActive(lobby.isAdmin && teamName.text == "");
+         teamName.interactable = lobby.isAdmin;
+        
       }
 
-      var ServerButtons = lobby.isAdmin;
+      var serverButtons = lobby.isAdmin;
       highlight.SetActive(false);
       var pos = team.Find(anOwnerId);
       var rttPos = team.Find(rttTarget);
@@ -33,8 +38,8 @@ public class TeamUI : MonoBehaviour {
       for (int i = 0; i < players.Count; i++) {
          bool highlight = pos == i;
          if (i < team.slots.Count) {
-            players[i].rttTargetButton.gameObject.SetActive(ServerButtons);
-            players[i].serverAllowed.gameObject.SetActive(ServerButtons);
+            players[i].rttTargetButton.gameObject.SetActive(serverButtons);
+            players[i].serverAllowed.gameObject.SetActive(serverButtons);
             team.slots[i].rttTarget = (rttPos == i);
             team.slots[i].runGameServer = (startServerPos == i &&startServerPos == pos );
             players[i].DisplayPlayer(team.slots[i],highlight);

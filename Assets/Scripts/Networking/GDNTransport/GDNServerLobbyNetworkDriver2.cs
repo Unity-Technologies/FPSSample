@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using UnityEngine;
-using System.Linq;
-using BestHTTP.WebSocket;
+﻿using UnityEngine;
 using Macrometa.Lobby;
-using Random = UnityEngine.Random;
 
 namespace Macrometa {
     //
@@ -14,6 +8,7 @@ namespace Macrometa {
         public GdnDocumentLobbyDriver gdnDocumentLobbyDriver;
         public float nextRefreshLobbyList= 0;
         public LobbyValue lobbyValue;
+        public bool lobbyUpdated = false;
 
         public override void Awake() {
             GameDebug.Log("  GDNNetworkDriver Awake");
@@ -180,6 +175,27 @@ namespace Macrometa {
                 return;
             } 
             
+            
+            //todo get key from??
+            // try to get from lobbylist
+            // if not put in lobbyValue
+            if (!lobbyUpdated) {
+                lobbyValue.showGameInitNow = true;
+                var lobbyLobby = LobbyLobby.GetFromLobbyValue(lobbyValue);
+                var key = gdnDocumentLobbyDriver.lobbyKey;
+                gdnDocumentLobbyDriver.UpdateLobbyDocument(lobbyLobby, lobbyValue.key);
+                lobbyUpdated = true;
+            }
+
+            //ToDo make PostLobbyGameMaster
+            if (!gdnDocumentLobbyDriver.postLobbyStuff) {
+                lobbyValue.key = "";
+                GameDebug.Log("make game Master: " + lobbyValue.streamName);
+                var lobbyGameMaster = LobbyGameMaster.GetFromLobbyValue(lobbyValue);
+                gdnDocumentLobbyDriver.PostLobbyDocument(lobbyGameMaster);
+                return;
+            }
+
             if (!gdnStreamDriver.setupComplete) {
                 if (GDNStreamDriver.isPlayStatsClientOn) {
                     PingStatsGroup.Init(Application.dataPath, "LatencyStats", gdnStreamDriver.statsGroupSize);
@@ -204,28 +220,10 @@ namespace Macrometa {
                     gdnStreamDriver.InitPingStatsGroup();
                     GameDebug.Log("isSocketPingOn: " + PingStatsGroup.latencyGroupSize);
                 }
-
                 StartCoroutine(gdnStreamDriver.RepeatTransportPing());
             }
 
-            // ToDo change to Document Collection
-            // nextKVput 
-            if (!isMonitor && isServer) {
-                /*
-                if (nextKVValuePut < Time.time) {
-                   //GameDebug.Log("loop kvValuePut");
-                    nextKVValuePut = Time.time + nextKVValuePutIncr;
-                    gdnKVDriver.putKVValueDone = false;
-                    var gameRecord = new GameRecord() {
-                        _key = RwConfig.ReadConfig().gameName,
-                        value = JsonUtility.ToJson(gameRecordValue),
-                        expireAt = GameRecord.UnixTSNow(kvValueTTL)
-                    };
-                    gdnKVDriver.PutKVValue(gameRecord);
-                    return;
-                }
-                */
-            }
+            
         }
     }
 }

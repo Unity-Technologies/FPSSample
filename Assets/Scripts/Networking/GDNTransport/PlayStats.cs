@@ -107,7 +107,7 @@ namespace Macrometa {
         
         static public void SetHealth(int val) {
             PlayStats.health= val;
-            //Debug.Log("SetHealth :" + val);
+            Debug.Log("SetHealth :" + val);
             if (health == 0) {
                 ReloadRifleShots();
             }

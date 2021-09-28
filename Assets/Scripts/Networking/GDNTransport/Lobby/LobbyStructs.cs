@@ -169,6 +169,7 @@ namespace Macrometa.Lobby {
         public bool joinGameNow;
         public string rttTarget = "";
         public string serverAllowed;
+        public string key;
 
 
        

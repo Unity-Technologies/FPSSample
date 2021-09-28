@@ -716,14 +716,14 @@ expireAfter: The time (in seconds) after a document's creation after which the d
                 callback(www);
         }
         
-        public static IEnumerator PostInsertReplaceDocument(GDNData gdnData,string collection, string data, bool replace,
-            Action<UnityWebRequest> callback) {
+        public static IEnumerator PostInsertReplaceDocument(GDNData gdnData,string collection, string data, bool replace, LobbyValue lv,
+            Action<UnityWebRequest, LobbyValue> callback) {
             GameDebug.Log("Post Lobby Document: "+ gdnData.PostInsertDocumentURL(collection,replace));
             var www = WebPost(gdnData.PostInsertDocumentURL(collection,replace), data, gdnData);
             yield return www.SendWebRequest();
             
             if (callback != null)
-                callback(www);
+                callback(www,lv);
         }
 
         public static IEnumerator PutReplaceDocument(GDNData gdnData, string collection, string data,

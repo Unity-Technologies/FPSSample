@@ -312,9 +312,7 @@ namespace Macrometa {
         public void UpdateLobby() {
             nextUpdateLobby = Time.time +5;
             var lobbyLobby = LobbyLobby.GetFromLobbyValue(lobbyValue);
-           
             var key = gdnDocumentLobbyDriver.lobbyKey;
-            
             gdnDocumentLobbyDriver.UpdateLobbyDocument(lobbyLobby, key);
         }
 

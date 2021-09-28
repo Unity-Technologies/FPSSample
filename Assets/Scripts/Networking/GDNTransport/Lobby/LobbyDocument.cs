@@ -166,15 +166,17 @@ namespace Macrometa.Lobby {
         
         #region Document
         
+        
+        //todo can this be post 
         public void PostLobbyDocument(LobbyDocument lobbyDocument) {
             GameDebug.Log("Post Lobby Document: " + lobbyDocument.baseName + " : "+ lobbyDocument.serialNumber);
             _gdnErrorHandler.isWaiting = true;
             string data = JsonUtility.ToJson(lobbyDocument);
             _monoBehaviour.StartCoroutine(PostInsertReplaceDocument(_gdnData, lobbiesCollectionName,
-                data,false, PostLobbyDocumentCallback));
+                data,false, lobbyDocument.lobbyValue,PostLobbyDocumentCallback));
         }
 
-        public void PostLobbyDocumentCallback(UnityWebRequest www) {
+        public void PostLobbyDocumentCallback(UnityWebRequest www, LobbyValue lv) {
             _gdnErrorHandler.isWaiting = false;
             if (www.isHttpError || www.isNetworkError) {
                 if (www.responseCode == 409) {
@@ -202,6 +204,7 @@ namespace Macrometa.Lobby {
                     GameDebug.Log("Post Lobby Doc key: "+ insertResponse._key);
                     errorSerialIncr = 0;
                     lobbyKey = insertResponse._key;
+                    lv.key = insertResponse._key;
                     lobbyIsMade = true;
                     postLobbyStuff = true;
                     _gdnErrorHandler.currentNetworkErrors = 0;
