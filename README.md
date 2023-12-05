@@ -3,19 +3,21 @@
 # FPS Sample
 
 **Update about the state of the project:**
-This project is based on Unity 2018.3 and no longer being actively maintained.
-Feel free to continue to use it as a learning resource or simply for
-inspiration. As always, you should upgrade to latest version of Unity
-and packages if you intend to start a project.
+This project relies on Unity 2018.3 and is no longer receiving active maintenance. 
+While you're welcome to continue using it for educational purposes or as a source of inspiration, 
+it's advisable to consider upgrading to the latest version of Unity 
+and associated packages if you plan to initiate a new project. 
+Staying current with the latest software versions ensures access to new features, bug fixes, and overall better support. 
+Keep in mind that using outdated versions may limit compatibility with newer technologies and potentially lead to challenges in the long run.
 
 Thanks for checking out this sample!
 
-This is a fully functional, first person multiplayer shooter game made in
-Unity and with full source and assets. It was developed by a small
-team from Unity Technologies. Our goals are to test and showcase new
-features in Unity and to be of use for teams who can bootstrap on top of
-this, extract useful bits and tools or simply learn from and get inspired by
-what is in the project.
+Presenting a fully operational first-person multiplayer shooter game crafted within Unity, 
+complete with comprehensive source code and assets. This project is the brainchild of a compact team at Unity Technologies. 
+Our primary objectives revolve around thorough testing and demonstration of novel features within Unity. 
+Additionally, we aim to provide a valuable resource for teams seeking a robust foundation. 
+Whether extracting practical components and tools or serving as an educational reference, 
+this project is designed to inspire and facilitate learning in the dynamic realm of game development.
 
 Visit our [landing page](https://unity.com/fps-sample) for more high
 level information about the project. Or reach out [in the forum](https://forum.unity.com/forums/fps-sample-game.184).
