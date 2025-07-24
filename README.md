@@ -81,7 +81,7 @@ It should look like this:
 ![](Documentation/Images/ProjectTools.png)
 
 Keep this window docked as you will use it a lot. From here you can open the
-levels, build assetbundles and build standalone players. Because this is a
+levels, build asset bundles and build standalone players. Because this is a
 multiplayer game you will need to work with standalone players a lot.
 
 ### Trying out preview mode
@@ -103,7 +103,7 @@ settings window.
 
 Now, in the Project Tools window in the bundles section, press __All \[force\]__.
 
-This will build the levels and other assets into assetbundles. The first time
+This will build the levels and other assets into asset bundles. The first time
 around this will take a significant amount of time as all shaders have to be
 compiled.
 
