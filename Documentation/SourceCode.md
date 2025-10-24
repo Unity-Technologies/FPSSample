@@ -86,7 +86,7 @@ Grenade module handles the creation and updating of grenades. Grenades are updat
 HitCollision module handles hit collision of all objects that are capable of receiving damage within the game. 
 The server stores position and rotation of moving colliders so that they can be "rolled back". This allows rollingback the collider to any given tick before collision tests have been performed. 
 This is used for server side lag compensation. 
-HitCollision for characters can be setup in a seperate prefab so that it can be shared between the server and client prefabs. 
+HitCollision for characters can be setup in a separate prefab so that it can be shared between the server and client prefabs. 
 
 *RaySphereQueryReciever* can be used to queue collision queries. It first processes a raytest against the environment and then sphere casts against the hit collision. 
 
