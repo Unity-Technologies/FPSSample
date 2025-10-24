@@ -1,6 +1,7 @@
 ﻿using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
+using Macrometa;
 
 public class ChaingunUI : AbilityUI
 {
@@ -24,6 +25,7 @@ public class ChaingunUI : AbilityUI
             m_ClipSize = settings.clipSize;
             m_ClipSizeText.text = "/ " + m_ClipSize.ToString();
         }
+        PlayStats.rifleShotsFired.Update(m_ClipSize,m_AmmoInClip);
     }
 
     [SerializeField] TMPro.TextMeshProUGUI m_AmmoInClipText;

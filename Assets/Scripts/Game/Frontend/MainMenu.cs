@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Macrometa;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour 
@@ -22,8 +25,16 @@ public class MainMenu : MonoBehaviour
     }
 
     public UIBinding uiBinding;
+
+    [FormerlySerializedAs("mainMenu")] public GameObject mainMenuGO;
+    public GameObject createGameMenu;
+    public GameObject createFailMsg;
+    public GameObject introMenu;
     public JoinMenu joinMenu;
     public OptionsMenu optionMenu;
+    public GameObject disconnectedMenu;
+    public bool isDisconnected = false;
+    public GDNClientBrowserNetworkDriver gdnClientBrowserNetworkDriver;
 
     // Currently active submenu, used by menu backdrop to track what is going on
     public int activeSubmenuNumber;
@@ -53,11 +64,12 @@ public class MainMenu : MonoBehaviour
 
     public void Awake()
     {
+        joinMenu.UpdateGdnFields();
         m_CanvasGroup = GetComponent<CanvasGroup>();
 
         uiBinding.gamemode.options.Clear();
-        uiBinding.gamemode.options.Add(new TMPro.TMP_Dropdown.OptionData("Assault"));
         uiBinding.gamemode.options.Add(new TMPro.TMP_Dropdown.OptionData("Deathmatch"));
+        uiBinding.gamemode.options.Add(new TMPro.TMP_Dropdown.OptionData("Assault"));
         uiBinding.gamemode.RefreshShownValue();
 
         uiBinding.levelname.options.Clear();
@@ -69,12 +81,29 @@ public class MainMenu : MonoBehaviour
         uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("2"));
         uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("4"));
         uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("8"));
-        uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("16"));
+        //uiBinding.maxplayers.options.Add(new TMPro.TMP_Dropdown.OptionData("16"));
         uiBinding.maxplayers.RefreshShownValue();
 
         uiBinding.buildId.text = Game.game.buildId;
     }
-
+    
+    void Update() {
+        if (gdnClientBrowserNetworkDriver.initSucceeded) {
+            CreateGame();
+            gdnClientBrowserNetworkDriver.initSucceeded= false;
+            ShowSubMenu(joinMenu.gameObject);
+        } else if (gdnClientBrowserNetworkDriver.initFail) {
+            createFailMsg.SetActive(true);
+            gdnClientBrowserNetworkDriver.initFail = false;
+        }
+    }
+    void OnEnable() {
+        if (isDisconnected) {
+            mainMenuGO.SetActive(false);
+            disconnectedMenu.SetActive(true);
+        } 
+    }
+    
     public void UpdateMenus()
     {
         if(joinMenu.gameObject.activeInHierarchy)
@@ -92,6 +121,9 @@ public class MainMenu : MonoBehaviour
     // Called from the Menu/Button_* UI.Buttons
     public void ShowSubMenu(GameObject ShowMenu)
     {
+        if (ShowMenu == uiBinding.menus[activeSubmenuNumber]) {
+            ShowMenu = introMenu;
+        }
         activeSubmenuNumber = 0;
         for(int i = 0; i < uiBinding.menus.Length; i++)
         {
@@ -100,10 +132,19 @@ public class MainMenu : MonoBehaviour
             {
                 menu.SetActive(true);
                 activeSubmenuNumber = i;
+               // GameDebug.Log("Menu name: " +  menu.name);
+                if (menu == createGameMenu) {
+                   // GameDebug.Log("Menu name: " +  menu.name + " setting false");
+                    createFailMsg.SetActive(false);
+                }
             }
             else if (menu.activeSelf)
                 menu.SetActive(false);
         }
+    }
+
+    public void OnJoinGame() {
+        Console.EnqueueCommand("connect localhost");
     }
 
     public void OnQuitGame()
@@ -116,8 +157,11 @@ public class MainMenu : MonoBehaviour
         Console.EnqueueCommand("disconnect");
     }
 
-    public void OnCreateGame()
-    {
+    public void OnCreateGame() {
+        gdnClientBrowserNetworkDriver.tryKVInit = true;
+    }
+    
+    public void CreateGame(){   
         var servername = uiBinding.servername.text;
 
         var levelname = uiBinding.levelname.options[uiBinding.levelname.value].text;
@@ -164,18 +208,32 @@ public class MainMenu : MonoBehaviour
             process.StartInfo.Arguments = " -batchmode -nographics -noboot -consolerestorefocus" +
                                           " +serve " + levelname + " +game.modename " + gamemode.ToLower() +
                                           " +servername \"" + servername + "\"";
-            if (process.Start())
-            {
-                Console.EnqueueCommand("connect localhost");
+           
+            
+            if (process.Start()){
+                GameDebug.Log("game process started");
+                //StartCoroutine(SendConnect(10));
+                ShowSubMenu(introMenu);
             }
+            
         }
         else
         {
             Console.EnqueueCommand("serve " + levelname);
             Console.EnqueueCommand("servername \"" + servername + "\"");
         }
+        
     }
 
+    IEnumerator SendConnect(float delay)
+    {
+        Debug.Log("mainMenu OnCreateGame waiting: " + delay);
+        //yield on a new YieldInstruction that waits for delay seconds.
+        yield return new WaitForSeconds(delay);
+        Console.EnqueueCommand("connect localhost");
+        Debug.Log("mainMenu OnCreateGame SendConnect connect localhost");
+    }
+    
     static readonly string k_AutoBuildPath = "AutoBuild";
     static readonly string k_AutoBuildExe = "AutoBuild.exe";
 

@@ -7,7 +7,8 @@ public class ClientFrontend : MonoBehaviour
 {
     public ScoreBoard scoreboardPanel;
     public GameScore gameScorePanel;
-    [SerializeField] MainMenu mainMenu;
+    [SerializeField] 
+    public MainMenu mainMenu;
     public ChatPanel chatPanel;
     public ServerPanel serverPanel;
 
@@ -54,6 +55,7 @@ public class ClientFrontend : MonoBehaviour
 
     public void Clear()
     {
+        GameDebug.Log("ClientFrontend Clear");
         scoreboardPanel.SetPanelActive(false);
         gameScorePanel.SetPanelActive(false);
         mainMenu.SetPanelActive(MenuShowing.None);

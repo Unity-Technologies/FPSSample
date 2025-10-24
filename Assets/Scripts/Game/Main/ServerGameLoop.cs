@@ -106,6 +106,8 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
                 l = StringFormatter.Write(ref _msgBuf, 0, "{0} is now known as {1}", player.playerName, settings.playerName);
             m_ChatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
             player.playerName = settings.playerName;
+            
+
         }
 
         var playerEntity = player.gameObject.GetComponent<GameObjectEntity>().Entity;
@@ -314,9 +316,18 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         m_StateMachine.Add(ServerState.Loading, null, UpdateLoadingState, null);
         m_StateMachine.Add(ServerState.Active, EnterActiveState, UpdateActiveState, LeaveActiveState);
 
-        m_StateMachine.SwitchTo(ServerState.Idle);
-
-        m_NetworkTransport = new SocketTransport(NetworkConfig.serverPort.IntValue, serverMaxClients.IntValue);
+        m_StateMachine.SwitchTo(ServerState.Idle); 
+        //m_NetworkTransport = new SocketTransport(NetworkConfig.serverPort.IntValue, serverMaxClients.IntValue);
+        var isServer = true;
+        GDNTransport.isSocketPingOn = true;
+        GDNTransport.isStatsOn = true;
+        GDNTransport.sendDummyTraffic = false;//probably not need but safer
+        m_NetworkTransport =  GDNTransport.Instance;
+        gdnStats = GDNStats.Instance;
+        gdnStats.Start(true);
+        GameDebug.Log(" gdnStats.Start ");
+        // not sure serverMaxClients.IntValue is right
+        m_NetworkTransport.Connect(isServer,7932, serverMaxClients.IntValue);
         var listenAddresses = NetworkUtils.GetLocalInterfaceAddresses();
         if (listenAddresses.Count > 0)
             Console.SetPrompt(listenAddresses[0] + ":" + NetworkConfig.serverPort.Value + "> ");
@@ -388,8 +399,15 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         m_GameWorld = null;
     }
 
-    public void Update()
-    {
+    public void Update() {
+       
+        
+         
+        m_NetworkTransport.UpdateGameRecord( GameModeSystemServer.modeName.Value ,
+            Game.game.levelManager.currentLevel.name,serverMaxClients.IntValue,m_Clients.Count,
+            m_StateMachine.CurrentState().ToString(),0
+            );
+        
         if (serverRecycleInterval.FloatValue > 0.0f)
         {
             // Recycle server if time is up and no clients connected
@@ -433,6 +451,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         var client = new ClientInfo();
         client.id = id;
         m_Clients.Add(id, client);
+        GameDebug.Log("ServergameLoop line 459   OnConnect" + client.playerSettings.playerName);
 
         if (m_serverGameWorld != null)
             m_serverGameWorld.HandleClientConnect(client);
@@ -463,10 +482,13 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
                 case GameNetworkEvents.EventType.PlayerReady:
                     m_NetworkServer.MapReady(clientId); // TODO (petera) hacky
                     client.isReady = true;
+                    GameDebug.Log("ServerGameLoop line 484 PlayerReady " +client.playerSettings.playerName );
+                   
                     break;
 
                 case GameNetworkEvents.EventType.PlayerSetup:
                     client.playerSettings.Deserialize(ref reader);
+                    GameDebug.Log("ServerGameloop line 490    Create player " + client.playerSettings.playerName);
                     if (client.player != null)
                         m_serverGameWorld.HandlePlayerSetupEvent(client.player, client.playerSettings);
                     break;
@@ -794,7 +816,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
             Console.Write(string.Format("   {0:00} {1,-15}", client.id, client.playerSettings.playerName));
         }
         Console.Write("-------------------");
-        Console.Write(string.Format("Total: {0}/{0} players connected", m_Clients.Count, serverMaxClients.IntValue));
+        Console.Write(string.Format("Total: {0}/{1} players connected", m_Clients.Count, serverMaxClients.IntValue));
     }
 
     string MakeServername()
@@ -850,8 +872,9 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     NetworkStatisticsServer m_NetworkStatistics;
     NetworkCompressionModel m_Model = NetworkCompressionModel.DefaultModel;
 
-    SocketTransport m_NetworkTransport;
-
+    //SocketTransport m_NetworkTransport;
+    GDNTransport  m_NetworkTransport;
+    GDNStats gdnStats;
     BundledResourceManager m_resourceSystem;
     ChatSystemServer m_ChatSystem;
     Dictionary<int, ClientInfo> m_Clients = new Dictionary<int, ClientInfo>();

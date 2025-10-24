@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 using System;
+using Macrometa;
 
 public class GameModeAssault : IGameMode
 {
@@ -115,6 +116,10 @@ public class GameModeAssault : IGameMode
                         p.displayGoal = false;
                         p.goalString = "";
                         p.goalCompletion = -1.0f;
+                        var matchResult = (p.teamIndex == winTeam) ?
+                            PlayStats.MatchResult.Win : PlayStats.MatchResult.Lose;
+                        PlayStats.AddPlayerMatchResultStat(p.playerName, "assault",
+                            matchResult, p.score);
 
                         if (p.controlledEntity != Entity.Null)
                         {
@@ -126,6 +131,7 @@ public class GameModeAssault : IGameMode
                                 .SetComponentData(p.controlledEntity,healthState);
                         }
                     }
+                    //PlayStats.UpdateNumPlayers( players.Length);
                     m_Phase = Phase.PostGame;
                     m_GameModeSystemServer.SetRespawnEnabled(false);
                     m_GameModeSystemServer.StartGameTimer(postMatchTime, "PostMatch");

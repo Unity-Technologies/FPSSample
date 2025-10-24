@@ -86,6 +86,11 @@ public class UpdateTerraformerWeaponA : BaseComponentSystem<CharacterPresentatio
             if(weapon.primaryMuzzleFlash != null)
                 weapon.primaryMuzzleFlash.Play();
 
+          
+            GameDebug.Log("TerraformerWeaponA.cs pos: "+ weapon.
+                muzzle.position); 
+            
+            
             if (weapon.hitscanEffect != null)
             {
                 World.GetExistingManager<HandleHitscanEffectRequests>().Request(weapon.hitscanEffect, 

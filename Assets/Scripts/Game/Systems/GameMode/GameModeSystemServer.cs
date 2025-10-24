@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Macrometa;
 using UnityEngine;
 using Unity.Entities;
 using UnityEngine.Profiling;
@@ -71,6 +72,7 @@ public class GameModeSystemServer : ComponentSystem
     public void Restart()
     {
         GameDebug.Log("Restarting gamdemode");
+        PlayStats.SendGameStats();
         var bases = m_TeamBaseComponentGroup.GetComponentArray<TeamBase>();
         teamBases.Clear();
         for (var i = 0; i < bases.Length; i++)
@@ -92,7 +94,7 @@ public class GameModeSystemServer : ComponentSystem
             player.goalCompletion = -1.0f;
             player.actionString = "";
         }
-
+      
         m_EnableRespawning = true;
 
         m_GameMode.Restart();
@@ -104,7 +106,7 @@ public class GameModeSystemServer : ComponentSystem
     public void Shutdown()
     {
         m_GameMode.Shutdown();
-
+        
         Resources.UnloadAsset(m_Settings);
 
         m_World.RequestDespawn(gameModeState.gameObject);
@@ -163,8 +165,9 @@ public class GameModeSystemServer : ComponentSystem
                     m_GameMode = new NullGameMode();
                     break;
             }
+            PlayStats.UpdateGameType(m_CurrentGameModeName);
             m_GameMode.Initialize(m_World, this);
-            GameDebug.Log("New gamemode : '" + m_GameMode.GetType().ToString() + "'");
+            GameDebug.Log("CharacterUISystems.cs line 167 New gamemode : '" + m_GameMode.GetType().ToString() + "'");
             Restart();
             return;
         }
@@ -183,7 +186,7 @@ public class GameModeSystemServer : ComponentSystem
                 player.gameModeSystemInitialized = true;
             }
         }
-
+       
         m_GameMode.Update();
 
         // General rules
@@ -196,7 +199,7 @@ public class GameModeSystemServer : ComponentSystem
             var player = playerStates[i];
             var controlledEntity = player.controlledEntity;
             var playerEntity = playerEntities[i];
-
+            
             
             player.actionString = player.enableCharacterSwitch ? "Press H to change character" : "";
 
@@ -245,6 +248,7 @@ public class GameModeSystemServer : ComponentSystem
 
                             CharacterDespawnRequest.Create(PostUpdateCommands, controlledEntity);
                             CharacterSpawnRequest.Create(PostUpdateCommands, charControl.characterType, predictedState.position, rotation, playerEntity);
+                            GameDebug.Log("server despawn/respawn  " + player.playerName + "rotation");
                         }
                         player.controlledEntity = Entity.Null;
                     }
@@ -252,7 +256,7 @@ public class GameModeSystemServer : ComponentSystem
                 charControl.requestedCharacterType = -1;
                 continue;
             }
-
+           
             if (EntityManager.HasComponent<HealthStateData>(controlledEntity))
             {
                 // Is character dead ?
@@ -271,12 +275,20 @@ public class GameModeSystemServer : ComponentSystem
                             var format = s_KillMessages[Random.Range(0, s_KillMessages.Length)];
                             var l = StringFormatter.Write(ref _msgBuf, 0, format, killerPlayer.playerName, player.playerName, m_TeamColors[killerPlayer.teamIndex], m_TeamColors[player.teamIndex]);
                             chatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
+                           // GameDebug.Log("CharacterUISystems.cs line 274 "+  killerPlayer.playerName + " killed "
+                           //               + player.playerName );
+                            PlayStats.AddPlayerStat( player.playerName,killerPlayer.playerName);
+                           
                         }
+                        
                         else
                         {
                             var format = s_SuicideMessages[Random.Range(0, s_SuicideMessages.Length)];
                             var l = StringFormatter.Write(ref _msgBuf, 0, format, player.playerName, m_TeamColors[player.teamIndex]);
                             chatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
+                            GameDebug.Log("CharacterUISystems.cs line 281 "+  player.playerName +
+                                          "self killed " +  player.playerName);
+                            PlayStats.AddPlayerStat( player.playerName,player.playerName );
                         }
                         m_GameMode.OnPlayerKilled(player, killerPlayer);
                     }
@@ -307,7 +319,7 @@ public class GameModeSystemServer : ComponentSystem
         chatSystem.SendChatMessage(player.playerId, "Switched to: " + heroTypeRegistry.entries[c.requestedCharacterType].name);
     }
 
-    public void CreateTeam(string name)
+    public void  CreateTeam(string name)
     {
         var team = new Team();
         team.name = name;
@@ -346,7 +358,7 @@ public class GameModeSystemServer : ComponentSystem
 
         // Join 
         player.teamIndex = joinIndex < 0 ? 0 : joinIndex;
-        GameDebug.Log("Assigned team " + joinIndex + " to player " + player);
+        GameDebug.Log("Assigned team " + joinIndex + " to player " + player.playerName );
     }
 
     int FindPlayerControlling(ref ComponentArray<PlayerState> players, Entity entity)

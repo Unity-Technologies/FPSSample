@@ -3,7 +3,7 @@ guid: df1973258418c99409436d70d45746e4
 TextureImporter:
   fileIDToRecycleName: {}
   externalObjects: {}
-  serializedVersion: 7
+  serializedVersion: 9
   mipmaps:
     mipMapMode: 0
     enableMipMap: 1
@@ -71,7 +71,7 @@ TextureImporter:
     androidETC2FallbackOverride: 0
   - serializedVersion: 2
     buildTarget: Standalone
-    maxTextureSize: 1024
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: 27
     textureCompression: 2
@@ -84,7 +84,7 @@ TextureImporter:
     buildTarget: PS4
     maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: 25
+    textureFormat: 27
     textureCompression: 2
     compressionQuality: 50
     crunchedCompression: 0

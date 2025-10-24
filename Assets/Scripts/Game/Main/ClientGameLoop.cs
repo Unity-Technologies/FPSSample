@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Macrometa;
 using UnityEngine;
 using Unity.Entities;
 using UnityEngine.Profiling;
@@ -76,6 +77,7 @@ public class ClientGameWorld
 
     public void Shutdown()
     {
+        GameDebug.Log(" ClientGameWorld Shutdown" );
         m_CharacterModule.Shutdown();
         m_ProjectileModule.Shutdown();
         m_HitCollisionModule.Shutdown();
@@ -243,7 +245,7 @@ public class ClientGameWorld
             {
                 var healthState = m_GameWorld.GetEntityManager()
                     .GetComponentData<HealthStateData>(m_localPlayer.playerState.controlledEntity);
-            
+                PlayStats.SetHealth((int)healthState.health);
                 // Only show score board when alive
                 showScorePanel = healthState.health <= 0;
             }
@@ -287,25 +289,25 @@ public class ClientGameWorld
     {
         if (!m_PlayerModule.PlayerStateReady)
         {
-            GameDebug.Log("No predict! No player state.");
+           // GameDebug.Log("No predict! No player state.");
             return false;
         }
         
         if(!m_PlayerModule.IsControllingEntity)
         {
-            GameDebug.Log("No predict! No controlled entity.");
+            //GameDebug.Log("No predict! No controlled entity.");
             return false;
         }
 
         if (m_PredictedTime.tick <= m_NetworkClient.serverTime)
         {
-            GameDebug.Log("No predict! Predict time not ahead of server tick! " + GetFramePredictInfo());
+            //GameDebug.Log("No predict! Predict time not ahead of server tick! " + GetFramePredictInfo());
             return false;
         }
 
         if (!m_PlayerModule.HasCommands(m_NetworkClient.serverTime + 1, m_PredictedTime.tick))
         {
-            GameDebug.Log("No predict! No commands available. " + GetFramePredictInfo());
+           // GameDebug.Log("No predict! No commands available. " + GetFramePredictInfo());
             return false;
         }
 
@@ -530,7 +532,17 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 #endif
         m_GameWorld = new GameWorld("ClientWorld");
         
-        m_NetworkTransport = new SocketTransport();
+        //m_NetworkTransport = new SocketTransport();
+        
+        GDNTransport.isSocketPingOn = true;
+        GDNTransport.sendDummyTraffic = false;//probably not need but safer
+        GDNTransport.isPlayStatsClientOn = true;
+        m_NetworkTransport = GDNTransport.Instance;
+        GameDebug.Log("GDNTransport instanciated 2");
+        gdnStats = GDNStats.Instance;
+        GameDebug.Log("GDNStats instanceated 2");
+        gdnStats.Start(true);
+
         m_NetworkClient = new NetworkClient(m_NetworkTransport);
 
         if (Application.isEditor || Game.game.buildId == "AutoBuild")
@@ -540,9 +552,10 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         m_NetworkStatistics = new NetworkStatisticsClient(m_NetworkClient);
         m_ChatSystem = new ChatSystemClient(m_NetworkClient);
 
-        GameDebug.Log("Network client initialized");
+        GameDebug.Log("NetworkClient initialized ");
 
         m_requestedPlayerSettings.playerName = clientPlayerName.Value;
+        
         m_requestedPlayerSettings.teamId = -1;
         
         Console.AddCommand("disconnect", CmdDisconnect, "Disconnect from server if connected", this.GetHashCode());
@@ -558,9 +571,12 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         {
             targetServer = args[0];
             m_StateMachine.SwitchTo(ClientState.Connecting);
+            GameDebug.Log("Client Connecting after init");
         }
-        else
+        else {
             m_StateMachine.SwitchTo(ClientState.Browsing);
+            GameDebug.Log("Client Browsing after init");
+        }
 
         GameDebug.Log("Client initialized");
 
@@ -584,7 +600,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     {
         return m_clientWorld;
     }
-    
+
     public void OnConnect(int clientId) { }
     public void OnDisconnect(int clientId) { }
 
@@ -636,12 +652,14 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
             clientPlayerName.Value = clientPlayerName.Value.Substring(0, Mathf.Min(clientPlayerName.Value.Length, 16));
             m_requestedPlayerSettings.playerName = clientPlayerName.Value;
             m_playerSettingsUpdated = true;
+            GDNStats.SetPlayerName(m_requestedPlayerSettings.playerName);
         }
 
         if(m_NetworkClient.isConnected && m_playerSettingsUpdated)
         {
             m_playerSettingsUpdated = false;
             SendPlayerSettings();
+            GDNStats.SetPlayerName(m_requestedPlayerSettings.playerName);
         }
 
         if(m_clientWorld != null)
@@ -672,12 +690,20 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     int connectRetryCount;
     void EnterConnectingState()
     {
+        //GameDebug.Log("clientGameLoop EnterConnectingState ");
+
         GameDebug.Assert(m_ClientState == ClientState.Browsing, "Expected ClientState to be browsing");
         GameDebug.Assert(m_clientWorld == null, "Expected ClientWorld to be null");
         GameDebug.Assert(m_NetworkClient.connectionState == NetworkClient.ConnectionState.Disconnected, "Expected network connectionState to be disconnected");
 
         m_ClientState = ClientState.Connecting;
         connectRetryCount = 0;
+        GameDebug.Log("Client  EnterConnectingState");
+        if (!GDNTransport.connectionStarted) {
+            GameDebug.Log("GDNTransport Connect");
+            var isServer = false;
+            m_NetworkTransport.Connect(isServer, 7932, 8);
+        }
     }
 
     void UpdateConnectingState()
@@ -688,6 +714,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
                 m_GameMessage = "Waiting for map info";
                 break;
             case NetworkClient.ConnectionState.Connecting:
+                //GameDebug.Log("clientGameLoop UpdateConnectingState NetworkClient.ConnectionState.Connecting ");
                 // Do nothing; just wait for either success or failure
                 break;
             case NetworkClient.ConnectionState.Disconnected:
@@ -1074,7 +1101,9 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
 
     GameWorld m_GameWorld;
 
-    SocketTransport m_NetworkTransport;
+    //SocketTransport m_NetworkTransport;
+    GDNTransport m_NetworkTransport;
+    GDNStats gdnStats;
 
     NetworkClient m_NetworkClient;
     

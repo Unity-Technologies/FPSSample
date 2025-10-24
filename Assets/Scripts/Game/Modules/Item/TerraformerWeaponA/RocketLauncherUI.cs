@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Macrometa;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +24,8 @@ public class RocketLauncherUI : AbilityUI
         activeIcon.enabled = behaviorCtrl.behaviorState == AbilityControl.State.Active;
 
         bool showCooldown = behaviorCtrl.behaviorState == AbilityControl.State.Cooldown;
+        PlayStats.UpdateGrenade(showCooldown);
+            
         cooldownText.gameObject.SetActive(showCooldown);
         disabledOverlay.SetActive(showCooldown);
         if (showCooldown)

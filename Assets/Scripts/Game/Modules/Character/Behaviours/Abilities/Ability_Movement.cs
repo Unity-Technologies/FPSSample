@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Macrometa;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -147,7 +148,15 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             predictedState.locoState = newPhase;
             predictedState.locoStartTick = time.tick;
         }
-        
+
+
+        PlayStats.position = predictedState.position;
+        /*
+        Vector2 vel = new Vector2(predictedState.velocity.x, predictedState.velocity.z);
+        if (vel.sqrMagnitude > 0.01) {
+            PlayStats.orientation = Vector3.Angle(vel, new Vector2(0, 1));
+        }
+        */
         if (debugCharacterMove.IntValue > 0)
         {
             // Only show for one player

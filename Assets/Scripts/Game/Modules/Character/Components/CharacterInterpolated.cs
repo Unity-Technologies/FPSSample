@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using Macrometa;
 using Unity.Entities;
 using UnityEngine.Profiling;
 
@@ -53,7 +54,7 @@ public struct CharacterInterpolatedData : IInterpolatedComponent<CharacterInterp
         writer.WriteFloatQ("aimYaw", aimYaw, 0);
         writer.WriteFloatQ("aimPitch", aimPitch, 0);
         writer.WriteFloatQ("moveYaw", moveYaw, 0);
-
+        
         writer.WriteInt32("charLocoState", (int)charLocoState);
         writer.WriteInt32("charLocoTick", charLocoTick);
         writer.WriteInt32("characterAction", (int)charAction);
@@ -89,6 +90,10 @@ public struct CharacterInterpolatedData : IInterpolatedComponent<CharacterInterp
         aimPitch = reader.ReadFloatQ();
         moveYaw = reader.ReadFloatQ();
 
+        //PlayStats.orientation = aimYaw;
+        //PlayStats.orientation = moveYaw;
+       // Debug.Log("Deserialize CharacterInterpolatedData  DE: "+aimYaw + " moveYaw: " + moveYaw + " pitch:" + aimPitch);
+        
         charLocoState = (CharacterPredictedData.LocoState)reader.ReadInt32();
         charLocoTick = reader.ReadInt32();
         charAction = (CharacterPredictedData.Action)reader.ReadInt32();

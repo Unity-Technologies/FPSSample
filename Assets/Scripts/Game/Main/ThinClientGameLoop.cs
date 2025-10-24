@@ -322,8 +322,13 @@ public class ThinClient : INetworkCallbacks, INetworkClientCallbacks
 
         m_GameWorld = new GameWorld("ClientWorld");
 
-        m_Transport = new SocketTransport();
-        
+        //m_Transport = new SocketTransport();
+        var isServer = false;
+        GDNTransport.isSocketPingOn = false;
+        GDNTransport.sendDummyTraffic = false;//probably not need but safer
+        m_Transport =  GDNTransport.Instance;
+        m_Transport.Connect(isServer,7932, 8);
+
         m_NetworkClient = new NetworkClient(m_Transport);
 
         if (Application.isEditor || Game.game.buildId == "AutoBuild")
@@ -589,7 +594,9 @@ public class ThinClient : INetworkCallbacks, INetworkClientCallbacks
     ClientState m_ClientState;
 
     GameWorld m_GameWorld;
-    private SocketTransport m_Transport;
+    //private SocketTransport m_Transport;
+    private GDNTransport m_Transport;
+    
     NetworkClient m_NetworkClient;
     
     LocalPlayer m_LocalPlayer;

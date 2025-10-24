@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Macrometa;
 using UnityEngine;
 using Unity.Entities;
 using UnityEditor;
@@ -197,7 +198,11 @@ public class UpdateCharacterCamera : BaseComponentSystem<LocalPlayer,LocalPlayer
         // Update camera settings
         var userCommand = EntityManager.GetComponentData<UserCommandComponentData>(localPlayer.controlledEntity);
         var lookRotation = userCommand.command.lookRotation;
-        
+       
+       
+       
+       // GameDebug.Log("UpdateCharacterCamera: "+lookRotation.eulerAngles );
+        //PlayStats.SetOrientation(lookRotation);
         cameraSettings.isEnabled = true;
 
         // Update FOV

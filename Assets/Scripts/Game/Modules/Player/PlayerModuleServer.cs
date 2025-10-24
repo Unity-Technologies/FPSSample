@@ -28,6 +28,7 @@ public class PlayerModuleServer
         var playerState = entityManager.GetComponentObject<PlayerState>(entity);
         playerState.playerId = playerId;
         playerState.playerName = playerName;
+        GameDebug.Log("PlayerModuleServer line 31    Create player " + playerState.playerName);
 
         // Mark the playerstate as 'owned' by ourselves so we can reduce amount of
         // data replicated out from server
