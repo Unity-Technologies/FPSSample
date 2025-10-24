@@ -131,7 +131,7 @@ Congratulations! If you made it this far you should celebrate a bit!
 
 ## Development of FPS Sample, Contributions etc.
 
-As of today, internally development of the project happens on Perforce. We
+As of today, internal development of the project happens on Perforce. We
 push versions of the project to github from there. As we do that we will update
 the [CHANGELOG](CHANGELOG.md) with highlights but the full history is not
 carried over.
