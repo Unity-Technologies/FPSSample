@@ -244,7 +244,12 @@ public class GameModeSystemServer : ComponentSystem
                             var rotation = predictedState.velocity.magnitude > 0.01f ? Quaternion.LookRotation(predictedState.velocity.normalized) : Quaternion.identity;
 
                             CharacterDespawnRequest.Create(PostUpdateCommands, controlledEntity);
-                            CharacterSpawnRequest.Create(PostUpdateCommands, charControl.characterType, predictedState.position, rotation, playerEntity);
+
+                            if (charControl.characterType == 1000)
+                                SpectatorCamSpawnRequest.Create(PostUpdateCommands, predictedState.position, rotation, playerEntity);
+                            else
+                                CharacterSpawnRequest.Create(PostUpdateCommands, charControl.characterType, predictedState.position, rotation, playerEntity);
+
                         }
                         player.controlledEntity = Entity.Null;
                     }
