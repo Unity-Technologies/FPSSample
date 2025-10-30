@@ -24,7 +24,7 @@ namespace SQP
 
     public enum SQPMessageType
     {
-        ChallangeRequest = 0,
+        ChallengeRequest = 0,
         ChallangeResponse = 0,
         QueryRequest = 1,
         QueryResponse = 1
@@ -60,7 +60,7 @@ namespace SQP
 
         public void ToStream(ref DataStreamWriter writer)
         {
-            Header.Type = (byte)SQPMessageType.ChallangeRequest;
+            Header.Type = (byte)SQPMessageType.ChallengeRequest;
             Header.ToStream(ref writer);
         }
 
@@ -505,7 +505,7 @@ namespace SQP
 
                     switch (type)
                     {
-                        case SQPMessageType.ChallangeRequest:
+                        case SQPMessageType.ChallengeRequest:
                             {
                                 if (!m_OutstandingTokens.ContainsKey(endpoint))
                                 {
